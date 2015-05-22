@@ -1,0 +1,56 @@
+#ifndef ast_h
+#define ast_h
+
+#include <lexic/lexer.h>
+#include <adt/list.h>
+#include <core/mem.h>
+
+typedef struct ast_s ast_t;
+
+typedef enum
+{
+    AST_IDENT,
+    AST_ATOM,
+    AST_NUMBER,
+    AST_STRING,
+    AST_ARRAY,
+    AST_TABLE,
+    AST_TABLEENTRY,
+    AST_BINARY,
+    AST_UNARY,
+    AST_SUBSCRIPT,
+    AST_LAMBDA,
+    AST_CALL,
+    AST_IF,
+    AST_IFCLAUSE,
+    AST_WHILE,
+    AST_DECLVAR,
+    AST_DECLFUN,
+    AST_TOPLEVEL,
+    AST_FOR
+} ast_class_t;
+
+typedef struct
+{
+    char* name;
+    ast_t* initializer;
+} ast_decl_t;
+
+struct ast_s
+{
+    ast_class_t class;
+    location_t location;
+    union
+    {
+        char* ident;
+        char* string;
+        list_t toplevel;
+        double number;
+        ast_decl_t vardecl;
+    };
+};
+
+ast_t* ast_class_create(ast_class_t class, location_t location);
+void ast_free(ast_t* ast);
+
+#endif
