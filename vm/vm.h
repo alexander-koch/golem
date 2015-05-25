@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <core/mem.h>
+#include <vm/value.h>
 #include <parser.h>
 
 typedef struct vm_t

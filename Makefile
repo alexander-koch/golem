@@ -9,9 +9,9 @@ FILES = main.c \
 		adt/stack.c \
 		adt/list.c \
 		lexic/lexer.c \
+		vm/vm.c \
 		ast.c \
-		parser.c \
-		vm.c
+		parser.c
 
 debug:
 	$(CC) -g -o $(MODULE) $(INC) $(FILES) -Wall $(LIBS)

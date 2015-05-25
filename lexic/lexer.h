@@ -32,7 +32,36 @@ typedef enum
     TOKEN_STRING,
     TOKEN_INT,
     TOKEN_FLOAT,
-    TOKEN_PUNCT
+    TOKEN_LPAREN,    // '('
+    TOKEN_RPAREN,    // ')'
+    TOKEN_LBRACE,    // '{'
+    TOKEN_RBRACE,    // '}'
+    TOKEN_LBRACKET,  // '['
+    TOKEN_RBRACKET,  // ']'
+    TOKEN_COMMA,     // ','
+    TOKEN_SEMICOLON, // ';'
+    TOKEN_ADD,
+    TOKEN_SUB,
+    TOKEN_MUL,
+    TOKEN_DIV,
+    TOKEN_MOD,
+    TOKEN_EQUAL,
+    TOKEN_ASSIGN,
+    TOKEN_NEQUAL,
+    TOKEN_NOT,
+    TOKEN_DOT,
+    TOKEN_BITLSHIFT,
+    TOKEN_BITRSHIFT,
+    TOKEN_LEQUAL,
+    TOKEN_GEQUAL,
+    TOKEN_LESS,
+    TOKEN_GREATER,
+    TOKEN_AND,
+    TOKEN_OR,
+    TOKEN_BITAND,
+    TOKEN_BITOR,
+    TOKEN_BITXOR,
+    TOKEN_BITNOT
 } token_type_t;
 
 typedef struct

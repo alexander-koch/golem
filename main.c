@@ -5,9 +5,9 @@
 
 #define USE_MEM_IMPLEMENTATION
 #include <core/mem.h>
+#include <vm/vm.h>
 #include <ast.h>
 #include <parser.h>
-#include <vm.h>
 
 void run_interactive()
 {

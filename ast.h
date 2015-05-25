@@ -4,6 +4,7 @@
 #include <lexic/lexer.h>
 #include <adt/list.h>
 #include <core/mem.h>
+#include <core/api.h>
 
 typedef struct ast_s ast_t;
 
@@ -47,10 +48,24 @@ struct ast_s
         list_t toplevel;
         double number;
         ast_decl_t vardecl;
+
+        struct
+        {
+            token_type_t op;
+            ast_t* left;
+            ast_t* right;
+        } binary;
+
+        struct
+        {
+            ast_t* callee;
+            list_t args;
+        } call;
     };
 };
 
 ast_t* ast_class_create(ast_class_t class, location_t location);
+const char* ast_classname(ast_class_t class);
 void ast_free(ast_t* ast);
 
 #endif

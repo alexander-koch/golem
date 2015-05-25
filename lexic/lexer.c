@@ -17,12 +17,13 @@ void lex_error(lexer_t* lexer, const char* err)
     fprintf(stdout, "[line %d, column %d] Lexical error: %s\n", lexer->location.line, lexer->location.column, err);
 }
 
-#define RESERVED_ENTRY(w) {w, sizeof(w) - 1}
+#define RESERVED_ENTRY(w, t) {w, sizeof(w) - 1, t}
 
 typedef struct
 {
     const char* str;
     size_t len;
+    token_type_t type;
 } Reserved;
 
 int is_special(char c)
@@ -157,42 +158,36 @@ int lex_op(lexer_t* lexer, token_t* token)
 {
     static const Reserved ops[] =
     {
-        RESERVED_ENTRY("("),
-        RESERVED_ENTRY(")"),
-        RESERVED_ENTRY("["),
-        RESERVED_ENTRY("]"),
-        RESERVED_ENTRY("{"),
-        RESERVED_ENTRY("}"),
-        RESERVED_ENTRY(","),
-        RESERVED_ENTRY(";"),
-        RESERVED_ENTRY("+"),
-        RESERVED_ENTRY("->"),
-        RESERVED_ENTRY("-"),
-        RESERVED_ENTRY("*"),
-        RESERVED_ENTRY("/"),
-        RESERVED_ENTRY("%"),
-        RESERVED_ENTRY("=="),
-        RESERVED_ENTRY("="),
-        RESERVED_ENTRY("!="),
-        RESERVED_ENTRY("!"),
-        RESERVED_ENTRY("."),
-        RESERVED_ENTRY("<<"),
-        RESERVED_ENTRY("<="),
-        RESERVED_ENTRY("<"),
-        RESERVED_ENTRY(">>"),
-        RESERVED_ENTRY(">="),
-        RESERVED_ENTRY(">"),
-        RESERVED_ENTRY("&&"),
-        RESERVED_ENTRY("&"),
-        RESERVED_ENTRY("||"),
-        RESERVED_ENTRY("|"),
-        RESERVED_ENTRY("^"),
-        RESERVED_ENTRY("?"),
-        RESERVED_ENTRY(":="),
-        RESERVED_ENTRY("::"),
-        RESERVED_ENTRY(":"),
-        RESERVED_ENTRY("$"),
-        RESERVED_ENTRY("~"),
+        RESERVED_ENTRY("(", TOKEN_LPAREN),
+        RESERVED_ENTRY(")", TOKEN_RPAREN),
+        RESERVED_ENTRY("[", TOKEN_LBRACKET),
+        RESERVED_ENTRY("]", TOKEN_RBRACKET),
+        RESERVED_ENTRY("{", TOKEN_LBRACE),
+        RESERVED_ENTRY("}", TOKEN_RBRACE),
+        RESERVED_ENTRY(",", TOKEN_COMMA),
+        RESERVED_ENTRY(";", TOKEN_SEMICOLON),
+        RESERVED_ENTRY("+", TOKEN_ADD),
+        RESERVED_ENTRY("-", TOKEN_SUB),
+        RESERVED_ENTRY("*", TOKEN_MUL),
+        RESERVED_ENTRY("/", TOKEN_DIV),
+        RESERVED_ENTRY("%", TOKEN_MOD),
+        RESERVED_ENTRY("==", TOKEN_EQUAL),
+        RESERVED_ENTRY("=", TOKEN_ASSIGN),
+        RESERVED_ENTRY("!=", TOKEN_NEQUAL),
+        RESERVED_ENTRY("!", TOKEN_NOT),
+        RESERVED_ENTRY(".", TOKEN_DOT),
+        RESERVED_ENTRY("<<", TOKEN_BITLSHIFT),
+        RESERVED_ENTRY("<=", TOKEN_LEQUAL),
+        RESERVED_ENTRY("<", TOKEN_LESS),
+        RESERVED_ENTRY(">>", TOKEN_BITRSHIFT),
+        RESERVED_ENTRY(">=", TOKEN_GEQUAL),
+        RESERVED_ENTRY(">", TOKEN_GREATER),
+        RESERVED_ENTRY("&&", TOKEN_AND),
+        RESERVED_ENTRY("&", TOKEN_BITAND),
+        RESERVED_ENTRY("||", TOKEN_OR),
+        RESERVED_ENTRY("|", TOKEN_BITOR),
+        RESERVED_ENTRY("^", TOKEN_BITXOR),
+        RESERVED_ENTRY("~", TOKEN_BITNOT)
     };
 
     size_t i;
@@ -200,7 +195,7 @@ int lex_op(lexer_t* lexer, token_t* token)
     {
         if(strncmp(lexer->cursor, ops[i].str, ops[i].len) == 0)
         {
-            token->type = TOKEN_PUNCT;
+            token->type = ops[i].type;
             token->value = strndup(lexer->cursor, ops[i].len);
             lexer->cursor += ops[i].len;
             return 1;

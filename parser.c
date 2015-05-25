@@ -3,6 +3,7 @@
 #define KEYWORD_DECLARATION "let"
 
 ast_t* parse_var_declaration(parser_t* parser);
+ast_t* parse_expression(parser_t* parser);
 
 void parser_init(parser_t* parser)
 {
@@ -71,88 +72,9 @@ token_t* accept_token_type(parser_t* parser, token_type_t type)
     }
     else
     {
-        fprintf(stdout, "Token: %d\n", parser->buffer[parser->cursor].type);
+        fprintf(stdout, "Wrong token type: %d. Expected: %d\n", parser->buffer[parser->cursor].type, type);
     }
     return 0;
-}
-
-token_t* parse_expression_until_type(parser_t* parser, token_type_t type, size_t* tokens)
-{
-    size_t alloc_size = 8;
-    size_t n = 0;
-    token_t* buffer = malloc(sizeof(token_t) * alloc_size);
-    while(parser->buffer[parser->cursor].type != type && !parser_end(parser))
-    {
-        if(n >= alloc_size)
-        {
-            alloc_size *= 2;
-            buffer = realloc(buffer, alloc_size * sizeof(buffer[0]));
-        }
-        buffer[n++] = parser->buffer[parser->cursor];
-        parser->cursor++;
-    }
-    *tokens = n;
-    return buffer;
-}
-
-token_t* parse_expression_until_string(parser_t* parser, const char* key, size_t* tokens)
-{
-    size_t alloc_size = 8;
-    size_t n = 0;
-    token_t* buffer = malloc(sizeof(token_t) * alloc_size);
-    while(strcmp(parser->buffer[parser->cursor].value, key) && !parser_end(parser))
-    {
-        if(n >= alloc_size)
-        {
-            alloc_size *= 2;
-            buffer = realloc(buffer, alloc_size * sizeof(buffer[0]));
-        }
-        buffer[n++] = parser->buffer[parser->cursor];
-        parser->cursor++;
-    }
-    *tokens = n;
-    parser->cursor++;
-    return buffer;
-}
-
-token_t* parse_expression_until_string_and_type(parser_t* parser, const char* key, token_type_t type, size_t* tokens)
-{
-    size_t alloc_size = 8;
-    size_t n = 0;
-    token_t* buffer = malloc(sizeof(token_t) * alloc_size);
-    while(strcmp(parser->buffer[parser->cursor].value, key) && parser->buffer[parser->cursor+1].type != type)
-    {
-        if(n >= alloc_size)
-        {
-            alloc_size *= 2;
-            buffer = realloc(buffer, alloc_size * sizeof(buffer[0]));
-        }
-        buffer[n++] = parser->buffer[parser->cursor];
-        parser->cursor++;
-    }
-    *tokens = n;
-    parser->cursor++;
-    return buffer;
-}
-
-token_t* parse_expression_until_string_tuple(parser_t* parser, const char* key1, const char* key2, size_t* tokens)
-{
-    size_t alloc_size = 8;
-    size_t n = 0;
-    token_t* buffer = malloc(sizeof(token_t) * alloc_size);
-    while(strcmp(parser->buffer[parser->cursor].value, key1) && strcmp(parser->buffer[parser->cursor+1].value, key2))
-    {
-        if(n >= alloc_size)
-        {
-            alloc_size *= 2;
-            buffer = realloc(buffer, alloc_size * sizeof(buffer[0]));
-        }
-        buffer[n++] = parser->buffer[parser->cursor];
-        parser->cursor++;
-    }
-    *tokens = n;
-    parser->cursor++;
-    return buffer;
 }
 
 void skip_newline(parser_t* parser)
@@ -162,7 +84,6 @@ void skip_newline(parser_t* parser)
         parser->cursor++;
     }
 }
-
 
 void parser_free(parser_t* parser)
 {
@@ -191,28 +112,57 @@ int match_literal(parser_t* parser)
         match_string(parser, "{");
 }
 
-int parse_precedence(token_t* token)
+int parse_precedence(token_type_t type)
 {
-    if(!strcmp(token->value, "=")) return 0;
-    else if(!strcmp(token->value, "||")) return 1;
-    else if(!strcmp(token->value, "&&")) return 2;
-    else if(!strcmp(token->value, "|")) return 3;
-    else if(!strcmp(token->value, "^")) return 4;
-    else if(!strcmp(token->value, "&")) return 5;
-    else if(!strcmp(token->value, "==")) return 6;
-    else if(!strcmp(token->value, "!=")) return 6;
-    else if(!strcmp(token->value, "<")) return 7;
-    else if(!strcmp(token->value, ">")) return 7;
-    else if(!strcmp(token->value, "<=")) return 7;
-    else if(!strcmp(token->value, ">=")) return 7;
-    else if(!strcmp(token->value, "<<")) return 8;
-    else if(!strcmp(token->value, ">>")) return 8;
-    else if(!strcmp(token->value, "-")) return 9;
-    else if(!strcmp(token->value, "+")) return 9;
-    else if(!strcmp(token->value, "*")) return 9;
-    else if(!strcmp(token->value, "/")) return 9;
-    else if(!strcmp(token->value, "%")) return 9;
-    return -1;
+    switch(type)
+    {
+        case TOKEN_ASSIGN: return 0;
+        case TOKEN_OR: return 1;
+        case TOKEN_AND: return 2;
+        case TOKEN_BITOR: return 3;
+        case TOKEN_BITXOR: return 4;
+        case TOKEN_BITAND: return 5;
+        case TOKEN_EQUAL: return 6;
+        case TOKEN_NEQUAL: return 6;
+        case TOKEN_LESS: return 7;
+        case TOKEN_GREATER: return 7;
+        case TOKEN_LEQUAL: return 7;
+        case TOKEN_GEQUAL: return 7;
+        case TOKEN_BITLSHIFT: return 8;
+        case TOKEN_BITRSHIFT: return 8;
+        case TOKEN_SUB: return 9;
+        case TOKEN_ADD: return 9;
+        case TOKEN_MUL: return 9;
+        case TOKEN_DIV: return 9;
+        case TOKEN_MOD: return 9;
+        default: return -1;
+    }
+}
+
+ast_t* parse_call(parser_t* parser, ast_t* node)
+{
+    ast_t* class = ast_class_create(AST_CALL, node->location);
+    list_init(&class->call.args);
+    class->call.callee = node;
+
+    while(!match_type(parser, TOKEN_RPAREN))
+    {
+        list_push(&class->call.args, (void*)parse_expression(parser));
+        if(match_type(parser, TOKEN_COMMA))
+        {
+            accept_token(parser);
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    token_t* token = accept_token_type(parser, TOKEN_RPAREN);
+    assert(token);
+    // TODO: Better error handling
+
+    return class;
 }
 
 ast_t* parse_simpleliteral(parser_t* parser)
@@ -233,6 +183,7 @@ ast_t* parse_simpleliteral(parser_t* parser)
     else
     {
         // TODO: Throw error
+        console("Error: literal\n");
     }
     return node;
 }
@@ -266,6 +217,14 @@ ast_t* parse_expression_primary(parser_t* parser)
         ast = ast_class_create(AST_IDENT, get_location(parser));
         ast->ident = accept_token(parser)->value;
     }
+    else if(match_type(parser, TOKEN_LPAREN))
+    {
+        accept_token(parser);
+        ast = parse_expression(parser);
+
+        assert(accept_token(parser)->type == TOKEN_RPAREN);
+        // TODO: better error handling
+    }
     else
     {
         // TODO: Throw error
@@ -274,20 +233,147 @@ ast_t* parse_expression_primary(parser_t* parser)
         console("[line %d, column %d] Expected expression, found '%s'.\n", loc.line, loc.column, current_token(parser)->value);
     }
     // TODO: Other matches
+
+    if(match_type(parser, TOKEN_LPAREN))
+    {
+        accept_token(parser);
+        return parse_call(parser, ast);
+    }
+
     return ast;
 }
 
 ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
 {
-    /*while(1)
+    ast_t* rhs = 0;
+    for(;;)
     {
-        token_t* token = accept_token(parser);
-        int prec = parse_precedence(token);
-        return lhs;
-    //    if(prec < minprec) return lhs;
-}*/
+        /*if(match_type(parser, TOKEN_NEWLINE))
+        {
+            if(lhs->class != AST_BINARY)
+            {
+                ast_free(rhs);
+            }
+            return lhs;
+        }*/
 
-    return lhs;
+        token_type_t op = current_token(parser)->type;
+        int prec = parse_precedence(op);
+        if(prec < minprec)
+        {
+            /*if(lhs->class != AST_BINARY)
+            {
+                ast_free(rhs);
+            }*/
+            return lhs;
+        }
+
+        parser->cursor++;
+
+        rhs = parse_expression_primary(parser);
+        int nextprec = parse_precedence(current_token(parser)->type);
+        if(prec < nextprec)
+        {
+        //    parser->cursor++;
+            rhs = parse_expression_last(parser, rhs, prec + 1);
+        }
+
+        if(lhs->class == AST_NUMBER && rhs->class == AST_NUMBER)
+        {
+            switch(op)
+            {
+                case TOKEN_ADD:
+                {
+                    lhs->number += rhs->number;
+                    continue;
+                }
+                case TOKEN_SUB:
+                {
+                    lhs->number -= rhs->number;
+                    continue;
+                }
+                case TOKEN_MUL:
+                {
+                    lhs->number *= rhs->number;
+                    continue;
+                }
+                case TOKEN_DIV:
+                {
+                    lhs->number /= rhs->number;
+                    continue;
+                }
+                case TOKEN_MOD:
+                {
+                    lhs->number = (uint32_t)lhs->number % (uint32_t)rhs->number;
+                    continue;
+                }
+                case TOKEN_BITAND:
+                {
+                    lhs->number = (uint32_t)lhs->number & (uint32_t)rhs->number;
+                    continue;
+                }
+                case TOKEN_BITOR:
+                {
+                    lhs->number = (uint32_t)lhs->number | (uint32_t)rhs->number;
+                    continue;
+                }
+                case TOKEN_BITLSHIFT:
+                {
+                    lhs->number = (uint32_t)lhs->number << (uint32_t)rhs->number;
+                    continue;
+                }
+                case TOKEN_BITRSHIFT:
+                {
+                    lhs->number = (uint32_t)lhs->number >> (uint32_t)rhs->number;
+                    continue;
+                }
+                case TOKEN_BITXOR:
+                {
+                    lhs->number = (uint32_t)lhs->number ^ (uint32_t)rhs->number;
+                    continue;
+                }
+                case TOKEN_LESS:
+                {
+                    lhs->number = !!(lhs->number < rhs->number);
+                    continue;
+                }
+                case TOKEN_GREATER:
+                {
+                    lhs->number = !!(lhs->number > rhs->number);
+                    continue;
+                }
+                case TOKEN_LEQUAL:
+                {
+                    lhs->number = !!(lhs->number <= rhs->number);
+                    continue;
+                }
+                case TOKEN_GEQUAL:
+                {
+                    lhs->number = !!(lhs->number >= rhs->number);
+                    continue;
+                }
+                case TOKEN_EQUAL:
+                {
+                    lhs->number = lhs->number == rhs->number;
+                    continue;
+                }
+                case TOKEN_NEQUAL:
+                {
+                    lhs->number = lhs->number != rhs->number;
+                    continue;
+                }
+                default: break;
+            }
+        }
+
+        ast_t* new_lhs = ast_class_create(AST_BINARY, get_location(parser));
+        new_lhs->binary.left = lhs;
+        new_lhs->binary.right = rhs;
+        new_lhs->binary.op = op;
+        lhs = new_lhs;
+
+        console("Connected %s and %s to binary\n", ast_classname(lhs->class), ast_classname(rhs->class));
+    }
 }
 
 ast_t* parse_expression(parser_t* parser)
@@ -295,7 +381,6 @@ ast_t* parse_expression(parser_t* parser)
     ast_t* lhs = parse_expression_primary(parser);
     if(!lhs) return lhs;
     ast_t* rhs = parse_expression_last(parser, lhs, 0);
-    assert(accept_token_type(parser, TOKEN_NEWLINE)->type == TOKEN_NEWLINE);
     return rhs;
 }
 
@@ -315,8 +400,17 @@ ast_t* parse_stmt(parser_t* parser)
     {
         if(match_string(parser, parsers[i].token))
         {
-            return parsers[i].fn(parser);
+            ast_t* node = parsers[i].fn(parser);
+            assert(accept_token_type(parser, TOKEN_NEWLINE)->type == TOKEN_NEWLINE);
+            return node;
         }
+    }
+
+    ast_t* node = parse_expression(parser);
+    if(node)
+    {
+        assert(accept_token_type(parser, TOKEN_NEWLINE)->type == TOKEN_NEWLINE);
+        return node;
     }
 
     parser->error = 1;
@@ -331,7 +425,8 @@ ast_t* parser_run(parser_t* parser, const char* content)
     parser->buffer = lexer_lex(&parser->lexer, content, &parser->num_tokens);
     if(!parser->buffer) return 0;
 
-    //nem_lexer_print_tokens(parser->buffer, parser->num_tokens);
+    // lexer_print_tokens(parser->buffer, parser->num_tokens);
+
     ast_t* ast = ast_class_create(AST_TOPLEVEL, get_location(parser));
     list_init(&ast->toplevel);
 
@@ -345,6 +440,7 @@ ast_t* parser_run(parser_t* parser, const char* content)
             ast_free(ast);
             return 0;
         }
+
         list_push(&ast->toplevel, node);
     }
 

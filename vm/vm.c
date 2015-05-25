@@ -1,24 +1,39 @@
 #include "vm.h"
 
-// int vm_eval_block(list_t* block)
-// {
-// 	list_iterator_t* iter = list_iterator_create(block);
-// 	while(!list_iterator_end(iter))
-// 	{
-// 		ast_t* next = list_iterator_next(iter);
-// 	}
-// 	list_iterator_free(iter);
-// }
-//
-// int vm_eval(ast_t* node)
-// {
-// 	switch(node->class)
-// 	{
-// 		case AST_TOPLEVEL: return vm_eval_block(node->toplevel);
-// 		case AST_DECLVAR: return vm_eval_statement(node);
-// 		default: return 0;
-// 	}
-// }
+value_t vm_eval(vm_t* vm, ast_t* node);
+
+value_t vm_eval_block(vm_t* vm, list_t* block)
+{
+	value_t val = value_null_create();
+	list_iterator_t* iter = list_iterator_create(block);
+	while(!list_iterator_end(iter))
+	{
+		ast_t* next = list_iterator_next(iter);
+		val = vm_eval(vm, next);
+	}
+	list_iterator_free(iter);
+	return val;
+}
+
+value_t vm_eval_declvar(vm_t* vm, ast_t* node)
+{
+	value_t val;
+	// const char* name = node->vardecl.name;
+
+	return val;
+}
+
+value_t vm_eval(vm_t* vm, ast_t* node)
+{
+	value_t null;
+	switch(node->class)
+	{
+		case AST_TOPLEVEL: return vm_eval_block(vm, &node->toplevel);
+		case AST_DECLVAR: return vm_eval_declvar(vm, node);
+		default: return null;
+	}
+	return null;
+}
 
 void vm_dump(ast_t* node)
 {
@@ -31,15 +46,16 @@ void vm_dump(ast_t* node)
 			{
 				ast_t* next = list_iterator_next(iter);
 				vm_dump(next);
+				fprintf(stdout, "\n");
 			}
 			list_iterator_free(iter);
 			break;
 		}
 		case AST_DECLVAR:
 		{
-			fprintf(stdout, "<decl %s", node->vardecl.name);
+			fprintf(stdout, ":decl %s<", node->vardecl.name);
 			vm_dump(node->vardecl.initializer);
-			fprintf(stdout, ">\n");
+			fprintf(stdout, ">");
 			break;
 		}
 		case AST_IDENT:
@@ -57,6 +73,21 @@ void vm_dump(ast_t* node)
 			fprintf(stdout, ":str = '%s'", node->string);
 			break;
 		}
+		case AST_BINARY:
+		{
+			fprintf(stdout, ":bin<");
+			vm_dump(node->binary.left);
+			vm_dump(node->binary.right);
+			fprintf(stdout, ":op = %d>", node->binary.op);
+			break;
+		}
+		case AST_CALL:
+		{
+			fprintf(stdout, ":call<");
+			vm_dump(node->call.callee);
+			fprintf(stdout, ">");
+			break;
+		}
 		default: break;
 	}
 }
@@ -69,6 +100,7 @@ void vm_run_buffer(vm_t* vm, const char* source)
 	{
 		// TODO: Eval abstract syntax tree
 		vm_dump(root);
+		vm_eval(root);
 	}
 	else
 	{
