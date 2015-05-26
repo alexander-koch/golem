@@ -1,6 +1,9 @@
 #ifndef ast_h
 #define ast_h
 
+#include <stddef.h>
+#include <stdbool.h>
+
 #include <lexic/lexer.h>
 #include <adt/list.h>
 #include <core/mem.h>
@@ -10,9 +13,10 @@ typedef struct ast_s ast_t;
 
 typedef enum
 {
+    AST_NULL,
     AST_IDENT,
-    AST_ATOM,
-    AST_NUMBER,
+    AST_FLOAT,
+    AST_INT,
     AST_STRING,
     AST_ARRAY,
     AST_TABLE,
@@ -34,6 +38,7 @@ typedef enum
 typedef struct
 {
     char* name;
+    bool mutate;
     ast_t* initializer;
 } ast_decl_t;
 
@@ -46,7 +51,8 @@ struct ast_s
         char* ident;
         char* string;
         list_t toplevel;
-        double number;
+        long i;
+        double f;
         ast_decl_t vardecl;
 
         struct

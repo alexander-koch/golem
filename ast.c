@@ -15,7 +15,8 @@ const char* ast_classname(ast_class_t class)
 	switch(class)
 	{
 		case AST_IDENT: return "identifier";
-		case AST_NUMBER: return "number";
+		case AST_FLOAT: return "float";
+		case AST_INT: return "integer";
 		case AST_STRING: return "string";
 		case AST_ARRAY: return "array";
 		case AST_BINARY: return "binary";

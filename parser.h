@@ -5,10 +5,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <stdarg.h>
 
-#include <lexic/lexer.h>
 #include <core/mem.h>
 #include <core/api.h>
+#include <lexic/lexer.h>
+#include <adt/hashmap.h>
 #include <ast.h>
 
 typedef struct
@@ -24,5 +26,6 @@ typedef struct
 void parser_init(parser_t* parser);
 ast_t* parser_run(parser_t* parser, const char* content);
 void parser_free(parser_t* parser);
+void parser_throw(parser_t* parser, const char* format, ...);
 int parser_error(parser_t* parser);
 #endif

@@ -9,9 +9,10 @@
 #include <ast.h>
 #include <parser.h>
 
-void run_interactive()
+#include <adt/hashmap.h>
+
+void run_interactive(vm_t* vm)
 {
-    vm_t vm;
     char buf[1024];
     while(1)
     {
@@ -21,19 +22,26 @@ void run_interactive()
         {
             return;
         }
-        vm_run_buffer(&vm, buf);
+        vm_run_buffer(vm, buf);
     }
 }
 
 int main(int argc, char** argv)
 {
+    vm_t vm;
+    vm_init(&vm);
+
+    // int value = 5;
+    // hashmap_t* hm = hashmap_new();
+    // hashmap_set(hm, "test", &value);
+    // hashmap_free(hm);
+
     if(argc == 1)
     {
-        run_interactive();
+        run_interactive(&vm);
     }
     else if(argc == 2)
     {
-        vm_t vm;
         vm_run_file(&vm, argv[1]);
     }
     else
@@ -41,9 +49,11 @@ int main(int argc, char** argv)
         fprintf(stderr, "Usage:\n");
         fprintf(stderr, " nemesis        (Interactive mode)\n");
         fprintf(stderr, " nemesis <file> (Run a file)\n");
+        vm_free(&vm);
         return -1;
     }
 
+    vm_free(&vm);
     mem_leak_check();
     return 0;
 }

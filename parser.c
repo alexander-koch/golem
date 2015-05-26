@@ -1,8 +1,11 @@
 #include "parser.h"
 
 #define KEYWORD_DECLARATION "let"
+#define KEYWORD_MUTATE "mod"
+#define KEYWORD_FUNCTION "fn"
 
 ast_t* parse_var_declaration(parser_t* parser);
+ast_t* parse_fn_declaration(parser_t* parser);
 ast_t* parse_expression(parser_t* parser);
 
 void parser_init(parser_t* parser)
@@ -95,6 +98,18 @@ int parser_error(parser_t* parser)
     return parser->error;
 }
 
+void parser_throw(parser_t* parser, const char* format, ...)
+{
+    parser->error = 1;
+    location_t loc = get_location(parser);
+
+    fprintf(stdout, "[line %d, column %d] ", loc.line, loc.column);
+    va_list argptr;
+    va_start(argptr, format);
+    vfprintf(stdout, format, argptr);
+    va_end(argptr);
+    fprintf(stdout, "\n");
+}
 
 // real parsing functions begin
 
@@ -116,25 +131,25 @@ int parse_precedence(token_type_t type)
 {
     switch(type)
     {
-        case TOKEN_ASSIGN: return 0;
-        case TOKEN_OR: return 1;
-        case TOKEN_AND: return 2;
-        case TOKEN_BITOR: return 3;
-        case TOKEN_BITXOR: return 4;
-        case TOKEN_BITAND: return 5;
-        case TOKEN_EQUAL: return 6;
-        case TOKEN_NEQUAL: return 6;
-        case TOKEN_LESS: return 7;
-        case TOKEN_GREATER: return 7;
-        case TOKEN_LEQUAL: return 7;
-        case TOKEN_GEQUAL: return 7;
-        case TOKEN_BITLSHIFT: return 8;
-        case TOKEN_BITRSHIFT: return 8;
-        case TOKEN_SUB: return 9;
-        case TOKEN_ADD: return 9;
-        case TOKEN_MUL: return 9;
-        case TOKEN_DIV: return 9;
-        case TOKEN_MOD: return 9;
+        case TOKEN_ASSIGN: return 0;    // =
+        case TOKEN_OR: return 1;        // ||
+        case TOKEN_AND: return 2;       // &&
+        case TOKEN_BITOR: return 3;     // |
+        case TOKEN_BITXOR: return 4;    // ^
+        case TOKEN_BITAND: return 5;    // &
+        case TOKEN_EQUAL: return 6;     // ==
+        case TOKEN_NEQUAL: return 6;    // !=
+        case TOKEN_LESS: return 7;      // <
+        case TOKEN_GREATER: return 7;   // >
+        case TOKEN_LEQUAL: return 7;    // <=
+        case TOKEN_GEQUAL: return 7;    // >=
+        case TOKEN_BITLSHIFT: return 8; // <<
+        case TOKEN_BITRSHIFT: return 8; // >>
+        case TOKEN_SUB: return 9;       // -
+        case TOKEN_ADD: return 9;       // +
+        case TOKEN_MUL: return 10;      // *
+        case TOKEN_DIV: return 10;      // /
+        case TOKEN_MOD: return 10;      // %
         default: return -1;
     }
 }
@@ -168,10 +183,16 @@ ast_t* parse_call(parser_t* parser, ast_t* node)
 ast_t* parse_simpleliteral(parser_t* parser)
 {
     ast_t* node = ast_class_create(-1, get_location(parser));
-    if(match_type(parser, TOKEN_FLOAT) || match_type(parser, TOKEN_INT))
+    if(match_type(parser, TOKEN_FLOAT))
     {
-        node->class = AST_NUMBER;
-        node->number = atof(accept_token(parser)->value);
+        node->class = AST_FLOAT;
+        node->f = atof(accept_token(parser)->value);
+        return node;
+    }
+    else if(match_type(parser, TOKEN_INT))
+    {
+        node->class = AST_INT;
+        node->i = atol(accept_token(parser)->value);
         return node;
     }
     else if(match_type(parser, TOKEN_STRING))
@@ -182,8 +203,7 @@ ast_t* parse_simpleliteral(parser_t* parser)
     }
     else
     {
-        // TODO: Throw error
-        console("Error: literal\n");
+        parser_throw(parser, "Token is not a literal");
     }
     return node;
 }
@@ -221,16 +241,14 @@ ast_t* parse_expression_primary(parser_t* parser)
     {
         accept_token(parser);
         ast = parse_expression(parser);
+        // ast->class = AST_TUPLE;
 
         assert(accept_token(parser)->type == TOKEN_RPAREN);
         // TODO: better error handling
     }
     else
     {
-        // TODO: Throw error
-        location_t loc = get_location(parser);
-        parser->error = 1;
-        console("[line %d, column %d] Expected expression, found '%s'.\n", loc.line, loc.column, current_token(parser)->value);
+        parser_throw(parser, "Expected expression, found '%s'", current_token(parser)->value);
     }
     // TODO: Other matches
 
@@ -245,124 +263,28 @@ ast_t* parse_expression_primary(parser_t* parser)
 
 ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
 {
-    ast_t* rhs = 0;
     for(;;)
     {
-        /*if(match_type(parser, TOKEN_NEWLINE))
-        {
-            if(lhs->class != AST_BINARY)
-            {
-                ast_free(rhs);
-            }
-            return lhs;
-        }*/
-
         token_type_t op = current_token(parser)->type;
         int prec = parse_precedence(op);
         if(prec < minprec)
         {
-            /*if(lhs->class != AST_BINARY)
-            {
-                ast_free(rhs);
-            }*/
             return lhs;
         }
 
         parser->cursor++;
 
-        rhs = parse_expression_primary(parser);
+        // TODO: Test if next is a valid operator
+
+        ast_t* rhs = parse_expression_primary(parser);
         int nextprec = parse_precedence(current_token(parser)->type);
         if(prec < nextprec)
         {
         //    parser->cursor++;
             rhs = parse_expression_last(parser, rhs, prec + 1);
-        }
-
-        if(lhs->class == AST_NUMBER && rhs->class == AST_NUMBER)
-        {
-            switch(op)
+            if(!rhs)
             {
-                case TOKEN_ADD:
-                {
-                    lhs->number += rhs->number;
-                    continue;
-                }
-                case TOKEN_SUB:
-                {
-                    lhs->number -= rhs->number;
-                    continue;
-                }
-                case TOKEN_MUL:
-                {
-                    lhs->number *= rhs->number;
-                    continue;
-                }
-                case TOKEN_DIV:
-                {
-                    lhs->number /= rhs->number;
-                    continue;
-                }
-                case TOKEN_MOD:
-                {
-                    lhs->number = (uint32_t)lhs->number % (uint32_t)rhs->number;
-                    continue;
-                }
-                case TOKEN_BITAND:
-                {
-                    lhs->number = (uint32_t)lhs->number & (uint32_t)rhs->number;
-                    continue;
-                }
-                case TOKEN_BITOR:
-                {
-                    lhs->number = (uint32_t)lhs->number | (uint32_t)rhs->number;
-                    continue;
-                }
-                case TOKEN_BITLSHIFT:
-                {
-                    lhs->number = (uint32_t)lhs->number << (uint32_t)rhs->number;
-                    continue;
-                }
-                case TOKEN_BITRSHIFT:
-                {
-                    lhs->number = (uint32_t)lhs->number >> (uint32_t)rhs->number;
-                    continue;
-                }
-                case TOKEN_BITXOR:
-                {
-                    lhs->number = (uint32_t)lhs->number ^ (uint32_t)rhs->number;
-                    continue;
-                }
-                case TOKEN_LESS:
-                {
-                    lhs->number = !!(lhs->number < rhs->number);
-                    continue;
-                }
-                case TOKEN_GREATER:
-                {
-                    lhs->number = !!(lhs->number > rhs->number);
-                    continue;
-                }
-                case TOKEN_LEQUAL:
-                {
-                    lhs->number = !!(lhs->number <= rhs->number);
-                    continue;
-                }
-                case TOKEN_GEQUAL:
-                {
-                    lhs->number = !!(lhs->number >= rhs->number);
-                    continue;
-                }
-                case TOKEN_EQUAL:
-                {
-                    lhs->number = lhs->number == rhs->number;
-                    continue;
-                }
-                case TOKEN_NEQUAL:
-                {
-                    lhs->number = lhs->number != rhs->number;
-                    continue;
-                }
-                default: break;
+                return 0;
             }
         }
 
@@ -371,17 +293,39 @@ ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
         new_lhs->binary.right = rhs;
         new_lhs->binary.op = op;
         lhs = new_lhs;
-
-        console("Connected %s and %s to binary\n", ast_classname(lhs->class), ast_classname(rhs->class));
     }
+    return 0;
 }
 
 ast_t* parse_expression(parser_t* parser)
 {
     ast_t* lhs = parse_expression_primary(parser);
     if(!lhs) return lhs;
-    ast_t* rhs = parse_expression_last(parser, lhs, 0);
-    return rhs;
+
+    // TODO test if next is a valid operator
+    if(!match_type(parser, TOKEN_NEWLINE))
+    {
+        ast_t* rhs = parse_expression_last(parser, lhs, 0);
+        return rhs;
+    }
+
+    return lhs;
+}
+
+void test_newline(parser_t* parser)
+{
+    if(!parser->error)
+    {
+        // TODO: Create a function for throwing errors using vaargs
+        // which does:
+        // throw_error(msg)
+        //  parser->error = 1
+        //  console("[line %d, column %d] %s\n", msg);
+        if(accept_token_type(parser, TOKEN_NEWLINE)->type != TOKEN_NEWLINE)
+        {
+            parser_throw(parser, "Missing newline after statement");
+        }
+    }
 }
 
 ast_t* parse_stmt(parser_t* parser)
@@ -401,7 +345,7 @@ ast_t* parse_stmt(parser_t* parser)
         if(match_string(parser, parsers[i].token))
         {
             ast_t* node = parsers[i].fn(parser);
-            assert(accept_token_type(parser, TOKEN_NEWLINE)->type == TOKEN_NEWLINE);
+            test_newline(parser);
             return node;
         }
     }
@@ -409,14 +353,12 @@ ast_t* parse_stmt(parser_t* parser)
     ast_t* node = parse_expression(parser);
     if(node)
     {
-        assert(accept_token_type(parser, TOKEN_NEWLINE)->type == TOKEN_NEWLINE);
+        test_newline(parser);
         return node;
     }
 
-    parser->error = 1;
     token_t* token = current_token(parser);
-    location_t loc = token->location;
-	console("[line %d, column %d] Could not interpret token '%s'\n", loc.line, loc.column, token->value);
+    parser_throw(parser, "Could not interpret token '%s'", token->value);
     return 0;
 }
 
@@ -449,24 +391,39 @@ ast_t* parser_run(parser_t* parser, const char* content)
 
 ast_t* parse_var_declaration(parser_t* parser)
 {
-    ast_t* node = ast_class_create(AST_DECLVAR, get_location(parser));
-
     // let x = expr \n
+    ast_t* node = ast_class_create(AST_DECLVAR, get_location(parser));
+    bool mutate = false;
+
     token_t* var = accept_token_string(parser, KEYWORD_DECLARATION);
+    if(match_string(parser, KEYWORD_MUTATE))
+    {
+        accept_token(parser);
+        mutate = true;
+    }
+
     token_t* ident = accept_token_type(parser, TOKEN_WORD);
     token_t* eq = accept_token_string(parser, "=");
 
     if(var && ident && eq)
     {
         node->vardecl.name = ident->value;
+        node->vardecl.mutate = mutate;
         node->vardecl.initializer = parse_expression(parser);
     }
     else
     {
-        // TODO: Error handling
-        free(node);
-        return 0;
+        parser_throw(parser, "Malformed variable declaration");
+        node->class = AST_NULL;
     }
 
     return node;
+}
+
+ast_t* parse_fn_declaration(parser_t* parser)
+{
+    // fn name (params) { \n
+    //ast_t* node = ast_class_create(AST_LAMBDA, get_location(parser));
+
+    return 0;
 }

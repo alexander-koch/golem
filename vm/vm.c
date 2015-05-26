@@ -1,10 +1,15 @@
 #include "vm.h"
 
-value_t vm_eval(vm_t* vm, ast_t* node);
+value_t* vm_eval(vm_t* vm, ast_t* node);
 
-value_t vm_eval_block(vm_t* vm, list_t* block)
+void vm_init(vm_t* vm)
 {
-	value_t val = value_null_create();
+	vm->scope = scope_new();
+}
+
+value_t* vm_eval_block(vm_t* vm, list_t* block)
+{
+	value_t* val = 0;
 	list_iterator_t* iter = list_iterator_create(block);
 	while(!list_iterator_end(iter))
 	{
@@ -15,21 +20,66 @@ value_t vm_eval_block(vm_t* vm, list_t* block)
 	return val;
 }
 
-value_t vm_eval_declvar(vm_t* vm, ast_t* node)
+value_t* vm_eval_declvar(vm_t* vm, ast_t* node)
 {
-	value_t val;
-	// const char* name = node->vardecl.name;
+	value_t* value = vm_eval(vm, node->vardecl.initializer);
+	// TODO: Create file and function for scope class (encapsulate)
+//	scope_add_var(vm->scope, node->vardecl.name, value);
+	value_free(value);
 
-	return val;
+	return 0;// value;
 }
 
-value_t vm_eval(vm_t* vm, ast_t* node)
+value_t* vm_eval_number(vm_t* vm, ast_t* node)
 {
-	value_t null;
+	if(node->class == AST_FLOAT)
+	{
+		value_t* num = value_new_float(node->f);
+		return num;
+	}
+	else
+	{
+		value_t* num = value_new_float(node->i);
+		return num;
+	}
+}
+
+value_t* vm_eval_binary(vm_t* vm, ast_t* node)
+{
+	// convert to inverse polish notation
+	// push involves evaluation of current ast
+	// convert:
+	// 	push left
+	// 	push op
+	//
+	// 	if(right == binary)
+	// 		convert(binary)
+	// 	else
+	// 		push right
+	//
+	// end:
+	// 	eval
+//	return eval_expression(node);
+	return 0;
+}
+
+value_t* vm_eval_string(vm_t* vm, ast_t* node)
+{
+	value_t* str = value_new_string(node->string);
+	return str;
+}
+
+value_t* vm_eval(vm_t* vm, ast_t* node)
+{
+	value_t* null = 0;
 	switch(node->class)
 	{
 		case AST_TOPLEVEL: return vm_eval_block(vm, &node->toplevel);
 		case AST_DECLVAR: return vm_eval_declvar(vm, node);
+		case AST_FLOAT: return vm_eval_number(vm, node);
+		case AST_INT: return vm_eval_number(vm, node);
+		case AST_STRING: return vm_eval_string(vm, node);
+		case AST_BINARY: return vm_eval_binary(vm, node);
 		default: return null;
 	}
 	return null;
@@ -63,9 +113,14 @@ void vm_dump(ast_t* node)
 			fprintf(stdout, ":ident = %s", node->ident);
 			break;
 		}
-		case AST_NUMBER:
+		case AST_FLOAT:
 		{
-			fprintf(stdout, ":num = %f", node->number);
+			fprintf(stdout, ":num = %f", node->f);
+			break;
+		}
+		case AST_INT:
+		{
+			fprintf(stdout, ":num = %li", node->i);
 			break;
 		}
 		case AST_STRING:
@@ -98,16 +153,12 @@ void vm_run_buffer(vm_t* vm, const char* source)
 	ast_t* root = parser_run(&vm->parser, source);
 	if(root)
 	{
-		// TODO: Eval abstract syntax tree
 		vm_dump(root);
-		vm_eval(root);
-	}
-	else
-	{
-		// TODO: Throw error
+		// vm_eval(vm, root);
+
+		ast_free(root);
 	}
 
-	ast_free(root);
 	parser_free(&vm->parser);
 }
 
@@ -127,4 +178,9 @@ int vm_run_file(vm_t* vm, const char* filename)
 	vm_run_buffer(vm, source);
 	free(source);
 	return 1;
+}
+
+void vm_free(vm_t* vm)
+{
+	scope_free(vm->scope);
 }
