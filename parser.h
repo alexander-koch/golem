@@ -24,6 +24,7 @@ typedef struct
 } parser_t;
 
 void parser_init(parser_t* parser);
+ast_t* parse_stmt(parser_t* parser);
 ast_t* parser_run(parser_t* parser, const char* content);
 void parser_free(parser_t* parser);
 void parser_throw(parser_t* parser, const char* format, ...);

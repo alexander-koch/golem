@@ -24,16 +24,27 @@ typedef enum
     AST_BINARY,
     AST_UNARY,
     AST_SUBSCRIPT,
-    AST_LAMBDA,
     AST_CALL,
     AST_IF,
     AST_IFCLAUSE,
     AST_WHILE,
     AST_DECLVAR,
-    AST_DECLFUN,
+    AST_DECLFUNC,
     AST_TOPLEVEL,
     AST_FOR
 } ast_class_t;
+
+typedef struct
+{
+    list_t* formals;
+    list_t* body;
+} ast_lambda_t;
+
+typedef struct
+{
+    char* name;
+    ast_lambda_t impl;
+} ast_func_t;
 
 typedef struct
 {
@@ -50,9 +61,10 @@ struct ast_s
     {
         char* ident;
         char* string;
-        list_t toplevel;
-        long i;
-        double f;
+        list_t* toplevel;
+        I64 i;
+        F64 f;
+        ast_func_t funcdecl;
         ast_decl_t vardecl;
 
         struct
@@ -65,10 +77,12 @@ struct ast_s
         struct
         {
             ast_t* callee;
-            list_t args;
+            list_t* args;
         } call;
     };
 };
+
+#define ast_is_number(x) (x->class == AST_FLOAT || x->class == AST_INT)
 
 ast_t* ast_class_create(ast_class_t class, location_t location);
 const char* ast_classname(ast_class_t class);

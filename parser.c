@@ -1,7 +1,7 @@
 #include "parser.h"
 
 #define KEYWORD_DECLARATION "let"
-#define KEYWORD_MUTATE "mod"
+#define KEYWORD_MUTATE "mut"
 #define KEYWORD_FUNCTION "fn"
 
 ast_t* parse_var_declaration(parser_t* parser);
@@ -75,7 +75,7 @@ token_t* accept_token_type(parser_t* parser, token_type_t type)
     }
     else
     {
-        fprintf(stdout, "Wrong token type: %d. Expected: %d\n", parser->buffer[parser->cursor].type, type);
+        parser_throw(parser, "Wrong token type %d. Expected %d", parser->buffer[parser->cursor].type, type);
     }
     return 0;
 }
@@ -157,25 +157,33 @@ int parse_precedence(token_type_t type)
 ast_t* parse_call(parser_t* parser, ast_t* node)
 {
     ast_t* class = ast_class_create(AST_CALL, node->location);
-    list_init(&class->call.args);
+    class->call.args = list_new();
     class->call.callee = node;
+    ast_t* expr = 0;
 
-    while(!match_type(parser, TOKEN_RPAREN))
+    while(!match_type(parser, TOKEN_RPAREN) && (expr = parse_expression(parser)))
     {
-        list_push(&class->call.args, (void*)parse_expression(parser));
+        list_push(class->call.args, (void*)expr);
         if(match_type(parser, TOKEN_COMMA))
         {
             accept_token(parser);
         }
         else
         {
+            // TODO: do better handling
+            // FIXME: is it even an error, can it occur ?
             break;
         }
     }
 
-    token_t* token = accept_token_type(parser, TOKEN_RPAREN);
-    assert(token);
-    // TODO: Better error handling
+    if(!match_type(parser, TOKEN_RPAREN))
+    {
+        parser_throw(parser, "Expected closing parenthesis");
+    }
+    else
+    {
+        accept_token(parser);
+    }
 
     return class;
 }
@@ -241,10 +249,15 @@ ast_t* parse_expression_primary(parser_t* parser)
     {
         accept_token(parser);
         ast = parse_expression(parser);
-        // ast->class = AST_TUPLE;
 
-        assert(accept_token(parser)->type == TOKEN_RPAREN);
-        // TODO: better error handling
+        if(!match_type(parser, TOKEN_RPAREN))
+        {
+            parser_throw(parser, "Expected closing parenthesis");
+        }
+        else
+        {
+            accept_token(parser);
+        }
     }
     else
     {
@@ -280,7 +293,6 @@ ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
         int nextprec = parse_precedence(current_token(parser)->type);
         if(prec < nextprec)
         {
-        //    parser->cursor++;
             rhs = parse_expression_last(parser, rhs, prec + 1);
             if(!rhs)
             {
@@ -312,22 +324,56 @@ ast_t* parse_expression(parser_t* parser)
     return lhs;
 }
 
+list_t* parse_formals(parser_t* parser)
+{
+    list_t* formals = list_new();
+    while(!match_type(parser, TOKEN_RPAREN))
+    {
+        if(!match_type(parser, TOKEN_WORD))
+        {
+            parser_throw(parser, "Invalid argument list");
+            return formals;
+        }
+
+        list_push(formals, accept_token(parser)->value);
+        if(!match_type(parser, TOKEN_COMMA) && !match_type(parser, TOKEN_RPAREN))
+        {
+            parser_throw(parser, "Expected seperator");
+            return formals;
+        }
+    }
+    accept_token(parser);
+    return formals;
+}
+
+list_t* parse_block(parser_t* parser)
+{
+    // parses block until end, NOT THE BEGIN
+    list_t* statements = list_new();
+    while(!match_type(parser, TOKEN_RBRACE))
+    {
+        list_push(statements, (void*)parse_stmt(parser));
+    }
+    accept_token(parser);
+    return statements;
+}
+
 void test_newline(parser_t* parser)
 {
     if(!parser->error)
     {
-        // TODO: Create a function for throwing errors using vaargs
-        // which does:
-        // throw_error(msg)
-        //  parser->error = 1
-        //  console("[line %d, column %d] %s\n", msg);
-        if(accept_token_type(parser, TOKEN_NEWLINE)->type != TOKEN_NEWLINE)
+        if(!match_type(parser, TOKEN_NEWLINE))
         {
             parser_throw(parser, "Missing newline after statement");
+        }
+        else
+        {
+            accept_token(parser);
         }
     }
 }
 
+// Every statement is followed by a newline
 ast_t* parse_stmt(parser_t* parser)
 {
     static const struct
@@ -336,7 +382,8 @@ ast_t* parse_stmt(parser_t* parser)
         ast_t* (*fn)(parser_t*);
     } parsers[] =
     {
-        {KEYWORD_DECLARATION, parse_var_declaration}
+        {KEYWORD_DECLARATION, parse_var_declaration},
+        {KEYWORD_FUNCTION, parse_fn_declaration}
     };
 
     size_t i;
@@ -362,16 +409,20 @@ ast_t* parse_stmt(parser_t* parser)
     return 0;
 }
 
+// Main function
 ast_t* parser_run(parser_t* parser, const char* content)
 {
     parser->buffer = lexer_lex(&parser->lexer, content, &parser->num_tokens);
     if(!parser->buffer) return 0;
 
+    // Use this for lexical analysis, debug if tokens are read wrong
     // lexer_print_tokens(parser->buffer, parser->num_tokens);
 
+    // Create toplevel program scope
     ast_t* ast = ast_class_create(AST_TOPLEVEL, get_location(parser));
-    list_init(&ast->toplevel);
+    ast->toplevel = list_new();
 
+    // Parse each statement and abort if an error occurs
     while(!parser_end(parser))
     {
         skip_newline(parser);
@@ -383,11 +434,14 @@ ast_t* parser_run(parser_t* parser, const char* content)
             return 0;
         }
 
-        list_push(&ast->toplevel, node);
+        // add node to program
+        list_push(ast->toplevel, node);
     }
 
     return ast;
 }
+
+// Parsing subroutines
 
 ast_t* parse_var_declaration(parser_t* parser)
 {
@@ -403,7 +457,7 @@ ast_t* parse_var_declaration(parser_t* parser)
     }
 
     token_t* ident = accept_token_type(parser, TOKEN_WORD);
-    token_t* eq = accept_token_string(parser, "=");
+    token_t* eq = accept_token_type(parser, TOKEN_ASSIGN);
 
     if(var && ident && eq)
     {
@@ -423,7 +477,32 @@ ast_t* parse_var_declaration(parser_t* parser)
 ast_t* parse_fn_declaration(parser_t* parser)
 {
     // fn name (params) { \n
-    //ast_t* node = ast_class_create(AST_LAMBDA, get_location(parser));
+    ast_t* node = ast_class_create(AST_DECLFUNC, get_location(parser));
 
-    return 0;
+    token_t* fn = accept_token_string(parser, KEYWORD_FUNCTION);
+    token_t* ident = accept_token_type(parser, TOKEN_WORD);
+    token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
+
+    if(fn && ident && lparen)
+    {
+        node->funcdecl.name = ident->value;
+        node->funcdecl.impl.formals = parse_formals(parser);
+
+        if(!match_type(parser, TOKEN_LBRACE))
+        {
+            parser_throw(parser, "Block begin expected");
+        }
+        else
+        {
+            accept_token(parser);
+            accept_token_type(parser, TOKEN_NEWLINE);
+            node->funcdecl.impl.body = parse_block(parser);
+        }
+    }
+    else
+    {
+        parser_throw(parser, "Malformed function declaration");
+    }
+
+    return node;
 }

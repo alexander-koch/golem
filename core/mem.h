@@ -46,6 +46,19 @@ void* mem_malloc(unsigned long n, char* file, int line)
     return ptr;
 }
 
+void* mem_calloc(unsigned long n0, unsigned long n1)
+{
+    void* ptr = calloc(n0, n1);
+    if(!ptr && n0 > 0 && n1 > 0)
+    {
+        mem_error("Memory allocation of %lu bytes failed", n0 * n1);
+    }
+    bytes += n0 * n1;
+    used_bytes += n0 * n1;
+    allocs++;
+    return ptr;
+}
+
 void* mem_realloc(void* ptr, unsigned long n)
 {
     bytes -= _msize(ptr);
@@ -85,10 +98,12 @@ void mem_leak_check()
 
 #define malloc(x) mem_malloc(x, __FILE__, __LINE__)
 #define realloc(x, y) mem_realloc(x, y)
+#define calloc(x, y) mem_calloc(x, y);
 #define free(x) do { if ((x) != 0) {mem_free(x); (x)=0;} } while(0)
 
 extern void* mem_malloc(unsigned long n, char* file, int line);
 extern void* mem_realloc(void* ptr, unsigned long n);
+extern void* mem_calloc(unsigned long n0, unsigned long n1);
 extern void mem_free(void* ptr);
 extern void mem_leak_check();
 extern void mem_error(const char* format, ...);

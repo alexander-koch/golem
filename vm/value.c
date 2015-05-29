@@ -33,9 +33,38 @@ value_t* value_new_string(const char* string)
 
 void value_free(value_t* value)
 {
-	if(value->type == VALUE_STRING)
+	if(value)
 	{
-		free(value->v.str);
+		if(value->type == VALUE_STRING)
+		{
+			free(value->v.str);
+		}
+		free(value);
 	}
-	free(value);
+}
+
+void value_print(value_t* value)
+{
+	if(value)
+	{
+		switch(value->type)
+		{
+			case VALUE_INT:
+			{
+				console("%d", value->v.i);
+				break;
+			}
+			case VALUE_FLOAT:
+			{
+				console("%f", value->v.f);
+				break;
+			}
+			case VALUE_STRING:
+			{
+				console("%s", value->v.str);
+				break;
+			}
+			default: break;
+		}
+	}
 }

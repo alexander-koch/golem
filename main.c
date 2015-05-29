@@ -1,3 +1,5 @@
+/** Copryright (c) Alexander Koch 2015 **/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,12 +13,12 @@
 
 #include <adt/hashmap.h>
 
-void run_interactive(vm_t* vm)
+void run_repl(vm_t* vm)
 {
     char buf[1024];
     while(1)
     {
-        fprintf(stdout, ">>> ");
+        fprintf(stdout, ">> ");
         fgets(buf, sizeof(buf), stdin);
         if(!strncmp(buf, "quit", 4))
         {
@@ -31,14 +33,9 @@ int main(int argc, char** argv)
     vm_t vm;
     vm_init(&vm);
 
-    // int value = 5;
-    // hashmap_t* hm = hashmap_new();
-    // hashmap_set(hm, "test", &value);
-    // hashmap_free(hm);
-
     if(argc == 1)
     {
-        run_interactive(&vm);
+        run_repl(&vm);
     }
     else if(argc == 2)
     {

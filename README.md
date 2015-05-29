@@ -12,18 +12,47 @@ Example:
 
 	let x = 5
 
-Variables can be modified, if they are declared using the mod keyword.
+Variables are mutable, if they are declared using the mut keyword.
 
-	let mod x = 5
+	let mut x = 5
 	x = x + 1
 
 Functions are declared using the 'fn' keyword. Every function is then followed by a tuple.
-The use of egyptian style braces is standard.
+The use of egyptian style braces is standard (Not supported yet, final structure may change).
 
 	fn main(args) {
 		# body
 	}
 
+Classes are defined using the following structure (Not supported yet, final structure may change):
+
+	class Main {
+
+		let mod x = 2
+		let mod y = 4
+
+		# Constructor
+		fn new(x, y, z) {
+			self.x = 2
+			self.y = y
+		}
+
+		fn run() {
+			println("Running with x:", self.x, "and y:", self.y)
+		}
+
+		fn free() {
+			# do some stuff here
+		}
+	}
+
+# Pointer and ownership
+Ownership orients on Rusts system. Once you call a function with an object, ownership is transferred to that function.
+The function deletes it at the end of the scope. To still own it after, you have to return it.
+This prevents use of a pointer, after it has been freed.
+
+
 # Licence
 Copyright (c) Alexander Koch 2015
 Inception at 18.05.2015
+Based on Project Ozone

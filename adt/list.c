@@ -1,10 +1,12 @@
 #include "list.h"
 
-void list_init(list_t* list)
+list_t* list_new()
 {
+	list_t* list = malloc(sizeof(*list));
 	list->size = 0;
 	list->head = 0;
 	list->tail = 0;
+	return list;
 }
 
 void list_push(list_t* list, void* val)
@@ -66,6 +68,7 @@ void list_free(list_t* list)
 		curr = 0;
 	}
 	list->head = 0;
+	free(list);
 }
 
 list_iterator_t* list_iterator_create(list_t* list)

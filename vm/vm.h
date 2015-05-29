@@ -15,7 +15,7 @@ typedef struct vm_t
 } vm_t;
 
 void vm_init(vm_t* vm);
-void vm_run_buffer(vm_t* vm, const char* source);
+value_t* vm_run_buffer(vm_t* vm, const char* source);
 int vm_run_file(vm_t* vm, const char* filename);
 void vm_free(vm_t* vm);
 

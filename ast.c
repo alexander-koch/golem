@@ -21,6 +21,7 @@ const char* ast_classname(ast_class_t class)
 		case AST_ARRAY: return "array";
 		case AST_BINARY: return "binary";
 		case AST_DECLVAR: return "variable declaration";
+		case AST_DECLFUNC: return "function declaration";
 		case AST_TOPLEVEL: return "toplevel";
 		case AST_CALL: return "call";
 		default: return "null";
@@ -36,19 +37,32 @@ void ast_free(ast_t* ast)
 	{
 		case AST_TOPLEVEL:
 		{
-			iter = list_iterator_create(&ast->toplevel);
+			iter = list_iterator_create(ast->toplevel);
 			while(!list_iterator_end(iter))
 			{
 				ast_free(list_iterator_next(iter));
 			}
 			list_iterator_free(iter);
-			list_free(&ast->toplevel);
+			list_free(ast->toplevel);
 			break;
 		}
 		case AST_DECLVAR:
 		{
 			//free(ast->vardecl.name);
 			ast_free(ast->vardecl.initializer);
+			break;
+		}
+		case AST_DECLFUNC:
+		{
+			iter = list_iterator_create(ast->funcdecl.impl.body);
+			while(!list_iterator_end(iter))
+			{
+				ast_free(list_iterator_next(iter));
+			}
+			list_iterator_free(iter);
+
+			list_free(ast->funcdecl.impl.body);
+			list_free(ast->funcdecl.impl.formals);
 			break;
 		}
 		case AST_BINARY:
@@ -61,13 +75,13 @@ void ast_free(ast_t* ast)
 		{
 			ast_free(ast->call.callee);
 
-			iter = list_iterator_create(&ast->call.args);
+			iter = list_iterator_create(ast->call.args);
 			while(!list_iterator_end(iter))
 			{
 				ast_free(list_iterator_next(iter));
 			}
 			list_iterator_free(iter);
-			list_free(&ast->call.args);
+			list_free(ast->call.args);
 		}
 		default: break;
 	}

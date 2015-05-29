@@ -24,7 +24,7 @@ typedef struct list_iterator_t
 	list_node_t* ptr;
 } list_iterator_t;
 
-void list_init(list_t* list);
+list_t* list_new();
 void list_push(list_t* list, void* val);
 void* list_pop(list_t* list);
 void* list_get(list_t* list, size_t index);

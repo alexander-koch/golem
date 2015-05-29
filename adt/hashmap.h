@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <core/mem.h>
+#include <core/api.h>
 
 #define HMAP_MISSING -3
 #define HMAP_FULL -2
@@ -27,7 +28,7 @@ typedef struct hashmap_t
 
 hashmap_t* hashmap_new();
 int hashmap_set(hashmap_t* hashmap, char* key, void* value);
-int hashmap_get(hashmap_t* hashmap, char* key, void* value);
+int hashmap_get(hashmap_t* hashmap, char* key, void** value);
 size_t hashmap_length(hashmap_t* hashmap);
 void hashmap_free(hashmap_t* hashmap);
 

@@ -97,8 +97,8 @@ int hashmap_hash(hashmap_t* hmap, char* key)
 
 	for(int i = 0; i < MAX_CHAIN_LENGTH; i++)
 	{
-		if(hmap->data[curr].use == 0) return curr;
-		if(hmap->data[curr].use == 1 && (strcmp(hmap->data[curr].key, key) == 0)) return curr;
+		if(!hmap->data[curr].use) return curr;
+		if(hmap->data[curr].use && (!strcmp(hmap->data[curr].key, key))) return curr;
 		curr = (curr + 1) % hmap->table_size;
 	}
 
@@ -111,18 +111,22 @@ int hashmap_rehash(hashmap_t* hmap)
 	if(!temp) return HMAP_MEM;
 
 	bucket_t* curr = hmap->data;
+	hmap->data = temp;
 
 	size_t old_size = hmap->table_size;
 	hmap->table_size = 2 * hmap->table_size;
 	hmap->size = 0;
-	hmap->data = temp;
 
 	for(int i = 0; i < old_size; i++)
 	{
-		if(curr[i].use == false) continue;
+		if(!curr[i].use) continue;
 
 		int status = hashmap_set(hmap, curr[i].key, curr[i].data);
-		if(status != HMAP_OK) return status;
+		if(status != HMAP_OK)
+		{
+			free(curr);
+			return status;
+		}
 	}
 	free(curr);
 
@@ -148,7 +152,7 @@ int hashmap_set(hashmap_t* hashmap, char* key, void* value)
 	return HMAP_OK;
 }
 
-int hashmap_get(hashmap_t* hashmap, char* key, void* value)
+int hashmap_get(hashmap_t* hashmap, char* key, void** value)
 {
 	unsigned int curr = hashmap_hash_int(hashmap, key);
 
@@ -157,9 +161,9 @@ int hashmap_get(hashmap_t* hashmap, char* key, void* value)
 		bool use = hashmap->data[curr].use;
 		if(use)
 		{
-			if(strcmp(hashmap->data[curr].key, key) == 0)
+			if(!strcmp(hashmap->data[curr].key, key))
 			{
-				value = (hashmap->data[curr].data);
+				*value = (hashmap->data[curr].data);
 				return HMAP_OK;
 			}
 		}
@@ -167,14 +171,14 @@ int hashmap_get(hashmap_t* hashmap, char* key, void* value)
 		curr = (curr + 1) % hashmap->table_size;
 	}
 
-	value = 0;
+	*value = 0;
 	return HMAP_MISSING;
 }
 
 hashmap_t* hashmap_new()
 {
 	hashmap_t* hmap = malloc(sizeof(*hmap));
-	hmap->data = (void*)malloc(INIT_SIZE * sizeof(bucket_t));
+	hmap->data = (bucket_t*)malloc(INIT_SIZE * sizeof(bucket_t));
 	hmap->table_size = INIT_SIZE;
 	hmap->size = 0;
 	return hmap;

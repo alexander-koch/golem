@@ -14,9 +14,13 @@ void scope_add_var(scope_t* scope, char* key, value_t* value)
 
 value_t* scope_get_var(scope_t* scope, char* key)
 {
-	value_t* value = 0;
-	hashmap_get(scope->variables, key, value);
-	return value;
+	void* value = 0;
+	if(hashmap_get(scope->variables, key, value) != HMAP_OK)
+	{
+		return 0;
+	}
+	value_t* ret = (value_t*)value;
+	return ret;
 }
 
 void scope_free(scope_t* scope)
