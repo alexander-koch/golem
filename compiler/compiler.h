@@ -1,13 +1,12 @@
-#ifndef vm_h
-#define vm_h
+#ifndef compiler_h
+#define compiler_h
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <core/mem.h>
+#include <core/value.h>
 #include <parser/parser.h>
-#include <vm/value.h>
-#include <vm/scope.h>
-#include <vm/bytecode.h>
+#include <compiler/bytecode.h>
 
 typedef struct compiler_t
 {

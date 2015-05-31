@@ -2,7 +2,7 @@
 #define bytecode_h
 
 #include <core/mem.h>
-#include <vm/value.h>
+#include <core/value.h>
 #include <lexis/lexer.h>
 #include <adt/list.h>
 

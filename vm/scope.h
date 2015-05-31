@@ -2,7 +2,7 @@
 #define scope_h
 
 #include <core/mem.h>
-#include <vm/value.h>
+#include <core/value.h>
 #include <adt/hashmap.h>
 
 typedef struct scope_t

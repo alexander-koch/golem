@@ -9,7 +9,8 @@
 #include <core/mem.h>
 #include <parser/ast.h>
 #include <parser/parser.h>
-#include <vm/compiler.h>
+#include <compiler/compiler.h>
+#include <vm/vm.h>
 
 void run_repl(compiler_t* vm)
 {
