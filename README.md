@@ -1,6 +1,6 @@
 # Project Nemesis
 
-A functional programming language written in C.
+A programming language written in C.
 The language for the pure evil.
 
 (Still not clear if using Golem or Nemesis as Name for the language)
@@ -50,6 +50,9 @@ Classes are defined using the following structure (Not supported yet, final stru
 Ownership orients on Rusts system. Once you call a function with an object, ownership is transferred to that function.
 The function deletes it at the end of the scope. To still own it after, you have to return it.
 This prevents use of a pointer, after it has been freed.
+
+# TODO
+Implement a vm and convert AST to bytecode for said vm.
 
 
 # Licence

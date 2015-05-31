@@ -117,7 +117,8 @@ int match_simple(parser_t* parser)
 {
     return match_type(parser, TOKEN_INT) ||
         match_type(parser, TOKEN_FLOAT) ||
-        match_type(parser, TOKEN_STRING);
+        match_type(parser, TOKEN_STRING) ||
+        match_type(parser, TOKEN_BOOL);
 }
 
 int match_literal(parser_t* parser)
@@ -207,6 +208,12 @@ ast_t* parse_simpleliteral(parser_t* parser)
     {
         node->class = AST_STRING;
         node->string = accept_token(parser)->value;
+        return node;
+    }
+    else if(match_type(parser, TOKEN_BOOL))
+    {
+        node->class = AST_BOOL;
+        node->b = !strcmp(accept_token(parser)->value, "true") ? true : false;
         return node;
     }
     else
@@ -300,6 +307,81 @@ ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
             }
         }
 
+        // Optimize syntax tree
+        if(lhs->class == AST_INT && rhs->class == AST_INT)
+        {
+            bool opt = true;
+            switch(op)
+            {
+                case TOKEN_ADD:
+                {
+                    lhs->i = lhs->i + rhs->i;
+                    break;
+                }
+                case TOKEN_SUB:
+                {
+                    lhs->i = lhs->i - rhs->i;
+                    break;
+                }
+                case TOKEN_MUL:
+                {
+                    lhs->i = lhs->i * rhs->i;
+                    break;
+                }
+                case TOKEN_DIV:
+                {
+                    lhs->i = lhs->i / rhs->i;
+                    break;
+                }
+                case TOKEN_BITLSHIFT:
+                {
+                    lhs->i = lhs->i << rhs->i;
+                    break;
+                }
+                case TOKEN_BITRSHIFT:
+                {
+                    lhs->i = lhs->i >> rhs->i;
+                    break;
+                }
+                case TOKEN_EQUAL:
+                {
+                    lhs->class = AST_BOOL;
+                    lhs->b = (lhs->i == rhs->i);
+                    break;
+                }
+                case TOKEN_NEQUAL:
+                {
+                    lhs->class = AST_BOOL;
+                    lhs->b = (lhs->i != rhs->i);
+                    break;
+                }
+                default:
+                {
+                    opt = false;
+                    break;
+                }
+            }
+
+            if(opt)
+            {
+                ast_free(rhs);
+                continue;
+            }
+        }
+
+        // convert for simple operation later
+        if(lhs->class == AST_FLOAT && rhs->class == AST_INT)
+        {
+            // convert right hand side to float too
+            rhs->class = AST_FLOAT;
+            rhs->f = (F64)rhs->i;
+        }
+        else if(lhs->class == AST_INT && rhs->class == AST_FLOAT)
+        {
+            lhs->class = AST_FLOAT;
+            lhs->f = (F64)lhs->i;
+        }
+
         ast_t* new_lhs = ast_class_create(AST_BINARY, get_location(parser));
         new_lhs->binary.left = lhs;
         new_lhs->binary.right = rhs;
@@ -342,7 +424,13 @@ list_t* parse_formals(parser_t* parser)
             return formals;
         }
     }
-    accept_token(parser);
+
+    token_t* rparen = accept_token_type(parser, TOKEN_RPAREN);
+    if(!rparen)
+    {
+        parser_throw(parser, "Missing right parenthesis");
+    }
+
     return formals;
 }
 
@@ -354,7 +442,13 @@ list_t* parse_block(parser_t* parser)
     {
         list_push(statements, (void*)parse_stmt(parser));
     }
-    accept_token(parser);
+
+    token_t* rbrace = accept_token_type(parser, TOKEN_RBRACE);
+    if(!rbrace)
+    {
+        parser_throw(parser, "Missing closing brace");
+    }
+
     return statements;
 }
 
@@ -386,8 +480,7 @@ ast_t* parse_stmt(parser_t* parser)
         {KEYWORD_FUNCTION, parse_fn_declaration}
     };
 
-    size_t i;
-    for(i = 0; i < sizeof(parsers)/sizeof(parsers[0]); i++)
+    for(size_t i = 0; i < sizeof(parsers)/sizeof(parsers[0]); i++)
     {
         if(match_string(parser, parsers[i].token))
         {

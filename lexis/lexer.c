@@ -232,6 +232,12 @@ int lex_word(lexer_t* lexer, token_t* token)
     token->type = TOKEN_WORD;
     token->value = strndup(lexer->cursor, end - lexer->cursor);
     lexer->cursor = end;
+
+    if(!strcmp(token->value, "true") || !strcmp(token->value, "false"))
+    {
+        token->type = TOKEN_BOOL;
+    }
+
     return 1;
 }
 

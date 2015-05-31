@@ -7,13 +7,11 @@
 
 #define USE_MEM_IMPLEMENTATION
 #include <core/mem.h>
-#include <vm/vm.h>
-#include <ast.h>
-#include <parser.h>
+#include <parser/ast.h>
+#include <parser/parser.h>
+#include <vm/compiler.h>
 
-#include <adt/hashmap.h>
-
-void run_repl(vm_t* vm)
+void run_repl(compiler_t* vm)
 {
     char buf[1024];
     while(1)
@@ -24,33 +22,32 @@ void run_repl(vm_t* vm)
         {
             return;
         }
-        vm_run_buffer(vm, buf);
+        list_t* buffer = compile_buffer(vm, buf);
+        buffer_free(buffer);
     }
 }
 
 int main(int argc, char** argv)
 {
-    vm_t vm;
-    vm_init(&vm);
+    compiler_t compiler;
 
     if(argc == 1)
     {
-        run_repl(&vm);
+        run_repl(&compiler);
     }
     else if(argc == 2)
     {
-        vm_run_file(&vm, argv[1]);
+        list_t* buffer = compile_file(&compiler, argv[1]);
+        buffer_free(buffer);
     }
     else
     {
         fprintf(stderr, "Usage:\n");
         fprintf(stderr, " nemesis        (Interactive mode)\n");
         fprintf(stderr, " nemesis <file> (Run a file)\n");
-        vm_free(&vm);
         return -1;
     }
 
-    vm_free(&vm);
     mem_leak_check();
     return 0;
 }

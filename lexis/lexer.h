@@ -32,6 +32,7 @@ typedef enum
     TOKEN_STRING,
     TOKEN_INT,
     TOKEN_FLOAT,
+    TOKEN_BOOL,
     TOKEN_LPAREN,    // '('
     TOKEN_RPAREN,    // ')'
     TOKEN_LBRACE,    // '{'
@@ -40,9 +41,9 @@ typedef enum
     TOKEN_RBRACKET,  // ']'
     TOKEN_COMMA,     // ','
     TOKEN_SEMICOLON, // ';'
-    TOKEN_ADD,
-    TOKEN_SUB,
-    TOKEN_MUL,
+    TOKEN_ADD,       // '+'
+    TOKEN_SUB,       // '-'
+    TOKEN_MUL,       // '*'
     TOKEN_DIV,
     TOKEN_MOD,
     TOKEN_EQUAL,

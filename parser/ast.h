@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#include <lexic/lexer.h>
+#include <lexis/lexer.h>
 #include <adt/list.h>
 #include <core/mem.h>
 #include <core/api.h>
@@ -17,6 +17,7 @@ typedef enum
     AST_IDENT,
     AST_FLOAT,
     AST_INT,
+    AST_BOOL,
     AST_STRING,
     AST_ARRAY,
     AST_TABLE,
@@ -64,6 +65,7 @@ struct ast_s
         list_t* toplevel;
         I64 i;
         F64 f;
+        bool b;
         ast_func_t funcdecl;
         ast_decl_t vardecl;
 

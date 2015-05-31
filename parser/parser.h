@@ -9,9 +9,8 @@
 
 #include <core/mem.h>
 #include <core/api.h>
-#include <lexic/lexer.h>
-#include <adt/hashmap.h>
-#include <ast.h>
+#include <lexis/lexer.h>
+#include <parser/ast.h>
 
 typedef struct
 {
