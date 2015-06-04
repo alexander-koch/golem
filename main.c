@@ -43,9 +43,11 @@ int main(int argc, char** argv)
     {
         vm_t* vm = vm_new();
         list_t* buffer = compile_file(&compiler, argv[1]);
-
-        vm_execute(vm, buffer);
-        buffer_free(buffer);
+        if(buffer)
+        {
+            vm_execute(vm, buffer);
+            buffer_free(buffer);
+        }
 
         vm_free(vm);
     }

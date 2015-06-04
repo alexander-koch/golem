@@ -59,24 +59,35 @@ size_t list_size(list_t* list)
 
 void list_free(list_t* list)
 {
-	list_node_t* curr;
-	while(list->head != 0)
+	if(list)
 	{
-		curr = list->head;
-		list->head = list->head->next;
-		free(curr);
-		curr = 0;
+		list_node_t* curr;
+		while(list->head != 0)
+		{
+			curr = list->head;
+			list->head = list->head->next;
+			free(curr);
+			curr = 0;
+		}
+		list->head = 0;
+		free(list);
 	}
-	list->head = 0;
-	free(list);
 }
 
 list_iterator_t* list_iterator_create(list_t* list)
 {
 	list_iterator_t* iter = malloc(sizeof(*iter));
 	if(!iter) return iter;
-	iter->ptr = list->head;
-	iter->list = list;
+	if(list)
+	{
+		iter->ptr = list->head;
+		iter->list = list;
+	}
+	else
+	{
+		iter->ptr = 0;
+		iter->list = 0;
+	}
 	return iter;
 }
 

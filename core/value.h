@@ -37,4 +37,8 @@ value_t* value_new_object(void* obj);
 void value_free(value_t* value);
 void value_print(value_t* value);
 
+I64 value_int(value_t* value);
+F64 value_float(value_t* value);
+char* value_string(value_t* value);
+
 #endif

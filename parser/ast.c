@@ -14,16 +14,20 @@ const char* ast_classname(ast_class_t class)
 {
 	switch(class)
 	{
+		case AST_NULL: return "null";
 		case AST_IDENT: return "identifier";
 		case AST_FLOAT: return "float";
 		case AST_INT: return "integer";
 		case AST_STRING: return "string";
 		case AST_ARRAY: return "array";
 		case AST_BINARY: return "binary";
+		case AST_UNARY: return "unary";
+		case AST_SUBSCRIPT: return "subscript";
+		case AST_CALL: return "call";
 		case AST_DECLVAR: return "variable declaration";
 		case AST_DECLFUNC: return "function declaration";
+		case AST_IF: return "if condition";
 		case AST_TOPLEVEL: return "toplevel";
-		case AST_CALL: return "call";
 		default: return "null";
 	}
 }
@@ -91,6 +95,19 @@ void ast_free(ast_t* ast)
 		{
 			ast_free(ast->subscript.key);
 			ast_free(ast->subscript.expr);
+			break;
+		}
+		case AST_IF:
+		{
+			iter = list_iterator_create(ast->ifstmt.body);
+			while(!list_iterator_end(iter))
+			{
+				ast_free(list_iterator_next(iter));
+			}
+			list_iterator_free(iter);
+			list_free(ast->ifstmt.body);
+
+			ast_free(ast->ifstmt.cond);
 			break;
 		}
 		case AST_CALL:

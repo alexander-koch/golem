@@ -17,6 +17,7 @@ const char* op2str(opcode_t code)
 		case OP_CALL: return "call";
 		case OP_LOAD: return "load";
 		case OP_ASSIGN: return "assign";
+		case OP_ARRAY: return "array";
 		default: break;
 	}
 	return "unknown";
@@ -82,15 +83,16 @@ void emit_string(list_t* buffer, char* str)
 	insert_v1(buffer, OP_PUSH_STRING, val);
 }
 
-void emit_store(list_t* buffer, bool mutable)
+void emit_store(list_t* buffer, bool mutable, char* key)
 {
+	value_t* val = value_new_string(key);
 	if(mutable)
 	{
-		insert(buffer, OP_MUT_STORE);
+		insert_v1(buffer, OP_MUT_STORE, val);
 	}
 	else
 	{
-		insert(buffer, OP_STORE);
+		insert_v1(buffer, OP_STORE, val);
 	}
 }
 
@@ -135,7 +137,15 @@ void emit_tok2op(list_t* buffer, token_type_t tok)
 	emit_op(buffer, op);
 }
 
-void emit_call(list_t* buffer)
+void emit_call(list_t* buffer, char* key, I64 args)
 {
-	insert(buffer, OP_CALL);
+	value_t* val = value_new_string(key);
+	value_t* argc = value_new_int(args);
+	insert_v2(buffer, OP_CALL, val, argc);
+}
+
+void emit_array(list_t* buffer, I64 size)
+{
+	value_t* sz = value_new_int(size);
+	insert_v1(buffer, OP_ARRAY, sz);
 }

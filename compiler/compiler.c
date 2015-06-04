@@ -20,10 +20,9 @@ void eval_declfunc(list_t* buffer, ast_t* node)
 	// PUSH "ARG1"
 	// PUSH "ARG0"
 	// PUSH 3
-	// PUSH "function name"
-	// STORE
+	// STORE "function name"
 
-	I64 args = list_size(node->funcdecl.impl.formals);
+	/*I64 args = list_size(node->funcdecl.impl.formals);
 	list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.formals);
 	while(!list_iterator_end(iter))
 	{
@@ -33,8 +32,7 @@ void eval_declfunc(list_t* buffer, ast_t* node)
 	list_iterator_free(iter);
 
 	emit_i64(buffer, args);
-	emit_string(buffer, node->funcdecl.name);
-	emit_store(buffer, false);
+	emit_store(buffer, false, node->funcdecl.name);*/
 }
 
 void eval_declvar(list_t* buffer, ast_t* node)
@@ -43,12 +41,10 @@ void eval_declvar(list_t* buffer, ast_t* node)
 	// PUSH 5 			-> push 5 onto stack
 	// PUSH 4 			-> push 4 onto stack
 	// ADD				-> pop 2, add
-	// PUSH "variable"	-> push "variable" onto stack
-	// STORE			-> pop 2, store "variable" in 'this'
+	// STORE "variable"
 
 	compiler_eval(buffer, node->vardecl.initializer);
-	emit_string(buffer, node->vardecl.name);
-	emit_store(buffer, node->vardecl.mutate);
+	emit_store(buffer, node->vardecl.mutate, node->vardecl.name);
 }
 
 void eval_number(list_t* buffer, ast_t* node)
@@ -74,6 +70,23 @@ void eval_binary(list_t* buffer, ast_t* node)
 	emit_tok2op(buffer, op);
 }
 
+void eval_array(list_t* buffer, ast_t* node)
+{
+	// Example:
+	// PUSH 5
+	// PUSH 6
+	// PUSH 67
+	// ARRAY 3
+
+	list_iterator_t* iter = list_iterator_create(node->array);
+	while(!list_iterator_end(iter))
+	{
+		compiler_eval(buffer, list_iterator_next(iter));
+	}
+	list_iterator_free(iter);
+	emit_array(buffer, list_size(node->array));
+}
+
 void eval_ident(list_t* buffer, ast_t* node)
 {
 	emit_load(buffer, node->ident);
@@ -81,14 +94,10 @@ void eval_ident(list_t* buffer, ast_t* node)
 
 void eval_call(list_t* buffer, ast_t* node)
 {
-	// PUSH "println"
 	// PUSH 3
 	// PUSH 5
 	// PUSH HELLO
-	// PUSH 3
-	// CALL
-
-	emit_string(buffer, node->call.callee->ident);
+	// CALL "println" 3
 
 	I64 args = list_size(node->call.args);
 	list_iterator_t* iter = list_iterator_create(node->call.args);
@@ -99,8 +108,7 @@ void eval_call(list_t* buffer, ast_t* node)
 	}
 	list_iterator_free(iter);
 
-	emit_i64(buffer, args);
-	emit_call(buffer);
+	emit_call(buffer, node->call.callee->ident, args);
 }
 
 void eval_string(list_t* buffer, ast_t* node)
@@ -116,8 +124,8 @@ void compiler_eval(list_t* buffer, ast_t* node)
 			{ eval_block(buffer, node->toplevel); break; }
 		case AST_DECLVAR:
 			{ eval_declvar(buffer, node); break; }
-		case AST_DECLFUNC:
-			{ eval_declfunc(buffer, node); break; }
+	/*	case AST_DECLFUNC:
+			{ eval_declfunc(buffer, node); break; }*/
 		case AST_FLOAT:
 			{ eval_number(buffer, node); break; }
 		case AST_INT:
@@ -126,6 +134,8 @@ void compiler_eval(list_t* buffer, ast_t* node)
 			{ eval_string(buffer, node); break; }
 		case AST_BINARY:
 			{ eval_binary(buffer, node); break; }
+		case AST_ARRAY:
+			{ eval_array(buffer, node); break; }
 		case AST_IDENT:
 			{ eval_ident(buffer, node); break; }
 		case AST_CALL:
@@ -134,8 +144,17 @@ void compiler_eval(list_t* buffer, ast_t* node)
 	}
 }
 
-void compiler_dump(ast_t* node)
+/**
+ *	'Dumps' the node to the console.
+ *	Basically a printing function for abstract syntax trees
+ */
+void compiler_dump(ast_t* node, int level)
 {
+	for(int i = 0; i < level; i++)
+	{
+		console("#");
+	}
+
 	switch(node->class)
 	{
 		case AST_TOPLEVEL:
@@ -144,7 +163,7 @@ void compiler_dump(ast_t* node)
 			while(!list_iterator_end(iter))
 			{
 				ast_t* next = list_iterator_next(iter);
-				compiler_dump(next);
+				compiler_dump(next, level+1);
 				fprintf(stdout, "\n");
 			}
 			list_iterator_free(iter);
@@ -153,13 +172,21 @@ void compiler_dump(ast_t* node)
 		case AST_DECLVAR:
 		{
 			fprintf(stdout, ":decl %s<", node->vardecl.name);
-			compiler_dump(node->vardecl.initializer);
+			compiler_dump(node->vardecl.initializer, 0);
 			fprintf(stdout, ">");
 			break;
 		}
 		case AST_DECLFUNC:
 		{
-			fprintf(stdout, ":func<%s>", node->funcdecl.name);
+			fprintf(stdout, ":func<%s>\n", node->funcdecl.name);
+			list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.body);
+			while(!list_iterator_end(iter))
+			{
+				ast_t* next = list_iterator_next(iter);
+				compiler_dump(next, level+1);
+				fprintf(stdout, "\n");
+			}
+			list_iterator_free(iter);
 			break;
 		}
 		case AST_IDENT:
@@ -190,25 +217,42 @@ void compiler_dump(ast_t* node)
 		case AST_BINARY:
 		{
 			fprintf(stdout, ":bin<");
-			compiler_dump(node->binary.left);
-			compiler_dump(node->binary.right);
+			compiler_dump(node->binary.left, 0);
+			compiler_dump(node->binary.right, 0);
 			fprintf(stdout, ":op = %d>", node->binary.op);
 			break;
 		}
 		case AST_UNARY:
 		{
 			fprintf(stdout, ":unary<");
-			compiler_dump(node->unary.expr);
+			compiler_dump(node->unary.expr, 0);
 			fprintf(stdout, ">");
 			break;
 		}
 		case AST_SUBSCRIPT:
 		{
 			fprintf(stdout, ":subscript<(key)");
-			compiler_dump(node->subscript.key);
+			compiler_dump(node->subscript.key, 0);
 			fprintf(stdout, "; (expr)");
-			compiler_dump(node->subscript.expr);
+			compiler_dump(node->subscript.expr, 0);
 			fprintf(stdout, ">");
+			break;
+		}
+		case AST_IF:
+		{
+			fprintf(stdout, ":if<");
+			compiler_dump(node->ifstmt.cond, 0);
+			fprintf(stdout, ">\n");
+
+			list_iterator_t* iter = list_iterator_create(node->ifstmt.body);
+			while(!list_iterator_end(iter))
+			{
+				ast_t* next = list_iterator_next(iter);
+				compiler_dump(next, level+1);
+				fprintf(stdout, "\n");
+			}
+			list_iterator_free(iter);
+
 			break;
 		}
 		case AST_ARRAY:
@@ -218,7 +262,7 @@ void compiler_dump(ast_t* node)
 			list_iterator_t* iter = list_iterator_create(node->array);
 			while(!list_iterator_end(iter))
 			{
-				compiler_dump(list_iterator_next(iter));
+				compiler_dump(list_iterator_next(iter), 0);
 			}
 			list_iterator_free(iter);
 			fprintf(stdout, ">");
@@ -227,7 +271,7 @@ void compiler_dump(ast_t* node)
 		case AST_CALL:
 		{
 			fprintf(stdout, ":call<");
-			compiler_dump(node->call.callee);
+			compiler_dump(node->call.callee, 0);
 			fprintf(stdout, ">");
 			break;
 		}
@@ -235,6 +279,9 @@ void compiler_dump(ast_t* node)
 	}
 }
 
+/**
+ *	Creates an instruction set based on source code @source
+ */
 list_t* compile_buffer(compiler_t* compiler, const char* source)
 {
 	list_t* buffer = list_new();
@@ -243,8 +290,8 @@ list_t* compile_buffer(compiler_t* compiler, const char* source)
 	ast_t* root = parser_run(&compiler->parser, source);
 	if(root)
 	{
-		compiler_dump(root);
-	//	compiler_eval(buffer, root);
+		compiler_dump(root, 0);
+		//compiler_eval(buffer, root);
 		ast_free(root);
 	}
 
@@ -252,6 +299,9 @@ list_t* compile_buffer(compiler_t* compiler, const char* source)
 	return buffer;
 }
 
+/**
+ *	Reads a file and converts it into a buffer
+ */
 list_t* compile_file(compiler_t* compiler, const char* filename)
 {
 	FILE* file = fopen(filename, "rb");

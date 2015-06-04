@@ -25,7 +25,8 @@ typedef enum
 	OP_LESS,
 	OP_GREATER,
 	OP_LEQUAL,
-	OP_GEQUAL
+	OP_GEQUAL,
+	OP_ARRAY
 } opcode_t;
 
 typedef struct
@@ -41,9 +42,10 @@ void emit_load(list_t* buffer, const char* obj);
 void emit_i64(list_t* buffer, I64 v);
 void emit_f64(list_t* buffer, F64 f);
 void emit_string(list_t* buffer, char* str);
-void emit_store(list_t* buffer, bool mutable);
+void emit_store(list_t* buffer, bool mutable, char* key);
 void emit_op(list_t* buffer, opcode_t op);
 void emit_tok2op(list_t* buffer, token_type_t tok);
-void emit_call(list_t* buffer);
+void emit_call(list_t* buffer, char* key, I64 args);
+void emit_array(list_t* buffer, I64 size);
 
 #endif

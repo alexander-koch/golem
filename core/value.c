@@ -1,5 +1,20 @@
 #include "value.h"
 
+I64 value_int(value_t* value)
+{
+	return value->v.i;
+}
+
+F64 value_float(value_t* value)
+{
+	return value->v.f;
+}
+
+char* value_string(value_t* value)
+{
+	return value->v.str;
+}
+
 value_t* value_new_null()
 {
 	value_t* val = malloc(sizeof(*val));

@@ -26,8 +26,15 @@ typedef enum
     AST_CALL,
     AST_DECLVAR,
     AST_DECLFUNC,
+    AST_IF,
     AST_TOPLEVEL,
 } ast_class_t;
+
+typedef struct
+{
+    ast_t* cond;
+    list_t* body;
+} ast_cond_t;
 
 typedef struct
 {
@@ -70,6 +77,7 @@ struct ast_s
         ast_field_t subscript;
         ast_func_t funcdecl;
         ast_decl_t vardecl;
+        ast_cond_t ifstmt;
 
         struct
         {

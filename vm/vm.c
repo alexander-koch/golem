@@ -46,14 +46,10 @@ void vm_process(vm_t* vm, list_t* buffer)
 		}
 		case OP_STORE:
 		{
-			value_t* ident = stack_pop(vm->stack);
 			value_t* val = stack_pop(vm->stack);
+			char* ident = value_string(instr->v1);
 
-		/*	variable_t* var = malloc(sizeof(*var));
-			var->val = val;
-
-			value_t* value = value_new_object(var);*/
-			hashmap_set(vm->fields, ident->v.str, val);
+			hashmap_set(vm->fields, ident, val);
 			break;
 		}
 		case OP_MUT_STORE:
@@ -98,17 +94,30 @@ void vm_process(vm_t* vm, list_t* buffer)
 			//hashmap_set(vm->fields, temp->v.str, val);*/
 			break;
 		}
+		case OP_ARRAY:
+		{
+			I64 size = value_int(instr->v1);
+			list_t* values = list_new();
+			for(int i = 0; i < size; i++)
+			{
+				list_push(values, stack_pop(vm->stack));
+			}
+
+			// TODO: properly implement
+			list_free(values);
+
+			break;
+		}
 		case OP_CALL:
 		{
-			// PUSH NAME
 			// PUSH arg0
 			// PUSH arg1
 			// PUSH argN
-			// PUSH ARGCOUNT
-			// CALL
+			// CALL "fnName" argument count
 
-			// Get arg count
-			I64 argc = ((value_t*)stack_pop(vm->stack))->v.i;
+			// Get passed values (ident - argument count)
+			char* ident = value_string(instr->v1);
+			I64 argc = value_int(instr->v2);
 
 			// Store arguments
 			list_t* args = list_new();
@@ -116,9 +125,9 @@ void vm_process(vm_t* vm, list_t* buffer)
 			{
 				list_push(args, stack_pop(vm->stack));
 			}
-			value_t* ident = stack_pop(vm->stack);
 
-			if(!strcmp(ident->v.str, "println"))
+			// TODO: valid function checks
+			if(!strcmp(ident, "println"))
 			{
 				for(int i = argc-1; i >= 0; i--)
 				{

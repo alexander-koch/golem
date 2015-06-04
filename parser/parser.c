@@ -3,9 +3,11 @@
 #define KEYWORD_DECLARATION "let"
 #define KEYWORD_MUTATE "mut"
 #define KEYWORD_FUNCTION "fn"
+#define KEYWORD_IF "if"
 
 ast_t* parse_var_declaration(parser_t* parser);
 ast_t* parse_fn_declaration(parser_t* parser);
+ast_t* parse_if_declaration(parser_t* parser);
 ast_t* parse_expression(parser_t* parser);
 
 ast_t* parse_stmt(parser_t* parser);
@@ -39,7 +41,7 @@ location_t get_location(parser_t* parser)
 
 int match_string(parser_t* parser, const char* token)
 {
-    if(parser_end(parser)) return 0;
+    if(parser_end(parser) || !token) return 0;
     return !strcmp(parser->buffer[parser->cursor].value, token);
 }
 
@@ -61,6 +63,8 @@ token_t* accept_token(parser_t* parser)
 
 token_t* accept_token_string(parser_t* parser, const char* str)
 {
+    if(parser_end(parser)) return 0;
+
     if(match_string(parser, str))
     {
         return &parser->buffer[parser->cursor++];
@@ -127,8 +131,7 @@ int match_simple(parser_t* parser)
 int match_literal(parser_t* parser)
 {
     return match_simple(parser) ||
-        match_string(parser, "[") ||
-        match_string(parser, "{");
+        match_string(parser, "[");
 }
 
 int parse_precedence(token_type_t type)
@@ -158,6 +161,9 @@ int parse_precedence(token_type_t type)
     }
 }
 
+/**
+ *  Parses a call structure
+ */
 ast_t* parse_call(parser_t* parser, ast_t* node)
 {
     ast_t* class = ast_class_create(AST_CALL, node->location);
@@ -192,6 +198,9 @@ ast_t* parse_call(parser_t* parser, ast_t* node)
     return class;
 }
 
+/**
+ *  Parses a subscript, bracket based myarray[5] = x
+ */
 ast_t* parse_subscript(parser_t* parser, ast_t* node)
 {
     ast_t* ast = ast_class_create(AST_SUBSCRIPT, node->location);
@@ -214,6 +223,45 @@ ast_t* parse_subscript(parser_t* parser, ast_t* node)
     return ast;
 }
 
+/**
+ *  Parses a subscript, dot based. Example: myclass.x = 5
+ */
+ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node)
+{
+    ast_t* ast = ast_class_create(AST_SUBSCRIPT, node->location);
+    ast->subscript.expr = node;
+    if(!match_type(parser, TOKEN_WORD))
+    {
+        parser_throw(parser, "Subscript: Identifier expected");
+        return ast;
+    }
+
+    token_t* ident = accept_token(parser);
+    ast_t* key = ast_class_create(AST_IDENT, ident->location);
+    key->ident = ident->value;
+    ast->subscript.key = key;
+
+    if(match_type(parser, TOKEN_LPAREN))
+    {
+        accept_token(parser);
+        return parse_call(parser, ast);
+    }
+    else if(match_type(parser, TOKEN_LBRACKET))
+    {
+        accept_token(parser);
+        return parse_subscript(parser, ast);
+    }
+    else if(match_type(parser, TOKEN_DOT))
+    {
+        accept_token(parser);
+        return parse_subscript_sugar(parser, ast);
+    }
+    return ast;
+}
+
+/**
+ *  Parses simple literal structures -> Float / Integer / String / Boolean
+ */
 ast_t* parse_simpleliteral(parser_t* parser)
 {
     ast_t* node = ast_class_create(-1, get_location(parser));
@@ -248,6 +296,9 @@ ast_t* parse_simpleliteral(parser_t* parser)
     return node;
 }
 
+/**
+ *  Array parsing function
+ */
 ast_t* parse_array(parser_t* parser)
 {
     ast_t* ast = ast_class_create(AST_ARRAY, get_location(parser));
@@ -280,6 +331,10 @@ ast_t* parse_array(parser_t* parser)
     return ast;
 }
 
+/**
+ *  Parses a literal
+ *  A literal is either a number / string / boolean or an array
+ */
 ast_t* parse_literal(parser_t* parser)
 {
     if(match_simple(parser))
@@ -299,6 +354,11 @@ ast_t* parse_literal(parser_t* parser)
 
 ast_t* parse_expression_primary(parser_t* parser)
 {
+    if(match_type(parser, TOKEN_NEWLINE))
+    {
+        return 0;
+    }
+
     ast_t* ast = 0;
     if(match_literal(parser))
     {
@@ -350,11 +410,11 @@ ast_t* parse_expression_primary(parser_t* parser)
         accept_token(parser);
         return parse_subscript(parser, ast);
     }
-    // else if(match_type(parser, TOKEN_DOT))
-    // {
-    //     accept_token(parser);
-    //     return
-    // }
+    else if(match_type(parser, TOKEN_DOT))
+    {
+        accept_token(parser);
+        return parse_subscript_sugar(parser, ast);
+    }
 
     return ast;
 }
@@ -469,12 +529,15 @@ ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
     return 0;
 }
 
+/**
+ *  Parses an expression using two subroutines
+ */
 ast_t* parse_expression(parser_t* parser)
 {
     ast_t* lhs = parse_expression_primary(parser);
     if(!lhs) return lhs;
 
-    // TODO test if next is a valid operator
+    // TODO: test if next is a valid operator
     if(!match_type(parser, TOKEN_NEWLINE))
     {
         ast_t* rhs = parse_expression_last(parser, lhs, 0);
@@ -484,6 +547,9 @@ ast_t* parse_expression(parser_t* parser)
     return lhs;
 }
 
+/**
+ *  Parse formals -> e.g. argument list for functions
+ */
 list_t* parse_formals(parser_t* parser)
 {
     list_t* formals = list_new();
@@ -512,9 +578,12 @@ list_t* parse_formals(parser_t* parser)
     return formals;
 }
 
+/**
+ *  Parses block until end
+ *  DOES NOT PARSE BEGIN WITH AN OPENING BRACE
+ */
 list_t* parse_block(parser_t* parser)
 {
-    // parses block until end, NOT THE BEGIN
     list_t* statements = list_new();
     skip_newline(parser);
     while(!match_type(parser, TOKEN_RBRACE))
@@ -538,6 +607,9 @@ list_t* parse_block(parser_t* parser)
     return statements;
 }
 
+/**
+ *  Newline testing, throws error if not
+ */
 void test_newline(parser_t* parser)
 {
     if(!parser->error)
@@ -553,7 +625,10 @@ void test_newline(parser_t* parser)
     }
 }
 
-// Every statement is followed by a newline
+/**
+ *  Statement parsing
+ *  Every statment is followed by a newline
+ */
 ast_t* parse_stmt(parser_t* parser)
 {
     static const struct
@@ -563,7 +638,8 @@ ast_t* parse_stmt(parser_t* parser)
     } parsers[] =
     {
         {KEYWORD_DECLARATION, parse_var_declaration},
-        {KEYWORD_FUNCTION, parse_fn_declaration}
+        {KEYWORD_FUNCTION, parse_fn_declaration},
+        {KEYWORD_IF, parse_if_declaration}
     };
 
     for(size_t i = 0; i < sizeof(parsers)/sizeof(parsers[0]); i++)
@@ -588,7 +664,10 @@ ast_t* parse_stmt(parser_t* parser)
     return 0;
 }
 
-// Main function
+///////-----------------
+// Main parsing function
+//////------------------
+
 ast_t* parser_run(parser_t* parser, const char* content)
 {
     parser->buffer = lexer_lex(&parser->lexer, content, &parser->num_tokens);
@@ -620,7 +699,9 @@ ast_t* parser_run(parser_t* parser, const char* content)
     return ast;
 }
 
+///////-----------------
 // Parsing subroutines
+//////------------------
 
 ast_t* parse_var_declaration(parser_t* parser)
 {
@@ -681,6 +762,37 @@ ast_t* parse_fn_declaration(parser_t* parser)
     else
     {
         parser_throw(parser, "Malformed function declaration");
+    }
+
+    return node;
+}
+
+ast_t* parse_if_declaration(parser_t* parser)
+{
+    // if (expr) { \n
+    ast_t* node = ast_class_create(AST_IF, get_location(parser));
+    token_t* ifst = accept_token_string(parser, KEYWORD_IF);
+    token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
+
+    if(ifst && lparen)
+    {
+        node->ifstmt.cond = parse_expression(parser);
+
+        token_t* rparen = accept_token_type(parser, TOKEN_RPAREN);
+        token_t* lbrace = accept_token_type(parser, TOKEN_LBRACE);
+
+        if(rparen && lbrace)
+        {
+            node->ifstmt.body = parse_block(parser);
+        }
+        else
+        {
+            parser_throw(parser, "Conditional expression without end");
+        }
+    }
+    else
+    {
+        parser_throw(parser, "Malformed condition block");
     }
 
     return node;
