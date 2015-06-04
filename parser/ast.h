@@ -20,20 +20,20 @@ typedef enum
     AST_BOOL,
     AST_STRING,
     AST_ARRAY,
-    AST_TABLE,
-    AST_TABLEENTRY,
     AST_BINARY,
     AST_UNARY,
     AST_SUBSCRIPT,
     AST_CALL,
-    AST_IF,
-    AST_IFCLAUSE,
-    AST_WHILE,
     AST_DECLVAR,
     AST_DECLFUNC,
     AST_TOPLEVEL,
-    AST_FOR
 } ast_class_t;
+
+typedef struct
+{
+    ast_t* key;
+    ast_t* expr;
+} ast_field_t;
 
 typedef struct
 {
@@ -63,9 +63,11 @@ struct ast_s
         char* ident;
         char* string;
         list_t* toplevel;
+        list_t* array;
         I64 i;
         F64 f;
         bool b;
+        ast_field_t subscript;
         ast_func_t funcdecl;
         ast_decl_t vardecl;
 
@@ -75,6 +77,12 @@ struct ast_s
             ast_t* left;
             ast_t* right;
         } binary;
+
+        struct
+        {
+            token_type_t op;
+            ast_t* expr;
+        } unary;
 
         struct
         {

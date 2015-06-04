@@ -31,6 +31,14 @@ value_t* value_new_string(const char* string)
 	return val;
 }
 
+value_t* value_new_object(void* obj)
+{
+	value_t* val = value_new_null();
+	val->type = VALUE_OBJECT;
+	val->v.o = obj;
+	return val;
+}
+
 void value_free(value_t* value)
 {
 	if(value)
@@ -38,6 +46,10 @@ void value_free(value_t* value)
 		if(value->type == VALUE_STRING)
 		{
 			free(value->v.str);
+		}
+		else if(value->type == VALUE_OBJECT)
+		{
+			free(value->v.o);
 		}
 		free(value);
 	}

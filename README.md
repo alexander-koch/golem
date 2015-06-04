@@ -26,7 +26,7 @@ The use of egyptian style braces is standard (Not supported yet, final structure
 
 Classes are defined using the following structure (Not supported yet, final structure may change):
 
-	class Main {
+ 	interface / class Main {
 
 		let mod x = 2
 		let mod y = 4

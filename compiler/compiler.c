@@ -21,7 +21,6 @@ void eval_declfunc(list_t* buffer, ast_t* node)
 	// PUSH "ARG0"
 	// PUSH 3
 	// PUSH "function name"
-	// LOAD "this"
 	// STORE
 
 	I64 args = list_size(node->funcdecl.impl.formals);
@@ -35,7 +34,6 @@ void eval_declfunc(list_t* buffer, ast_t* node)
 
 	emit_i64(buffer, args);
 	emit_string(buffer, node->funcdecl.name);
-	emit_load(buffer, "this");
 	emit_store(buffer, false);
 }
 
@@ -46,12 +44,10 @@ void eval_declvar(list_t* buffer, ast_t* node)
 	// PUSH 4 			-> push 4 onto stack
 	// ADD				-> pop 2, add
 	// PUSH "variable"	-> push "variable" onto stack
-	// LOAD "this"	-> load class
 	// STORE			-> pop 2, store "variable" in 'this'
 
 	compiler_eval(buffer, node->vardecl.initializer);
 	emit_string(buffer, node->vardecl.name);
-	emit_load(buffer, "this");
 	emit_store(buffer, node->vardecl.mutate);
 }
 
@@ -85,13 +81,14 @@ void eval_ident(list_t* buffer, ast_t* node)
 
 void eval_call(list_t* buffer, ast_t* node)
 {
+	// PUSH "println"
 	// PUSH 3
 	// PUSH 5
 	// PUSH HELLO
-	// PUSH "println"
-	// LOAD "this"
 	// PUSH 3
 	// CALL
+
+	emit_string(buffer, node->call.callee->ident);
 
 	I64 args = list_size(node->call.args);
 	list_iterator_t* iter = list_iterator_create(node->call.args);
@@ -102,8 +99,6 @@ void eval_call(list_t* buffer, ast_t* node)
 	}
 	list_iterator_free(iter);
 
-	emit_string(buffer, node->call.callee->ident);
-	emit_load(buffer, "this");
 	emit_i64(buffer, args);
 	emit_call(buffer);
 }
@@ -200,6 +195,35 @@ void compiler_dump(ast_t* node)
 			fprintf(stdout, ":op = %d>", node->binary.op);
 			break;
 		}
+		case AST_UNARY:
+		{
+			fprintf(stdout, ":unary<");
+			compiler_dump(node->unary.expr);
+			fprintf(stdout, ">");
+			break;
+		}
+		case AST_SUBSCRIPT:
+		{
+			fprintf(stdout, ":subscript<(key)");
+			compiler_dump(node->subscript.key);
+			fprintf(stdout, "; (expr)");
+			compiler_dump(node->subscript.expr);
+			fprintf(stdout, ">");
+			break;
+		}
+		case AST_ARRAY:
+		{
+			fprintf(stdout, ":array<");
+
+			list_iterator_t* iter = list_iterator_create(node->array);
+			while(!list_iterator_end(iter))
+			{
+				compiler_dump(list_iterator_next(iter));
+			}
+			list_iterator_free(iter);
+			fprintf(stdout, ">");
+			break;
+		}
 		case AST_CALL:
 		{
 			fprintf(stdout, ":call<");
@@ -220,7 +244,7 @@ list_t* compile_buffer(compiler_t* compiler, const char* source)
 	if(root)
 	{
 		compiler_dump(root);
-		compiler_eval(buffer, root);
+	//	compiler_eval(buffer, root);
 		ast_free(root);
 	}
 

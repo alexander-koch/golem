@@ -8,6 +8,9 @@ ast_t* parse_var_declaration(parser_t* parser);
 ast_t* parse_fn_declaration(parser_t* parser);
 ast_t* parse_expression(parser_t* parser);
 
+ast_t* parse_stmt(parser_t* parser);
+ast_t* parse_expression(parser_t* parser);
+
 void parser_init(parser_t* parser)
 {
     lexer_init(&parser->lexer);
@@ -189,6 +192,28 @@ ast_t* parse_call(parser_t* parser, ast_t* node)
     return class;
 }
 
+ast_t* parse_subscript(parser_t* parser, ast_t* node)
+{
+    ast_t* ast = ast_class_create(AST_SUBSCRIPT, node->location);
+    ast->subscript.expr = node;
+    ast->subscript.key = parse_expression(parser);
+
+    if(!match_type(parser, TOKEN_RBRACKET))
+    {
+        parser_throw(parser, "Expected closing bracket");
+        return ast;
+    }
+
+    accept_token(parser);
+    if(match_type(parser, TOKEN_LBRACKET))
+    {
+        accept_token(parser);
+        return parse_subscript(parser, ast);
+    }
+
+    return ast;
+}
+
 ast_t* parse_simpleliteral(parser_t* parser)
 {
     ast_t* node = ast_class_create(-1, get_location(parser));
@@ -223,19 +248,51 @@ ast_t* parse_simpleliteral(parser_t* parser)
     return node;
 }
 
+ast_t* parse_array(parser_t* parser)
+{
+    ast_t* ast = ast_class_create(AST_ARRAY, get_location(parser));
+    ast->array = list_new();
+
+    token_t* tmp = accept_token_type(parser, TOKEN_LBRACKET);
+    if(!tmp)
+    {
+        parser_throw(parser, "Expected array begin");
+    }
+
+    ast_t* expr = 0;
+    while(!match_type(parser, TOKEN_RBRACKET) && (expr = parse_expression(parser)))
+    {
+        list_push(ast->array, (void*)expr);
+        if(!match_type(parser, TOKEN_COMMA))
+        {
+            break;
+        }
+        else
+        {
+            accept_token(parser);
+        }
+    }
+    tmp = accept_token_type(parser, TOKEN_RBRACKET);
+    if(!tmp)
+    {
+        parser_throw(parser, "Expected array end");
+    }
+    return ast;
+}
+
 ast_t* parse_literal(parser_t* parser)
 {
     if(match_simple(parser))
     {
         return parse_simpleliteral(parser);
     }
-    else if(match_string(parser, "["))
+    else if(match_type(parser, TOKEN_LBRACKET))
     {
-        // TODO: Implement
+        return parse_array(parser);
     }
-    else if(match_string(parser, "{"))
+    else
     {
-        // TODO: Implement
+        parser_throw(parser, "Could not parse literal");
     }
     return 0;
 }
@@ -266,17 +323,38 @@ ast_t* parse_expression_primary(parser_t* parser)
             accept_token(parser);
         }
     }
+    else if(match_type(parser, TOKEN_ADD) || match_type(parser, TOKEN_SUB) ||
+        match_type(parser, TOKEN_NOT) || match_type(parser, TOKEN_BITNOT))
+    {
+        token_type_t op = accept_token(parser)->type;
+        ast = ast_class_create(AST_UNARY, get_location(parser));
+        ast->unary.op = op;
+        ast->unary.expr = parse_expression(parser);
+
+        // FIXME: Unary has to be improved,
+        // currently changes whole expression in line
+    }
     else
     {
         parser_throw(parser, "Expected expression, found '%s'", current_token(parser)->value);
     }
-    // TODO: Other matches
+    // TODO: Expand, other matches
 
     if(match_type(parser, TOKEN_LPAREN))
     {
         accept_token(parser);
         return parse_call(parser, ast);
     }
+    else if(match_type(parser, TOKEN_LBRACKET))
+    {
+        accept_token(parser);
+        return parse_subscript(parser, ast);
+    }
+    // else if(match_type(parser, TOKEN_DOT))
+    // {
+    //     accept_token(parser);
+    //     return
+    // }
 
     return ast;
 }
@@ -438,9 +516,17 @@ list_t* parse_block(parser_t* parser)
 {
     // parses block until end, NOT THE BEGIN
     list_t* statements = list_new();
+    skip_newline(parser);
     while(!match_type(parser, TOKEN_RBRACE))
     {
+        if(parser_end(parser))
+        {
+            parser_throw(parser, "Block not closed, reached end");
+            return statements;
+        }
+
         list_push(statements, (void*)parse_stmt(parser));
+        skip_newline(parser);
     }
 
     token_t* rbrace = accept_token_type(parser, TOKEN_RBRACE);

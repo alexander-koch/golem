@@ -5,7 +5,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
-#include <core/mem.h>
 
 typedef int8_t I8;
 typedef uint8_t U8;

@@ -16,7 +16,7 @@ FILES = main.c \
 		parser/parser.c \
 		compiler/compiler.c \
 		compiler/bytecode.c \
-		vm/scope.c 
+		vm/vm.c
 
 debug:
 	$(CC) -g -o $(MODULE) $(INC) $(FILES) $(LIBS) -Wall $(CFLAGS)

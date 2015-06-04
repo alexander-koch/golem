@@ -12,7 +12,7 @@
 #include <compiler/compiler.h>
 #include <vm/vm.h>
 
-void run_repl(compiler_t* vm)
+void run_repl(vm_t* vm, compiler_t* compiler)
 {
     char buf[1024];
     while(1)
@@ -23,7 +23,8 @@ void run_repl(compiler_t* vm)
         {
             return;
         }
-        list_t* buffer = compile_buffer(vm, buf);
+        list_t* buffer = compile_buffer(compiler, buf);
+        vm_execute(vm, buffer);
         buffer_free(buffer);
     }
 }
@@ -34,12 +35,19 @@ int main(int argc, char** argv)
 
     if(argc == 1)
     {
-        run_repl(&compiler);
+        vm_t* vm = vm_new();
+        run_repl(vm, &compiler);
+        vm_free(vm);
     }
     else if(argc == 2)
     {
+        vm_t* vm = vm_new();
         list_t* buffer = compile_file(&compiler, argv[1]);
+
+        vm_execute(vm, buffer);
         buffer_free(buffer);
+
+        vm_free(vm);
     }
     else
     {

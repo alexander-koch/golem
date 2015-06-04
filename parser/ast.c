@@ -71,6 +71,28 @@ void ast_free(ast_t* ast)
 			ast_free(ast->binary.right);
 			break;
 		}
+		case AST_UNARY:
+		{
+			ast_free(ast->unary.expr);
+			break;
+		}
+		case AST_ARRAY:
+		{
+			iter = list_iterator_create(ast->array);
+			while(!list_iterator_end(iter))
+			{
+				ast_free(list_iterator_next(iter));
+			}
+			list_iterator_free(iter);
+			list_free(ast->array);
+			break;
+		}
+		case AST_SUBSCRIPT:
+		{
+			ast_free(ast->subscript.key);
+			ast_free(ast->subscript.expr);
+			break;
+		}
 		case AST_CALL:
 		{
 			ast_free(ast->call.callee);

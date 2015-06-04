@@ -13,11 +13,11 @@ typedef enum
 	OP_PUSH_STRING,
 	OP_STORE,
 	OP_MUT_STORE,
+	OP_ASSIGN,
 	OP_ADD,
 	OP_SUB,
 	OP_MUL,
 	OP_DIV,
-	OP_PRINT,
 	OP_LOAD,
 	OP_CALL,
 	OP_EQUAL,
@@ -34,6 +34,8 @@ typedef struct
 	value_t* v1;
 	value_t* v2;
 } instruction_t;
+
+const char* op2str(opcode_t code);
 
 void emit_load(list_t* buffer, const char* obj);
 void emit_i64(list_t* buffer, I64 v);

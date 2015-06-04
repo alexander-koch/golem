@@ -1,10 +1,12 @@
 #include "stack.h"
 
-void stack_init(stack_t* s)
+stack_t* stack_new()
 {
+	stack_t* s = malloc(sizeof(*s));
 	s->content = 0;
 	s->size = 0;
 	s->top = -1;
+	return s;
 }
 
 void stack_push(stack_t* s, void* val)
@@ -62,4 +64,5 @@ void stack_free(stack_t* s)
 	s->content = 0;
 	s->size = 0;
 	s->top = -1;
+	free(s);
 }

@@ -2,6 +2,26 @@
 
 // Helper functions
 
+const char* op2str(opcode_t code)
+{
+	switch(code)
+	{
+		case OP_ADD: return "add";
+		case OP_SUB: return "sub";
+		case OP_MUL: return "mul";
+		case OP_DIV: return "div";
+		case OP_STORE: return "store";
+		case OP_PUSH_INT: return "push_int";
+		case OP_PUSH_FLOAT: return "push_float";
+		case OP_PUSH_STRING: return "push_string";
+		case OP_CALL: return "call";
+		case OP_LOAD: return "load";
+		case OP_ASSIGN: return "assign";
+		default: break;
+	}
+	return "unknown";
+}
+
 instruction_t* instruction_new(opcode_t op)
 {
 	instruction_t* ins = malloc(sizeof(*ins));
@@ -76,30 +96,7 @@ void emit_store(list_t* buffer, bool mutable)
 
 void emit_op(list_t* buffer, opcode_t op)
 {
-	switch(op)
-	{
-		case OP_ADD:
-		{
-			insert(buffer, OP_ADD);
-			break;
-		}
-		case OP_SUB:
-		{
-			insert(buffer, OP_SUB);
-			break;
-		}
-		case OP_MUL:
-		{
-			insert(buffer, OP_MUL);
-			break;
-		}
-		case OP_DIV:
-		{
-			insert(buffer, OP_DIV);
-			break;
-		}
-		default: break;
-	}
+	insert(buffer, op);
 }
 
 void emit_tok2op(list_t* buffer, token_type_t tok)
@@ -125,6 +122,11 @@ void emit_tok2op(list_t* buffer, token_type_t tok)
 		case TOKEN_DIV:
 		{
 			op = OP_DIV;
+			break;
+		}
+		case TOKEN_ASSIGN:
+		{
+			op = OP_ASSIGN;
 			break;
 		}
 		default: break;
