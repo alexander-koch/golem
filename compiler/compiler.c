@@ -1,145 +1,145 @@
 #include "compiler.h"
 
-void compiler_eval(list_t* buffer, ast_t* node);
+void compiler_eval(compiler_t* compiler, ast_t* node);
 
-// Evaluates a block and returns the last value
-void eval_block(list_t* buffer, list_t* block)
+void eval_block(compiler_t* compiler, list_t* block)
 {
 	list_iterator_t* iter = list_iterator_create(block);
 	while(!list_iterator_end(iter))
 	{
-		compiler_eval(buffer, list_iterator_next(iter));
+		compiler_eval(compiler, list_iterator_next(iter));
 	}
 	list_iterator_free(iter);
 }
 
-void eval_declfunc(list_t* buffer, ast_t* node)
+void eval_declfunc(compiler_t* compiler, ast_t* node)
 {
-	// Example:
-	// PUSH "ARG2"
-	// PUSH "ARG1"
-	// PUSH "ARG0"
-	// PUSH 3
-	// STORE "function name"
+	// TODO: Implement
 
-	/*I64 args = list_size(node->funcdecl.impl.formals);
-	list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.formals);
-	while(!list_iterator_end(iter))
-	{
-		char* str = (char*)list_iterator_next(iter);
-		emit_string(buffer, str);
-	}
-	list_iterator_free(iter);
-
-	emit_i64(buffer, args);
-	emit_store(buffer, false, node->funcdecl.name);*/
+	eval_block(compiler, node->funcdecl.impl.body);
 }
 
-void eval_declvar(list_t* buffer, ast_t* node)
+void eval_declvar(compiler_t* compiler, ast_t* node)
 {
-	// Example:
-	// PUSH 5 			-> push 5 onto stack
-	// PUSH 4 			-> push 4 onto stack
-	// ADD				-> pop 2, add
-	// STORE "variable"
-
-	compiler_eval(buffer, node->vardecl.initializer);
-	emit_store(buffer, node->vardecl.mutate, node->vardecl.name);
+	compiler_eval(compiler, node->vardecl.initializer);
+	emit_store_field(compiler->buffer, node->vardecl.name, node->vardecl.mutate);
 }
 
-void eval_number(list_t* buffer, ast_t* node)
+void eval_number(compiler_t* compiler, ast_t* node)
 {
 	if(node->class == AST_FLOAT)
 	{
-		emit_f64(buffer, node->f);
+		emit_f64(compiler->buffer, node->f);
 	}
 	else
 	{
-		emit_i64(buffer, node->i);
+		emit_i64(compiler->buffer, node->i);
 	}
 }
 
-void eval_binary(list_t* buffer, ast_t* node)
+void eval_binary(compiler_t* compiler, ast_t* node)
 {
-	// Emit node op-codes
-	compiler_eval(buffer, node->binary.left);
-	compiler_eval(buffer, node->binary.right);
-
-	// Emit operator
 	token_type_t op = node->binary.op;
-	emit_tok2op(buffer, op);
-}
-
-void eval_array(list_t* buffer, ast_t* node)
-{
-	// Example:
-	// PUSH 5
-	// PUSH 6
-	// PUSH 67
-	// ARRAY 3
-
-	list_iterator_t* iter = list_iterator_create(node->array);
-	while(!list_iterator_end(iter))
+	if(op == TOKEN_ASSIGN)
 	{
-		compiler_eval(buffer, list_iterator_next(iter));
+		ast_t* lhs = node->binary.left;
+		if(lhs->class != AST_IDENT)
+		{
+			// TODO: throw error / eval subscript
+			return;
+		}
+
+		compiler_eval(compiler, node->binary.right);
+		emit_store_field(compiler->buffer,lhs->ident, false);
 	}
-	list_iterator_free(iter);
-	emit_array(buffer, list_size(node->array));
+	else
+	{
+		// Emit node op-codes
+		compiler_eval(compiler, node->binary.left);
+		compiler_eval(compiler, node->binary.right);
+
+		// Emit operator
+		emit_tok2op(compiler->buffer,op);
+	}
 }
 
-void eval_ident(list_t* buffer, ast_t* node)
+void eval_ident(compiler_t* compiler, ast_t* node)
 {
-	emit_load(buffer, node->ident);
+	emit_get_field(compiler->buffer, node->ident);
 }
 
-void eval_call(list_t* buffer, ast_t* node)
+void eval_call(compiler_t* compiler, ast_t* node)
 {
-	// PUSH 3
-	// PUSH 5
-	// PUSH HELLO
-	// CALL "println" 3
-
 	I64 args = list_size(node->call.args);
-	list_iterator_t* iter = list_iterator_create(node->call.args);
-	while(!list_iterator_end(iter))
+	eval_block(compiler, node->call.args);
+
+	ast_t* call = node->call.callee;
+	if(call->class == AST_IDENT)
 	{
-		ast_t* node = list_iterator_next(iter);
-		compiler_eval(buffer, node);
+		emit_string(compiler->buffer,call->ident);
 	}
-	list_iterator_free(iter);
-
-	emit_call(buffer, node->call.callee->ident, args);
+	else
+	{
+		// TODO: FIX!!
+		// Subscript?
+	}
+	emit_invoke(compiler->buffer,args);
 }
 
-void eval_string(list_t* buffer, ast_t* node)
+void eval_string(compiler_t* compiler, ast_t* node)
 {
-	emit_string(buffer, node->string);
+	emit_string(compiler->buffer, node->string);
 }
 
-void compiler_eval(list_t* buffer, ast_t* node)
+void compiler_eval(compiler_t* compiler, ast_t* node)
 {
 	switch(node->class)
 	{
 		case AST_TOPLEVEL:
-			{ eval_block(buffer, node->toplevel); break; }
+		{
+			eval_block(compiler, node->toplevel);
+			break;
+		}
 		case AST_DECLVAR:
-			{ eval_declvar(buffer, node); break; }
-	/*	case AST_DECLFUNC:
-			{ eval_declfunc(buffer, node); break; }*/
+		{
+			eval_declvar(compiler, node);
+			break;
+		}
+		case AST_DECLFUNC:
+		{
+			eval_declfunc(compiler, node);
+			break;
+		}
 		case AST_FLOAT:
-			{ eval_number(buffer, node); break; }
+		{
+			eval_number(compiler, node);
+			break;
+		}
 		case AST_INT:
-			{ eval_number(buffer, node); break; }
+		{
+			eval_number(compiler, node);
+			break;
+		}
 		case AST_STRING:
-			{ eval_string(buffer, node); break; }
+		{
+			eval_string(compiler, node);
+			break;
+		}
 		case AST_BINARY:
-			{ eval_binary(buffer, node); break; }
-		case AST_ARRAY:
-			{ eval_array(buffer, node); break; }
+		{
+			eval_binary(compiler, node);
+			break;
+		}
 		case AST_IDENT:
-			{ eval_ident(buffer, node); break; }
+		{
+			eval_ident(compiler, node);
+			break;
+		}
 		case AST_CALL:
-			{ eval_call(buffer, node); break; }
+		{
+			eval_call(compiler, node);
+			break;
+		}
 		default: break;
 	}
 }
@@ -284,23 +284,24 @@ void compiler_dump(ast_t* node, int level)
  */
 list_t* compile_buffer(compiler_t* compiler, const char* source)
 {
-	list_t* buffer = list_new();
+	compiler_clear(compiler);
+	compiler->buffer = list_new();
 
 	parser_init(&compiler->parser);
 	ast_t* root = parser_run(&compiler->parser, source);
 	if(root)
 	{
 		compiler_dump(root, 0);
-		//compiler_eval(buffer, root);
+		compiler_eval(compiler, root);
 		ast_free(root);
 	}
 
 	parser_free(&compiler->parser);
-	return buffer;
+	return compiler->buffer;
 }
 
 /**
- *	Reads a file and converts it into a buffer
+ *	Reads a file and converts it into a compiler
  */
 list_t* compile_file(compiler_t* compiler, const char* filename)
 {
@@ -314,22 +315,26 @@ list_t* compile_file(compiler_t* compiler, const char* filename)
  	source[size] = '\0';
 	fclose(file);
 
-	// run vm with buffer
+	// run vm with compiler
 	list_t* buffer = compile_buffer(compiler, source);
 	free(source);
 	return buffer;
 }
 
-void buffer_free(list_t* buffer)
+void compiler_clear(compiler_t* compiler)
 {
-	list_iterator_t* iter = list_iterator_create(buffer);
-	while(!list_iterator_end(iter))
+	if(compiler->buffer)
 	{
-		instruction_t* instr = (instruction_t*)list_iterator_next(iter);
-		if(instr->v1) value_free(instr->v1);
-		if(instr->v2) value_free(instr->v2);
-		free(instr);
+		list_iterator_t* iter = list_iterator_create(compiler->buffer);
+		while(!list_iterator_end(iter))
+		{
+			instruction_t* instr = (instruction_t*)list_iterator_next(iter);
+			if(instr->v1) value_free(instr->v1);
+			if(instr->v2) value_free(instr->v2);
+			free(instr);
+		}
+		list_iterator_free(iter);
+		list_free(compiler->buffer);
+		compiler->buffer = 0;
 	}
-	list_iterator_free(iter);
-	list_free(buffer);
 }

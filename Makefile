@@ -1,5 +1,5 @@
 CC = gcc
-MODULE = nemesis
+MODULE = golem
 INC = -I.
 CFLAGS = -std=c99
 

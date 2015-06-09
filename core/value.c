@@ -1,5 +1,10 @@
 #include "value.h"
 
+bool value_bool(value_t* value)
+{
+	return value->v.b;
+}
+
 I64 value_int(value_t* value)
 {
 	return value->v.i;
@@ -19,6 +24,15 @@ value_t* value_new_null()
 {
 	value_t* val = malloc(sizeof(*val));
 	val->type = VALUE_NULL;
+	val->refcount = 0;
+	return val;
+}
+
+value_t* value_new_bool(bool b)
+{
+	value_t* val = value_new_null();
+	val->type = VALUE_BOOL;
+	val->v.b = b;
 	return val;
 }
 
@@ -54,9 +68,19 @@ value_t* value_new_object(void* obj)
 	return val;
 }
 
-void value_free(value_t* value)
+void value_retain(value_t* value)
 {
 	if(value)
+	{
+		value->refcount++;
+	}
+}
+
+void value_free(value_t* value)
+{
+	if(!value) return;
+
+	if(value->refcount == 0)
 	{
 		if(value->type == VALUE_STRING)
 		{
@@ -68,6 +92,10 @@ void value_free(value_t* value)
 		}
 		free(value);
 	}
+	else
+	{
+		value->refcount--;
+	}
 }
 
 void value_print(value_t* value)
@@ -76,6 +104,11 @@ void value_print(value_t* value)
 	{
 		switch(value->type)
 		{
+			case VALUE_BOOL:
+			{
+				console("%s", value->v.b ? "true" : "false");
+				break;
+			}
 			case VALUE_INT:
 			{
 				console("%d", value->v.i);

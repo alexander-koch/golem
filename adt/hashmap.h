@@ -32,4 +32,15 @@ int hashmap_get(hashmap_t* hashmap, char* key, void** value);
 size_t hashmap_length(hashmap_t* hashmap);
 void hashmap_free(hashmap_t* hashmap);
 
+typedef struct hashmap_iterator_t
+{
+	hashmap_t* hmap;
+	size_t idx;
+} hashmap_iterator_t;
+
+hashmap_iterator_t* hashmap_iterator_create(hashmap_t* hashmap);
+void* hashmap_iterator_next(hashmap_iterator_t* iterator);
+bool hashmap_iterator_end(hashmap_iterator_t* iterator);
+void hashmap_iterator_free(hashmap_iterator_t* iterator);
+
 #endif

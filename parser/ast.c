@@ -27,6 +27,7 @@ const char* ast_classname(ast_class_t class)
 		case AST_DECLVAR: return "variable declaration";
 		case AST_DECLFUNC: return "function declaration";
 		case AST_IF: return "if condition";
+		case AST_WHILE: return "while loop";
 		case AST_TOPLEVEL: return "toplevel";
 		default: return "null";
 	}

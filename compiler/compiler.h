@@ -11,10 +11,11 @@
 typedef struct compiler_t
 {
 	parser_t parser;
+	list_t* buffer;
 } compiler_t;
 
 list_t* compile_buffer(compiler_t* compiler, const char* source);
 list_t* compile_file(compiler_t* compiler, const char* filename);
-void buffer_free(list_t* buffer);
+void compiler_clear(compiler_t* compiler);
 
 #endif

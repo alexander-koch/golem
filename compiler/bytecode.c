@@ -6,18 +6,18 @@ const char* op2str(opcode_t code)
 {
 	switch(code)
 	{
+		case OP_PUSH_INT: return "push_int";
+		case OP_PUSH_FLOAT: return "push_float";
+		case OP_PUSH_STRING: return "push_string";
+		case OP_PUSH_NULL: return "push_null";
+		case OP_GET_FIELD: return "get_field";
 		case OP_ADD: return "add";
 		case OP_SUB: return "sub";
 		case OP_MUL: return "mul";
 		case OP_DIV: return "div";
-		case OP_STORE: return "store";
-		case OP_PUSH_INT: return "push_int";
-		case OP_PUSH_FLOAT: return "push_float";
-		case OP_PUSH_STRING: return "push_string";
-		case OP_CALL: return "call";
-		case OP_LOAD: return "load";
-		case OP_ASSIGN: return "assign";
-		case OP_ARRAY: return "array";
+		case OP_MOD: return "mod";
+		case OP_INVOKE: return "invoke";
+		case OP_STORE_FIELD: return "store_field";
 		default: break;
 	}
 	return "unknown";
@@ -59,12 +59,6 @@ void insert_v2(list_t* buffer, opcode_t op, value_t* v1, value_t* v2)
 
 // Main functions
 
-void emit_load(list_t* buffer, const char* obj)
-{
-	value_t* val = value_new_string(obj);
-	insert_v1(buffer, OP_LOAD, val);
-}
-
 void emit_i64(list_t* buffer, I64 v)
 {
 	value_t* val = value_new_int(v);
@@ -83,17 +77,10 @@ void emit_string(list_t* buffer, char* str)
 	insert_v1(buffer, OP_PUSH_STRING, val);
 }
 
-void emit_store(list_t* buffer, bool mutable, char* key)
+void emit_null(list_t* buffer)
 {
-	value_t* val = value_new_string(key);
-	if(mutable)
-	{
-		insert_v1(buffer, OP_MUT_STORE, val);
-	}
-	else
-	{
-		insert_v1(buffer, OP_STORE, val);
-	}
+	value_t* val = value_new_null();
+	insert_v1(buffer, OP_PUSH_NULL, val);
 }
 
 void emit_op(list_t* buffer, opcode_t op)
@@ -126,9 +113,9 @@ void emit_tok2op(list_t* buffer, token_type_t tok)
 			op = OP_DIV;
 			break;
 		}
-		case TOKEN_ASSIGN:
+		case TOKEN_MOD:
 		{
-			op = OP_ASSIGN;
+			op = OP_MOD;
 			break;
 		}
 		default: break;
@@ -137,15 +124,21 @@ void emit_tok2op(list_t* buffer, token_type_t tok)
 	emit_op(buffer, op);
 }
 
-void emit_call(list_t* buffer, char* key, I64 args)
+void emit_invoke(list_t* buffer, size_t args)
 {
-	value_t* val = value_new_string(key);
-	value_t* argc = value_new_int(args);
-	insert_v2(buffer, OP_CALL, val, argc);
+	value_t* v1 = value_new_int(args);
+	insert_v1(buffer, OP_INVOKE, v1);
 }
 
-void emit_array(list_t* buffer, I64 size)
+void emit_store_field(list_t* buffer, char* name, bool mutate)
 {
-	value_t* sz = value_new_int(size);
-	insert_v1(buffer, OP_ARRAY, sz);
+	value_t* val = value_new_string(name);
+	value_t* m = value_new_bool(mutate);
+	insert_v2(buffer, OP_STORE_FIELD, val, m);
+}
+
+void emit_get_field(list_t* buffer, char* key)
+{
+	value_t* val = value_new_string(key);
+	insert_v1(buffer, OP_GET_FIELD, val);
 }

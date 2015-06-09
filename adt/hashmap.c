@@ -155,7 +155,6 @@ int hashmap_set(hashmap_t* hashmap, char* key, void* value)
 int hashmap_get(hashmap_t* hashmap, char* key, void** value)
 {
 	unsigned int curr = hashmap_hash_int(hashmap, key);
-
 	for(int i = 0; i < MAX_CHAIN_LENGTH; i++)
 	{
 		bool use = hashmap->data[curr].use;
@@ -179,6 +178,11 @@ hashmap_t* hashmap_new()
 {
 	hashmap_t* hmap = malloc(sizeof(*hmap));
 	hmap->data = (bucket_t*)malloc(INIT_SIZE * sizeof(bucket_t));
+	for(int i = 0; i < INIT_SIZE; i++)
+	{
+		hmap->data[i].use = false;
+	}
+
 	hmap->table_size = INIT_SIZE;
 	hmap->size = 0;
 	return hmap;
@@ -200,4 +204,33 @@ void hashmap_free(hashmap_t* hashmap)
 {
 	free(hashmap->data);
 	free(hashmap);
+}
+
+hashmap_iterator_t* hashmap_iterator_create(hashmap_t* hashmap)
+{
+	hashmap_iterator_t* iter = malloc(sizeof(*iter));
+	iter->hmap = hashmap;
+	iter->idx = 0;
+	return iter;
+}
+
+void* hashmap_iterator_next(hashmap_iterator_t* iterator)
+{
+	void* data = 0;
+	if(iterator->hmap->data[iterator->idx].use)
+	{
+		data = iterator->hmap->data[iterator->idx].data;
+	}
+	iterator->idx++;
+	return data;
+}
+
+bool hashmap_iterator_end(hashmap_iterator_t* iterator)
+{
+	return iterator->idx == iterator->hmap->table_size;
+}
+
+void hashmap_iterator_free(hashmap_iterator_t* iterator)
+{
+	free(iterator);
 }

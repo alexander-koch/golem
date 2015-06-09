@@ -41,28 +41,28 @@ typedef enum
     TOKEN_RBRACKET,  // ']'
     TOKEN_COMMA,     // ','
     TOKEN_SEMICOLON, // ';'
-    TOKEN_ADD,       // '+'
-    TOKEN_SUB,       // '-'
-    TOKEN_MUL,       // '*'
-    TOKEN_DIV,
-    TOKEN_MOD,
-    TOKEN_EQUAL,
-    TOKEN_ASSIGN,
-    TOKEN_NEQUAL,
-    TOKEN_NOT,
-    TOKEN_DOT,
-    TOKEN_BITLSHIFT,
-    TOKEN_BITRSHIFT,
-    TOKEN_LEQUAL,
-    TOKEN_GEQUAL,
-    TOKEN_LESS,
-    TOKEN_GREATER,
-    TOKEN_AND,
-    TOKEN_OR,
-    TOKEN_BITAND,
-    TOKEN_BITOR,
-    TOKEN_BITXOR,
-    TOKEN_BITNOT
+    TOKEN_ADD,       // '+' OP
+    TOKEN_SUB,       // '-' OP
+    TOKEN_MUL,       // '*' OP
+    TOKEN_DIV,       // '/' OP
+    TOKEN_MOD,       // '%' OP
+    TOKEN_EQUAL,     // '==' OP
+    TOKEN_ASSIGN,    // '=' OP
+    TOKEN_NEQUAL,    // '!=' OP
+    TOKEN_NOT,       // '!' OP
+    TOKEN_DOT,       // '.'
+    TOKEN_BITLSHIFT, // '<<' OP
+    TOKEN_BITRSHIFT, // '>>' OP
+    TOKEN_LEQUAL,    // '<=' OP
+    TOKEN_GEQUAL,    // '>=' OP
+    TOKEN_LESS,      // '<' OP
+    TOKEN_GREATER,   // '>' OP
+    TOKEN_AND,       // '&&' OP
+    TOKEN_OR,        // '||' OP
+    TOKEN_BITAND,    // '&' OP
+    TOKEN_BITOR,     // '|' OP
+    TOKEN_BITXOR,    // '^' OP
+    TOKEN_BITNOT     // '~' OP
 } token_type_t;
 
 typedef struct

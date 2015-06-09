@@ -14,6 +14,7 @@ typedef struct
 	stack_t* stack;
 	hashmap_t* fields;
 	U64 pc;
+	bool error;
 } vm_t;
 
 typedef struct
@@ -22,6 +23,14 @@ typedef struct
 	bool mutate;
 	value_t* val;
 } variable_t;
+
+typedef struct
+{
+	char* name;
+	list_t* args;
+	U64 pc;
+	size_t len;
+} function_t;
 
 vm_t* vm_new();
 void vm_process(vm_t* vm, list_t* buffer);

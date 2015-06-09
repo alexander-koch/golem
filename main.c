@@ -25,13 +25,14 @@ void run_repl(vm_t* vm, compiler_t* compiler)
         }
         list_t* buffer = compile_buffer(compiler, buf);
         vm_execute(vm, buffer);
-        buffer_free(buffer);
+        compiler_clear(compiler);
     }
 }
 
 int main(int argc, char** argv)
 {
     compiler_t compiler;
+    compiler.buffer = 0;
 
     if(argc == 1)
     {
@@ -46,7 +47,7 @@ int main(int argc, char** argv)
         if(buffer)
         {
             vm_execute(vm, buffer);
-            buffer_free(buffer);
+            compiler_clear(&compiler);
         }
 
         vm_free(vm);
@@ -54,8 +55,8 @@ int main(int argc, char** argv)
     else
     {
         fprintf(stderr, "Usage:\n");
-        fprintf(stderr, " nemesis        (Interactive mode)\n");
-        fprintf(stderr, " nemesis <file> (Run a file)\n");
+        fprintf(stderr, " golem        (Interactive mode)\n");
+        fprintf(stderr, " golem <file> (Run a file)\n");
         return -1;
     }
 

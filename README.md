@@ -1,9 +1,7 @@
-# Project Nemesis
+# Project Nemesis / Golem-lang
 
 A programming language written in C.
 The language for the pure evil.
-
-(Still not clear if using Golem or Nemesis as Name for the language)
 
 # Concept
 
@@ -26,7 +24,7 @@ The use of egyptian style braces is standard (Not supported yet, final structure
 
 Classes are defined using the following structure (Not supported yet, final structure may change):
 
- 	interface / class Main {
+ 	class Main {
 
 		let mod x = 2
 		let mod y = 4

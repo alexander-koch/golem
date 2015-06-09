@@ -4,10 +4,12 @@
 #define KEYWORD_MUTATE "mut"
 #define KEYWORD_FUNCTION "fn"
 #define KEYWORD_IF "if"
+#define KEYWORD_WHILE "while"
 
 ast_t* parse_var_declaration(parser_t* parser);
 ast_t* parse_fn_declaration(parser_t* parser);
 ast_t* parse_if_declaration(parser_t* parser);
+ast_t* parse_while_declaration(parser_t* parser);
 ast_t* parse_expression(parser_t* parser);
 
 ast_t* parse_stmt(parser_t* parser);
@@ -446,6 +448,7 @@ ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
         }
 
         // Optimize syntax tree
+        // Integer optimization
         if(lhs->class == AST_INT && rhs->class == AST_INT)
         {
             bool opt = true;
@@ -471,6 +474,11 @@ ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
                     lhs->i = lhs->i / rhs->i;
                     break;
                 }
+                case TOKEN_MOD:
+                {
+                    lhs->i = lhs->i % rhs->i;
+                    break;
+                }
                 case TOKEN_BITLSHIFT:
                 {
                     lhs->i = lhs->i << rhs->i;
@@ -479,6 +487,21 @@ ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
                 case TOKEN_BITRSHIFT:
                 {
                     lhs->i = lhs->i >> rhs->i;
+                    break;
+                }
+                case TOKEN_BITAND:
+                {
+                    lhs->i = lhs->i & rhs->i;
+                    break;
+                }
+                case TOKEN_BITOR:
+                {
+                    lhs->i = lhs->i | rhs->i;
+                    break;
+                }
+                case TOKEN_BITXOR:
+                {
+                    lhs->i = lhs->i ^ rhs->i;
                     break;
                 }
                 case TOKEN_EQUAL:
@@ -491,6 +514,30 @@ ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
                 {
                     lhs->class = AST_BOOL;
                     lhs->b = (lhs->i != rhs->i);
+                    break;
+                }
+                case TOKEN_LEQUAL:
+                {
+                    lhs->class = AST_BOOL;
+                    lhs->b = (lhs->i <= lhs->i);
+                    break;
+                }
+                case TOKEN_GEQUAL:
+                {
+                    lhs->class = AST_BOOL;
+                    lhs->b = (lhs->i >= lhs->i);
+                    break;
+                }
+                case TOKEN_LESS:
+                {
+                    lhs->class = AST_BOOL;
+                    lhs->b = (lhs->i < lhs->i);
+                    break;
+                }
+                case TOKEN_GREATER:
+                {
+                    lhs->class = AST_BOOL;
+                    lhs->b = (lhs->i > lhs->i);
                     break;
                 }
                 default:
@@ -507,7 +554,7 @@ ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
             }
         }
 
-        // convert for simple operation later
+        // Float optimization
         if(lhs->class == AST_FLOAT && rhs->class == AST_INT)
         {
             // convert right hand side to float too
@@ -793,6 +840,26 @@ ast_t* parse_if_declaration(parser_t* parser)
     else
     {
         parser_throw(parser, "Malformed condition block");
+    }
+
+    return node;
+}
+
+ast_t* parse_while_declaration(parser_t* parser)
+{
+    ast_t* node = ast_class_create(AST_WHILE, get_location(parser));
+    token_t* key = accept_token_string(parser, KEYWORD_WHILE);
+    token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
+
+	// TODO: Implement!
+
+    if(key && lparen)
+    {
+
+    }
+    else
+    {
+        parser_throw(parser, "Malformed while loop block");
     }
 
     return node;
