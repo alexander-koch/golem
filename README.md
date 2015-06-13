@@ -44,14 +44,9 @@ Classes are defined using the following structure (Not supported yet, final stru
 		}
 	}
 
-# Pointer and ownership
-Ownership orients on Rusts system. Once you call a function with an object, ownership is transferred to that function.
-The function deletes it at the end of the scope. To still own it after, you have to return it.
-This prevents use of a pointer, after it has been freed.
-
 # Curently supported (AST)
 
-- variable declaration
+- variable declaration (immutable/mutable)
 - function declaration
 - if statements
 - while loop
@@ -63,8 +58,15 @@ This prevents use of a pointer, after it has been freed.
 # TODO
 
 - classes
-- Not operation is not working correctly
+- imports
+- for loops
+- unary- / prefix-operators fix (including pointers '*val = 5')
 - implement bytecode vm / llvm compiler
+
+# Pointer and ownership (TODO)
+Ownership orients on Rusts system. Once you call a function with an object, ownership is transferred to that function.
+The function deletes it at the end of the scope. To still own it after, you have to return it.
+This prevents use of a pointer, after it has been freed.
 
 
 # Licence

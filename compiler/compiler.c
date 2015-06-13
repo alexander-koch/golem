@@ -283,14 +283,18 @@ void compiler_dump(ast_t* node, int level)
 				fprintf(stdout, ":else<>");
 			}
 
-			// list_iterator_t* iter = list_iterator_create(node->ifclause.body);
-			// while(!list_iterator_end(iter))
-			// {
-			// 	ast_t* next = list_iterator_next(iter);
-			// 	compiler_dump(next, level+1);
-			// 	fprintf(stdout, "\n");
-			// }
-			// list_iterator_free(iter);
+			if(list_size(node->ifclause.body) > 0)
+			{
+				fprintf(stdout, "\n");
+				list_iterator_t* iter = list_iterator_create(node->ifclause.body);
+				while(!list_iterator_end(iter))
+				{
+					ast_t* next = list_iterator_next(iter);
+					compiler_dump(next, level+1);
+					fprintf(stdout, "\n");
+				}
+				list_iterator_free(iter);
+			}
 			break;
 		}
 		case AST_WHILE:
@@ -326,7 +330,6 @@ void compiler_dump(ast_t* node, int level)
 		{
 			fprintf(stdout, ":call<");
 			compiler_dump(node->call.callee, 0);
-			fprintf(stdout, ">");
 			break;
 		}
 		default: break;

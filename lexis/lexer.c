@@ -11,16 +11,38 @@ const char* tok2str(token_type_t type)
         case TOKEN_INT: return "<int>";
         case TOKEN_FLOAT: return "<float>";
         case TOKEN_BOOL: return "<bool>";
-        case TOKEN_LPAREN: return "(";
-        case TOKEN_RPAREN: return ")";
-        case TOKEN_LBRACE: return "{";
-        case TOKEN_RBRACE: return "}";
-        case TOKEN_LBRACKET: return "[";
-        case TOKEN_RBRACKET: return "]";
-        case TOKEN_COMMA: return ",";
-        case TOKEN_SEMICOLON: return ";";
-        // TODO implement more
-        default: return "null";
+        case TOKEN_LPAREN: return "<lparen>";
+        case TOKEN_RPAREN: return "<rparen>";
+        case TOKEN_LBRACE: return "<lbrace>";
+        case TOKEN_RBRACE: return "<rbrace>";
+        case TOKEN_LBRACKET: return "<lbracket>";
+        case TOKEN_RBRACKET: return "<rbracket>";
+        case TOKEN_COMMA: return "<comma>";
+        case TOKEN_SEMICOLON: return "<semicolon>";
+        case TOKEN_ADD: return "<add";
+        case TOKEN_SUB: return "<sub>";
+        case TOKEN_MUL: return "<mul>";
+        case TOKEN_DIV: return "<div>";
+        case TOKEN_MOD: return "<mod>";
+        case TOKEN_EQUAL: return "<equal>";
+        case TOKEN_ASSIGN: return "<assign>";
+        case TOKEN_NEQUAL: return "<nequal>";
+        case TOKEN_NOT: return "<not>";
+        case TOKEN_DOT: return "<dot>";
+        case TOKEN_BITLSHIFT: return ">bitlshift>";
+        case TOKEN_BITRSHIFT: return "<bitrshift>";
+        case TOKEN_LEQUAL: return "<lequal>";
+        case TOKEN_GEQUAL: return "<gequal>";
+        case TOKEN_LESS: return "<less>";
+        case TOKEN_GREATER: return "<greater>";
+        case TOKEN_AND: return "<and>";
+        case TOKEN_OR: return "<or>";
+        case TOKEN_BITAND: return "<bitand>";
+        case TOKEN_BITOR: return "<bitor>";
+        case TOKEN_BITXOR: return "<bitxor>";
+        case TOKEN_BITNOT: return "<bitnot>";
+        case TOKEN_NAMESPACE: return "<namespace>";
+        default: return "<null>";
     }
 }
 
@@ -211,7 +233,8 @@ int lex_op(lexer_t* lexer, token_t* token)
         RESERVED_ENTRY("||", TOKEN_OR),
         RESERVED_ENTRY("|", TOKEN_BITOR),
         RESERVED_ENTRY("^", TOKEN_BITXOR),
-        RESERVED_ENTRY("~", TOKEN_BITNOT)
+        RESERVED_ENTRY("~", TOKEN_BITNOT),
+        RESERVED_ENTRY("::", TOKEN_NAMESPACE)
     };
 
     size_t i;

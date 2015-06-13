@@ -391,19 +391,19 @@ ast_t* parse_expression_primary(parser_t* parser)
     else if(match_type(parser, TOKEN_ADD) || match_type(parser, TOKEN_SUB) ||
         match_type(parser, TOKEN_NOT) || match_type(parser, TOKEN_BITNOT))
     {
+        // Prefix operator
         token_type_t op = accept_token(parser)->type;
         ast = ast_class_create(AST_UNARY, get_location(parser));
         ast->unary.op = op;
-        ast->unary.expr = parse_expression(parser);
+        ast->unary.expr = parse_expression_primary(parser);
 
-        // FIXME: Unary has to be improved,
-        // currently changes whole expression in line
+        // -2 + 3 -> bin(unary(2), 3)
+        // -(2 + 3) -> unary(bin(2,3))
     }
     else
     {
         parser_throw(parser, "Expected expression, found '%s'", current_token(parser)->value);
     }
-    // TODO: Expand, other matches
 
     if(match_type(parser, TOKEN_LPAREN))
     {

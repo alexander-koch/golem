@@ -62,7 +62,8 @@ typedef enum
     TOKEN_BITAND,    // '&' OP
     TOKEN_BITOR,     // '|' OP
     TOKEN_BITXOR,    // '^' OP
-    TOKEN_BITNOT     // '~' OP
+    TOKEN_BITNOT,    // '~' OP
+    TOKEN_NAMESPACE  // '::'
 } token_type_t;
 
 typedef struct
