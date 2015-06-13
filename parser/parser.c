@@ -4,6 +4,7 @@
 #define KEYWORD_MUTATE "mut"
 #define KEYWORD_FUNCTION "fn"
 #define KEYWORD_IF "if"
+#define KEYWORD_ELSE "else"
 #define KEYWORD_WHILE "while"
 
 ast_t* parse_var_declaration(parser_t* parser);
@@ -41,20 +42,21 @@ location_t get_location(parser_t* parser)
     return current_token(parser)->location;
 }
 
-int match_string(parser_t* parser, const char* token)
+bool match_string(parser_t* parser, const char* token)
 {
-    if(parser_end(parser) || !token) return 0;
+    if(parser_end(parser) || !token) return false;
+    if(!parser->buffer[parser->cursor].value) return false;
     return !strcmp(parser->buffer[parser->cursor].value, token);
 }
 
-int match_type(parser_t* parser, token_type_t type)
+bool match_type(parser_t* parser, token_type_t type)
 {
     return parser->buffer[parser->cursor].type == type;
 }
 
-int match_next(parser_t* parser, const char* token)
+bool match_next(parser_t* parser, const char* token)
 {
-    if(parser_end(parser) || parser->cursor+1 >= parser->num_tokens) return 0;
+    if(parser_end(parser) || parser->cursor+1 >= parser->num_tokens) return false;
     return !strcmp(parser->buffer[parser->cursor+1].value, token);
 }
 
@@ -84,7 +86,8 @@ token_t* accept_token_type(parser_t* parser, token_type_t type)
     }
     else
     {
-        parser_throw(parser, "Wrong token type %d. Expected %d", parser->buffer[parser->cursor].type, type);
+        token_type_t tp = parser->buffer[parser->cursor].type;
+        parser_throw(parser, "Invalid syntax token '%s'. Expected '%s'", tok2str(tp), tok2str(type));
     }
     return 0;
 }
@@ -633,7 +636,7 @@ list_t* parse_block(parser_t* parser)
 {
     list_t* statements = list_new();
     skip_newline(parser);
-    while(!match_type(parser, TOKEN_RBRACE))
+    while(!match_type(parser, TOKEN_RBRACE) && !parser_error(parser))
     {
         if(parser_end(parser))
         {
@@ -645,10 +648,13 @@ list_t* parse_block(parser_t* parser)
         skip_newline(parser);
     }
 
-    token_t* rbrace = accept_token_type(parser, TOKEN_RBRACE);
-    if(!rbrace)
+    if(!parser_error(parser))
     {
-        parser_throw(parser, "Missing closing brace");
+        token_t* rbrace = accept_token_type(parser, TOKEN_RBRACE);
+        if(!rbrace)
+        {
+            parser_throw(parser, "Missing closing brace");
+        }
     }
 
     return statements;
@@ -686,7 +692,8 @@ ast_t* parse_stmt(parser_t* parser)
     {
         {KEYWORD_DECLARATION, parse_var_declaration},
         {KEYWORD_FUNCTION, parse_fn_declaration},
-        {KEYWORD_IF, parse_if_declaration}
+        {KEYWORD_IF, parse_if_declaration},
+        {KEYWORD_WHILE, parse_while_declaration}
     };
 
     for(size_t i = 0; i < sizeof(parsers)/sizeof(parsers[0]); i++)
@@ -697,6 +704,13 @@ ast_t* parse_stmt(parser_t* parser)
             test_newline(parser);
             return node;
         }
+    }
+
+    // Error testing
+    if(match_string(parser, KEYWORD_ELSE))
+    {
+        parser_throw(parser, "If-clause error: No beginning if-statement / Else-if out of if-chain");
+        return 0;
     }
 
     ast_t* node = parse_expression(parser);
@@ -818,28 +832,72 @@ ast_t* parse_if_declaration(parser_t* parser)
 {
     // if (expr) { \n
     ast_t* node = ast_class_create(AST_IF, get_location(parser));
-    token_t* ifst = accept_token_string(parser, KEYWORD_IF);
-    token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
+    node->ifstmt = list_new();
 
-    if(ifst && lparen)
+    // if (if / else if) do
+    while(match_string(parser, KEYWORD_IF) || (match_string(parser, KEYWORD_ELSE) && match_next(parser, KEYWORD_IF)))
     {
-        node->ifstmt.cond = parse_expression(parser);
+        // create a subclause and skip tokens
+        ast_t* clause = ast_class_create(AST_IFCLAUSE, get_location(parser));
+        if(match_string(parser, KEYWORD_IF))
+        {
+            accept_token_string(parser, KEYWORD_IF);
+        }
+        else
+        {
+            accept_token_string(parser, KEYWORD_ELSE);
+            accept_token_string(parser, KEYWORD_IF);
+        }
+
+        // begin expression
+        token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
+        if(!lparen)
+        {
+            parser_throw(parser, "Malformed if-statement, opening parenthesis expected");
+            ast_free(clause);
+            return node;
+        }
+        else
+        {
+            clause->ifclause.cond = parse_expression(parser);
+        }
 
         token_t* rparen = accept_token_type(parser, TOKEN_RPAREN);
         token_t* lbrace = accept_token_type(parser, TOKEN_LBRACE);
 
         if(rparen && lbrace)
         {
-            node->ifstmt.body = parse_block(parser);
+            clause->ifclause.body = parse_block(parser);
         }
         else
         {
             parser_throw(parser, "Conditional expression without end");
+            ast_free(clause);
+            return node;
         }
+
+        list_push(node->ifstmt, clause);
     }
-    else
+
+    if(match_string(parser, KEYWORD_ELSE))
     {
-        parser_throw(parser, "Malformed condition block");
+        ast_t* clause = ast_class_create(AST_IFCLAUSE, get_location(parser));
+        token_t* elsetok = accept_token_string(parser, KEYWORD_ELSE);
+        token_t* lbrace = accept_token_type(parser, TOKEN_LBRACE);
+
+        if(elsetok && lbrace)
+        {
+            clause->ifclause.cond = 0;
+            clause->ifclause.body = parse_block(parser);
+        }
+        else
+        {
+            parser_throw(parser, "Else statement without else keyword");
+            free(clause);
+            return node;
+        }
+
+        list_push(node->ifstmt, clause);
     }
 
     return node;
@@ -847,15 +905,27 @@ ast_t* parse_if_declaration(parser_t* parser)
 
 ast_t* parse_while_declaration(parser_t* parser)
 {
+    // while (expr) { \n
     ast_t* node = ast_class_create(AST_WHILE, get_location(parser));
+
     token_t* key = accept_token_string(parser, KEYWORD_WHILE);
     token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
 
-	// TODO: Implement!
-
     if(key && lparen)
     {
+        node->whilestmt.cond = parse_expression(parser);
 
+        token_t* rparen = accept_token_type(parser, TOKEN_RPAREN);
+        token_t* lbrace = accept_token_type(parser, TOKEN_LBRACE);
+
+        if(rparen && lbrace)
+        {
+            node->whilestmt.body = parse_block(parser);
+        }
+        else
+        {
+            parser_throw(parser, "While loop without end");
+        }
     }
     else
     {

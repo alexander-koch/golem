@@ -10,7 +10,7 @@ Example:
 
 	let x = 5
 
-Variables are mutable, if they are declared using the mut keyword.
+Variables are mutable, if they are declared using the 'mut' keyword.
 
 	let mut x = 5
 	x = x + 1
@@ -26,8 +26,8 @@ Classes are defined using the following structure (Not supported yet, final stru
 
  	class Main {
 
-		let mod x = 2
-		let mod y = 4
+		let mut x = 2
+		let mut y = 4
 
 		# Constructor
 		fn new(x, y, z) {
@@ -49,8 +49,22 @@ Ownership orients on Rusts system. Once you call a function with an object, owne
 The function deletes it at the end of the scope. To still own it after, you have to return it.
 This prevents use of a pointer, after it has been freed.
 
+# Curently supported (AST)
+
+- variable declaration
+- function declaration
+- if statements
+- while loop
+- function calls
+- array declaration
+- subscripts
+- expressions with precedence
+
 # TODO
-Implement a vm and convert AST to bytecode for said vm.
+
+- classes
+- Not operation is not working correctly
+- implement bytecode vm / llvm compiler
 
 
 # Licence

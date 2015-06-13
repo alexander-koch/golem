@@ -72,6 +72,8 @@ typedef struct
     char* value;
 } token_t;
 
+const char* tok2str(token_type_t type);
+
 void lexer_init(lexer_t* lexer);
 token_t* lexer_lex(lexer_t* lexer, const char* src, size_t* numTokens);
 void lexer_print_tokens(token_t* tokens, size_t n);

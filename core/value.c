@@ -76,20 +76,27 @@ void value_retain(value_t* value)
 	}
 }
 
+void value_reset(value_t* value)
+{
+	if(value->type == VALUE_STRING)
+	{
+		free(value->v.str);
+		value->v.str = 0;
+	}
+	else if(value->type == VALUE_OBJECT)
+	{
+		free(value->v.o);
+		value->v.o = 0;
+	}
+}
+
 void value_free(value_t* value)
 {
 	if(!value) return;
 
 	if(value->refcount == 0)
 	{
-		if(value->type == VALUE_STRING)
-		{
-			free(value->v.str);
-		}
-		else if(value->type == VALUE_OBJECT)
-		{
-			free(value->v.o);
-		}
+		value_reset(value);
 		free(value);
 	}
 	else
@@ -122,6 +129,11 @@ void value_print(value_t* value)
 			case VALUE_STRING:
 			{
 				console("%s", value->v.str);
+				break;
+			}
+			case VALUE_NULL:
+			{
+				console("null");
 				break;
 			}
 			default: break;

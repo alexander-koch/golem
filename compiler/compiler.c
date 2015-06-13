@@ -14,9 +14,18 @@ void eval_block(compiler_t* compiler, list_t* block)
 
 void eval_declfunc(compiler_t* compiler, ast_t* node)
 {
-	// TODO: Implement
+	emit_begin_func(compiler->buffer, node->funcdecl.name, list_size(node->funcdecl.impl.formals));
+
+	list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.formals);
+	while(!list_iterator_end(iter))
+	{
+		char* token = list_iterator_next(iter);
+		emit_string(compiler->buffer, token);
+	}
+	list_iterator_free(iter);
 
 	eval_block(compiler, node->funcdecl.impl.body);
+	emit_scope_end(compiler->buffer);
 }
 
 void eval_declvar(compiler_t* compiler, ast_t* node)
@@ -91,6 +100,11 @@ void eval_string(compiler_t* compiler, ast_t* node)
 	emit_string(compiler->buffer, node->string);
 }
 
+void eval_if(compiler_t* compiler, ast_t* node)
+{
+	// TODO: implement
+}
+
 void compiler_eval(compiler_t* compiler, ast_t* node)
 {
 	switch(node->class)
@@ -138,6 +152,11 @@ void compiler_eval(compiler_t* compiler, ast_t* node)
 		case AST_CALL:
 		{
 			eval_call(compiler, node);
+			break;
+		}
+		case AST_IF:
+		{
+			eval_if(compiler, node);
 			break;
 		}
 		default: break;
@@ -240,11 +259,8 @@ void compiler_dump(ast_t* node, int level)
 		}
 		case AST_IF:
 		{
-			fprintf(stdout, ":if<");
-			compiler_dump(node->ifstmt.cond, 0);
-			fprintf(stdout, ">\n");
-
-			list_iterator_t* iter = list_iterator_create(node->ifstmt.body);
+			fprintf(stdout, ":if<>\n");
+			list_iterator_t* iter = list_iterator_create(node->ifstmt);
 			while(!list_iterator_end(iter))
 			{
 				ast_t* next = list_iterator_next(iter);
@@ -252,7 +268,45 @@ void compiler_dump(ast_t* node, int level)
 				fprintf(stdout, "\n");
 			}
 			list_iterator_free(iter);
+			break;
+		}
+		case AST_IFCLAUSE:
+		{
+			if(node->ifclause.cond != 0)
+			{
+				fprintf(stdout, ":ifclause<");
+				compiler_dump(node->ifclause.cond, 0);
+				fprintf(stdout, ">");
+			}
+			else
+			{
+				fprintf(stdout, ":else<>");
+			}
 
+			// list_iterator_t* iter = list_iterator_create(node->ifclause.body);
+			// while(!list_iterator_end(iter))
+			// {
+			// 	ast_t* next = list_iterator_next(iter);
+			// 	compiler_dump(next, level+1);
+			// 	fprintf(stdout, "\n");
+			// }
+			// list_iterator_free(iter);
+			break;
+		}
+		case AST_WHILE:
+		{
+			fprintf(stdout, ":while<");
+			compiler_dump(node->whilestmt.cond, 0);
+			fprintf(stdout, ">\n");
+
+			list_iterator_t* iter = list_iterator_create(node->whilestmt.body);
+			while(!list_iterator_end(iter))
+			{
+				ast_t* next = list_iterator_next(iter);
+				compiler_dump(next, level+1);
+				fprintf(stdout, "\n");
+			}
+			list_iterator_free(iter);
 			break;
 		}
 		case AST_ARRAY:
@@ -292,7 +346,7 @@ list_t* compile_buffer(compiler_t* compiler, const char* source)
 	if(root)
 	{
 		compiler_dump(root, 0);
-		compiler_eval(compiler, root);
+		//compiler_eval(compiler, root);
 		ast_free(root);
 	}
 

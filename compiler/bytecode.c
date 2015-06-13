@@ -18,6 +18,8 @@ const char* op2str(opcode_t code)
 		case OP_MOD: return "mod";
 		case OP_INVOKE: return "invoke";
 		case OP_STORE_FIELD: return "store_field";
+		case OP_BEGIN_FUNC: return "begin_func";
+		case OP_SCOPE_END: return "scope_end";
 		default: break;
 	}
 	return "unknown";
@@ -141,4 +143,21 @@ void emit_get_field(list_t* buffer, char* key)
 {
 	value_t* val = value_new_string(key);
 	insert_v1(buffer, OP_GET_FIELD, val);
+}
+
+void emit_begin_func(list_t* buffer, char* name, size_t params)
+{
+	value_t* key = value_new_string(name);
+	value_t* args = value_new_int(params);
+	insert_v2(buffer, OP_BEGIN_FUNC, key, args);
+}
+
+void emit_scope_end(list_t* buffer)
+{
+	insert(buffer, OP_SCOPE_END);
+}
+
+void emit_if(list_t* buffer)
+{
+	insert(buffer, OP_IF);
 }

@@ -27,6 +27,7 @@ typedef enum
     AST_DECLVAR,
     AST_DECLFUNC,
     AST_IF,
+    AST_IFCLAUSE,
     AST_WHILE,
     AST_TOPLEVEL,
 } ast_class_t;
@@ -72,13 +73,14 @@ struct ast_s
         char* string;
         list_t* toplevel;
         list_t* array;
+        list_t* ifstmt;
         I64 i;
         F64 f;
         bool b;
         ast_field_t subscript;
         ast_func_t funcdecl;
         ast_decl_t vardecl;
-        ast_cond_t ifstmt;
+        ast_cond_t ifclause;
         ast_cond_t whilestmt;
 
         struct

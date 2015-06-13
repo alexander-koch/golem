@@ -13,6 +13,7 @@ typedef struct
 {
 	stack_t* stack;
 	hashmap_t* fields;
+	hashmap_t* functions;
 	U64 pc;
 	bool error;
 } vm_t;
@@ -27,12 +28,13 @@ typedef struct
 typedef struct
 {
 	char* name;
-	list_t* args;
+	size_t args;
 	U64 pc;
-	size_t len;
+	list_t* params;
 } function_t;
 
 vm_t* vm_new();
+instruction_t* vm_peek(vm_t* vm, list_t* buffer);
 void vm_process(vm_t* vm, list_t* buffer);
 void vm_execute(vm_t* vm, list_t* buffer);
 void vm_free(vm_t* vm);

@@ -1,5 +1,29 @@
 #include "lexer.h"
 
+const char* tok2str(token_type_t type)
+{
+    switch(type)
+    {
+        case TOKEN_NEWLINE: return "<newline>";
+        case TOKEN_SPACE: return "<space>";
+        case TOKEN_WORD: return "<word>";
+        case TOKEN_STRING: return "<string>";
+        case TOKEN_INT: return "<int>";
+        case TOKEN_FLOAT: return "<float>";
+        case TOKEN_BOOL: return "<bool>";
+        case TOKEN_LPAREN: return "(";
+        case TOKEN_RPAREN: return ")";
+        case TOKEN_LBRACE: return "{";
+        case TOKEN_RBRACE: return "}";
+        case TOKEN_LBRACKET: return "[";
+        case TOKEN_RBRACKET: return "]";
+        case TOKEN_COMMA: return ",";
+        case TOKEN_SEMICOLON: return ";";
+        // TODO implement more
+        default: return "null";
+    }
+}
+
 void lexer_init(lexer_t* lexer)
 {
     lexer->location.line = 0;

@@ -19,7 +19,10 @@ typedef enum
 	OP_DIV,
 	OP_MOD,
 	OP_INVOKE,
-	OP_STORE_FIELD
+	OP_STORE_FIELD,
+	OP_BEGIN_FUNC,
+	OP_SCOPE_END,
+	OP_IF
 } opcode_t;
 
 typedef struct
@@ -40,5 +43,8 @@ void emit_tok2op(list_t* buffer, token_type_t tok);
 void emit_invoke(list_t* buffer, size_t args);
 void emit_store_field(list_t* buffer, char* name, bool mutate);
 void emit_get_field(list_t* buffer, char* key);
+void emit_begin_func(list_t* buffer, char* name, size_t params);
+void emit_scope_end(list_t* buffer);
+void emit_if(list_t* buffer);
 
 #endif

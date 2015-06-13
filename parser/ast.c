@@ -5,6 +5,7 @@ ast_t* ast_class_create(ast_class_t class, location_t location)
 	ast_t* ast = malloc(sizeof(*ast));
 	if(!ast) return ast;
 
+	memset(ast, 0, sizeof(*ast));
 	ast->class = class;
 	ast->location = location;
     return ast;
@@ -100,15 +101,37 @@ void ast_free(ast_t* ast)
 		}
 		case AST_IF:
 		{
-			iter = list_iterator_create(ast->ifstmt.body);
+			iter = list_iterator_create(ast->ifstmt);
 			while(!list_iterator_end(iter))
 			{
 				ast_free(list_iterator_next(iter));
 			}
 			list_iterator_free(iter);
-			list_free(ast->ifstmt.body);
-
-			ast_free(ast->ifstmt.cond);
+			list_free(ast->ifstmt);
+			break;
+		}
+		case AST_IFCLAUSE:
+		{
+			iter = list_iterator_create(ast->ifclause.body);
+			while(!list_iterator_end(iter))
+			{
+				ast_free(list_iterator_next(iter));
+			}
+			list_iterator_free(iter);
+			list_free(ast->ifclause.body);
+			ast_free(ast->ifclause.cond);
+			break;
+		}
+		case AST_WHILE:
+		{
+			iter = list_iterator_create(ast->whilestmt.body);
+			while(!list_iterator_end(iter))
+			{
+				ast_free(list_iterator_next(iter));
+			}
+			list_iterator_free(iter);
+			list_free(ast->whilestmt.body);
+			ast_free(ast->whilestmt.cond);
 			break;
 		}
 		case AST_CALL:
