@@ -11,6 +11,7 @@
 #include <core/api.h>
 #include <lexis/lexer.h>
 #include <parser/ast.h>
+#include <parser/optimizer.h>
 
 typedef struct
 {
@@ -18,8 +19,7 @@ typedef struct
     token_t* buffer;
     size_t num_tokens;
     size_t cursor;
-
-    int error;
+    bool error;
 } parser_t;
 
 void parser_init(parser_t* parser);

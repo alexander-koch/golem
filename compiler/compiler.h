@@ -8,6 +8,15 @@
 #include <parser/parser.h>
 #include <compiler/bytecode.h>
 
+#ifdef __USE_LLVM__
+#include <llvm-c/Core.h>
+#include <llvm-c/ExecutionEngine.h>
+#include <llvm-c/Target.h>
+#include <llvm-c/Analysis.h>
+#include <llvm-c/BitWriter.h>
+#include <compiler/llvm_compiler.h>
+#endif
+
 typedef struct compiler_t
 {
 	parser_t parser;

@@ -29,6 +29,9 @@ const char* ast_classname(ast_class_t class)
 		case AST_DECLFUNC: return "function declaration";
 		case AST_IF: return "if condition";
 		case AST_WHILE: return "while loop";
+		case AST_INCLUDE: return "use";
+		case AST_CLASS: return "class";
+		case AST_RETURN: return "return";
 		case AST_TOPLEVEL: return "toplevel";
 		default: return "null";
 	}
@@ -132,6 +135,27 @@ void ast_free(ast_t* ast)
 			list_iterator_free(iter);
 			list_free(ast->whilestmt.body);
 			ast_free(ast->whilestmt.cond);
+			break;
+		}
+		case AST_INCLUDE:
+		{
+			ast_free(ast->include);
+			break;
+		}
+		case AST_CLASS:
+		{
+			iter = list_iterator_create(ast->classstmt.body);
+			while(!list_iterator_end(iter))
+			{
+				ast_free(list_iterator_next(iter));
+			}
+			list_iterator_free(iter);
+			list_free(ast->classstmt.body);
+			break;
+		}
+		case AST_RETURN:
+		{
+			ast_free(ast->returnstmt);
 			break;
 		}
 		case AST_CALL:

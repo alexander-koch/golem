@@ -15,10 +15,10 @@ Variables are mutable, if they are declared using the 'mut' keyword.
 	let mut x = 5
 	x = x + 1
 
-Functions are declared using the 'fn' keyword. Every function is then followed by a tuple.
+Functions are declared using the 'func' keyword.
 The use of egyptian style braces is standard (Not supported yet, final structure may change).
 
-	fn main(args) {
+	func main(args) {
 		# body
 	}
 
@@ -30,16 +30,16 @@ Classes are defined using the following structure (Not supported yet, final stru
 		let mut y = 4
 
 		# Constructor
-		fn new(x, y, z) {
-			self.x = 2
-			self.y = y
+		func new(x, y, z) {
+			this::x = 2
+			this::y = y
 		}
 
-		fn run() {
+		func run() {
 			println("Running with x:", self.x, "and y:", self.y)
 		}
 
-		fn free() {
+		func free() {
 			# do some stuff here
 		}
 	}
@@ -57,16 +57,25 @@ Classes are defined using the following structure (Not supported yet, final stru
 
 # TODO
 
+- AST optimization
 - classes
 - imports
 - for loops
-- unary- / prefix-operators fix (including pointers '*val = 5')
 - implement bytecode vm / llvm compiler
+
+# Feature ideas
+
+- Prefix operators
 
 # Pointer and ownership (TODO)
 Ownership orients on Rusts system. Once you call a function with an object, ownership is transferred to that function.
 The function deletes it at the end of the scope. To still own it after, you have to return it.
 This prevents use of a pointer, after it has been freed.
+
+# TODO if done
+
+- opengl api for golem
+- create a rougelike game in 2d with a dungeon generator based on http://journal.stuffwithstuff.com/2014/12/21/rooms-and-mazes/
 
 
 # Licence

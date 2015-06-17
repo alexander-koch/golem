@@ -238,12 +238,12 @@ void compiler_dump(ast_t* node, int level)
 			fprintf(stdout, ":bin<");
 			compiler_dump(node->binary.left, 0);
 			compiler_dump(node->binary.right, 0);
-			fprintf(stdout, ":op = %d>", node->binary.op);
+			fprintf(stdout, ":op = %s>", tok2str(node->binary.op));
 			break;
 		}
 		case AST_UNARY:
 		{
-			fprintf(stdout, ":unary<");
+			fprintf(stdout, ":unary<%s, ", tok2str(node->unary.op));
 			compiler_dump(node->unary.expr, 0);
 			fprintf(stdout, ">");
 			break;
@@ -313,6 +313,13 @@ void compiler_dump(ast_t* node, int level)
 			list_iterator_free(iter);
 			break;
 		}
+		case AST_INCLUDE:
+		{
+			fprintf(stdout, ":use<");
+			compiler_dump(node->include, 0);
+			fprintf(stdout, ">");
+			break;
+		}
 		case AST_ARRAY:
 		{
 			fprintf(stdout, ":array<");
@@ -326,14 +333,70 @@ void compiler_dump(ast_t* node, int level)
 			fprintf(stdout, ">");
 			break;
 		}
+		case AST_CLASS:
+		{
+			fprintf(stdout, ":class<%s>\n", node->classstmt.name);
+			list_iterator_t* iter = list_iterator_create(node->classstmt.body);
+			while(!list_iterator_end(iter))
+			{
+				ast_t* next = list_iterator_next(iter);
+				compiler_dump(next, level+1);
+				fprintf(stdout, "\n");
+			}
+			list_iterator_free(iter);
+			break;
+		}
+		case AST_RETURN:
+		{
+			fprintf(stdout, ":return<");
+			compiler_dump(node->returnstmt, 0);
+			fprintf(stdout, ">");
+			break;
+		}
 		case AST_CALL:
 		{
 			fprintf(stdout, ":call<");
 			compiler_dump(node->call.callee, 0);
+			fprintf(stdout, ">");
 			break;
 		}
 		default: break;
 	}
+}
+
+void llvm_compile(ast_t* root)
+{
+#ifdef __USE_LLVM__
+	LLVMModuleRef module = LLVMModuleCreateWithName("toplevel");
+	LLVMBuilderRef builder = LLVMCreateBuilder();
+
+	// LLVMTypeRef param_types[] = { LLVMInt32Type(), LLVMInt32Type() };
+	// LLVMTypeRef ret_type = LLVMFunctionType(LLVMInt32Type(), param_types, 2, 0);
+	// LLVMValueRef sum = LLVMAddFunction(module, "sum", ret_type);
+	//
+	// LLVMBasicBlockRef entry = LLVMAppendBasicBlock(sum, "entry");
+	// LLVMPositionBuilderAtEnd(builder, entry);
+	//
+	// LLVMValueRef tmp = LLVMBuildAdd(builder, LLVMGetParam(sum, 0), LLVMGetParam(sum, 1), "tmp");
+	// LLVMBuildRet(builder, tmp);
+
+	llvm_eval(&builder, root);
+
+	// Verify and execute
+	char *error = 0;
+	LLVMVerifyModule(module, LLVMAbortProcessAction, &error);
+	LLVMDisposeMessage(error);
+
+	LLVMDumpModule(module);
+
+    // Write out bitcode to file
+    if (LLVMWriteBitcodeToFile(module, "out.bc") != 0) {
+        fprintf(stderr, "error writing bitcode to file, skipping\n");
+    }
+
+	LLVMDisposeBuilder(builder);
+	LLVMDisposeModule(module);
+#endif
 }
 
 /**
@@ -349,7 +412,9 @@ list_t* compile_buffer(compiler_t* compiler, const char* source)
 	if(root)
 	{
 		compiler_dump(root, 0);
-		//compiler_eval(compiler, root);
+		compiler_eval(compiler, root);
+		//llvm_compile(root);
+
 		ast_free(root);
 	}
 

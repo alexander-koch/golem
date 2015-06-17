@@ -60,7 +60,7 @@ void lexer_init(lexer_t* lexer)
 void lex_error(lexer_t* lexer, const char* err)
 {
     lexer->error = 1;
-    fprintf(stdout, "[line %d, column %d] Lexical error: %s\n", lexer->location.line, lexer->location.column, err);
+    fprintf(stdout, "[line %d, column %d] (Lexis): %s\n", lexer->location.line, lexer->location.column, err);
 }
 
 #define RESERVED_ENTRY(w, t) {w, sizeof(w) - 1, t}

@@ -29,6 +29,9 @@ typedef enum
     AST_IF,
     AST_IFCLAUSE,
     AST_WHILE,
+    AST_INCLUDE,
+    AST_CLASS,
+    AST_RETURN,
     AST_TOPLEVEL,
 } ast_class_t;
 
@@ -63,6 +66,12 @@ typedef struct
     ast_t* initializer;
 } ast_decl_t;
 
+typedef struct
+{
+    char* name;
+    list_t* body;
+} ast_struct_t;
+
 struct ast_s
 {
     ast_class_t class;
@@ -77,11 +86,14 @@ struct ast_s
         I64 i;
         F64 f;
         bool b;
+        ast_t* include;
+        ast_t* returnstmt;
         ast_field_t subscript;
         ast_func_t funcdecl;
         ast_decl_t vardecl;
         ast_cond_t ifclause;
         ast_cond_t whilestmt;
+        ast_struct_t classstmt;
 
         struct
         {

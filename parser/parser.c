@@ -1,16 +1,22 @@
 #include "parser.h"
 
+#define KEYWORD_INCLUDE "use"
 #define KEYWORD_DECLARATION "let"
 #define KEYWORD_MUTATE "mut"
-#define KEYWORD_FUNCTION "fn"
+#define KEYWORD_FUNCTION "func"
 #define KEYWORD_IF "if"
 #define KEYWORD_ELSE "else"
 #define KEYWORD_WHILE "while"
+#define KEYWORD_CLASS "class"
+#define KEYWORD_RETURN "return"
 
+ast_t* parse_include_declaration(parser_t* parser);
 ast_t* parse_var_declaration(parser_t* parser);
 ast_t* parse_fn_declaration(parser_t* parser);
 ast_t* parse_if_declaration(parser_t* parser);
 ast_t* parse_while_declaration(parser_t* parser);
+ast_t* parse_class_declaration(parser_t* parser);
+ast_t* parse_return_declaration(parser_t* parser);
 ast_t* parse_expression(parser_t* parser);
 
 ast_t* parse_stmt(parser_t* parser);
@@ -115,7 +121,7 @@ void parser_throw(parser_t* parser, const char* format, ...)
     parser->error = 1;
     location_t loc = get_location(parser);
 
-    fprintf(stdout, "[line %d, column %d] ", loc.line, loc.column);
+    fprintf(stdout, "[line %d, column %d] (Syntax): ", loc.line, loc.column);
     va_list argptr;
     va_start(argptr, format);
     vfprintf(stdout, format, argptr);
@@ -389,16 +395,24 @@ ast_t* parse_expression_primary(parser_t* parser)
         }
     }
     else if(match_type(parser, TOKEN_ADD) || match_type(parser, TOKEN_SUB) ||
-        match_type(parser, TOKEN_NOT) || match_type(parser, TOKEN_BITNOT))
+        match_type(parser, TOKEN_NOT) || match_type(parser, TOKEN_BITNOT) ||
+        match_type(parser, TOKEN_MUL))
     {
+        // +2 -> unary(+, 2)
+        // -2 -> unary(-, 2)
+        // !true -> unary(!, true)
+        // ~2 -> unary(~, 2)
+        // *x -> unary(*, x) -> pointer to something / value of
+        // -2 + 3 -> bin(unary(-, 2), 3)
+        // -(2 + 3) -> unary(-, bin(2,3))
+
+        // TODO: How about prefix increment and decrement?
+
         // Prefix operator
         token_type_t op = accept_token(parser)->type;
         ast = ast_class_create(AST_UNARY, get_location(parser));
         ast->unary.op = op;
         ast->unary.expr = parse_expression_primary(parser);
-
-        // -2 + 3 -> bin(unary(2), 3)
-        // -(2 + 3) -> unary(bin(2,3))
     }
     else
     {
@@ -428,6 +442,9 @@ ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
 {
     for(;;)
     {
+        // TODO: Test if the operator is valid or not, otherwise
+        // throws error of missing newline
+
         token_type_t op = current_token(parser)->type;
         int prec = parse_precedence(op);
         if(prec < minprec)
@@ -669,7 +686,7 @@ void test_newline(parser_t* parser)
     {
         if(!match_type(parser, TOKEN_NEWLINE))
         {
-            parser_throw(parser, "Missing newline after statement");
+            parser_throw(parser, "Invalid statement (Newline missing?)");
         }
         else
         {
@@ -690,10 +707,13 @@ ast_t* parse_stmt(parser_t* parser)
         ast_t* (*fn)(parser_t*);
     } parsers[] =
     {
+        {KEYWORD_INCLUDE, parse_include_declaration},
         {KEYWORD_DECLARATION, parse_var_declaration},
         {KEYWORD_FUNCTION, parse_fn_declaration},
         {KEYWORD_IF, parse_if_declaration},
-        {KEYWORD_WHILE, parse_while_declaration}
+        {KEYWORD_WHILE, parse_while_declaration},
+        {KEYWORD_CLASS, parse_class_declaration},
+        {KEYWORD_RETURN, parse_return_declaration}
     };
 
     for(size_t i = 0; i < sizeof(parsers)/sizeof(parsers[0]); i++)
@@ -757,12 +777,40 @@ ast_t* parser_run(parser_t* parser, const char* content)
         list_push(ast->toplevel, node);
     }
 
+    bool b = optimize_tree(ast);
+    if(!b)
+    {
+        ast_free(ast);
+        return 0;
+    }
+
     return ast;
 }
 
 ///////-----------------
 // Parsing subroutines
 //////------------------
+
+ast_t* parse_include_declaration(parser_t* parser)
+{
+    // use "io" \n
+    ast_t* node = ast_class_create(AST_INCLUDE, get_location(parser));
+    token_t* inc = accept_token_string(parser, KEYWORD_INCLUDE);
+    token_t* val = accept_token_type(parser, TOKEN_STRING);
+
+    if(inc && val)
+    {
+        ast_t* str = ast_class_create(AST_STRING, get_location(parser));
+        str->string = val->value;
+        node->include = str;
+    }
+    else
+    {
+        parser_throw(parser, "Malformed import / include statement");
+    }
+
+    return node;
+}
 
 ast_t* parse_var_declaration(parser_t* parser)
 {
@@ -930,6 +978,45 @@ ast_t* parse_while_declaration(parser_t* parser)
     else
     {
         parser_throw(parser, "Malformed while loop block");
+    }
+
+    return node;
+}
+
+ast_t* parse_class_declaration(parser_t* parser)
+{
+    // class expr { \n
+    ast_t* node = ast_class_create(AST_CLASS, get_location(parser));
+
+    token_t* key = accept_token_string(parser, KEYWORD_CLASS);
+    token_t* ident = accept_token_type(parser, TOKEN_WORD);
+    token_t* lbrace = accept_token_type(parser, TOKEN_LBRACE);
+
+    if(key && ident && lbrace)
+    {
+        node->classstmt.name = ident->value;
+        node->classstmt.body = parse_block(parser);
+    }
+    else
+    {
+        parser_throw(parser, "Malformed class declaration");
+    }
+
+    return node;
+}
+
+ast_t* parse_return_declaration(parser_t* parser)
+{
+    ast_t* node = ast_class_create(AST_RETURN, get_location(parser));
+    token_t* ret = accept_token_string(parser, KEYWORD_RETURN);
+
+    if(ret)
+    {
+        node->returnstmt = parse_expression(parser);
+    }
+    else
+    {
+        parser_throw(parser, "Invalid return statement");
     }
 
     return node;
