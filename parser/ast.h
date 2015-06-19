@@ -9,6 +9,25 @@
 #include <core/mem.h>
 #include <core/api.h>
 
+// types: i32, f32, i64, f64, bool, str, (array)i32[], custom classes
+typedef enum
+{
+    DATA_NULL = 0x1,
+    DATA_BOOL = 0x2,
+    DATA_INT = 0x4,
+    DATA_FLOAT = 0x8,
+    DATA_STRING = 0x10,
+    DATA_ARRAY = 0x20,
+    DATA_OBJECT = 0x40,
+    DATA_VOID = 0x80
+} datatype_t;
+
+typedef struct
+{
+    char* name;
+    datatype_t type;
+} param_t;
+
 typedef struct ast_s ast_t;
 
 typedef enum
@@ -57,6 +76,7 @@ typedef struct
 {
     char* name;
     ast_lambda_t impl;
+    datatype_t rettype;
 } ast_func_t;
 
 typedef struct

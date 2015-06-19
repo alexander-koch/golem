@@ -614,6 +614,65 @@ ast_t* parse_expression(parser_t* parser)
     return lhs;
 }
 
+datatype_t parse_datatype(parser_t* parser)
+{
+    token_t* typestr = accept_token_type(parser, TOKEN_WORD);
+    if(!typestr)
+    {
+        parser_throw(parser, "Type must be an identifier, invalid");
+        return DATA_NULL;
+    }
+
+    datatype_t type = DATA_NULL;
+    char* v = typestr->value;
+
+    if(!strcmp(v, "int"))
+    {
+        type = DATA_INT;
+    }
+    else if(!strcmp(v, "float"))
+    {
+        type = DATA_FLOAT;
+    }
+    else if(!strcmp(v, "str"))
+    {
+        type = DATA_STRING;
+    }
+    else if(!strcmp(v, "bool"))
+    {
+        type = DATA_BOOL;
+    }
+    else if(!strcmp(v, "void"))
+    {
+        type = DATA_VOID;
+    }
+    else
+    {
+        type = DATA_OBJECT;
+    }
+
+    if(match_type(parser, TOKEN_LBRACKET))
+    {
+        accept_token(parser);
+        token_t* rbrac = accept_token_type(parser, TOKEN_RBRACKET);
+        if(!rbrac)
+        {
+            parser_throw(parser, "Expected closing bracket");
+            return DATA_NULL;
+        }
+
+        if(type == DATA_VOID)
+        {
+            parser_throw(parser, "Invalid: array of type void");
+            return DATA_NULL;
+        }
+
+        type = DATA_ARRAY | type;
+    }
+
+    return type;
+}
+
 /**
  *  Parse formals -> e.g. argument list for functions
  */
@@ -628,11 +687,27 @@ list_t* parse_formals(parser_t* parser)
             return formals;
         }
 
-        list_push(formals, accept_token(parser)->value);
+        token_t* name = accept_token(parser);
+        if(!match_type(parser, TOKEN_COLON))
+        {
+            parser_throw(parser, "Type expected");
+            return formals;
+        }
+        accept_token(parser); // ':'
+
+        param_t* param = malloc(sizeof(*param));
+        param->name = name->value;
+        param->type = parse_datatype(parser);
+
+        list_push(formals, param);
         if(!match_type(parser, TOKEN_COMMA) && !match_type(parser, TOKEN_RPAREN))
         {
             parser_throw(parser, "Expected seperator");
             return formals;
+        }
+        else if(match_type(parser, TOKEN_COMMA))
+        {
+            accept_token(parser);
         }
     }
 
@@ -845,7 +920,7 @@ ast_t* parse_var_declaration(parser_t* parser)
 
 ast_t* parse_fn_declaration(parser_t* parser)
 {
-    // fn name (params) { \n
+    // fn name (params) -> int { \n
     ast_t* node = ast_class_create(AST_DECLFUNC, get_location(parser));
 
     token_t* fn = accept_token_string(parser, KEYWORD_FUNCTION);
@@ -856,6 +931,19 @@ ast_t* parse_fn_declaration(parser_t* parser)
     {
         node->funcdecl.name = ident->value;
         node->funcdecl.impl.formals = parse_formals(parser);
+        node->funcdecl.rettype = DATA_NULL;
+
+        if(!match_type(parser, TOKEN_ARROW))
+        {
+            parser_throw(parser, "Return type expected");
+            return node;
+        }
+        else
+        {
+            accept_token(parser);
+            datatype_t tp = parse_datatype(parser);
+            node->funcdecl.rettype = tp;
+        }
 
         if(!match_type(parser, TOKEN_LBRACE))
         {

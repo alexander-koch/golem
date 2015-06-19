@@ -20,6 +20,7 @@ void opt_throw(optimizer_t* opt, const char* format, ...)
 
 void optimize_node(optimizer_t* opt, ast_t* node)
 {
+	opt->node = node;
 	switch(node->class)
 	{
 		case AST_TOPLEVEL:
@@ -59,6 +60,7 @@ void optimize_node(optimizer_t* opt, ast_t* node)
 		}
 		case AST_DECLFUNC:
 		{
+			// Body analysing
 			list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.body);
 			while(!list_iterator_end(iter))
 			{
@@ -71,6 +73,20 @@ void optimize_node(optimizer_t* opt, ast_t* node)
 				}
 			}
 			list_iterator_free(iter);
+
+			// Formals analysing
+			iter = list_iterator_create(node->funcdecl.impl.formals);
+			while(!list_iterator_end(iter))
+			{
+				param_t* sub = list_iterator_next(iter);
+				if(sub->type == DATA_VOID || ((sub->type & DATA_ARRAY) == DATA_ARRAY && (sub->type & DATA_VOID) == DATA_VOID))
+				{
+					opt_throw(opt, "Parameters may not be declared as void");
+					break;
+				}
+			}
+			list_iterator_free(iter);
+
 			break;
 		}
 		default: break;

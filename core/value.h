@@ -6,7 +6,7 @@
 #include <core/api.h>
 #include <core/util.h>
 
-typedef enum value_type_t
+typedef enum
 {
 	VALUE_NULL,
 	VALUE_BOOL,

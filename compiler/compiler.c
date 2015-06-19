@@ -367,34 +367,17 @@ void compiler_dump(ast_t* node, int level)
 void llvm_compile(ast_t* root)
 {
 #ifdef __USE_LLVM__
-	LLVMModuleRef module = LLVMModuleCreateWithName("toplevel");
+	LLVMModuleRef module = LLVMModuleCreateWithName("golem");
 	LLVMBuilderRef builder = LLVMCreateBuilder();
-
-	// LLVMTypeRef param_types[] = { LLVMInt32Type(), LLVMInt32Type() };
-	// LLVMTypeRef ret_type = LLVMFunctionType(LLVMInt32Type(), param_types, 2, 0);
-	// LLVMValueRef sum = LLVMAddFunction(module, "sum", ret_type);
-	//
-	// LLVMBasicBlockRef entry = LLVMAppendBasicBlock(sum, "entry");
-	// LLVMPositionBuilderAtEnd(builder, entry);
-	//
-	// LLVMValueRef tmp = LLVMBuildAdd(builder, LLVMGetParam(sum, 0), LLVMGetParam(sum, 1), "tmp");
-	// LLVMBuildRet(builder, tmp);
-
-	llvm_eval(&builder, root);
-
-	// Verify and execute
-	char *error = 0;
-	LLVMVerifyModule(module, LLVMAbortProcessAction, &error);
-	LLVMDisposeMessage(error);
-
+	llvm_eval(module, builder, root);
+	LLVMDisposeBuilder(builder);
 	LLVMDumpModule(module);
 
     // Write out bitcode to file
-    if (LLVMWriteBitcodeToFile(module, "out.bc") != 0) {
+    /*if (LLVMWriteBitcodeToFile(module, "out.bc") != 0) {
         fprintf(stderr, "error writing bitcode to file, skipping\n");
-    }
+    }*/
 
-	LLVMDisposeBuilder(builder);
 	LLVMDisposeModule(module);
 #endif
 }
@@ -412,8 +395,8 @@ list_t* compile_buffer(compiler_t* compiler, const char* source)
 	if(root)
 	{
 		compiler_dump(root, 0);
-		compiler_eval(compiler, root);
-		//llvm_compile(root);
+	//	compiler_eval(compiler, root);
+	//	llvm_compile(root);
 
 		ast_free(root);
 	}

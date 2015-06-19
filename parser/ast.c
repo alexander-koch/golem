@@ -57,7 +57,6 @@ void ast_free(ast_t* ast)
 		}
 		case AST_DECLVAR:
 		{
-			//free(ast->vardecl.name);
 			ast_free(ast->vardecl.initializer);
 			break;
 		}
@@ -69,8 +68,15 @@ void ast_free(ast_t* ast)
 				ast_free(list_iterator_next(iter));
 			}
 			list_iterator_free(iter);
-
 			list_free(ast->funcdecl.impl.body);
+
+			iter = list_iterator_create(ast->funcdecl.impl.formals);
+			while(!list_iterator_end(iter))
+			{
+				param_t* param = list_iterator_next(iter);
+				free(param);
+			}
+			list_iterator_free(iter);
 			list_free(ast->funcdecl.impl.formals);
 			break;
 		}

@@ -18,7 +18,7 @@ Variables are mutable, if they are declared using the 'mut' keyword.
 Functions are declared using the 'func' keyword.
 The use of egyptian style braces is standard (Not supported yet, final structure may change).
 
-	func main(args) {
+	func main(args: str[]) -> void {
 		# body
 	}
 
@@ -30,16 +30,16 @@ Classes are defined using the following structure (Not supported yet, final stru
 		let mut y = 4
 
 		# Constructor
-		func new(x, y, z) {
+		func new(x, y, z) -> void {
 			this::x = 2
 			this::y = y
 		}
 
-		func run() {
+		func run() -> void {
 			println("Running with x:", self.x, "and y:", self.y)
 		}
 
-		func free() {
+		func free() -> void {
 			# do some stuff here
 		}
 	}
@@ -58,8 +58,6 @@ Classes are defined using the following structure (Not supported yet, final stru
 # TODO
 
 - AST optimization
-- classes
-- imports
 - for loops
 - implement bytecode vm / llvm compiler
 

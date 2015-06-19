@@ -22,10 +22,10 @@ FILES = main.c \
 		parser/optimizer.c \
 		compiler/compiler.c \
 		compiler/bytecode.c \
+		compiler/llvm_compiler.c \
 		vm/vm.c
 
 debug:
-	#mkdir -p bin/
 	$(CC) $(CFLAGS) $(INC) -c $(FILES)
 	$(CXX) *.o $(LDFLAGS) -o $(MODULE)
 	-rm *.o
