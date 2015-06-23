@@ -169,6 +169,8 @@ void compiler_eval(compiler_t* compiler, ast_t* node)
  */
 void compiler_dump(ast_t* node, int level)
 {
+	if(!node) return;
+
 	for(int i = 0; i < level; i++)
 	{
 		console("#");
@@ -364,21 +366,29 @@ void compiler_dump(ast_t* node, int level)
 	}
 }
 
-void llvm_compile(ast_t* root)
+void llvm_compile(compiler_t* cmpl, ast_t* root)
 {
 #ifdef __USE_LLVM__
-	LLVMModuleRef module = LLVMModuleCreateWithName("golem");
-	LLVMBuilderRef builder = LLVMCreateBuilder();
-	llvm_eval(module, builder, root);
-	LLVMDisposeBuilder(builder);
-	LLVMDumpModule(module);
+	llvm_context_t* ctx = llvm_context_create(cmpl->filename);
+	llvm_traverse(ctx, root);
 
-    // Write out bitcode to file
-    /*if (LLVMWriteBitcodeToFile(module, "out.bc") != 0) {
-        fprintf(stderr, "error writing bitcode to file, skipping\n");
-    }*/
+	if(cmpl->filename)
+	{
+		char* ext = strdup(".bc");
+		char* out = concat(cmpl->filename, ext);
 
-	LLVMDisposeModule(module);
+		fprintf(stdout, "Writing to file...\n");
+		// Write out bitcode to file
+	    if (LLVMWriteBitcodeToFile(ctx->module, out) != 0) {
+	        fprintf(stderr, "Error writing bitcode to file, skipping\n");
+	    }
+
+		free(ext);
+		free(cmpl->filename);
+	}
+
+	LLVMDumpModule(ctx->module);
+	llvm_context_free(ctx);
 #endif
 }
 
@@ -395,8 +405,8 @@ list_t* compile_buffer(compiler_t* compiler, const char* source)
 	if(root)
 	{
 		compiler_dump(root, 0);
-	//	compiler_eval(compiler, root);
-	//	llvm_compile(root);
+		// compiler_eval(compiler, root);
+		llvm_compile(compiler, root);
 
 		ast_free(root);
 	}
@@ -423,6 +433,8 @@ list_t* compile_file(compiler_t* compiler, const char* filename)
 	// run vm with compiler
 	list_t* buffer = compile_buffer(compiler, source);
 	free(source);
+
+	compiler->filename = strdup(filename);
 	return buffer;
 }
 

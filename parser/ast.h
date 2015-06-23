@@ -19,7 +19,8 @@ typedef enum
     DATA_STRING = 0x10,
     DATA_ARRAY = 0x20,
     DATA_OBJECT = 0x40,
-    DATA_VOID = 0x80
+    DATA_VOID = 0x80,
+    DATA_PTR = 0x100
 } datatype_t;
 
 typedef struct

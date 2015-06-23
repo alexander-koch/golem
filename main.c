@@ -33,6 +33,7 @@ int main(int argc, char** argv)
 {
     compiler_t compiler;
     compiler.buffer = 0;
+    compiler.filename = 0;
 
     if(argc == 1)
     {

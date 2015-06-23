@@ -75,6 +75,11 @@ This prevents use of a pointer, after it has been freed.
 - opengl api for golem
 - create a rougelike game in 2d with a dungeon generator based on http://journal.stuffwithstuff.com/2014/12/21/rooms-and-mazes/
 
+# Stuff
+
+http://llvm.org/docs/LangRef.html
+http://llvm.org/docs/doxygen/html/group__LLVMCCoreValueGeneral.html
+https://github.com/TheThirdOne/llvm-tutorial-gitbook/blob/master/mutable.md
 
 # Licence
 Copyright (c) Alexander Koch 2015

@@ -21,6 +21,7 @@ typedef struct compiler_t
 {
 	parser_t parser;
 	list_t* buffer;
+	char* filename;
 } compiler_t;
 
 list_t* compile_buffer(compiler_t* compiler, const char* source);

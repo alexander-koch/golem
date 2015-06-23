@@ -26,7 +26,7 @@
 
 # Example compilation
 
-    fn main(args) {
+    func main(args:str[]) -> void {
         let mut x = 5
         x = x + 5
         println(x)

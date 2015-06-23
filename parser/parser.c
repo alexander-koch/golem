@@ -1100,7 +1100,14 @@ ast_t* parse_return_declaration(parser_t* parser)
 
     if(ret)
     {
-        node->returnstmt = parse_expression(parser);
+        if(match_type(parser, TOKEN_NEWLINE))
+        {
+            node->returnstmt = 0;
+        }
+        else
+        {
+            node->returnstmt = parse_expression(parser);
+        }
     }
     else
     {
