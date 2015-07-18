@@ -6,8 +6,8 @@
 #include <adt/list.h>
 #include <adt/hashmap.h>
 
-#include <compiler/bytecode.h>
-#include <core/value.h>
+#include <vm/bytecode.h>
+#include <vm/value.h>
 
 typedef struct
 {

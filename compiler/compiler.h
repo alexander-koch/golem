@@ -4,9 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <core/mem.h>
-#include <core/value.h>
 #include <parser/parser.h>
-#include <compiler/bytecode.h>
+#include <vm/bytecode.h>
 
 #ifdef __USE_LLVM__
 #include <llvm-c/Core.h>

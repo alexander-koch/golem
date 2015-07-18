@@ -18,6 +18,7 @@ typedef enum
 
 typedef struct value_t
 {
+	const char* classname;
 	value_type_t type;
 	size_t refcount;
 	union
@@ -34,8 +35,12 @@ value_t* value_new_null();
 value_t* value_new_bool(bool b);
 value_t* value_new_int(long number);
 value_t* value_new_float(double number);
-value_t* value_new_string(const char* string);
+value_t* value_new_string_const(const char* string);
+value_t* value_new_string(char* string);
 value_t* value_new_object(void* obj);
+
+value_t* value_copy(value_t* value);
+const char* value_classname(value_t* value);
 
 void value_retain(value_t* value);
 void value_reset(value_t* value);

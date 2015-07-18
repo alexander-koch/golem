@@ -2,16 +2,15 @@
 #define bytecode_h
 
 #include <core/mem.h>
-#include <core/value.h>
 #include <lexis/lexer.h>
 #include <adt/list.h>
+#include <vm/value.h>
 
 typedef enum
 {
 	OP_PUSH_INT,
 	OP_PUSH_FLOAT,
 	OP_PUSH_STRING,
-	OP_PUSH_NULL,
 	OP_GET_FIELD,
 	OP_ADD,
 	OP_SUB,
@@ -22,7 +21,8 @@ typedef enum
 	OP_STORE_FIELD,
 	OP_BEGIN_FUNC,
 	OP_SCOPE_END,
-	OP_IF
+	OP_JMPF,
+	OP_EQUAL
 } opcode_t;
 
 typedef struct
@@ -37,14 +37,14 @@ const char* op2str(opcode_t code);
 void emit_i64(list_t* buffer, I64 v);
 void emit_f64(list_t* buffer, F64 f);
 void emit_string(list_t* buffer, char* str);
-void emit_null(list_t* buffer);
 void emit_op(list_t* buffer, opcode_t op);
 void emit_tok2op(list_t* buffer, token_type_t tok);
-void emit_invoke(list_t* buffer, size_t args);
+void emit_invoke(list_t* buffer, char* str, size_t args);
 void emit_store_field(list_t* buffer, char* name, bool mutate);
 void emit_get_field(list_t* buffer, char* key);
+value_t* emit_jmpf(list_t* buffer, int address);
+
 void emit_begin_func(list_t* buffer, char* name, size_t params);
 void emit_scope_end(list_t* buffer);
-void emit_if(list_t* buffer);
 
 #endif

@@ -11,6 +11,21 @@ vm_t* vm_new()
 	return vm;
 }
 
+void vm_throw(vm_t* vm, const char* format, ...)
+{
+	vm->error = true;
+    //location_t loc = opt->node->location;
+    //fprintf(stdout, "[line %d, column %d] (Semantic): ", loc.line, loc.column);
+	// TODO: get line / column position for OP_CODE
+
+	fprintf(stdout, "(VM): ");
+    va_list argptr;
+    va_start(argptr, format);
+    vfprintf(stdout, format, argptr);
+    va_end(argptr);
+    fprintf(stdout, "\n");
+}
+
 void save_var(vm_t* vm, char* key, value_t* val, bool mutate)
 {
 	variable_t* var = 0;
@@ -20,8 +35,7 @@ void save_var(vm_t* vm, char* key, value_t* val, bool mutate)
 		var = (variable_t*)tmp;
 		if(!var->mutate)
 		{
-			console("Can't modify the non-mutable variable '%s'\n", var->name);
-			vm->error = true;
+			vm_throw(vm, "Can't modify the non-mutable variable '%s'\n", var->name);
 		}
 		else
 		{
@@ -105,6 +119,30 @@ instruction_t* vm_peek(vm_t* vm, list_t* buffer)
 	return list_get(buffer, vm->pc);
 }
 
+void vm_print_code(vm_t* vm, list_t* buffer)
+{
+	console("\nImmediate code:\n");
+	while(vm->pc < list_size(buffer))
+	{
+		instruction_t* instr = list_get(buffer, vm->pc);
+
+		console("  %.2d: %s", vm->pc, op2str(instr->op));
+		if(instr->v1)
+		{
+			console(", ");
+			value_print(instr->v1);
+		}
+		if(instr->v2)
+		{
+			console(", ");
+			value_print(instr->v2);
+		}
+		console("\n");
+		vm->pc++;
+	}
+	vm->pc = 0;
+}
+
 /**
  *	Processes a buffer instruction based on program counter (pc).
  */
@@ -112,38 +150,21 @@ void vm_process(vm_t* vm, list_t* buffer)
 {
 	instruction_t* instr = list_get(buffer, vm->pc);
 
-	// LOG OPCODES
-#define LOG_OP
-#ifdef LOG_OP
-	console("[%d] = (%s", vm->pc, op2str(instr->op));
-	if(instr->v1)
-	{
-		console(", ");
-		value_print(instr->v1);
-	}
-	if(instr->v2)
-	{
-		console(", ");
-		value_print(instr->v2);
-	}
-	console(")\n");
-#endif
-
 	switch(instr->op)
 	{
 		case OP_PUSH_INT:
 		{
-			stack_push(vm->stack, instr->v1);
+			stack_push(vm->stack, value_copy(instr->v1));
 			break;
 		}
 		case OP_PUSH_FLOAT:
 		{
-			stack_push(vm->stack, instr->v1);
+			stack_push(vm->stack, value_copy(instr->v1));
 			break;
 		}
 		case OP_PUSH_STRING:
 		{
-			stack_push(vm->stack, instr->v1);
+			stack_push(vm->stack, value_copy(instr->v1));
 			break;
 		}
 		case OP_STORE_FIELD:
@@ -163,7 +184,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 			variable_t* var = (variable_t*)value;
 			if(var)
 			{
-				stack_push(vm->stack, var->val);
+				stack_push(vm->stack, value_copy(var->val));
 			}
 			else
 			{
@@ -175,9 +196,9 @@ void vm_process(vm_t* vm, list_t* buffer)
 		}
 		case OP_INVOKE:
 		{
-			char* name = value_string(stack_pop(vm->stack));
+			char* name = value_string(instr->v1);
+			I64 args = value_int(instr->v2);
 
-			I64 args = value_int(instr->v1);
 			list_t* values = list_new();
 			for(int i = 0; i < args; i++)
 			{
@@ -192,6 +213,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 				{
 					value_t* v = list_get(values, i-1);
 					value_print(v);
+					value_free(v);
 				}
 				console("\n");
 			}
@@ -204,10 +226,16 @@ void vm_process(vm_t* vm, list_t* buffer)
 			list_free(values);
 			break;
 		}
-		case OP_BEGIN_FUNC:
+		case OP_JMPF:
 		{
-			I64 params = value_int(instr->v2);
-			save_func(vm, value_string(instr->v1), params);
+			value_t* v = stack_pop(vm->stack);
+			bool result = value_bool(v);
+			value_free(v);
+			if(!result)
+			{
+				vm->pc = value_int(instr->v1);
+				return;
+			}
 
 			break;
 		}
@@ -216,10 +244,15 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v2 = stack_pop(vm->stack);
 			value_t* v1 = stack_pop(vm->stack);
 
-			if(v1->type == VALUE_FLOAT && v2->type == VALUE_FLOAT)
+			if(v1->type == VALUE_INT && v2->type == VALUE_INT)
 			{
-				v1->v.f = v1->v.f + v2->v.f;
-				stack_push(vm->stack, v1);
+				value_t* v = value_new_int(v1->v.i + v2->v.i);
+				stack_push(vm->stack, v);
+			}
+			else if(v1->type == VALUE_FLOAT && v2->type == VALUE_FLOAT)
+			{
+				value_t* v = value_new_float(v1->v.f + v2->v.f);
+				stack_push(vm->stack, v);
 			}
 			else if(v1->type == VALUE_STRING && v2->type == VALUE_STRING)
 			{
@@ -227,14 +260,19 @@ void vm_process(vm_t* vm, list_t* buffer)
 				char* s1 = value_string(v1);
 				char* s2 = value_string(v2);
 				char* newstr = concat(s1, s2);
-				value_reset(v1);
-				v1->v.str = newstr;
-				stack_push(vm->stack, v1);
+				value_t* v = value_new_string(newstr);
+				stack_push(vm->stack, v);
+				free(newstr);
 			}
 			else
 			{
 				// TODO: Other datatypes
+				// for now error
+				vm_throw(vm, "No rule for adding objects of class '%s' and '%s'\n", value_classname(v1), value_classname(v2));
 			}
+
+			value_free(v1);
+			value_free(v2);
 			break;
 		}
 		case OP_SUB:
@@ -242,16 +280,50 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v2 = stack_pop(vm->stack);
 			value_t* v1 = stack_pop(vm->stack);
 
-			if(v1->type == VALUE_FLOAT && v2->type == VALUE_FLOAT)
+			if(v1->type == VALUE_INT && v2->type == VALUE_INT)
 			{
-				v1->v.f = v1->v.f - v2->v.f;
-				stack_push(vm->stack, v1);
+				value_t* v = value_new_int(v1->v.i - v2->v.i);
+				stack_push(vm->stack, v);
+			}
+			else if(v1->type == VALUE_FLOAT && v2->type == VALUE_FLOAT)
+			{
+				value_t* v = value_new_float(v1->v.f - v2->v.f);
+				stack_push(vm->stack, v);
 			}
 			else
 			{
 				// TODO: Other datatypes
 			}
 
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
+		case OP_EQUAL:
+		{
+			value_t* v2 = stack_pop(vm->stack);
+			value_t* v1 = stack_pop(vm->stack);
+
+			if(v1->type == VALUE_INT && v2->type == VALUE_INT)
+			{
+				value_t* v = value_new_bool(value_int(v1) == value_int(v2));
+				stack_push(vm->stack, v);
+			}
+			else if(v1->type == VALUE_FLOAT && v2->type == VALUE_FLOAT)
+			{
+				value_t* v = value_new_bool(value_float(v1) == value_float(v2));
+				stack_push(vm->stack, v);
+			}
+			else if(v1->type == VALUE_STRING && v2->type == VALUE_STRING)
+			{
+				char* s1 = value_string(v1);
+				char* s2 = value_string(v2);
+				value_t* v = value_new_bool(!strcmp(s1, s2));
+				stack_push(vm->stack, v);
+			}
+
+			value_free(v1);
+			value_free(v2);
 			break;
 		}
 		default: break;
@@ -266,9 +338,18 @@ void vm_execute(vm_t* vm, list_t* buffer)
 {
 	vm->pc = 0;
 	vm->error = false;
+	vm_print_code(vm, buffer);
+
 	while(vm->pc < list_size(buffer) && !vm->error)
 	{
 		vm_process(vm, buffer);
+	}
+
+	console("\n");
+	while(stack_size(vm->stack) > 0)
+	{
+		value_t* v = stack_pop(vm->stack);
+		value_free(v);
 	}
 }
 
@@ -287,6 +368,7 @@ void vm_free(vm_t* vm)
 		variable_t* var = hashmap_iterator_next(iter);
 		if(var)
 		{
+			free(var->val);
 			free(var);
 		}
 	}

@@ -1,6 +1,7 @@
 #ifndef llvm_compiler_h
 #define llvm_compiler_h
 
+#include <limits.h>
 #include <parser/ast.h>
 #include <adt/hashmap.h>
 

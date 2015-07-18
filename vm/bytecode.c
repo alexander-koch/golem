@@ -9,7 +9,6 @@ const char* op2str(opcode_t code)
 		case OP_PUSH_INT: return "push_int";
 		case OP_PUSH_FLOAT: return "push_float";
 		case OP_PUSH_STRING: return "push_string";
-		case OP_PUSH_NULL: return "push_null";
 		case OP_GET_FIELD: return "get_field";
 		case OP_ADD: return "add";
 		case OP_SUB: return "sub";
@@ -18,11 +17,13 @@ const char* op2str(opcode_t code)
 		case OP_MOD: return "mod";
 		case OP_INVOKE: return "invoke";
 		case OP_STORE_FIELD: return "store_field";
+		case OP_JMPF: return "jump_false";
+		case OP_EQUAL: return "equal";
+
 		case OP_BEGIN_FUNC: return "begin_func";
 		case OP_SCOPE_END: return "scope_end";
-		default: break;
+		default: return "unknown";
 	}
-	return "unknown";
 }
 
 instruction_t* instruction_new(opcode_t op)
@@ -79,12 +80,6 @@ void emit_string(list_t* buffer, char* str)
 	insert_v1(buffer, OP_PUSH_STRING, val);
 }
 
-void emit_null(list_t* buffer)
-{
-	value_t* val = value_new_null();
-	insert_v1(buffer, OP_PUSH_NULL, val);
-}
-
 void emit_op(list_t* buffer, opcode_t op)
 {
 	insert(buffer, op);
@@ -120,16 +115,22 @@ void emit_tok2op(list_t* buffer, token_type_t tok)
 			op = OP_MOD;
 			break;
 		}
+		case TOKEN_EQUAL:
+		{
+			op = OP_EQUAL;
+			break;
+		}
 		default: break;
 	}
 
 	emit_op(buffer, op);
 }
 
-void emit_invoke(list_t* buffer, size_t args)
+void emit_invoke(list_t* buffer, char* str, size_t args)
 {
-	value_t* v1 = value_new_int(args);
-	insert_v1(buffer, OP_INVOKE, v1);
+	value_t* v1 = value_new_string(str);
+	value_t* v2 = value_new_int(args);
+	insert_v2(buffer, OP_INVOKE, v1, v2);
 }
 
 void emit_store_field(list_t* buffer, char* name, bool mutate)
@@ -145,6 +146,13 @@ void emit_get_field(list_t* buffer, char* key)
 	insert_v1(buffer, OP_GET_FIELD, val);
 }
 
+value_t* emit_jmpf(list_t* buffer, int address)
+{
+	value_t* val = value_new_int(address);
+	insert_v1(buffer, OP_JMPF, val);
+	return val;
+}
+
 void emit_begin_func(list_t* buffer, char* name, size_t params)
 {
 	value_t* key = value_new_string(name);
@@ -155,9 +163,4 @@ void emit_begin_func(list_t* buffer, char* name, size_t params)
 void emit_scope_end(list_t* buffer)
 {
 	insert(buffer, OP_SCOPE_END);
-}
-
-void emit_if(list_t* buffer)
-{
-	insert(buffer, OP_IF);
 }

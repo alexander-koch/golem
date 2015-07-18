@@ -182,6 +182,12 @@ ast_t* parse_call(parser_t* parser, ast_t* node)
     class->call.callee = node;
     ast_t* expr = 0;
 
+    if(node->class != AST_IDENT)
+    {
+        parser_throw(parser, "Function callee has to be an identifier");
+        return class;
+    }
+
     while(!match_type(parser, TOKEN_RPAREN) && (expr = parse_expression(parser)))
     {
         list_push(class->call.args, (void*)expr);

@@ -33,6 +33,7 @@ value_t* value_new_bool(bool b)
 	value_t* val = value_new_null();
 	val->type = VALUE_BOOL;
 	val->v.b = b;
+	val->classname = "bool";
 	return val;
 }
 
@@ -41,6 +42,7 @@ value_t* value_new_int(long number)
 	value_t* val = value_new_null();
 	val->type = VALUE_INT;
 	val->v.i = number;
+	val->classname = "int";
 	return val;
 }
 
@@ -49,14 +51,25 @@ value_t* value_new_float(double number)
 	value_t* val = value_new_null();
 	val->type = VALUE_FLOAT;
 	val->v.f = number;
+	val->classname = "float";
 	return val;
 }
 
-value_t* value_new_string(const char* string)
+value_t* value_new_string_const(const char* string)
 {
 	value_t* val = value_new_null();
 	val->type = VALUE_STRING;
 	val->v.str = strdup(string);
+	val->classname = "string";
+	return val;
+}
+
+value_t* value_new_string(char* string)
+{
+	value_t* val = value_new_null();
+	val->type = VALUE_STRING;
+	val->v.str = strdup(string);
+	val->classname = "string";
 	return val;
 }
 
@@ -65,7 +78,23 @@ value_t* value_new_object(void* obj)
 	value_t* val = value_new_null();
 	val->type = VALUE_OBJECT;
 	val->v.o = obj;
+	val->classname = "object";
 	return val;
+}
+
+value_t* value_copy(value_t* value)
+{
+	value_t* val = value_new_null();
+	val->type = value->type;
+	val->v = value->v;
+	val->classname = value->classname;
+	//TODO: obj pointer copying
+	return val;
+}
+
+const char* value_classname(value_t* value)
+{
+	return value->classname;
 }
 
 void value_retain(value_t* value)

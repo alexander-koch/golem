@@ -9,6 +9,7 @@ LLVMValueRef llvm_string(llvm_context_t* ctx, ast_t* node);
 LLVMValueRef llvm_int(llvm_context_t* ctx, ast_t* node);
 LLVMValueRef llvm_ident(llvm_context_t* ctx, ast_t* node);
 LLVMValueRef llvm_call(llvm_context_t* ctx, ast_t* node);
+LLVMValueRef llvm_unary(llvm_context_t* ctx, ast_t* node);
 
 LLVMTypeRef getLLVMType(datatype_t dt)
 {
@@ -49,6 +50,14 @@ llvm_context_t* llvm_context_create(const char* name)
 	ctx->module = LLVMModuleCreateWithName(name);
 	ctx->builder = LLVMCreateBuilder();
 	ctx->variables = hashmap_new();
+
+	LLVMTypeRef returnType = LLVMIntType(sizeof(int) * CHAR_BIT);
+	LLVMTypeRef putsArguments[] =  {
+		LLVMPointerType(LLVMInt8Type(), 0)
+	};
+	LLVMTypeRef functionType = LLVMFunctionType(returnType, putsArguments, 1, false);
+	LLVMAddFunction(ctx->module, "puts", functionType);
+
 	return ctx;
 }
 
@@ -64,6 +73,7 @@ LLVMValueRef llvm_traverse(llvm_context_t* ctx, ast_t* node)
 		case AST_INT: return llvm_int(ctx, node);
 		case AST_IDENT: return llvm_ident(ctx, node);
 		case AST_CALL: return llvm_call(ctx, node);
+		case AST_UNARY: return llvm_unary(ctx, node);
 		default: return 0;
 	}
 }
@@ -134,6 +144,8 @@ LLVMValueRef llvm_function(llvm_context_t* ctx, ast_t* node)
 		}
 	}
 
+	LLVMSetFunctionCallConv(func, LLVMCCallConv);
+
 	// If valid append statements
 	if(func)
 	{
@@ -148,6 +160,9 @@ LLVMValueRef llvm_function(llvm_context_t* ctx, ast_t* node)
 		}
 		list_iterator_free(iter);
 	}
+
+	// LLVMBuildRet(ctx->builder, type)
+	LLVMBuildRetVoid(ctx->builder);
 
 	free(params);
 	return func;
@@ -177,6 +192,7 @@ LLVMValueRef llvm_binary(llvm_context_t* ctx, ast_t* node)
 
 	bool floating = node->binary.left->class == AST_FLOAT &&
 		node->binary.right->class == AST_FLOAT;
+		
 	switch(node->binary.op)
 	{
 		case TOKEN_ADD: return floating ? LLVMBuildFAdd(ctx->builder, lhs, rhs, "add") :
@@ -215,7 +231,58 @@ LLVMValueRef llvm_ident(llvm_context_t* ctx, ast_t* node)
 
 LLVMValueRef llvm_call(llvm_context_t* ctx, ast_t* node)
 {
+	LLVMValueRef func = LLVMGetNamedFunction(ctx->module, node->call.callee->ident);
+	if(!func)
+	{
+		// TODO: better error handling
+		printf("Invalid function call");
+		return 0;
+	}
 
+	size_t argc = list_size(node->call.args);
+	if(LLVMCountParams(func) != argc)
+	{
+		printf("Function '%s' has too many/few arguments", node->call.callee->ident);
+		return 0;
+	}
+
+	LLVMValueRef *args = malloc(sizeof(LLVMValueRef) * argc);
+
+	size_t idx = 0;
+	list_iterator_t* iter = list_iterator_create(node->call.args);
+	while(!list_iterator_end(iter))
+	{
+		ast_t* expr = list_iterator_next(iter);
+		args[idx] = llvm_traverse(ctx, expr);
+		if(!args[idx])
+		{
+			printf("Could not evaluate function call argument %d", (int)idx);
+			free(args);
+			return 0;
+		}
+	}
+	list_iterator_free(iter);
+
+	LLVMBuildCall(ctx->builder, func, args, argc, "");
+	return func;
+}
+
+LLVMValueRef llvm_unary(llvm_context_t* ctx, ast_t* node)
+{
+	// LLVMValueRef expr = llvm_traverse(ctx, node->unary.expr);
+	//
+	// switch(node->unary.op)
+	// {
+	// 	case TOKEN_BITNOT:
+	// 	{
+	// 		// TODO: Get address of element
+	// 		// use ampersand!!
+	// 		break;
+	// 	}
+	// 	default: return;
+	// }
+	//
+	// return expr;
 	return 0;
 }
 

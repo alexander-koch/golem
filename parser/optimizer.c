@@ -40,11 +40,11 @@ void optimize_node(optimizer_t* opt, ast_t* node)
 			ast_t* lhs = node->binary.left;
 			ast_t* rhs = node->binary.right;
 
-			if(lhs->class != rhs->class)
-			{
-				opt_throw(opt, "Cannot compare objects of different classes");
-				break;
-			}
+			// if(lhs->class != rhs->class)
+			// {
+			// 	opt_throw(opt, "Cannot compare objects of different classes");
+			// 	break;
+			// }
 
 			// Do string testing
 			// Form:

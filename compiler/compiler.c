@@ -68,7 +68,7 @@ void eval_binary(compiler_t* compiler, ast_t* node)
 		compiler_eval(compiler, node->binary.right);
 
 		// Emit operator
-		emit_tok2op(compiler->buffer,op);
+		emit_tok2op(compiler->buffer, op);
 	}
 }
 
@@ -85,14 +85,13 @@ void eval_call(compiler_t* compiler, ast_t* node)
 	ast_t* call = node->call.callee;
 	if(call->class == AST_IDENT)
 	{
-		emit_string(compiler->buffer,call->ident);
+		emit_invoke(compiler->buffer, call->ident, args);
 	}
 	else
 	{
 		// TODO: FIX!!
 		// Subscript?
 	}
-	emit_invoke(compiler->buffer,args);
 }
 
 void eval_string(compiler_t* compiler, ast_t* node)
@@ -102,7 +101,16 @@ void eval_string(compiler_t* compiler, ast_t* node)
 
 void eval_if(compiler_t* compiler, ast_t* node)
 {
+	eval_block(compiler, node->ifstmt);
+}
+
+void eval_ifclause(compiler_t* compiler, ast_t* node)
+{
 	// TODO: implement
+	compiler_eval(compiler, node->ifclause.cond);
+	value_t* instr = emit_jmpf(compiler->buffer, 0);
+	eval_block(compiler, node->ifclause.body);
+	instr->v.i = list_size(compiler->buffer);
 }
 
 void compiler_eval(compiler_t* compiler, ast_t* node)
@@ -158,6 +166,10 @@ void compiler_eval(compiler_t* compiler, ast_t* node)
 		{
 			eval_if(compiler, node);
 			break;
+		}
+		case AST_IFCLAUSE:
+		{
+			eval_ifclause(compiler, node);
 		}
 		default: break;
 	}
@@ -369,22 +381,28 @@ void compiler_dump(ast_t* node, int level)
 void llvm_compile(compiler_t* cmpl, ast_t* root)
 {
 #ifdef __USE_LLVM__
+	if(!cmpl->filename)
+	{
+		console("Non-files currently not supported");
+		return;
+	}
+
 	llvm_context_t* ctx = llvm_context_create(cmpl->filename);
 	llvm_traverse(ctx, root);
 
+/*	char *error = 0;
+	if(LLVMVerifyModule(ctx->module, LLVMAbortProcessAction, &error) != 0)
+	{
+		LLVMDisposeMessage(error);
+	}*/
+
 	if(cmpl->filename)
 	{
-		char* ext = strdup(".bc");
-		char* out = concat(cmpl->filename, ext);
-
-		fprintf(stdout, "Writing to file...\n");
+		fprintf(stdout, "Writing bitcode to file...\n");
 		// Write out bitcode to file
-	    if (LLVMWriteBitcodeToFile(ctx->module, out) != 0) {
+	    if (LLVMWriteBitcodeToFile(ctx->module, "out.bc") != 0) {
 	        fprintf(stderr, "Error writing bitcode to file, skipping\n");
 	    }
-
-		free(ext);
-		free(cmpl->filename);
 	}
 
 	LLVMDumpModule(ctx->module);
@@ -405,10 +423,15 @@ list_t* compile_buffer(compiler_t* compiler, const char* source)
 	if(root)
 	{
 		compiler_dump(root, 0);
-		// compiler_eval(compiler, root);
-		llvm_compile(compiler, root);
+		compiler_eval(compiler, root);
+		//llvm_compile(compiler, root);
 
 		ast_free(root);
+	}
+
+	if(compiler->filename)
+	{
+		free(compiler->filename);
 	}
 
 	parser_free(&compiler->parser);
@@ -430,11 +453,12 @@ list_t* compile_file(compiler_t* compiler, const char* filename)
  	source[size] = '\0';
 	fclose(file);
 
+	compiler->filename = strdup(filename);
+
 	// run vm with compiler
 	list_t* buffer = compile_buffer(compiler, source);
 	free(source);
 
-	compiler->filename = strdup(filename);
 	return buffer;
 }
 

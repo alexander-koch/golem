@@ -77,9 +77,11 @@ This prevents use of a pointer, after it has been freed.
 
 # Stuff
 
+http://markmail.org/download.xqy?id=vhdi5dbzkrdbchxq&number=1
 http://llvm.org/docs/LangRef.html
 http://llvm.org/docs/doxygen/html/group__LLVMCCoreValueGeneral.html
 https://github.com/TheThirdOne/llvm-tutorial-gitbook/blob/master/mutable.md
+http://ducklang.org/designing-a-programming-language-i
 
 # Licence
 Copyright (c) Alexander Koch 2015
