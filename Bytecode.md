@@ -14,7 +14,8 @@
 |DIV                  | pops two values from the stack and divides them, pushes result
 |MOD                  | pops two values from the stack and applies modulo to them, pushes result
 |---                  |---
-|EQUAL                | pops two values from the stack and compares them, pushes a boolean
+|EQUAL                | pops two values from the stack and tests a == b, pushes a boolean
+|LESS                 | pops two values from the stack and tests a < b, pushes a boolean
 |---                  |---
 |INVOKE X Y           | invokes the method X on top of the stack with y params
 |---                  |---
@@ -24,6 +25,7 @@
 |SCOPE_END            | pops a scope
 |---                  |---
 |JMPF X               | if top value is false, jump to x
+|JMP x                | jump to x
 
 # Example compilation
 

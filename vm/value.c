@@ -86,9 +86,19 @@ value_t* value_copy(value_t* value)
 {
 	value_t* val = value_new_null();
 	val->type = value->type;
-	val->v = value->v;
+	if(val->type == VALUE_STRING)
+	{
+		val->v.str = strdup(value->v.str);
+	}
+	else
+	{
+		val->v = value->v;
+	}
 	val->classname = value->classname;
+
 	//TODO: obj pointer copying
+	//FIX UNSTABLE: could possibly create an error
+
 	return val;
 }
 

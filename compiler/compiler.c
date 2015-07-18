@@ -106,10 +106,19 @@ void eval_if(compiler_t* compiler, ast_t* node)
 
 void eval_ifclause(compiler_t* compiler, ast_t* node)
 {
-	// TODO: implement
 	compiler_eval(compiler, node->ifclause.cond);
 	value_t* instr = emit_jmpf(compiler->buffer, 0);
 	eval_block(compiler, node->ifclause.body);
+	instr->v.i = list_size(compiler->buffer);
+}
+
+void eval_while(compiler_t* compiler, ast_t* node)
+{
+	size_t start = list_size(compiler->buffer);
+	compiler_eval(compiler, node->whilestmt.cond);
+	value_t* instr = emit_jmpf(compiler->buffer, 0);
+	eval_block(compiler, node->ifclause.body);
+	emit_jmp(compiler->buffer, start);
 	instr->v.i = list_size(compiler->buffer);
 }
 
@@ -170,6 +179,12 @@ void compiler_eval(compiler_t* compiler, ast_t* node)
 		case AST_IFCLAUSE:
 		{
 			eval_ifclause(compiler, node);
+			break;
+		}
+		case AST_WHILE:
+		{
+			eval_while(compiler, node);
+			break;
 		}
 		default: break;
 	}

@@ -226,6 +226,11 @@ void vm_process(vm_t* vm, list_t* buffer)
 			list_free(values);
 			break;
 		}
+		case OP_JMP:
+		{
+			vm->pc = value_int(instr->v1);
+			return;
+		}
 		case OP_JMPF:
 		{
 			value_t* v = stack_pop(vm->stack);
@@ -246,20 +251,17 @@ void vm_process(vm_t* vm, list_t* buffer)
 
 			if(v1->type == VALUE_INT && v2->type == VALUE_INT)
 			{
-				value_t* v = value_new_int(v1->v.i + v2->v.i);
+				value_t* v = value_new_int(value_int(v1) + value_int(v2));
 				stack_push(vm->stack, v);
 			}
 			else if(v1->type == VALUE_FLOAT && v2->type == VALUE_FLOAT)
 			{
-				value_t* v = value_new_float(v1->v.f + v2->v.f);
+				value_t* v = value_new_float(value_float(v1) + value_float(v2));
 				stack_push(vm->stack, v);
 			}
 			else if(v1->type == VALUE_STRING && v2->type == VALUE_STRING)
 			{
-				// Append
-				char* s1 = value_string(v1);
-				char* s2 = value_string(v2);
-				char* newstr = concat(s1, s2);
+				char* newstr = concat(value_string(v1), value_string(v2));
 				value_t* v = value_new_string(newstr);
 				stack_push(vm->stack, v);
 				free(newstr);
@@ -282,17 +284,90 @@ void vm_process(vm_t* vm, list_t* buffer)
 
 			if(v1->type == VALUE_INT && v2->type == VALUE_INT)
 			{
-				value_t* v = value_new_int(v1->v.i - v2->v.i);
+				value_t* v = value_new_int(value_int(v1) - value_int(v2));
 				stack_push(vm->stack, v);
 			}
 			else if(v1->type == VALUE_FLOAT && v2->type == VALUE_FLOAT)
 			{
-				value_t* v = value_new_float(v1->v.f - v2->v.f);
+				value_t* v = value_new_float(value_float(v1) - value_float(v2));
 				stack_push(vm->stack, v);
 			}
 			else
 			{
 				// TODO: Other datatypes
+				// for now error
+				vm_throw(vm, "No rule of subtraction for objects of class '%s' and '%s'\n", value_classname(v1), value_classname(v2));
+			}
+
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
+		case OP_MUL:
+		{
+			value_t* v2 = stack_pop(vm->stack);
+			value_t* v1 = stack_pop(vm->stack);
+
+			if(v1->type == VALUE_INT && v2->type == VALUE_INT)
+			{
+				value_t* v = value_new_int(value_int(v1) * value_int(v2));
+				stack_push(vm->stack, v);
+			}
+			else if(v1->type == VALUE_FLOAT && v2->type == VALUE_FLOAT)
+			{
+				value_t* v = value_new_float(value_float(v1) * value_float(v2));
+				stack_push(vm->stack, v);
+			}
+			else
+			{
+				// TODO: Other datatypes
+				// for now error
+				vm_throw(vm, "No rule for multipliying objects of class '%s' and '%s'\n", value_classname(v1), value_classname(v2));
+			}
+
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
+		case OP_DIV:
+		{
+			value_t* v2 = stack_pop(vm->stack);
+			value_t* v1 = stack_pop(vm->stack);
+
+			if(v1->type == VALUE_INT && v2->type == VALUE_INT)
+			{
+				value_t* v = value_new_int(value_int(v1) / value_int(v2));
+				stack_push(vm->stack, v);
+			}
+			else if(v1->type == VALUE_FLOAT && v2->type == VALUE_FLOAT)
+			{
+				value_t* v = value_new_float(value_float(v1) / value_float(v2));
+				stack_push(vm->stack, v);
+			}
+			else
+			{
+				// TODO: Other datatypes
+				// for now error
+				vm_throw(vm, "No rule for division of objects of class '%s' and '%s'\n", value_classname(v1), value_classname(v2));
+			}
+
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
+		case OP_MOD:
+		{
+			value_t* v2 = stack_pop(vm->stack);
+			value_t* v1 = stack_pop(vm->stack);
+
+			if(v1->type == VALUE_INT && v2->type == VALUE_INT)
+			{
+				value_t* v = value_new_int(value_int(v1) % value_int(v2));
+				stack_push(vm->stack, v);
+			}
+			else
+			{
+				vm_throw(vm, "Modulo is only applicable to integers\n");
 			}
 
 			value_free(v1);
@@ -321,6 +396,34 @@ void vm_process(vm_t* vm, list_t* buffer)
 				value_t* v = value_new_bool(!strcmp(s1, s2));
 				stack_push(vm->stack, v);
 			}
+			else
+			{
+				vm_throw(vm, "Cannot compare objects of classtypes '%s' and '%s'\n", value_classname(v1), value_classname(v2));
+			}
+
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
+		case OP_LESS:
+		{
+			value_t* v2 = stack_pop(vm->stack);
+			value_t* v1 = stack_pop(vm->stack);
+
+			if(v1->type == VALUE_INT && v2->type == VALUE_INT)
+			{
+				value_t* v = value_new_bool(value_int(v1) < value_int(v2));
+				stack_push(vm->stack, v);
+			}
+			else if(v1->type == VALUE_FLOAT && v2->type == VALUE_FLOAT)
+			{
+				value_t* v = value_new_bool(value_float(v1) < value_float(v2));
+				stack_push(vm->stack, v);
+			}
+			else
+			{
+				vm_throw(vm, "Less operation cannot be applied for classes '%s' and '%s'\n", value_classname(v1), value_classname(v2));
+			}
 
 			value_free(v1);
 			value_free(v2);
@@ -328,6 +431,8 @@ void vm_process(vm_t* vm, list_t* buffer)
 		}
 		default: break;
 	}
+
+//	console("  %.2d (stack %d)\n", vm->pc, stack_size(vm->stack));
 	vm->pc++;
 }
 
@@ -340,6 +445,7 @@ void vm_execute(vm_t* vm, list_t* buffer)
 	vm->error = false;
 	vm_print_code(vm, buffer);
 
+	console("\nExecution:\n");
 	while(vm->pc < list_size(buffer) && !vm->error)
 	{
 		vm_process(vm, buffer);

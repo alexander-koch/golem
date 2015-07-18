@@ -17,8 +17,10 @@ const char* op2str(opcode_t code)
 		case OP_MOD: return "mod";
 		case OP_INVOKE: return "invoke";
 		case OP_STORE_FIELD: return "store_field";
+		case OP_JMP: return "jump";
 		case OP_JMPF: return "jump_false";
 		case OP_EQUAL: return "equal";
+		case OP_LESS: return "less";
 
 		case OP_BEGIN_FUNC: return "begin_func";
 		case OP_SCOPE_END: return "scope_end";
@@ -120,6 +122,11 @@ void emit_tok2op(list_t* buffer, token_type_t tok)
 			op = OP_EQUAL;
 			break;
 		}
+		case TOKEN_LESS:
+		{
+			op = OP_LESS;
+			break;
+		}
 		default: break;
 	}
 
@@ -144,6 +151,12 @@ void emit_get_field(list_t* buffer, char* key)
 {
 	value_t* val = value_new_string(key);
 	insert_v1(buffer, OP_GET_FIELD, val);
+}
+
+void emit_jmp(list_t* buffer, int address)
+{
+	value_t* val = value_new_int(address);
+	insert_v1(buffer, OP_JMP, val);
 }
 
 value_t* emit_jmpf(list_t* buffer, int address)
