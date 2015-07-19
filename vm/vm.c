@@ -173,8 +173,8 @@ void vm_process(vm_t* vm, list_t* buffer)
 		{
 			char* key = value_string(instr->v1);
 			bool mutate = value_bool(instr->v2);
-			value_t* newVal = stack_pop(vm->stack);
-			save_var(vm, key, newVal, mutate);
+			value_t* v = stack_pop(vm->stack);
+			save_var(vm, key, v, mutate);
 			break;
 		}
 		case OP_GET_FIELD:
@@ -579,7 +579,7 @@ void vm_free(vm_t* vm)
 		variable_t* var = hashmap_iterator_next(iter);
 		if(var)
 		{
-			free(var->val);
+			value_free(var->val);
 			free(var);
 		}
 	}

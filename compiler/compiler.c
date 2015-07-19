@@ -241,10 +241,8 @@ void compiler_dump(ast_t* node, int level)
 {
 	if(!node) return;
 
-	for(int i = 0; i < level; i++)
-	{
-		console("#");
-	}
+	if(level > 0) console("  ");
+	for(int i = 0; i < level; i++) console("#");
 
 	switch(node->class)
 	{
@@ -480,7 +478,11 @@ list_t* compile_buffer(compiler_t* compiler, const char* source)
 	ast_t* root = parser_run(&compiler->parser, source);
 	if(root)
 	{
-		if(compiler->debug) compiler_dump(root, 0);
+		if(compiler->debug)
+		{
+			console("Abstract syntax tree:\n");
+			compiler_dump(root, 0);
+		}
 		compiler_eval(compiler, root);
 		//llvm_compile(compiler, root);
 

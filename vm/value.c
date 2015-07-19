@@ -137,6 +137,7 @@ void value_free(value_t* value)
 	{
 		value_reset(value);
 		free(value);
+		value = 0;
 	}
 	else
 	{
