@@ -9,21 +9,25 @@ const char* op2str(opcode_t code)
 		case OP_PUSH_INT: return "push_int";
 		case OP_PUSH_FLOAT: return "push_float";
 		case OP_PUSH_STRING: return "push_string";
+		case OP_STORE_FIELD: return "store_field";
 		case OP_GET_FIELD: return "get_field";
 		case OP_ADD: return "add";
 		case OP_SUB: return "sub";
 		case OP_MUL: return "mul";
 		case OP_DIV: return "div";
 		case OP_MOD: return "mod";
+		case OP_BITL: return "bit_l";
+		case OP_BITR: return "bit_r";
+		case OP_BITAND: return "bit_and";
+		case OP_BITOR: return "bit_or";
+		case OP_BITXOR: return "bit_xor";
 		case OP_INVOKE: return "invoke";
-		case OP_STORE_FIELD: return "store_field";
+		case OP_PUSH_SCOPE: return "push_scope";
+		case OP_POP_SCOPE: return "pop_scope";
 		case OP_JMP: return "jump";
 		case OP_JMPF: return "jump_false";
 		case OP_EQUAL: return "equal";
 		case OP_LESS: return "less";
-
-		case OP_BEGIN_FUNC: return "begin_func";
-		case OP_SCOPE_END: return "scope_end";
 		default: return "unknown";
 	}
 }
@@ -117,6 +121,31 @@ void emit_tok2op(list_t* buffer, token_type_t tok)
 			op = OP_MOD;
 			break;
 		}
+		case TOKEN_BITLSHIFT:
+		{
+			op = OP_BITL;
+			break;
+		}
+		case TOKEN_BITRSHIFT:
+		{
+			op = OP_BITR;
+			break;
+		}
+		case TOKEN_BITAND:
+		{
+			op = OP_BITAND;
+			break;
+		}
+		case TOKEN_BITOR:
+		{
+			op = OP_BITOR;
+			break;
+		}
+		case TOKEN_BITXOR:
+		{
+			op = OP_BITXOR;
+			break;
+		}
 		case TOKEN_EQUAL:
 		{
 			op = OP_EQUAL;
@@ -127,7 +156,11 @@ void emit_tok2op(list_t* buffer, token_type_t tok)
 			op = OP_LESS;
 			break;
 		}
-		default: break;
+		default:
+		{
+			op = -1;
+			break;
+		}
 	}
 
 	emit_op(buffer, op);
@@ -153,10 +186,23 @@ void emit_get_field(list_t* buffer, char* key)
 	insert_v1(buffer, OP_GET_FIELD, val);
 }
 
-void emit_jmp(list_t* buffer, int address)
+void emit_push_scope(list_t* buffer, char* name, size_t params)
+{
+	value_t* key = value_new_string(name);
+	value_t* args = value_new_int(params);
+	insert_v2(buffer, OP_PUSH_SCOPE, key, args);
+}
+
+void emit_pop_scope(list_t* buffer)
+{
+	insert(buffer, OP_POP_SCOPE);
+}
+
+value_t* emit_jmp(list_t* buffer, int address)
 {
 	value_t* val = value_new_int(address);
 	insert_v1(buffer, OP_JMP, val);
+	return val;
 }
 
 value_t* emit_jmpf(list_t* buffer, int address)
@@ -164,16 +210,4 @@ value_t* emit_jmpf(list_t* buffer, int address)
 	value_t* val = value_new_int(address);
 	insert_v1(buffer, OP_JMPF, val);
 	return val;
-}
-
-void emit_begin_func(list_t* buffer, char* name, size_t params)
-{
-	value_t* key = value_new_string(name);
-	value_t* args = value_new_int(params);
-	insert_v2(buffer, OP_BEGIN_FUNC, key, args);
-}
-
-void emit_scope_end(list_t* buffer)
-{
-	insert(buffer, OP_SCOPE_END);
 }

@@ -60,6 +60,7 @@ Classes are defined using the following structure (Not supported yet, final stru
 - AST optimization
 - for loops
 - implement bytecode vm / llvm compiler
+- write to asm
 
 # Feature ideas
 
@@ -69,11 +70,6 @@ Classes are defined using the following structure (Not supported yet, final stru
 Ownership orients on Rusts system. Once you call a function with an object, ownership is transferred to that function.
 The function deletes it at the end of the scope. To still own it after, you have to return it.
 This prevents use of a pointer, after it has been freed.
-
-# TODO if done
-
-- opengl api for golem
-- create a rougelike game in 2d with a dungeon generator based on http://journal.stuffwithstuff.com/2014/12/21/rooms-and-mazes/
 
 # Stuff
 

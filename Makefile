@@ -21,6 +21,7 @@ FILES = main.c \
 		parser/optimizer.c \
 		compiler/compiler.c \
 		compiler/llvm_compiler.c \
+		compiler/asm_compiler.c \
 		vm/value.c \
 		vm/bytecode.c \
 		vm/vm.c

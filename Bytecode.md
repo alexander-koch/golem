@@ -21,8 +21,8 @@
 |---                  |---
 |STORE_FIELD X Y      | pops a value and stores it as field x, marks it as mutable if y is true
 |---                  |---
-|BEGIN_FUNC X Y       | creates a function with the name x and sets it to the current scope, y-parameters
-|SCOPE_END            | pops a scope
+|PUSH_SCOPE X Y       | creates a function with the name x and sets it to the current scope, y-parameters
+|POP_SCOPE            | pops the scope
 |---                  |---
 |JMPF X               | if top value is false, jump to x
 |JMP x                | jump to x
@@ -33,17 +33,18 @@
     x = x + 5
     println(x)
 
-should compile to
+This should compile to the following (unoptimized):
 
-    PUSH_INT 5
-    STORE_FIELD x true
-    GET_FIELD x
-    PUSH_INT 5
-    ADD
-    STORE_FIELD x true
-    GET_FIELD x
-    INVOKE println 1
+    Code:
+      1: push_int, 5
+      2: store_field, x, true
+      3: get_field, x
+      4: push_int, 5
+      5: add
+      6: store_field, x, false
+      7: get_field, x
+      8: invoke, println, 1
 
-should print out
+Result of execution:
 
     >> 10

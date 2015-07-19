@@ -11,12 +11,12 @@
 
 typedef struct
 {
-	stack_t* stack;
-	hashmap_t* fields;
-	hashmap_t* functions;
+	char* name;
+	size_t args;
 	U64 pc;
-	bool error;
-} vm_t;
+	list_t* params;
+	size_t ic;
+} scope_t;
 
 typedef struct
 {
@@ -27,11 +27,12 @@ typedef struct
 
 typedef struct
 {
-	char* name;
-	size_t args;
+	stack_t* stack;
+	hashmap_t* fields;
+	hashmap_t* functions;
 	U64 pc;
-	list_t* params;
-} function_t;
+	bool error;
+} vm_t;
 
 vm_t* vm_new();
 instruction_t* vm_peek(vm_t* vm, list_t* buffer);

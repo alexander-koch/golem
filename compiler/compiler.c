@@ -14,7 +14,7 @@ void eval_block(compiler_t* compiler, list_t* block)
 
 void eval_declfunc(compiler_t* compiler, ast_t* node)
 {
-	emit_begin_func(compiler->buffer, node->funcdecl.name, list_size(node->funcdecl.impl.formals));
+	emit_push_scope(compiler->buffer, node->funcdecl.name, list_size(node->funcdecl.impl.formals));
 
 	list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.formals);
 	while(!list_iterator_end(iter))
@@ -25,7 +25,7 @@ void eval_declfunc(compiler_t* compiler, ast_t* node)
 	list_iterator_free(iter);
 
 	eval_block(compiler, node->funcdecl.impl.body);
-	emit_scope_end(compiler->buffer);
+	emit_pop_scope(compiler->buffer);
 }
 
 void eval_declvar(compiler_t* compiler, ast_t* node)
@@ -101,7 +101,55 @@ void eval_string(compiler_t* compiler, ast_t* node)
 
 void eval_if(compiler_t* compiler, ast_t* node)
 {
-	eval_block(compiler, node->ifstmt);
+	//eval_block(compiler, node->ifstmt);
+
+	// Eval the sub-ifclauses
+	list_t* jmps = list_new();
+	list_iterator_t* iter = list_iterator_create(node->ifstmt);
+	while(!list_iterator_end(iter))
+	{
+		// Get sub-ifclause
+		ast_t* subnode = list_iterator_next(iter);
+
+		// Test if not an else-statement
+		value_t* instr = 0;
+		if(subnode->ifclause.cond)
+		{
+			// Eval the condition and generate an if-false jump
+			compiler_eval(compiler, subnode->ifclause.cond);
+			instr = emit_jmpf(compiler->buffer, 0);
+		}
+
+		// Eval execution block code
+		eval_block(compiler, subnode->ifclause.body);
+
+		// Optimization
+		// If not an else statement and more ifclauses than one
+		// Generate a jump to end
+		if(list_size(node->ifstmt) > 1 && subnode->ifclause.cond)
+		{
+			value_t* pos = emit_jmp(compiler->buffer, 0);
+			list_push(jmps, pos);
+		}
+
+		// If not an else statement
+		// Generate jump to next clause
+		if(subnode->ifclause.cond)
+		{
+			instr->v.i = list_size(compiler->buffer);
+		}
+	}
+	list_iterator_free(iter);
+
+	// Set the jump points to end after whole if block
+	iter = list_iterator_create(jmps);
+	while(!list_iterator_end(iter))
+	{
+		value_t* pos = list_iterator_next(iter);
+		pos->v.i = list_size(compiler->buffer);
+	}
+	list_iterator_free(iter);
+	list_free(jmps);
 }
 
 void eval_ifclause(compiler_t* compiler, ast_t* node)
@@ -174,11 +222,6 @@ void compiler_eval(compiler_t* compiler, ast_t* node)
 		case AST_IF:
 		{
 			eval_if(compiler, node);
-			break;
-		}
-		case AST_IFCLAUSE:
-		{
-			eval_ifclause(compiler, node);
 			break;
 		}
 		case AST_WHILE:
@@ -437,7 +480,7 @@ list_t* compile_buffer(compiler_t* compiler, const char* source)
 	ast_t* root = parser_run(&compiler->parser, source);
 	if(root)
 	{
-		compiler_dump(root, 0);
+		if(compiler->debug) compiler_dump(root, 0);
 		compiler_eval(compiler, root);
 		//llvm_compile(compiler, root);
 

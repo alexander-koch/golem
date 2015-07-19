@@ -57,59 +57,61 @@ void save_var(vm_t* vm, char* key, value_t* val, bool mutate)
 	}
 }
 
-function_t* save_func(vm_t* vm, char* name, I64 args)
+void create_scope(vm_t* vm, list_t* buffer, char* name, I64 params)
 {
-	function_t* func = 0;
+	scope_t* func = 0;
 	void* tmp = 0;
 	if(hashmap_get(vm->functions, name, &tmp) != HMAP_MISSING)
 	{
-		// TODO: Throw error, function redefinition
+		vm_throw(vm, "Function redefinition\n");
 	}
 	else
 	{
 		func = malloc(sizeof(*func));
 		func->name = name;
-		func->args = args;
-		func->pc = vm->pc + args + 1;
-
+		func->args = params;
+		func->pc = vm->pc+1;
 		hashmap_set(vm->functions, name, func);
+
+		instruction_t* ins = vm_peek(vm, buffer);
+		while(ins)
+		{
+			ins = vm_peek(vm, buffer);
+			if(ins->op == OP_POP_SCOPE)
+			{
+				func->ic = vm->pc - func->pc;
+				break;
+			}
+
+			vm->pc++;
+		}
 	}
-	return func;
 }
 
-void exec_func(vm_t* vm, char* name, list_t* params)
+void run_scope(vm_t* vm, list_t* buffer, char* name, list_t* params)
 {
 	void* tmp = 0;
 	if(hashmap_get(vm->functions, name, &tmp) != HMAP_MISSING)
 	{
-		function_t* func = tmp;
-		U64 current = vm->pc;
-		vm->pc = func->pc;
-/*
-		bool valid = true;
-		do
+		scope_t* func = (scope_t*)tmp;
+		if(list_size(params) != func->args)
 		{
-			instruction_t* ins = vm_peek(vm, buffer);
-			if(!ins)
-			{
-				valid = false;
-			}
-
-			if(ins->op == OP_SCOPE_END)
-			{
-				valid = false;
-			}
-			else
+			vm_throw(vm, "Too few / many arguments for function '%s'\n", name);
+		}
+		else
+		{
+			U64 current = vm->pc;
+			vm->pc = func->pc;
+			for(int i = 0; i < func->ic; i++)
 			{
 				vm_process(vm, buffer);
 			}
-		} while(valid);*/
-
-		vm->pc = current;
+			vm->pc = current;
+		}
 	}
 	else
 	{
-		// TODO: handle no such function
+		vm_throw(vm, "Function with name '%s' is not defined\n", name);
 	}
 }
 
@@ -194,6 +196,13 @@ void vm_process(vm_t* vm, list_t* buffer)
 
 			break;
 		}
+		case OP_PUSH_SCOPE:
+		{
+			char* name = value_string(instr->v1);
+			I64 params = value_int(instr->v2);
+			create_scope(vm, buffer, name, params);
+			break;
+		}
 		case OP_INVOKE:
 		{
 			char* name = value_string(instr->v1);
@@ -213,17 +222,22 @@ void vm_process(vm_t* vm, list_t* buffer)
 				{
 					value_t* v = list_get(values, i-1);
 					value_print(v);
-					value_free(v);
 				}
 				console("\n");
 			}
+			else
+			{
+				run_scope(vm, buffer, name, values);
+			}
 
-			// TODO: get function of hashmap 'functions'
-			// which searches in hashmap and executes the buffer from
-			// function program counter pc until it reaches scope_end
-			//exec_func(vm, name, values);
-
+			list_iterator_t* iter = list_iterator_create(values);
+			while(!list_iterator_end(iter))
+			{
+				value_t* v = list_iterator_next(iter);
+				value_free(v);
+			}
 			list_free(values);
+			list_iterator_free(iter);
 			break;
 		}
 		case OP_JMP:
@@ -268,8 +282,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			}
 			else
 			{
-				// TODO: Other datatypes
-				// for now error
 				vm_throw(vm, "No rule for adding objects of class '%s' and '%s'\n", value_classname(v1), value_classname(v2));
 			}
 
@@ -294,8 +306,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			}
 			else
 			{
-				// TODO: Other datatypes
-				// for now error
 				vm_throw(vm, "No rule of subtraction for objects of class '%s' and '%s'\n", value_classname(v1), value_classname(v2));
 			}
 
@@ -320,8 +330,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			}
 			else
 			{
-				// TODO: Other datatypes
-				// for now error
 				vm_throw(vm, "No rule for multipliying objects of class '%s' and '%s'\n", value_classname(v1), value_classname(v2));
 			}
 
@@ -346,8 +354,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			}
 			else
 			{
-				// TODO: Other datatypes
-				// for now error
 				vm_throw(vm, "No rule for division of objects of class '%s' and '%s'\n", value_classname(v1), value_classname(v2));
 			}
 
@@ -368,6 +374,101 @@ void vm_process(vm_t* vm, list_t* buffer)
 			else
 			{
 				vm_throw(vm, "Modulo is only applicable to integers\n");
+			}
+
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
+		case OP_BITL:
+		{
+			value_t* v2 = stack_pop(vm->stack);
+			value_t* v1 = stack_pop(vm->stack);
+
+			if(v1->type == VALUE_INT && v2->type == VALUE_INT)
+			{
+				value_t* v = value_new_int(value_int(v1) << value_int(v2));
+				stack_push(vm->stack, v);
+			}
+			else
+			{
+				vm_throw(vm, "Bitoperations are only applicable to integers\n");
+			}
+
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
+		case OP_BITR:
+		{
+			value_t* v2 = stack_pop(vm->stack);
+			value_t* v1 = stack_pop(vm->stack);
+
+			if(v1->type == VALUE_INT && v2->type == VALUE_INT)
+			{
+				value_t* v = value_new_int(value_int(v1) >> value_int(v2));
+				stack_push(vm->stack, v);
+			}
+			else
+			{
+				vm_throw(vm, "Bitoperations are only applicable to integers\n");
+			}
+
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
+		case OP_BITAND:
+		{
+			value_t* v2 = stack_pop(vm->stack);
+			value_t* v1 = stack_pop(vm->stack);
+
+			if(v1->type == VALUE_INT && v2->type == VALUE_INT)
+			{
+				value_t* v = value_new_int(value_int(v1) & value_int(v2));
+				stack_push(vm->stack, v);
+			}
+			else
+			{
+				vm_throw(vm, "Bitoperations are only applicable to integers\n");
+			}
+
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
+		case OP_BITOR:
+		{
+			value_t* v2 = stack_pop(vm->stack);
+			value_t* v1 = stack_pop(vm->stack);
+
+			if(v1->type == VALUE_INT && v2->type == VALUE_INT)
+			{
+				value_t* v = value_new_int(value_int(v1) | value_int(v2));
+				stack_push(vm->stack, v);
+			}
+			else
+			{
+				vm_throw(vm, "Bitoperations are only applicable to integers\n");
+			}
+
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
+		case OP_BITXOR:
+		{
+			value_t* v2 = stack_pop(vm->stack);
+			value_t* v1 = stack_pop(vm->stack);
+
+			if(v1->type == VALUE_INT && v2->type == VALUE_INT)
+			{
+				value_t* v = value_new_int(value_int(v1) ^ value_int(v2));
+				stack_push(vm->stack, v);
+			}
+			else
+			{
+				vm_throw(vm, "Bitoperations are only applicable to integers\n");
 			}
 
 			value_free(v1);
@@ -429,7 +530,11 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_free(v2);
 			break;
 		}
-		default: break;
+		default:
+		{
+			vm_throw(vm, "Unknown op-code\n");
+			break;
+		}
 	}
 
 //	console("  %.2d (stack %d)\n", vm->pc, stack_size(vm->stack));
@@ -480,14 +585,14 @@ void vm_free(vm_t* vm)
 	}
 	hashmap_iterator_free(iter);
 
-	// Free functions
+	// Free scopes
 	iter = hashmap_iterator_create(vm->functions);
 	while(!hashmap_iterator_end(iter))
 	{
-	 	function_t* func = hashmap_iterator_next(iter);
-		if(func)
+	 	scope_t* scope = hashmap_iterator_next(iter);
+		if(scope)
 		{
-			free(func);
+			free(scope);
 		}
 	}
 	hashmap_iterator_free(iter);
