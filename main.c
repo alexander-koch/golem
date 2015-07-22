@@ -69,6 +69,10 @@ int main(int argc, char** argv)
                 compiler_clear(&compiler);
                 fprintf(stdout, "Wrote assembly code to file 'out.asm'\n");
             }
+            else
+            {
+                fprintf(stdout, "Could not compile file '%s'\n", argv[2]);
+            }
         }
         else
         {

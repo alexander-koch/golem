@@ -316,37 +316,37 @@ ast_t* parse_simpleliteral(parser_t* parser)
 /**
  *  Array parsing function
  */
-ast_t* parse_array(parser_t* parser)
-{
-    ast_t* ast = ast_class_create(AST_ARRAY, get_location(parser));
-    ast->array = list_new();
-
-    token_t* tmp = accept_token_type(parser, TOKEN_LBRACKET);
-    if(!tmp)
-    {
-        parser_throw(parser, "Expected array begin");
-    }
-
-    ast_t* expr = 0;
-    while(!match_type(parser, TOKEN_RBRACKET) && (expr = parse_expression(parser)))
-    {
-        list_push(ast->array, (void*)expr);
-        if(!match_type(parser, TOKEN_COMMA))
-        {
-            break;
-        }
-        else
-        {
-            accept_token(parser);
-        }
-    }
-    tmp = accept_token_type(parser, TOKEN_RBRACKET);
-    if(!tmp)
-    {
-        parser_throw(parser, "Expected array end");
-    }
-    return ast;
-}
+// ast_t* parse_array(parser_t* parser)
+// {
+//     ast_t* ast = ast_class_create(AST_ARRAY, get_location(parser));
+//     ast->array = list_new();
+//
+//     token_t* tmp = accept_token_type(parser, TOKEN_LBRACKET);
+//     if(!tmp)
+//     {
+//         parser_throw(parser, "Expected array begin");
+//     }
+//
+//     ast_t* expr = 0;
+//     while(!match_type(parser, TOKEN_RBRACKET) && (expr = parse_expression(parser)))
+//     {
+//         list_push(ast->array, (void*)expr);
+//         if(!match_type(parser, TOKEN_COMMA))
+//         {
+//             break;
+//         }
+//         else
+//         {
+//             accept_token(parser);
+//         }
+//     }
+//     tmp = accept_token_type(parser, TOKEN_RBRACKET);
+//     if(!tmp)
+//     {
+//         parser_throw(parser, "Expected array end");
+//     }
+//     return ast;
+// }
 
 /**
  *  Parses a literal
@@ -357,10 +357,6 @@ ast_t* parse_literal(parser_t* parser)
     if(match_simple(parser))
     {
         return parse_simpleliteral(parser);
-    }
-    else if(match_type(parser, TOKEN_LBRACKET))
-    {
-        return parse_array(parser);
     }
     else
     {
@@ -657,24 +653,24 @@ datatype_t parse_datatype(parser_t* parser)
         type = DATA_OBJECT;
     }
 
-    if(match_type(parser, TOKEN_LBRACKET))
-    {
-        accept_token(parser);
-        token_t* rbrac = accept_token_type(parser, TOKEN_RBRACKET);
-        if(!rbrac)
-        {
-            parser_throw(parser, "Expected closing bracket");
-            return DATA_NULL;
-        }
-
-        if(type == DATA_VOID)
-        {
-            parser_throw(parser, "Invalid: array of type void");
-            return DATA_NULL;
-        }
-
-        type = DATA_ARRAY | type;
-    }
+    // if(match_type(parser, TOKEN_LBRACKET))
+    // {
+    //     accept_token(parser);
+    //     token_t* rbrac = accept_token_type(parser, TOKEN_RBRACKET);
+    //     if(!rbrac)
+    //     {
+    //         parser_throw(parser, "Expected closing bracket");
+    //         return DATA_NULL;
+    //     }
+    //
+    //     if(type == DATA_VOID)
+    //     {
+    //         parser_throw(parser, "Invalid: array of type void");
+    //         return DATA_NULL;
+    //     }
+    //
+    //     type = DATA_ARRAY | type;
+    // }
 
     return type;
 }

@@ -9,7 +9,9 @@
 #include <core/mem.h>
 #include <core/api.h>
 
-// types: i32, f32, i64, f64, bool, str, (array)i32[], custom classes
+// types: i32, f32, i64, f64, bool, str, custom classes
+// types int, float, char
+
 typedef enum
 {
     DATA_NULL = 0x1,
@@ -17,10 +19,9 @@ typedef enum
     DATA_INT = 0x4,
     DATA_FLOAT = 0x8,
     DATA_STRING = 0x10,
-    DATA_ARRAY = 0x20,
-    DATA_OBJECT = 0x40,
-    DATA_VOID = 0x80,
-    DATA_PTR = 0x100
+    DATA_OBJECT = 0x20,
+    DATA_VOID = 0x40,
+    DATA_PTR = 0x80
 } datatype_t;
 
 typedef struct
@@ -39,7 +40,6 @@ typedef enum
     AST_INT,
     AST_BOOL,
     AST_STRING,
-    AST_ARRAY,
     AST_BINARY,
     AST_UNARY,
     AST_SUBSCRIPT,
@@ -102,7 +102,6 @@ struct ast_s
         char* ident;
         char* string;
         list_t* toplevel;
-        list_t* array;
         list_t* ifstmt;
         I64 i;
         F64 f;

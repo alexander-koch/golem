@@ -2,7 +2,7 @@
 
 void asm_write_prologue(FILE* fp, int stack_size)
 {
-	fprintf(fp, "extern printf\nsection .data\n\tsize equ %d\n\n", stack_size);
+	fprintf(fp, "extern printf\nsection .data\n\tsize equ %d\n\tfmt db \"%%d\", 0\n\n", stack_size);
 	fprintf(fp, "section .text\nglobal WinMain\nWinMain:\n");
 	fprintf(fp, "\t; prologue\n\tmov [rsp+8],rcx\n\tpush r14\n\tpush r13\n");
 	fprintf(fp, "\tsub rsp, size\n\tlea r13,[rsp]\n\n");
@@ -28,6 +28,17 @@ void translate(FILE* fp, instruction_t* instr)
 		{
 			fprintf(fp, "\tpop rax\n");
 			fprintf(fp, "\t; store to %s\n", value_string(instr->v1));
+			break;
+		}
+		case OP_INVOKE:
+		{
+			if(!strcmp(value_string(instr->v1), "println"))
+			{
+				fprintf(fp, "\tpop rax\n");
+				fprintf(fp, "\tmov rcx, fmt\n");
+				fprintf(fp, "\tmov rdx, rax\n");
+				fprintf(fp, "\tcall printf\n");
+			}
 			break;
 		}
 		default: break;

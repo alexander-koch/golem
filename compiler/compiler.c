@@ -390,19 +390,19 @@ void compiler_dump(ast_t* node, int level)
 			fprintf(stdout, ">");
 			break;
 		}
-		case AST_ARRAY:
-		{
-			fprintf(stdout, ":array<");
-
-			list_iterator_t* iter = list_iterator_create(node->array);
-			while(!list_iterator_end(iter))
-			{
-				compiler_dump(list_iterator_next(iter), 0);
-			}
-			list_iterator_free(iter);
-			fprintf(stdout, ">");
-			break;
-		}
+		// case AST_ARRAY:
+		// {
+		// 	fprintf(stdout, ":array<");
+		//
+		// 	list_iterator_t* iter = list_iterator_create(node->array);
+		// 	while(!list_iterator_end(iter))
+		// 	{
+		// 		compiler_dump(list_iterator_next(iter), 0);
+		// 	}
+		// 	list_iterator_free(iter);
+		// 	fprintf(stdout, ">");
+		// 	break;
+		// }
 		case AST_CLASS:
 		{
 			fprintf(stdout, ":class<%s>\n", node->classstmt.name);

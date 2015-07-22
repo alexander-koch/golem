@@ -62,13 +62,13 @@ void optimize_node(optimizer_t* opt, ast_t* node)
 
 			// Do array testing
 			// (Array + Array) = Array
-
-			if((lhs->class == AST_ARRAY && rhs->class != AST_ARRAY) ||
-				(lhs->class != AST_ARRAY && lhs->class == AST_ARRAY))
-			{
-				opt_throw(opt, "Invalid statement, objects of type array can only be compared with another array");
-				break;
-			}
+			// TODO: remove dead code
+			// if((lhs->class == AST_ARRAY && rhs->class != AST_ARRAY) ||
+			// 	(lhs->class != AST_ARRAY && lhs->class == AST_ARRAY))
+			// {
+			// 	opt_throw(opt, "Invalid statement, objects of type array can only be compared with another array");
+			// 	break;
+			// }
 
 			if(lhs->class == AST_FLOAT && rhs->class == AST_FLOAT)
 	        {
@@ -225,7 +225,7 @@ void optimize_node(optimizer_t* opt, ast_t* node)
 			while(!list_iterator_end(iter))
 			{
 				param_t* sub = list_iterator_next(iter);
-				if(sub->type == DATA_VOID || ((sub->type & DATA_ARRAY) == DATA_ARRAY && (sub->type & DATA_VOID) == DATA_VOID))
+				if(sub->type == DATA_VOID) //|| ((sub->type & DATA_ARRAY) == DATA_ARRAY && (sub->type & DATA_VOID) == DATA_VOID))
 				{
 					opt_throw(opt, "Parameters may not be declared as void");
 					break;
