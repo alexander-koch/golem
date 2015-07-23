@@ -28,8 +28,6 @@ typedef struct
 typedef struct
 {
 	stack_t* stack;
-	hashmap_t* fields;
-	hashmap_t* functions;
 	U64 pc;
 	bool error;
 } vm_t;

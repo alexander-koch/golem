@@ -8,22 +8,20 @@
 
 typedef enum
 {
-	// Push
-	OP_PUSH_INT,
-	OP_PUSH_FLOAT,
+	// Basic stack
+	OP_ICONST,
+	OP_FCONST,
+	OP_POP,
 
 	// Store
-	OP_PUSH_STRING,
-	OP_STORE_FIELD,
-	OP_GET_FIELD,
-	OP_PUSH_SCOPE,
-	OP_POP_SCOPE,
+	OP_STORE,
+	OP_LOAD,
 
 	// Arithmetic
-	OP_ADD,
-	OP_SUB,
-	OP_MUL,
-	OP_DIV,
+	OP_IADD,
+	OP_ISUB,
+	OP_IMUL,
+	OP_IDIV,
 	OP_MOD,
 	OP_BITL,
 	OP_BITR,
@@ -35,10 +33,12 @@ typedef enum
 	OP_INVOKE,
 	OP_JMP,
 	OP_JMPF,
+	OP_JMPT,
 
 	// Compare
-	OP_EQUAL,
-	OP_LESS
+	OP_IEQ,
+	OP_INE,
+	OP_ILT
 } opcode_t;
 
 typedef struct
@@ -50,19 +50,18 @@ typedef struct
 
 const char* op2str(opcode_t code);
 
-void emit_i64(list_t* buffer, I64 v);
-void emit_f64(list_t* buffer, F64 f);
-void emit_string(list_t* buffer, char* str);
+void emit_int(list_t* buffer, I64 v);
+void emit_float(list_t* buffer, F64 f);
+void emit_pop(list_t* buffer);
 void emit_op(list_t* buffer, opcode_t op);
 void emit_tok2op(list_t* buffer, token_type_t tok);
 void emit_invoke(list_t* buffer, char* str, size_t args);
-void emit_store_field(list_t* buffer, char* name, bool mutate);
-void emit_get_field(list_t* buffer, char* key);
-void emit_push_scope(list_t* buffer, char* name, size_t params);
-void emit_pop_scope(list_t* buffer);
+void emit_store(list_t* buffer, char* name);
+void emit_load(list_t* buffer, char* key);
 
 value_t* emit_jmp(list_t* buffer, int address);
 value_t* emit_jmpf(list_t* buffer, int address);
+value_t* emit_jmpt(list_t* buffer, int address);
 
 
 #endif

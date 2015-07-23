@@ -54,6 +54,11 @@ int main(int argc, char** argv)
             vm_execute(vm, buffer);
             compiler_clear(&compiler);
         }
+        else
+        {
+            fprintf(stdout, "Could not compile file '%s'\n\n", argv[1]);
+        }
+
         vm_free(vm);
     }
     else if(argc == 3)
@@ -71,12 +76,12 @@ int main(int argc, char** argv)
             }
             else
             {
-                fprintf(stdout, "Could not compile file '%s'\n", argv[2]);
+                fprintf(stdout, "Could not compile file '%s'\n\n", argv[2]);
             }
         }
         else
         {
-            fprintf(stderr, "Flag: '%s' is invalid\n", argv[2]);
+            fprintf(stderr, "Flag: '%s' is invalid\n\n", argv[2]);
         }
     }
     else

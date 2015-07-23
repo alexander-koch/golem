@@ -14,40 +14,45 @@ void eval_block(compiler_t* compiler, list_t* block)
 
 void eval_declfunc(compiler_t* compiler, ast_t* node)
 {
-	emit_push_scope(compiler->buffer, node->funcdecl.name, list_size(node->funcdecl.impl.formals));
+	// TESTIFICATE
 
-	list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.formals);
-	while(!list_iterator_end(iter))
-	{
-		char* token = list_iterator_next(iter);
-		emit_string(compiler->buffer, token);
-	}
-	list_iterator_free(iter);
-
-	eval_block(compiler, node->funcdecl.impl.body);
-	emit_pop_scope(compiler->buffer);
+	// // emit_push_scope(compiler->buffer, node->funcdecl.name, list_size(node->funcdecl.impl.formals));
+	//
+	// list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.formals);
+	// while(!list_iterator_end(iter))
+	// {
+	// 	char* token = list_iterator_next(iter);
+	// 	//emit_string(compiler->buffer, token);
+	// }
+	// list_iterator_free(iter);
+	//
+	// eval_block(compiler, node->funcdecl.impl.body);
+	// // emit_pop_scope(compiler->buffer);
 }
 
 void eval_declvar(compiler_t* compiler, ast_t* node)
 {
+	// TODO: change name to actual address
+
 	compiler_eval(compiler, node->vardecl.initializer);
-	emit_store_field(compiler->buffer, node->vardecl.name, node->vardecl.mutate);
+	emit_store(compiler->buffer, node->vardecl.name);
 }
 
 void eval_number(compiler_t* compiler, ast_t* node)
 {
 	if(node->class == AST_FLOAT)
 	{
-		emit_f64(compiler->buffer, node->f);
+		emit_float(compiler->buffer, node->f);
 	}
 	else
 	{
-		emit_i64(compiler->buffer, node->i);
+		emit_int(compiler->buffer, node->i);
 	}
 }
 
 void eval_binary(compiler_t* compiler, ast_t* node)
 {
+	// How to eval properly?
 	token_type_t op = node->binary.op;
 	if(op == TOKEN_ASSIGN)
 	{
@@ -59,13 +64,15 @@ void eval_binary(compiler_t* compiler, ast_t* node)
 		}
 
 		compiler_eval(compiler, node->binary.right);
-		emit_store_field(compiler->buffer,lhs->ident, false);
+		emit_store(compiler->buffer, lhs->ident);
 	}
 	else
 	{
 		// Emit node op-codes
 		compiler_eval(compiler, node->binary.left);
 		compiler_eval(compiler, node->binary.right);
+
+		//node->binary.left->class;
 
 		// Emit operator
 		emit_tok2op(compiler->buffer, op);
@@ -74,7 +81,8 @@ void eval_binary(compiler_t* compiler, ast_t* node)
 
 void eval_ident(compiler_t* compiler, ast_t* node)
 {
-	emit_get_field(compiler->buffer, node->ident);
+	// Is local or global?
+	emit_load(compiler->buffer, node->ident);
 }
 
 void eval_call(compiler_t* compiler, ast_t* node)
@@ -89,19 +97,36 @@ void eval_call(compiler_t* compiler, ast_t* node)
 	}
 	else
 	{
-		// TODO: FIX!!
-		// Subscript?
+		// TODO: Subscript?, FIX!!
 	}
 }
 
 void eval_string(compiler_t* compiler, ast_t* node)
 {
-	emit_string(compiler->buffer, node->string);
+	//emit_string(compiler->buffer, node->string);
 }
 
 void eval_if(compiler_t* compiler, ast_t* node)
 {
-	//eval_block(compiler, node->ifstmt);
+	// Creates jumps
+	// if x == 5
+	// 	print 5
+	// else if x == 4
+	// 	print 4
+	// else
+	//  print x
+
+	// 1: load x
+	// 2: iconst 5
+	// 3: ieq			<-- condition 1
+	// 4: jmpf 8		<-- jump to condition 2
+	// 5: iconst 5
+	// 6: print
+	// 7: jmp end		<-- end block, jump to end
+	// 8: load x 		<-- condition 2
+	// 9: iconst 5
+	//10: ieq
+	//11: jmpf ..		<-- jump to condition 3 and so on
 
 	// Eval the sub-ifclauses
 	list_t* jmps = list_new();
@@ -154,6 +179,7 @@ void eval_if(compiler_t* compiler, ast_t* node)
 
 void eval_ifclause(compiler_t* compiler, ast_t* node)
 {
+	// helper function for if
 	compiler_eval(compiler, node->ifclause.cond);
 	value_t* instr = emit_jmpf(compiler->buffer, 0);
 	eval_block(compiler, node->ifclause.body);
@@ -267,8 +293,23 @@ void compiler_dump(ast_t* node, int level)
 		}
 		case AST_DECLFUNC:
 		{
-			fprintf(stdout, ":func<%s>\n", node->funcdecl.name);
-			list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.body);
+			fprintf(stdout, ":func<%s::(", node->funcdecl.name);
+
+			list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.formals);
+			while(!list_iterator_end(iter))
+			{
+				param_t* param = list_iterator_next(iter);
+				fprintf(stdout, "%s: %d", param->name, param->type);
+
+				if(!list_iterator_end(iter))
+				{
+					fprintf(stdout, ", ");
+				}
+			}
+			fprintf(stdout, ") => ret: %d>\n", node->funcdecl.rettype);
+
+			list_iterator_free(iter);
+			iter = list_iterator_create(node->funcdecl.impl.body);
 			while(!list_iterator_end(iter))
 			{
 				ast_t* next = list_iterator_next(iter);
@@ -495,7 +536,16 @@ list_t* compile_buffer(compiler_t* compiler, const char* source)
 	}
 
 	parser_free(&compiler->parser);
-	return compiler->buffer;
+
+	if(root)
+	{
+		return compiler->buffer;
+	}
+	else
+	{
+		list_free(compiler->buffer);
+		return 0;
+	}
 }
 
 /**

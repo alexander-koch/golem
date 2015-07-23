@@ -12,7 +12,7 @@ The language for the pure evil.
 
 # Ideas
 
-- String not as a data type but character array (C-like)
+- String not as a data type but character array (C-like) -> type i8
 - Characters may be UTF-8 / 16 / 32
 
 # Concept (final concept may change)
@@ -30,7 +30,7 @@ Variables can be mutable, if they are declared using the 'mut' keyword.
 Functions are declared using the 'func' keyword.
 The body is bound by egyptian style braces. You have to declare the parameters and the return type.
 
-	func main(args: char*) -> void {
+	func main(args: i8*) -> void {
 		# body
 	}
 
@@ -68,7 +68,7 @@ Example:
 	if(number == 5) {
 		println("Your number is odd.")
 	} else if(number == 3) {
-		println("Your number is odd and it is three.")
+		println("Your number is odd and it's three.")
 	} else {
 		println("Your number isn't 5 or 3.")
 	}
@@ -104,6 +104,7 @@ Implementation specific
 
 - implement bytecode vm or an llvm compiler
 - compile to machine code (x86 / x86_64 => Intel syntax)
+- mark-sweep garbage collector for vm
 
 # Pointer and ownership (only if language is fully operational (TODO))
 
@@ -122,6 +123,8 @@ http://www.codejury.com/a-walk-in-x64-land/
 http://www.d.umn.edu/~rmaclin/cs5641/Notes/L19_CodeGenerationI.pdf
 http://www.incubatorgames.com/20110621/simple-scripting-language-part-5/
 http://byteworm.com/2010/11/21/the-fastest-vm-bytecode-interpreter/
+https://www.youtube.com/watch?v=OjaAToVkoTw
+http://journal.stuffwithstuff.com/2013/12/08/babys-first-garbage-collector/
 
 # Licence
 Copyright (c) Alexander Koch 2015

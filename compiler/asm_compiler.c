@@ -1,8 +1,12 @@
 #include "asm_compiler.h"
 
+int i_vars = 1;
+
 void asm_write_prologue(FILE* fp, int stack_size)
 {
-	fprintf(fp, "extern printf\nsection .data\n\tsize equ %d\n\tfmt db \"%%d\", 0\n\n", stack_size);
+	fprintf(fp, "extern printf\nsection .data\n\tsize equ %d\n", stack_size);
+	fprintf(fp, "\ti_local_vars db 0\n");
+	fprintf(fp, "\tfmt db \"%%d\", 0\n\n");
 	fprintf(fp, "section .text\nglobal WinMain\nWinMain:\n");
 	fprintf(fp, "\t; prologue\n\tmov [rsp+8],rcx\n\tpush r14\n\tpush r13\n");
 	fprintf(fp, "\tsub rsp, size\n\tlea r13,[rsp]\n\n");
@@ -18,23 +22,15 @@ void translate(FILE* fp, instruction_t* instr)
 {
 	switch(instr->op)
 	{
-		case OP_PUSH_INT:
+		case OP_ICONST:
 		{
 			fprintf(fp, "\tmov rax, %li\n", (long int)value_int(instr->v1));
-			fprintf(fp, "\tpush rax\n");
-			break;
-		}
-		case OP_STORE_FIELD:
-		{
-			fprintf(fp, "\tpop rax\n");
-			fprintf(fp, "\t; store to %s\n", value_string(instr->v1));
 			break;
 		}
 		case OP_INVOKE:
 		{
 			if(!strcmp(value_string(instr->v1), "println"))
 			{
-				fprintf(fp, "\tpop rax\n");
 				fprintf(fp, "\tmov rcx, fmt\n");
 				fprintf(fp, "\tmov rdx, rax\n");
 				fprintf(fp, "\tcall printf\n");

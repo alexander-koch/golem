@@ -653,6 +653,19 @@ datatype_t parse_datatype(parser_t* parser)
         type = DATA_OBJECT;
     }
 
+    if(match_type(parser, TOKEN_MUL))
+    {
+        accept_token(parser);
+
+        if(type == DATA_VOID)
+        {
+            parser_throw(parser, "Void pointers are invalid");
+            return DATA_NULL;
+        }
+
+        type = DATA_PTR | type;
+    }
+
     // if(match_type(parser, TOKEN_LBRACKET))
     // {
     //     accept_token(parser);

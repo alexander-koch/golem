@@ -9,8 +9,8 @@
 #include <core/mem.h>
 #include <core/api.h>
 
-// types: i32, f32, i64, f64, bool, str, custom classes
-// types int, float, char
+// needed types? i32, f32, i64, f64, bool, str, custom classes
+// types: void, bool, i8, int, float
 
 typedef enum
 {

@@ -22,24 +22,24 @@ LLVMTypeRef getLLVMType(datatype_t dt)
 		default: break;
 	}
 
-	if((dt & DATA_ARRAY) == DATA_ARRAY)
-	{
-		dt = dt & ~DATA_ARRAY; // Remove bitflag to get type of array
-		switch(dt)
-		{
-			case DATA_INT:
-			{
-				return LLVMPointerType(LLVMInt32Type(), 0);
-				break;
-			}
-			case DATA_STRING:
-			{
-				return LLVMPointerType(LLVMInt8Type(), 0);
-				break;
-			}
-			default: break;
-		}
-	}
+	// if((dt & DATA_ARRAY) == DATA_ARRAY)
+	// {
+	// 	dt = dt & ~DATA_ARRAY; // Remove bitflag to get type of array
+	// 	switch(dt)
+	// 	{
+	// 		case DATA_INT:
+	// 		{
+	// 			return LLVMPointerType(LLVMInt32Type(), 0);
+	// 			break;
+	// 		}
+	// 		case DATA_STRING:
+	// 		{
+	// 			return LLVMPointerType(LLVMInt8Type(), 0);
+	// 			break;
+	// 		}
+	// 		default: break;
+	// 	}
+	// }
 
 	return LLVMInt1Type();
 }
@@ -192,7 +192,7 @@ LLVMValueRef llvm_binary(llvm_context_t* ctx, ast_t* node)
 
 	bool floating = node->binary.left->class == AST_FLOAT &&
 		node->binary.right->class == AST_FLOAT;
-		
+
 	switch(node->binary.op)
 	{
 		case TOKEN_ADD: return floating ? LLVMBuildFAdd(ctx->builder, lhs, rhs, "add") :

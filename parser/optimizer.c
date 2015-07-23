@@ -1,9 +1,11 @@
 #include "optimizer.h"
+#include <adt/hashmap.h>
 
 typedef struct
 {
 	ast_t* node;
 	bool error;
+	hashmap_t* globals;
 } optimizer_t;
 
 void opt_throw(optimizer_t* opt, const char* format, ...)
@@ -33,6 +35,11 @@ void optimize_node(optimizer_t* opt, ast_t* node)
 			list_iterator_free(iter);
 			break;
 		}
+		case AST_DECLVAR:
+		{
+			hashmap_set(opt->globals, node->vardecl.name, &node->vardecl.mutate);
+			break;
+		}
 		case AST_BINARY:
 		{
 			optimize_node(opt, node->binary.left);
@@ -40,11 +47,19 @@ void optimize_node(optimizer_t* opt, ast_t* node)
 			ast_t* lhs = node->binary.left;
 			ast_t* rhs = node->binary.right;
 
-			// if(lhs->class != rhs->class)
-			// {
-			// 	opt_throw(opt, "Cannot compare objects of different classes");
-			// 	break;
-			// }
+			// Immutability check
+			if(node->binary.op == TOKEN_ASSIGN)
+			{
+				if(lhs->class == AST_IDENT)
+				{
+					void* val;
+					if(hashmap_get(opt->globals, lhs->ident, &val) != HMAP_MISSING)
+					{
+						opt_throw(opt, "Invalid statement, trying to modifiy an immutable variable");
+						break;
+					}
+				}
+			}
 
 			// Do string testing
 			// Form:
@@ -164,7 +179,6 @@ void optimize_node(optimizer_t* opt, ast_t* node)
 				}
 			}
 
-
 			break;
 		}
 		case AST_CLASS:
@@ -197,6 +211,13 @@ void optimize_node(optimizer_t* opt, ast_t* node)
 			while(!list_iterator_end(iter))
 			{
 				ast_t* sub = list_iterator_next(iter);
+
+				if(sub->class == AST_DECLFUNC)
+				{
+					opt->node = sub;
+					opt_throw(opt, "Function declaration in a function is not allowed");
+					break;
+				}
 
 				// If return reached before end
 				if(sub->class == AST_RETURN && !list_iterator_end(iter))
@@ -244,6 +265,7 @@ bool optimize_tree(ast_t* node)
 	optimizer_t opt;
 	opt.node = node;
 	opt.error = false;
+	opt.globals = hashmap_new();
 
 	if(node->class == AST_TOPLEVEL)
 	{
@@ -254,5 +276,6 @@ bool optimize_tree(ast_t* node)
 		opt_throw(&opt, "Node must be a root node");
 	}
 
+	hashmap_free(opt.globals);
 	return !opt.error;
 }
