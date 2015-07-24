@@ -30,7 +30,7 @@ Variables can be mutable, if they are declared using the 'mut' keyword.
 Functions are declared using the 'func' keyword.
 The body is bound by egyptian style braces. You have to declare the parameters and the return type.
 
-	func main(args: i8*) -> void {
+	func main(args: str) -> void {
 		# body
 	}
 
@@ -45,8 +45,8 @@ constructor and destructor.
 
 		# Constructor
 		func new(x: int, y: int, z: int) -> void {
-			this::x = 2
-			this::y = 4
+			this.x = 2
+			this.y = 4
 		}
 
 		# Method 1

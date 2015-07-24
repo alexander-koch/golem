@@ -4,6 +4,7 @@
 |---                  |---
 |iconst x             | pushes int onto the stack
 |fconst x             | pushes float onto the stack
+|sconst x             | pushes a string onto the stack
 |pop                  | pop value from stack, remove
 
 | Store               | Description
@@ -46,22 +47,22 @@
 This should compile to the following (unoptimized):
 
     Code:
-      1: push_int, 5
-      2: store_field, x, true
-      3: get_field, x
-      4: push_int, 5
-      5: iadd
-      6: store_field, x, false
-      7: get_field, x
-      8: invoke, println, 1
+      01: iconst, 5
+      02: store, 0
+      03: load, 0
+      04: iconst, 5
+      05: iadd
+      06: store, 0
+      07: load, 0
+      08: invoke, println, 1
 
 Optimized (not done by vm / interpreter):
 
     Code:
-      1: push_int, 5
-      2: push_int, 5
-      3: add
-      4: invoke, println, 1
+      01: iconst, 5
+      02: iconst, 5
+      03: iadd
+      04: invoke, println, 1
 
 Result of execution:
 

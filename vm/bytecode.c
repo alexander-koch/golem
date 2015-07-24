@@ -8,6 +8,7 @@ const char* op2str(opcode_t code)
 	{
 		case OP_ICONST: return "iconst";
 		case OP_FCONST: return "fconst";
+		case OP_SCONST: return "sconst";
 		case OP_POP: return "pop";
 		case OP_STORE: return "store";
 		case OP_LOAD: return "load";
@@ -78,6 +79,12 @@ void emit_float(list_t* buffer, F64 f)
 {
 	value_t* val = value_new_float(f);
 	insert_v1(buffer, OP_FCONST, val);
+}
+
+void emit_string(list_t* buffer, char* str)
+{
+	value_t* val = value_new_string(str);
+	insert_v1(buffer, OP_SCONST, val);
 }
 
 void emit_pop(list_t* buffer)
@@ -179,15 +186,15 @@ void emit_invoke(list_t* buffer, char* str, size_t args)
 	insert_v2(buffer, OP_INVOKE, v1, v2);
 }
 
-void emit_store(list_t* buffer, char* name)
+void emit_store(list_t* buffer, int address)
 {
-	value_t* val = value_new_string(name);
+	value_t* val = value_new_int(address);
 	insert_v1(buffer, OP_STORE, val);
 }
 
-void emit_load(list_t* buffer, char* key)
+void emit_load(list_t* buffer, int address)
 {
-	value_t* val = value_new_string(key);
+	value_t* val = value_new_int(address);
 	insert_v1(buffer, OP_LOAD, val);
 }
 

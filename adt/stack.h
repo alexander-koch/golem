@@ -11,6 +11,7 @@ typedef struct stack_t
 } stack_t;
 
 stack_t* stack_new();
+void stack_resize(stack_t* s, int size);
 void stack_push(stack_t* s, void* val);
 void* stack_top(stack_t* s);
 void* stack_pop(stack_t* s);

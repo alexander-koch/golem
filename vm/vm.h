@@ -11,25 +11,11 @@
 
 typedef struct
 {
-	char* name;
-	size_t args;
-	U64 pc;
-	list_t* params;
-	size_t ic;
-} scope_t;
-
-typedef struct
-{
-	char* name;
-	bool mutate;
-	value_t* val;
-} variable_t;
-
-typedef struct
-{
-	stack_t* stack;
-	U64 pc;
 	bool error;
+	stack_t* stack;
+	int sp;
+	int pc;
+	int fp;
 } vm_t;
 
 vm_t* vm_new();

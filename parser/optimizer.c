@@ -37,7 +37,10 @@ void optimize_node(optimizer_t* opt, ast_t* node)
 		}
 		case AST_DECLVAR:
 		{
-			hashmap_set(opt->globals, node->vardecl.name, &node->vardecl.mutate);
+			if(!node->vardecl.mutate)
+			{
+				hashmap_set(opt->globals, node->vardecl.name, &node->vardecl.mutate);
+			}
 			break;
 		}
 		case AST_BINARY:

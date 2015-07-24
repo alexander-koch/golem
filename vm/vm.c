@@ -1,27 +1,18 @@
 #include "vm.h"
 
+#define STACK_SIZE 256
+
 vm_t* vm_new()
 {
 	vm_t* vm = malloc(sizeof(*vm));
-	vm->stack = stack_new();
-	vm->pc = 0;
 	vm->error = false;
+	vm->stack = stack_new();
+	vm->sp = 0;
+	vm->pc = 0;
+	vm->fp = 200;
+
+	stack_resize(vm->stack, 256);
 	return vm;
-}
-
-void vm_throw(vm_t* vm, const char* format, ...)
-{
-	vm->error = true;
-    //location_t loc = opt->node->location;
-    //fprintf(stdout, "[line %d, column %d] (Semantic): ", loc.line, loc.column);
-	// TODO: get line / column position for OP_CODE
-
-	fprintf(stdout, "(VM): ");
-    va_list argptr;
-    va_start(argptr, format);
-    vfprintf(stdout, format, argptr);
-    va_end(argptr);
-    fprintf(stdout, "\n");
 }
 
 instruction_t* vm_peek(vm_t* vm, list_t* buffer)
@@ -55,20 +46,17 @@ void vm_print_code(vm_t* vm, list_t* buffer)
 }
 
 /**
- *	Processes a buffer instruction based on program counter (pc).
+ *	Processes a buffer instruction based on instruction / program counter (pc).
  */
 void vm_process(vm_t* vm, list_t* buffer)
 {
-	instruction_t* instr = list_get(buffer, vm->pc);
+	instruction_t* instr = vm_peek(vm, buffer);
 
 	switch(instr->op)
 	{
-		case OP_ICONST:
-		{
-			stack_push(vm->stack, value_copy(instr->v1));
-			break;
-		}
+		case OP_SCONST:
 		case OP_FCONST:
+		case OP_ICONST:
 		{
 			stack_push(vm->stack, value_copy(instr->v1));
 			break;
@@ -80,29 +68,16 @@ void vm_process(vm_t* vm, list_t* buffer)
 		}
 		case OP_STORE:
 		{
-			// char* key = value_string(instr->v1);
-			// bool mutate = value_bool(instr->v2);
-			// value_t* v = stack_pop(vm->stack);
-			// save_var(vm, key, v, mutate);
+			value_t* v = stack_pop(vm->stack);
+			int offset = value_int(instr->v1);
+			vm->stack->content[vm->fp+offset] = v;
 			break;
 		}
 		case OP_LOAD:
 		{
-			// void* value = 0;
-			// char* key = value_string(instr->v1);
-			// int err = hashmap_get(vm->fields, key, &value);
-			//
-			// variable_t* var = (variable_t*)value;
-			// if(var)
-			// {
-			// 	stack_push(vm->stack, value_copy(var->val));
-			// }
-			// else
-			// {
-			// 	console("Could not find variable '%s'. Code %d\n", key, err);
-			// 	vm->error = true;
-			// }
-
+			int offset = value_int(instr->v1);
+			value_t* v = vm->stack->content[vm->fp+offset];
+			stack_push(vm->stack, v);
 			break;
 		}
 		case OP_INVOKE:
@@ -128,7 +103,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 				console("\n");
 			}
 
-			// Else search!
+			// Else get method!, TODO!
 
 			list_iterator_t* iter = list_iterator_create(values);
 			while(!list_iterator_end(iter))
@@ -287,14 +262,9 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_free(v2);
 			break;
 		}
-		default:
-		{
-			vm_throw(vm, "Unknown op-code\n");
-			break;
-		}
+		default: break;
 	}
 
-//	console("  %.2d (stack %d)\n", vm->pc, stack_size(vm->stack));
 	vm->pc++;
 }
 
@@ -307,12 +277,16 @@ void vm_execute(vm_t* vm, list_t* buffer)
 	vm->error = false;
 	vm_print_code(vm, buffer);
 
+	// Run
+#ifndef NO_EXEC
 	console("\nExecution:\n");
 	while(vm->pc < list_size(buffer) && !vm->error)
 	{
 		vm_process(vm, buffer);
 	}
+#endif
 
+	// Clear
 	console("\n");
 	while(stack_size(vm->stack) > 0)
 	{

@@ -33,9 +33,7 @@ void run_repl(vm_t* vm, compiler_t* compiler)
 int main(int argc, char** argv)
 {
     compiler_t compiler;
-    compiler.buffer = 0;
-    compiler.filename = 0;
-    compiler.debug = true;
+    compiler_init(&compiler);
 
     if(argc == 1)
     {
@@ -92,6 +90,7 @@ int main(int argc, char** argv)
         return -1;
     }
 
+    compiler_free_symbols(&compiler);
     mem_leak_check();
     return 0;
 }

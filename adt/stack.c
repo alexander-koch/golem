@@ -9,6 +9,20 @@ stack_t* stack_new()
 	return s;
 }
 
+void stack_resize(stack_t* s, int size)
+{
+	if(s->size == 0)
+	{
+		s->size = size;
+		s->content = (void**)malloc(s->size * sizeof(void*));
+	}
+	else
+	{
+		s->size = size;
+		s->content = (void**)realloc(s->content, s->size * sizeof(void*));
+	}
+}
+
 void stack_push(stack_t* s, void* val)
 {
 	if(s->top + 1 >= s->size)

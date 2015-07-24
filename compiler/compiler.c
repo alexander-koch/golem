@@ -2,6 +2,15 @@
 
 void compiler_eval(compiler_t* compiler, ast_t* node);
 
+void compiler_init(compiler_t* compiler)
+{
+	compiler->buffer = 0;
+	compiler->filename = 0;
+	compiler->debug = true;
+	compiler->symbols = hashmap_new();
+	compiler->address = 0;
+}
+
 void eval_block(compiler_t* compiler, list_t* block)
 {
 	list_iterator_t* iter = list_iterator_create(block);
@@ -33,9 +42,15 @@ void eval_declfunc(compiler_t* compiler, ast_t* node)
 void eval_declvar(compiler_t* compiler, ast_t* node)
 {
 	// TODO: change name to actual address
+	// Save symbols
+
+	value_t* address = value_new_int(compiler->address);
 
 	compiler_eval(compiler, node->vardecl.initializer);
-	emit_store(compiler->buffer, node->vardecl.name);
+	emit_store(compiler->buffer, value_int(address));
+
+	hashmap_set(compiler->symbols, node->vardecl.name, address);
+	compiler->address++;
 }
 
 void eval_number(compiler_t* compiler, ast_t* node)
@@ -64,7 +79,14 @@ void eval_binary(compiler_t* compiler, ast_t* node)
 		}
 
 		compiler_eval(compiler, node->binary.right);
-		emit_store(compiler->buffer, lhs->ident);
+
+		// Get address
+		void* val = 0;
+		if(hashmap_get(compiler->symbols, lhs->ident, &val) != HMAP_MISSING)
+		{
+			value_t* ptr = (value_t*)val;
+			emit_store(compiler->buffer, value_int(ptr));
+		}
 	}
 	else
 	{
@@ -72,7 +94,9 @@ void eval_binary(compiler_t* compiler, ast_t* node)
 		compiler_eval(compiler, node->binary.left);
 		compiler_eval(compiler, node->binary.right);
 
-		//node->binary.left->class;
+		// TODO:
+		// test compiler->buffer type of top element
+		// --> decide which op to choose
 
 		// Emit operator
 		emit_tok2op(compiler->buffer, op);
@@ -81,8 +105,12 @@ void eval_binary(compiler_t* compiler, ast_t* node)
 
 void eval_ident(compiler_t* compiler, ast_t* node)
 {
-	// Is local or global?
-	emit_load(compiler->buffer, node->ident);
+	void* val = 0;
+	if(hashmap_get(compiler->symbols, node->ident, &val) != HMAP_MISSING)
+	{
+		value_t* ptr = (value_t*)val;
+		emit_load(compiler->buffer, value_int(ptr));
+	}
 }
 
 void eval_call(compiler_t* compiler, ast_t* node)
@@ -103,7 +131,7 @@ void eval_call(compiler_t* compiler, ast_t* node)
 
 void eval_string(compiler_t* compiler, ast_t* node)
 {
-	//emit_string(compiler->buffer, node->string);
+	emit_string(compiler->buffer, node->string);
 }
 
 void eval_if(compiler_t* compiler, ast_t* node)
@@ -588,4 +616,18 @@ void compiler_clear(compiler_t* compiler)
 		list_free(compiler->buffer);
 		compiler->buffer = 0;
 	}
+
+
+}
+
+void compiler_free_symbols(compiler_t* compiler)
+{
+	hashmap_iterator_t* iter = hashmap_iterator_create(compiler->symbols);
+	while(!hashmap_iterator_end(iter))
+	{
+		value_t* val = hashmap_iterator_next(iter);
+		value_free(val);
+	}
+	hashmap_iterator_free(iter);
+	hashmap_free(compiler->symbols);
 }
