@@ -9,9 +9,9 @@ vm_t* vm_new()
 	vm->stack = stack_new();
 	vm->sp = 0;
 	vm->pc = 0;
-	vm->fp = 200;
+	vm->fp = 0;
 
-	stack_resize(vm->stack, 256);
+	stack_resize(vm->stack, STACK_SIZE);
 	return vm;
 }
 
