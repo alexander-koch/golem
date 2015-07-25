@@ -1,32 +1,43 @@
 #include "compiler.h"
 
-void compiler_eval(compiler_t* compiler, ast_t* node);
+datatype_t compiler_eval(compiler_t* compiler, ast_t* node);
 
-void compiler_init(compiler_t* compiler)
+void compiler_init(compiler_t* compiler, bool debugmode)
 {
 	compiler->buffer = 0;
 	compiler->filename = 0;
-	compiler->debug = true;
-	compiler->symbols = hashmap_new();
-	compiler->address = 0;
+	compiler->debug = debugmode;
+	compiler->error = false;
 }
 
-void eval_block(compiler_t* compiler, list_t* block)
+void compiler_throw(compiler_t* compiler, ast_t* node, const char* format, ...)
 {
+	compiler->error = true;
+    location_t loc = node->location;
+    fprintf(stdout, "[line %d, column %d] (Semantic): ", loc.line, loc.column);
+    va_list argptr;
+    va_start(argptr, format);
+    vfprintf(stdout, format, argptr);
+    va_end(argptr);
+    fprintf(stdout, "\n");
+}
+
+datatype_t eval_block(compiler_t* compiler, list_t* block)
+{
+	datatype_t ret = DATA_NULL;
+
 	list_iterator_t* iter = list_iterator_create(block);
 	while(!list_iterator_end(iter))
 	{
-		compiler_eval(compiler, list_iterator_next(iter));
+		ret = compiler_eval(compiler, list_iterator_next(iter));
 	}
 	list_iterator_free(iter);
+	return ret;
 }
 
-void eval_declfunc(compiler_t* compiler, ast_t* node)
+datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 {
 	// TESTIFICATE
-
-	// // emit_push_scope(compiler->buffer, node->funcdecl.name, list_size(node->funcdecl.impl.formals));
-	//
 	// list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.formals);
 	// while(!list_iterator_end(iter))
 	// {
@@ -36,86 +47,220 @@ void eval_declfunc(compiler_t* compiler, ast_t* node)
 	// list_iterator_free(iter);
 	//
 	// eval_block(compiler, node->funcdecl.impl.body);
-	// // emit_pop_scope(compiler->buffer);
+	return DATA_NULL;
 }
 
-void eval_declvar(compiler_t* compiler, ast_t* node)
+datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 {
-	// TODO: change name to actual address
-	// Save symbols
+	// First eval initializer
+	datatype_t vartype = compiler_eval(compiler, node->vardecl.initializer); // <-- get type
 
-	value_t* address = value_new_int(compiler->address);
+	// Store symbol
+	symbol_t* symbol = malloc(sizeof(*symbol));
+	symbol->node = node;
+	symbol->address = compiler->address;
+	symbol->node->vardecl.type = vartype;
+	hashmap_set(compiler->symbols, node->vardecl.name, symbol);
 
-	compiler_eval(compiler, node->vardecl.initializer);
-	emit_store(compiler->buffer, value_int(address));
+	// Emit last bytecode
+	emit_store(compiler->buffer, symbol->address);
 
-	hashmap_set(compiler->symbols, node->vardecl.name, address);
+	// Increase compiler address
 	compiler->address++;
+
+	// Debug variables
+	//console("Created variable %s: %s with data type %d\n", node->vardecl.name, node->vardecl.mutate ? "mut" : "immut", vartype);
+
+	return DATA_NULL;
 }
 
-void eval_number(compiler_t* compiler, ast_t* node)
+datatype_t eval_number(compiler_t* compiler, ast_t* node)
 {
 	if(node->class == AST_FLOAT)
 	{
 		emit_float(compiler->buffer, node->f);
+		return DATA_FLOAT;
 	}
-	else
-	{
-		emit_int(compiler->buffer, node->i);
-	}
+
+	emit_int(compiler->buffer, node->i);
+	return DATA_INT;
 }
 
-void eval_binary(compiler_t* compiler, ast_t* node)
+datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 {
-	// How to eval properly?
+	ast_t* lhs = node->binary.left;
+	ast_t* rhs = node->binary.right;
 	token_type_t op = node->binary.op;
+
+	// Testing and internal optimization
+
+	// Do string testing
+	// String x String -> String
+	// String x Other = Invalid
+
+	if((lhs->class == AST_STRING && rhs->class != AST_STRING) ||
+		(lhs->class != AST_STRING && rhs->class == AST_STRING))
+	{
+		compiler_throw(compiler, node, "Invalid statement, objects of type string can only be compared with a another string");
+		return DATA_NULL;
+	}
+
+	if(lhs->class == AST_FLOAT && rhs->class == AST_FLOAT)
+	{
+		switch(op)
+		{
+			case TOKEN_ADD:
+			{
+				lhs->f = lhs->f + rhs->f;
+				break;
+			}
+			case TOKEN_SUB:
+			{
+				lhs->f = lhs->f - rhs->f;
+				break;
+			}
+			case TOKEN_MUL:
+			{
+				lhs->f = lhs->f * rhs->f;
+				break;
+			}
+			case TOKEN_DIV:
+			{
+				lhs->f = lhs->f / rhs->f;
+				break;
+			}
+			case TOKEN_EQUAL:
+			{
+				lhs->class = AST_BOOL;
+				lhs->b = (lhs->f == rhs->f);
+				break;
+			}
+			case TOKEN_NEQUAL:
+			{
+				lhs->class = AST_BOOL;
+				lhs->b = (lhs->f != rhs->f);
+				break;
+			}
+			case TOKEN_LEQUAL:
+			{
+				lhs->class = AST_BOOL;
+				lhs->b = (lhs->f <= lhs->f);
+				break;
+			}
+			case TOKEN_GEQUAL:
+			{
+				lhs->class = AST_BOOL;
+				lhs->b = (lhs->f >= lhs->f);
+				break;
+			}
+			case TOKEN_LESS:
+			{
+				lhs->class = AST_BOOL;
+				lhs->b = (lhs->f < lhs->f);
+				break;
+			}
+			case TOKEN_GREATER:
+			{
+				lhs->class = AST_BOOL;
+				lhs->b = (lhs->f > lhs->f);
+				break;
+			}
+			default:
+			{
+				compiler_throw(compiler, node, "Invalid operator. Operator might not be available for floats");
+				return DATA_NULL;
+			}
+		}
+	}
+
+	// How to eval properly?
+
+	// Immutability check
 	if(op == TOKEN_ASSIGN)
 	{
-		ast_t* lhs = node->binary.left;
-		if(lhs->class != AST_IDENT)
+		if(lhs->class == AST_IDENT)
 		{
-			// TODO: throw error / eval subscript
-			return;
+			void* val;
+			if(hashmap_get(compiler->symbols, lhs->ident, &val) != HMAP_MISSING)
+			{
+				symbol_t* symbol = (symbol_t*)val;
+				if(symbol->node->class == AST_DECLVAR)
+				{
+					if(!symbol->node->vardecl.mutate)
+					{
+						compiler_throw(compiler, node, "Invalid statement, trying to modifiy an immutable variable");
+						return DATA_NULL;
+					}
+
+					compiler_eval(compiler, rhs); // gettype here
+					emit_store(compiler->buffer, symbol->address);
+				}
+				else
+				{
+					// TODO: other types
+				}
+			}
+			else
+			{
+				compiler_throw(compiler, node, "Warning: Implicit declaration of field '%s'", lhs->ident);
+				return DATA_NULL;
+			}
 		}
-
-		compiler_eval(compiler, node->binary.right);
-
-		// Get address
-		void* val = 0;
-		if(hashmap_get(compiler->symbols, lhs->ident, &val) != HMAP_MISSING)
+		else
 		{
-			value_t* ptr = (value_t*)val;
-			emit_store(compiler->buffer, value_int(ptr));
+			// We got a subscript, todo!!
 		}
 	}
 	else
 	{
 		// Emit node op-codes
-		compiler_eval(compiler, node->binary.left);
-		compiler_eval(compiler, node->binary.right);
+		datatype_t lhs_type = compiler_eval(compiler, lhs);
+		datatype_t rhs_type = compiler_eval(compiler, rhs);
 
-		// TODO:
-		// test compiler->buffer type of top element
-		// --> decide which op to choose
+		if(lhs_type != rhs_type)
+		{
+			compiler_throw(compiler, node, "Cannot perform operation '%s' on the types '%s' and '%s'", tok2str(op), datatype2str(lhs_type), datatype2str(rhs_type));
+			return DATA_NULL;
+		}
 
 		// Emit operator
-		emit_tok2op(compiler->buffer, op);
+		emit_tok2op(compiler->buffer, op, lhs_type);
+		return lhs_type;
 	}
+	return DATA_NULL;
 }
 
-void eval_ident(compiler_t* compiler, ast_t* node)
+datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 {
 	void* val = 0;
 	if(hashmap_get(compiler->symbols, node->ident, &val) != HMAP_MISSING)
 	{
-		value_t* ptr = (value_t*)val;
-		emit_load(compiler->buffer, value_int(ptr));
+		symbol_t* ptr = (symbol_t*)val;
+		emit_load(compiler->buffer, ptr->address);
+
+		if(ptr->node->class == AST_DECLVAR)
+		{
+			return ptr->node->vardecl.type;
+		}
+		else if(node->class == AST_CLASS)
+		{
+			// TODO:
+		}
+		else if(node->class == AST_SUBSCRIPT)
+		{
+			// TODO:
+		}
+
+		return DATA_NULL;
 	}
+
+	compiler_throw(compiler, node, "Warning: Implicit declaration of field '%s'", node->ident);
+	return DATA_NULL;
 }
 
-void eval_call(compiler_t* compiler, ast_t* node)
+datatype_t eval_call(compiler_t* compiler, ast_t* node)
 {
-	I64 args = list_size(node->call.args);
+	size_t args = list_size(node->call.args);
 	eval_block(compiler, node->call.args);
 
 	ast_t* call = node->call.callee;
@@ -127,14 +272,17 @@ void eval_call(compiler_t* compiler, ast_t* node)
 	{
 		// TODO: Subscript?, FIX!!
 	}
+
+	return DATA_NULL;
 }
 
-void eval_string(compiler_t* compiler, ast_t* node)
+datatype_t eval_string(compiler_t* compiler, ast_t* node)
 {
 	emit_string(compiler->buffer, node->string);
+	return DATA_STRING;
 }
 
-void eval_if(compiler_t* compiler, ast_t* node)
+datatype_t eval_if(compiler_t* compiler, ast_t* node)
 {
 	// Creates jumps
 	// if x == 5
@@ -203,88 +351,53 @@ void eval_if(compiler_t* compiler, ast_t* node)
 	}
 	list_iterator_free(iter);
 	list_free(jmps);
+
+	return DATA_NULL;
 }
 
-void eval_ifclause(compiler_t* compiler, ast_t* node)
+datatype_t eval_ifclause(compiler_t* compiler, ast_t* node)
 {
 	// helper function for if
 	compiler_eval(compiler, node->ifclause.cond);
 	value_t* instr = emit_jmpf(compiler->buffer, 0);
 	eval_block(compiler, node->ifclause.body);
-	instr->v.i = list_size(compiler->buffer);
+	value_set_int(instr, list_size(compiler->buffer));
+	return DATA_NULL;
 }
 
-void eval_while(compiler_t* compiler, ast_t* node)
+datatype_t eval_while(compiler_t* compiler, ast_t* node)
 {
 	size_t start = list_size(compiler->buffer);
 	compiler_eval(compiler, node->whilestmt.cond);
 	value_t* instr = emit_jmpf(compiler->buffer, 0);
 	eval_block(compiler, node->ifclause.body);
 	emit_jmp(compiler->buffer, start);
-	instr->v.i = list_size(compiler->buffer);
+	value_set_int(instr, list_size(compiler->buffer));
+	return DATA_NULL;
 }
 
-void compiler_eval(compiler_t* compiler, ast_t* node)
+// Real compile function
+datatype_t compiler_eval(compiler_t* compiler, ast_t* node)
 {
+	if(compiler->error) return DATA_NULL;
+
 	switch(node->class)
 	{
-		case AST_TOPLEVEL:
-		{
-			eval_block(compiler, node->toplevel);
-			break;
-		}
-		case AST_DECLVAR:
-		{
-			eval_declvar(compiler, node);
-			break;
-		}
-		case AST_DECLFUNC:
-		{
-			eval_declfunc(compiler, node);
-			break;
-		}
-		case AST_FLOAT:
-		{
-			eval_number(compiler, node);
-			break;
-		}
-		case AST_INT:
-		{
-			eval_number(compiler, node);
-			break;
-		}
-		case AST_STRING:
-		{
-			eval_string(compiler, node);
-			break;
-		}
-		case AST_BINARY:
-		{
-			eval_binary(compiler, node);
-			break;
-		}
-		case AST_IDENT:
-		{
-			eval_ident(compiler, node);
-			break;
-		}
-		case AST_CALL:
-		{
-			eval_call(compiler, node);
-			break;
-		}
-		case AST_IF:
-		{
-			eval_if(compiler, node);
-			break;
-		}
-		case AST_WHILE:
-		{
-			eval_while(compiler, node);
-			break;
-		}
+		case AST_TOPLEVEL: return eval_block(compiler, node->toplevel);
+		case AST_DECLVAR: return eval_declvar(compiler, node);
+		case AST_DECLFUNC: return eval_declfunc(compiler, node);
+		case AST_FLOAT: return eval_number(compiler, node);
+		case AST_INT: return eval_number(compiler, node);
+		case AST_STRING: return eval_string(compiler, node);
+		case AST_BINARY: return eval_binary(compiler, node);
+		case AST_IDENT: return eval_ident(compiler, node);
+		case AST_CALL: return eval_call(compiler, node);
+		case AST_IF: return eval_if(compiler, node);
+		case AST_WHILE: return eval_while(compiler, node);
 		default: break;
 	}
+
+	return DATA_NULL;
 }
 
 /**
@@ -540,9 +653,13 @@ void llvm_compile(compiler_t* cmpl, ast_t* root)
  */
 list_t* compile_buffer(compiler_t* compiler, const char* source)
 {
+	// Reset compiler
 	compiler_clear(compiler);
 	compiler->buffer = list_new();
+	compiler->address = 0;
+	compiler->symbols = hashmap_new();
 
+	// Run the parser
 	parser_init(&compiler->parser);
 	ast_t* root = parser_run(&compiler->parser, source);
 	if(root)
@@ -558,20 +675,24 @@ list_t* compile_buffer(compiler_t* compiler, const char* source)
 		ast_free(root);
 	}
 
+	// Free filename and parser
 	if(compiler->filename)
 	{
 		free(compiler->filename);
 	}
-
 	parser_free(&compiler->parser);
 
-	if(root)
+	// Clean up symbol table / debugging symbols
+	compiler_free_symbols(compiler);
+
+	// Return bytecode if valid
+	if(root && !compiler->error)
 	{
 		return compiler->buffer;
 	}
 	else
 	{
-		list_free(compiler->buffer);
+		compiler_clear(compiler);
 		return 0;
 	}
 }
@@ -616,8 +737,6 @@ void compiler_clear(compiler_t* compiler)
 		list_free(compiler->buffer);
 		compiler->buffer = 0;
 	}
-
-
 }
 
 void compiler_free_symbols(compiler_t* compiler)
@@ -625,8 +744,10 @@ void compiler_free_symbols(compiler_t* compiler)
 	hashmap_iterator_t* iter = hashmap_iterator_create(compiler->symbols);
 	while(!hashmap_iterator_end(iter))
 	{
-		value_t* val = hashmap_iterator_next(iter);
-		value_free(val);
+		symbol_t* val = hashmap_iterator_next(iter);
+
+
+		free(val);
 	}
 	hashmap_iterator_free(iter);
 	hashmap_free(compiler->symbols);

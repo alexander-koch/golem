@@ -10,18 +10,18 @@
 #include <core/api.h>
 
 // needed types? i32, f32, i64, f64, bool, str, custom classes
-// types: void, bool, i8, int, float
+// types: void, bool, str, int, float, custom classes
 
 typedef enum
 {
-    DATA_NULL = 0x1,
-    DATA_BOOL = 0x2,
-    DATA_INT = 0x4,
-    DATA_FLOAT = 0x8,
-    DATA_STRING = 0x10,
-    DATA_OBJECT = 0x20,
-    DATA_VOID = 0x40,
-    DATA_PTR = 0x80
+    DATA_NULL = 1,// 0x1,
+    DATA_BOOL = 2, //0x2,
+    DATA_INT = 3, //0x4,
+    DATA_FLOAT = 4, //0x8,
+    DATA_STRING = 5, //0x10,
+    DATA_OBJECT = 6, //0x20,
+    DATA_VOID = 7 //0x40
+    // 0x80
 } datatype_t;
 
 typedef struct
@@ -85,6 +85,7 @@ typedef struct
     char* name;
     bool mutate;
     ast_t* initializer;
+    datatype_t type;
 } ast_decl_t;
 
 typedef struct
@@ -135,6 +136,8 @@ struct ast_s
         } call;
     };
 };
+
+const char* datatype2str(datatype_t type);
 
 #define ast_is_number(x) (x->class == AST_FLOAT || x->class == AST_INT)
 

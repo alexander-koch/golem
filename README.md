@@ -5,8 +5,8 @@ The language for the pure evil.
 
 # Project aims
 
+- Functional approach, but not purely functional
 - Immutability of objects
-- Strings as really 'string of chars' no object (may be introduced in language code as class)
 - Fully functional fast bytecode vm or translation into x86 / x86_64 assembler machine code
 - Systems language
 
@@ -14,6 +14,7 @@ The language for the pure evil.
 
 - String not as a data type but character array (C-like) -> type i8
 - Characters may be UTF-8 / 16 / 32
+- Lambdas
 
 # Concept (final concept may change)
 
@@ -79,6 +80,14 @@ While loops:
 		number = number + 1
 	}
 
+
+Lambdas (Concept idea, not implemented):
+Lambda keyword followed by a parameter list, big arrow and expression
+
+	func main(argc: int) -> void {
+		return lambda(x) => x + 2
+	}
+
 # Curently supported (AST)
 
 - variable declaration (immutable/mutable)
@@ -98,6 +107,7 @@ Langugage specific
 - AST optimization
 - for loops
 - prefix operators
+- Lambdas
 
 Implementation specific
 ===
@@ -125,6 +135,8 @@ http://www.incubatorgames.com/20110621/simple-scripting-language-part-5/
 http://byteworm.com/2010/11/21/the-fastest-vm-bytecode-interpreter/
 https://www.youtube.com/watch?v=OjaAToVkoTw
 http://journal.stuffwithstuff.com/2013/12/08/babys-first-garbage-collector/
+http://bartoszsypytkowski.com/simple-virtual-machine/
+https://github.com/gphat/babyvm/blob/master/babyvm.c
 
 # Licence
 Copyright (c) Alexander Koch 2015

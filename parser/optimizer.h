@@ -4,6 +4,7 @@
 #include <parser/parser.h>
 #include <parser/ast.h>
 
+//@Deprecated
 bool optimize_tree(ast_t* node);
 
 #endif

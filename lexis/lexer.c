@@ -19,7 +19,7 @@ const char* tok2str(token_type_t type)
         case TOKEN_RBRACKET: return "<rbracket>";
         case TOKEN_COMMA: return "<comma>";
         case TOKEN_SEMICOLON: return "<semicolon>";
-        case TOKEN_ADD: return "<add";
+        case TOKEN_ADD: return "<add>";
         case TOKEN_SUB: return "<sub>";
         case TOKEN_MUL: return "<mul>";
         case TOKEN_DIV: return "<div>";
@@ -44,6 +44,7 @@ const char* tok2str(token_type_t type)
         case TOKEN_NAMESPACE: return "<namespace>";
         case TOKEN_COLON: return "<colon>";
         case TOKEN_ARROW: return "<arrow>";
+        case TOKEN_ARROW_BIG: return "<big_arrow>";
         default: return "<null>";
     }
 }
@@ -221,6 +222,7 @@ int lex_op(lexer_t* lexer, token_t* token)
         RESERVED_ENTRY("/", TOKEN_DIV),
         RESERVED_ENTRY("%", TOKEN_MOD),
         RESERVED_ENTRY("==", TOKEN_EQUAL),
+        RESERVED_ENTRY("=>", TOKEN_ARROW_BIG),
         RESERVED_ENTRY("=", TOKEN_ASSIGN),
         RESERVED_ENTRY("!=", TOKEN_NEQUAL),
         RESERVED_ENTRY("!", TOKEN_NOT),

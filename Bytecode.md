@@ -2,9 +2,7 @@
 
 | Basic stack ops     | Description
 |---                  |---
-|iconst x             | pushes int onto the stack
-|fconst x             | pushes float onto the stack
-|sconst x             | pushes a string onto the stack
+|push                 | pushes a generic value on the stack
 |pop                  | pop value from stack, remove
 
 | Store               | Description
@@ -24,6 +22,7 @@
 |bit_and              | binary 'and' operation
 |bit_or               | binary 'or' operation
 |bit_xor              | binary 'xor' operation
+|concat               | concatenate strings
 
 | Special             | Description
 |---                  |---
@@ -35,6 +34,7 @@
 | Comparison          | Description
 |---                  |---
 |ieq                  | integer equal
+|streq                | string equal
 |ine                  | integer not equal
 |ilt                  | integer less than
 

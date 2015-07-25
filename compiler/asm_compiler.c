@@ -22,7 +22,7 @@ void translate(FILE* fp, instruction_t* instr)
 {
 	switch(instr->op)
 	{
-		case OP_ICONST:
+		case OP_PUSH:
 		{
 			fprintf(fp, "\tmov rax, %li\n", (long int)value_int(instr->v1));
 			break;

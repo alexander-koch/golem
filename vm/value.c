@@ -2,15 +2,15 @@
 
 bool value_bool(value_t* value)
 {
-	return value->v.b;
+	return (bool)value->v.i;
 }
 
-I64 value_int(value_t* value)
+int value_int(value_t* value)
 {
 	return value->v.i;
 }
 
-F64 value_float(value_t* value)
+float value_float(value_t* value)
 {
 	return value->v.f;
 }
@@ -32,12 +32,12 @@ value_t* value_new_bool(bool b)
 {
 	value_t* val = value_new_null();
 	val->type = VALUE_BOOL;
-	val->v.b = b;
+	val->v.i = b;
 	val->classname = "bool";
 	return val;
 }
 
-value_t* value_new_int(long number)
+value_t* value_new_int(int number)
 {
 	value_t* val = value_new_null();
 	val->type = VALUE_INT;
@@ -46,7 +46,7 @@ value_t* value_new_int(long number)
 	return val;
 }
 
-value_t* value_new_float(double number)
+value_t* value_new_float(float number)
 {
 	value_t* val = value_new_null();
 	val->type = VALUE_FLOAT;
@@ -153,7 +153,7 @@ void value_print(value_t* value)
 		{
 			case VALUE_BOOL:
 			{
-				console("%s", value->v.b ? "true" : "false");
+				console("%s", value->v.i ? "true" : "false");
 				break;
 			}
 			case VALUE_INT:

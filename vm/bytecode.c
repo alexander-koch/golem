@@ -6,9 +6,7 @@ const char* op2str(opcode_t code)
 {
 	switch(code)
 	{
-		case OP_ICONST: return "iconst";
-		case OP_FCONST: return "fconst";
-		case OP_SCONST: return "sconst";
+		case OP_PUSH: return "push";
 		case OP_POP: return "pop";
 		case OP_STORE: return "store";
 		case OP_LOAD: return "load";
@@ -22,11 +20,13 @@ const char* op2str(opcode_t code)
 		case OP_BITAND: return "bit_and";
 		case OP_BITOR: return "bit_or";
 		case OP_BITXOR: return "bit_xor";
+		case OP_CONCAT: return "concat";
 		case OP_INVOKE: return "invoke";
 		case OP_JMP: return "jmp";
 		case OP_JMPF: return "jmpf";
 		case OP_JMPT: return "jmpt";
 		case OP_IEQ: return "ieq";
+		case OP_STREQ: return "streq";
 		case OP_INE: return "ine";
 		case OP_ILT: return "ilt";
 		default: return "unknown";
@@ -72,19 +72,19 @@ void insert_v2(list_t* buffer, opcode_t op, value_t* v1, value_t* v2)
 void emit_int(list_t* buffer, I64 v)
 {
 	value_t* val = value_new_int(v);
-	insert_v1(buffer, OP_ICONST, val);
+	insert_v1(buffer, OP_PUSH, val);
 }
 
 void emit_float(list_t* buffer, F64 f)
 {
 	value_t* val = value_new_float(f);
-	insert_v1(buffer, OP_FCONST, val);
+	insert_v1(buffer, OP_PUSH, val);
 }
 
 void emit_string(list_t* buffer, char* str)
 {
 	value_t* val = value_new_string(str);
-	insert_v1(buffer, OP_SCONST, val);
+	insert_v1(buffer, OP_PUSH, val);
 }
 
 void emit_pop(list_t* buffer)
@@ -97,85 +97,43 @@ void emit_op(list_t* buffer, opcode_t op)
 	insert(buffer, op);
 }
 
-void emit_tok2op(list_t* buffer, token_type_t tok)
+opcode_t getOp(token_type_t tok, datatype_t type)
 {
-	// Test type first!
-
-	opcode_t op;
 	switch(tok)
 	{
 		case TOKEN_ADD:
 		{
-			op = OP_IADD;
-			break;
+			if(type == DATA_INT) return OP_IADD;
+			if(type == DATA_STRING) return OP_CONCAT;
+			return -1;
 		}
-		case TOKEN_SUB:
-		{
-			op = OP_ISUB;
-			break;
-		}
-		case TOKEN_MUL:
-		{
-			op = OP_IMUL;
-			break;
-		}
-		case TOKEN_DIV:
-		{
-			op = OP_IDIV;
-			break;
-		}
-		case TOKEN_MOD:
-		{
-			op = OP_MOD;
-			break;
-		}
-		case TOKEN_BITLSHIFT:
-		{
-			op = OP_BITL;
-			break;
-		}
-		case TOKEN_BITRSHIFT:
-		{
-			op = OP_BITR;
-			break;
-		}
-		case TOKEN_BITAND:
-		{
-			op = OP_BITAND;
-			break;
-		}
-		case TOKEN_BITOR:
-		{
-			op = OP_BITOR;
-			break;
-		}
-		case TOKEN_BITXOR:
-		{
-			op = OP_BITXOR;
-			break;
-		}
+		case TOKEN_SUB: return OP_ISUB;
+		case TOKEN_MUL: return OP_IMUL;
+		case TOKEN_DIV: return OP_IMUL;
+		case TOKEN_MOD: return OP_MOD;
+		case TOKEN_BITLSHIFT: return OP_BITL;
+		case TOKEN_BITRSHIFT: return OP_BITR;
+		case TOKEN_BITAND: return OP_BITAND;
+		case TOKEN_BITOR: return OP_BITOR;
+		case TOKEN_BITXOR: return OP_BITXOR;
 		case TOKEN_EQUAL:
 		{
-			op = OP_IEQ;
-			break;
+			if(type == DATA_INT) return OP_IEQ;
+			if(type == DATA_STRING) return OP_STREQ;
+			return -1;
 		}
-		case TOKEN_NEQUAL:
-		{
-			op = OP_INE;
-			break;
-		}
-		case TOKEN_LESS:
-		{
-			op = OP_ILT;
-			break;
-		}
+		case TOKEN_NEQUAL: return OP_INE;
+		case TOKEN_LESS: return OP_ILT;
 		default:
 		{
-			op = -1;
-			break;
+			return -1;
 		}
 	}
+}
 
+void emit_tok2op(list_t* buffer, token_type_t tok, datatype_t type)
+{
+	opcode_t op = getOp(tok, type);
 	emit_op(buffer, op);
 }
 

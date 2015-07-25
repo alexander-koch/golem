@@ -1,5 +1,20 @@
 #include "ast.h"
 
+const char* datatype2str(datatype_t type)
+{
+	switch(type)
+	{
+		case DATA_NULL: return "null";
+		case DATA_BOOL: return "bool";
+		case DATA_INT: return "int";
+		case DATA_FLOAT: return "float";
+		case DATA_STRING: return "string";
+		case DATA_OBJECT: return "object";
+		case DATA_VOID: return "void";
+		default: return "unknown";
+	}
+}
+
 ast_t* ast_class_create(ast_class_t class, location_t location)
 {
 	ast_t* ast = malloc(sizeof(*ast));

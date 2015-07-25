@@ -20,7 +20,7 @@ void opt_throw(optimizer_t* opt, const char* format, ...)
     fprintf(stdout, "\n");
 }
 
-void optimize_node(optimizer_t* opt, ast_t* node)
+datatype_t optimize_node(optimizer_t* opt, ast_t* node)
 {
 	opt->node = node;
 	switch(node->class)
@@ -35,12 +35,26 @@ void optimize_node(optimizer_t* opt, ast_t* node)
 			list_iterator_free(iter);
 			break;
 		}
+		case AST_IDENT:
+		{
+			// Test for classes, namespaces, variables
+			// TODO: extend
+
+			char* ident = node->ident;
+			void* val;
+			if(hashmap_get(opt->globals, ident, &val) == HMAP_MISSING)
+			{
+				opt_throw(opt, "Warning: Implicit declaration of variable '%s'", ident);
+			}
+
+			break;
+		}
 		case AST_DECLVAR:
 		{
-			if(!node->vardecl.mutate)
-			{
-				hashmap_set(opt->globals, node->vardecl.name, &node->vardecl.mutate);
-			}
+			optimize_node(opt, node->vardecl.initializer);
+			hashmap_set(opt->globals, node->vardecl.name, &node->vardecl.mutate);
+			// TODO: store type in variable ast
+
 			break;
 		}
 		case AST_BINARY:
@@ -58,7 +72,16 @@ void optimize_node(optimizer_t* opt, ast_t* node)
 					void* val;
 					if(hashmap_get(opt->globals, lhs->ident, &val) != HMAP_MISSING)
 					{
-						opt_throw(opt, "Invalid statement, trying to modifiy an immutable variable");
+						bool mutable = *(bool*)val;
+						if(!mutable)
+						{
+							opt_throw(opt, "Invalid statement, trying to modifiy an immutable variable");
+						}
+						break;
+					}
+					else
+					{
+						opt_throw(opt, "Warning: Implicit declaration of variable '%s'", lhs->ident);
 						break;
 					}
 				}
@@ -151,7 +174,7 @@ void optimize_node(optimizer_t* opt, ast_t* node)
 	                default:
 	                {
 	                    opt_throw(opt, "Invalid operator. Operator might not be available for floats");
-	                    return;
+	                    return DATA_NULL;
 	                }
 	            }
 	        }
@@ -177,7 +200,7 @@ void optimize_node(optimizer_t* opt, ast_t* node)
 					default:
 					{
 						opt_throw(opt, "Invalid operator. Operator might not be available for strings");
-						return;
+						return DATA_NULL;
 					}
 				}
 			}
@@ -261,6 +284,8 @@ void optimize_node(optimizer_t* opt, ast_t* node)
 		}
 		default: break;
 	}
+
+	return DATA_NULL;
 }
 
 bool optimize_tree(ast_t* node)

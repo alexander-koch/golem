@@ -5,39 +5,40 @@
 #include <lexis/lexer.h>
 #include <adt/list.h>
 #include <vm/value.h>
+#include <parser/ast.h>
 
 typedef enum
 {
 	// Basic stack
-	OP_ICONST = 1,
-	OP_FCONST = 2,
-	OP_SCONST = 3,
-	OP_POP = 4,
+	OP_PUSH = 1,
+	OP_POP = 2,
 
 	// Store
-	OP_STORE = 5,
-	OP_LOAD = 6,
+	OP_STORE = 3,
+	OP_LOAD = 4,
 
 	// Arithmetic
-	OP_IADD = 7,
-	OP_ISUB = 8,
-	OP_IMUL = 9,
-	OP_IDIV = 10,
-	OP_MOD = 11,
-	OP_BITL = 12,
-	OP_BITR = 13,
-	OP_BITAND = 14,
-	OP_BITOR = 15,
-	OP_BITXOR = 16,
+	OP_IADD = 5,
+	OP_ISUB = 6,
+	OP_IMUL = 7,
+	OP_IDIV = 8,
+	OP_MOD = 9,
+	OP_BITL = 10,
+	OP_BITR = 11,
+	OP_BITAND = 12,
+	OP_BITOR = 13,
+	OP_BITXOR = 14,
+	OP_CONCAT = 15,
 
 	// Special
-	OP_INVOKE = 17,
-	OP_JMP = 18,
-	OP_JMPF = 19,
-	OP_JMPT = 20,
+	OP_INVOKE = 16,
+	OP_JMP = 17,
+	OP_JMPF = 18,
+	OP_JMPT = 19,
 
 	// Compare
-	OP_IEQ = 21,
+	OP_IEQ = 20,
+	OP_STREQ = 21,
 	OP_INE = 22,
 	OP_ILT = 23
 } opcode_t;
@@ -56,7 +57,7 @@ void emit_float(list_t* buffer, F64 f);
 void emit_string(list_t* buffer, char* str);
 void emit_pop(list_t* buffer);
 void emit_op(list_t* buffer, opcode_t op);
-void emit_tok2op(list_t* buffer, token_type_t tok);
+void emit_tok2op(list_t* buffer, token_type_t tok, datatype_t type);
 void emit_invoke(list_t* buffer, char* str, size_t args);
 void emit_store(list_t* buffer, int address);
 void emit_load(list_t* buffer, int address);

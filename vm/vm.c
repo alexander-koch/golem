@@ -9,7 +9,7 @@ vm_t* vm_new()
 	vm->stack = stack_new();
 	vm->sp = 0;
 	vm->pc = 0;
-	vm->fp = 0;
+	vm->fp = 200;
 
 	stack_resize(vm->stack, STACK_SIZE);
 	return vm;
@@ -52,11 +52,17 @@ void vm_process(vm_t* vm, list_t* buffer)
 {
 	instruction_t* instr = vm_peek(vm, buffer);
 
+	console("  %.2d: %s [", vm->pc, op2str(instr->op));
+	for(int i = 0; i < stack_size(vm->stack); i++)
+	{
+		value_print(vm->stack->content[i]);
+		if(i < stack_size(vm->stack)-1) console(", ");
+	}
+	console("]\n");
+
 	switch(instr->op)
 	{
-		case OP_SCONST:
-		case OP_FCONST:
-		case OP_ICONST:
+		case OP_PUSH:
 		{
 			stack_push(vm->stack, value_copy(instr->v1));
 			break;
@@ -70,6 +76,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 		{
 			value_t* v = stack_pop(vm->stack);
 			int offset = value_int(instr->v1);
+			value_free(vm->stack->content[vm->fp+offset]);
 			vm->stack->content[vm->fp+offset] = v;
 			break;
 		}
@@ -77,7 +84,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 		{
 			int offset = value_int(instr->v1);
 			value_t* v = vm->stack->content[vm->fp+offset];
-			stack_push(vm->stack, v);
+			stack_push(vm->stack, value_copy(v));
 			break;
 		}
 		case OP_INVOKE:
@@ -232,6 +239,18 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_free(v2);
 			break;
 		}
+		case OP_CONCAT:
+		{
+			value_t* v2 = stack_pop(vm->stack);
+			value_t* v1 = stack_pop(vm->stack);
+			char* str = concat(value_string(v1), value_string(v2));
+			value_t* v = value_new_string(str);
+			stack_push(vm->stack, v);
+			free(str);
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
 		case OP_IEQ:
 		{
 			value_t* v2 = stack_pop(vm->stack);
@@ -292,6 +311,11 @@ void vm_execute(vm_t* vm, list_t* buffer)
 	{
 		value_t* v = stack_pop(vm->stack);
 		value_free(v);
+	}
+
+	for(int i = vm->fp; i < vm->stack->size+1; i++)
+	{
+		value_free(vm->stack->content[i]);
 	}
 }
 

@@ -9,14 +9,16 @@
 #define KEYWORD_WHILE "while"
 #define KEYWORD_CLASS "class"
 #define KEYWORD_RETURN "return"
+#define KEYWORD_LAMBDA "lambda"
 
-ast_t* parse_include_declaration(parser_t* parser);
-ast_t* parse_var_declaration(parser_t* parser);
-ast_t* parse_fn_declaration(parser_t* parser);
-ast_t* parse_if_declaration(parser_t* parser);
-ast_t* parse_while_declaration(parser_t* parser);
-ast_t* parse_class_declaration(parser_t* parser);
-ast_t* parse_return_declaration(parser_t* parser);
+ast_t* parse_include_declaration(parser_t* parser, location_t loc);
+ast_t* parse_var_declaration(parser_t* parser, location_t loc);
+ast_t* parse_fn_declaration(parser_t* parser, location_t loc);
+ast_t* parse_if_declaration(parser_t* parser, location_t loc);
+ast_t* parse_while_declaration(parser_t* parser, location_t loc);
+ast_t* parse_class_declaration(parser_t* parser, location_t loc);
+ast_t* parse_return_declaration(parser_t* parser, location_t loc);
+ast_t* parse_lambda_declaration(parser_t* parser, location_t loc);
 ast_t* parse_expression(parser_t* parser);
 
 ast_t* parse_stmt(parser_t* parser);
@@ -650,20 +652,8 @@ datatype_t parse_datatype(parser_t* parser)
     }
     else
     {
+        // unknown identifier, treat as object for now
         type = DATA_OBJECT;
-    }
-
-    if(match_type(parser, TOKEN_MUL))
-    {
-        accept_token(parser);
-
-        if(type == DATA_VOID)
-        {
-            parser_throw(parser, "Void pointers are invalid");
-            return DATA_NULL;
-        }
-
-        type = DATA_PTR | type;
     }
 
     // if(match_type(parser, TOKEN_LBRACKET))
@@ -791,10 +781,12 @@ void test_newline(parser_t* parser)
  */
 ast_t* parse_stmt(parser_t* parser)
 {
+    location_t pos = get_location(parser);
+
     static const struct
     {
         const char* token;
-        ast_t* (*fn)(parser_t*);
+        ast_t* (*fn)(parser_t*, location_t);
     } parsers[] =
     {
         {KEYWORD_INCLUDE, parse_include_declaration},
@@ -810,7 +802,7 @@ ast_t* parse_stmt(parser_t* parser)
     {
         if(match_string(parser, parsers[i].token))
         {
-            ast_t* node = parsers[i].fn(parser);
+            ast_t* node = parsers[i].fn(parser, pos);
             test_newline(parser);
             return node;
         }
@@ -867,13 +859,6 @@ ast_t* parser_run(parser_t* parser, const char* content)
         list_push(ast->toplevel, node);
     }
 
-    bool b = optimize_tree(ast);
-    if(!b)
-    {
-        ast_free(ast);
-        return 0;
-    }
-
     return ast;
 }
 
@@ -881,10 +866,10 @@ ast_t* parser_run(parser_t* parser, const char* content)
 // Parsing subroutines
 //////------------------
 
-ast_t* parse_include_declaration(parser_t* parser)
+ast_t* parse_include_declaration(parser_t* parser, location_t loc)
 {
     // use "io" \n
-    ast_t* node = ast_class_create(AST_INCLUDE, get_location(parser));
+    ast_t* node = ast_class_create(AST_INCLUDE, loc);
     token_t* inc = accept_token_string(parser, KEYWORD_INCLUDE);
     token_t* val = accept_token_type(parser, TOKEN_STRING);
 
@@ -902,10 +887,10 @@ ast_t* parse_include_declaration(parser_t* parser)
     return node;
 }
 
-ast_t* parse_var_declaration(parser_t* parser)
+ast_t* parse_var_declaration(parser_t* parser, location_t loc)
 {
     // let x = expr \n
-    ast_t* node = ast_class_create(AST_DECLVAR, get_location(parser));
+    ast_t* node = ast_class_create(AST_DECLVAR, loc);
     bool mutate = false;
 
     token_t* var = accept_token_string(parser, KEYWORD_DECLARATION);
@@ -923,6 +908,11 @@ ast_t* parse_var_declaration(parser_t* parser)
         node->vardecl.name = ident->value;
         node->vardecl.mutate = mutate;
         node->vardecl.initializer = parse_expression(parser);
+
+        if(node->vardecl.initializer == 0)
+        {
+            parser_throw(parser, "Invalid or missing variable initializer");
+        }
     }
     else
     {
@@ -933,10 +923,10 @@ ast_t* parse_var_declaration(parser_t* parser)
     return node;
 }
 
-ast_t* parse_fn_declaration(parser_t* parser)
+ast_t* parse_fn_declaration(parser_t* parser, location_t loc)
 {
     // fn name (params) -> int { \n
-    ast_t* node = ast_class_create(AST_DECLFUNC, get_location(parser));
+    ast_t* node = ast_class_create(AST_DECLFUNC, loc);
 
     token_t* fn = accept_token_string(parser, KEYWORD_FUNCTION);
     token_t* ident = accept_token_type(parser, TOKEN_WORD);
@@ -979,10 +969,10 @@ ast_t* parse_fn_declaration(parser_t* parser)
     return node;
 }
 
-ast_t* parse_if_declaration(parser_t* parser)
+ast_t* parse_if_declaration(parser_t* parser, location_t loc)
 {
     // if (expr) { \n
-    ast_t* node = ast_class_create(AST_IF, get_location(parser));
+    ast_t* node = ast_class_create(AST_IF, loc);
     node->ifstmt = list_new();
 
     // if (if / else if) do
@@ -1054,10 +1044,10 @@ ast_t* parse_if_declaration(parser_t* parser)
     return node;
 }
 
-ast_t* parse_while_declaration(parser_t* parser)
+ast_t* parse_while_declaration(parser_t* parser, location_t loc)
 {
     // while (expr) { \n
-    ast_t* node = ast_class_create(AST_WHILE, get_location(parser));
+    ast_t* node = ast_class_create(AST_WHILE, loc);
 
     token_t* key = accept_token_string(parser, KEYWORD_WHILE);
     token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
@@ -1086,10 +1076,10 @@ ast_t* parse_while_declaration(parser_t* parser)
     return node;
 }
 
-ast_t* parse_class_declaration(parser_t* parser)
+ast_t* parse_class_declaration(parser_t* parser, location_t loc)
 {
     // class expr { \n
-    ast_t* node = ast_class_create(AST_CLASS, get_location(parser));
+    ast_t* node = ast_class_create(AST_CLASS, loc);
 
     token_t* key = accept_token_string(parser, KEYWORD_CLASS);
     token_t* ident = accept_token_type(parser, TOKEN_WORD);
@@ -1108,9 +1098,9 @@ ast_t* parse_class_declaration(parser_t* parser)
     return node;
 }
 
-ast_t* parse_return_declaration(parser_t* parser)
+ast_t* parse_return_declaration(parser_t* parser, location_t loc)
 {
-    ast_t* node = ast_class_create(AST_RETURN, get_location(parser));
+    ast_t* node = ast_class_create(AST_RETURN, loc);
     token_t* ret = accept_token_string(parser, KEYWORD_RETURN);
 
     if(ret)
@@ -1130,4 +1120,11 @@ ast_t* parse_return_declaration(parser_t* parser)
     }
 
     return node;
+}
+
+ast_t* parse_lambda_declaration(parser_t* parser, location_t loc)
+{
+    //ast_t* node = ast_class_create(AST_LAMBDA, loc);
+
+    return 0;
 }
