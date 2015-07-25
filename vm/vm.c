@@ -6,12 +6,9 @@ vm_t* vm_new()
 {
 	vm_t* vm = malloc(sizeof(*vm));
 	vm->error = false;
-	vm->stack = stack_new();
-	vm->sp = 0;
+	vm->stack = 0;
 	vm->pc = 0;
-	vm->fp = 200;
-
-	stack_resize(vm->stack, STACK_SIZE);
+	vm->fp = 0;
 	return vm;
 }
 
@@ -292,9 +289,14 @@ void vm_process(vm_t* vm, list_t* buffer)
  */
 void vm_execute(vm_t* vm, list_t* buffer)
 {
+	vm->stack = stack_new();
 	vm->pc = 0;
+	vm->fp = 200;
 	vm->error = false;
+	stack_resize(vm->stack, STACK_SIZE);
 	vm_print_code(vm, buffer);
+
+	memset(vm->stack->content, 0, STACK_SIZE * sizeof(void*));
 
 	// Run
 #ifndef NO_EXEC
@@ -313,10 +315,12 @@ void vm_execute(vm_t* vm, list_t* buffer)
 		value_free(v);
 	}
 
-	for(int i = vm->fp; i < vm->stack->size+1; i++)
+	for(int i = vm->fp; i < vm->stack->size; i++)
 	{
 		value_free(vm->stack->content[i]);
 	}
+
+	stack_free(vm->stack);
 }
 
 /**
@@ -325,6 +329,5 @@ void vm_execute(vm_t* vm, list_t* buffer)
 void vm_free(vm_t* vm)
 {
 	console("Freeing vm\n");
-	stack_free(vm->stack);
 	free(vm);
 }

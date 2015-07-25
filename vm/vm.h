@@ -13,7 +13,6 @@ typedef struct
 {
 	bool error;
 	stack_t* stack;
-	int sp;
 	int pc;
 	int fp;
 } vm_t;

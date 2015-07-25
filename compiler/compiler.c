@@ -8,6 +8,7 @@ void compiler_init(compiler_t* compiler, bool debugmode)
 	compiler->filename = 0;
 	compiler->debug = debugmode;
 	compiler->error = false;
+	compiler->symbols = 0;
 }
 
 void compiler_throw(compiler_t* compiler, ast_t* node, const char* format, ...)
@@ -745,10 +746,9 @@ void compiler_free_symbols(compiler_t* compiler)
 	while(!hashmap_iterator_end(iter))
 	{
 		symbol_t* val = hashmap_iterator_next(iter);
-
-
 		free(val);
 	}
 	hashmap_iterator_free(iter);
 	hashmap_free(compiler->symbols);
+	compiler->symbols = 0;
 }
