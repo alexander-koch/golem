@@ -1,3 +1,8 @@
+# Golem Bytecode
+
+Golem runs on an internal stack-based bytecode virtual machine.
+The following instructions are currently supported.
+
 # Bytecode Instruction Set
 
 | Basic stack ops     | Description
@@ -8,7 +13,7 @@
 | Store               | Description
 |---                  |---
 |store x              | pops a value and stores it in field x
-|load X               | pushes the value of field x onto the stack
+|load x               | pushes the value of field x onto the stack
 
 | Arithmetic          | Description
 |---                  |---

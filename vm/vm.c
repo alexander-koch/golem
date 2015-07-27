@@ -32,6 +32,7 @@ instruction_t* vm_peek(vm_t* vm, list_t* buffer)
 	return list_get(buffer, vm->pc);
 }
 
+// Just prints out instruction codes
 void vm_print_code(vm_t* vm, list_t* buffer)
 {
 	console("\nImmediate code:\n");
@@ -61,6 +62,8 @@ void vm_process(vm_t* vm, list_t* buffer)
 {
 	instruction_t* instr = vm_peek(vm, buffer);
 
+#define NO_TRACE
+#ifndef NO_TRACE
 	console("  %.2d: %s [", vm->pc, op2str(instr->op));
 	for(int i = 0; i < vm->sp; i++)
 	{
@@ -68,6 +71,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 		if(i < vm->sp-1) console(", ");
 	}
 	console("]\n");
+#endif
 
 	switch(instr->op)
 	{
@@ -93,6 +97,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 			int offset = value_int(instr->v1);
 
 			// HACK: Using < 0 for locals
+			// Still works, wondering if it really is a HACK.
 			if(offset < 0)
 			{
 				value_t* v = vm->stack[vm->fp+offset];

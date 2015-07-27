@@ -6,13 +6,13 @@ A programming language written in C.
 
 - Functional approach, but not purely functional
 - Immutability of objects
+- Everything is an object
 - Fully functional fast bytecode vm or translation into x86 / x86_64 assembler machine code
 - Systems language
+- FAST!!!
 
-# Ideas
+# New Ideas
 
-- String not as a data type but character array (C-like) -> type i8
-- Characters may be UTF-8 / 16 / 32
 - Lambdas
 
 # Concept (final concept may change)
@@ -117,12 +117,6 @@ Implementation specific
 - implement bytecode vm or an llvm compiler
 - compile to machine code (x86 / x86_64 => Intel syntax)
 - mark-sweep garbage collector for vm
-
-# Pointer and ownership (only if language is fully operational (TODO))
-
-Ownership orients on Rusts system. Once you call a function with an object, ownership is transferred to that function.
-The function deletes it at the end of the scope. To still own it after, you have to return it.
-This prevents use of a pointer, after it has been freed.
 
 # Stuff / Internet sources
 

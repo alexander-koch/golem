@@ -9,8 +9,8 @@
 #include <vm/bytecode.h>
 #include <vm/value.h>
 
-#define STACK_SIZE 1024
-#define LOCALS_SIZE 1024
+#define STACK_SIZE 512
+#define LOCALS_SIZE 512
 
 typedef struct
 {

@@ -1,6 +1,9 @@
 #include "optimizer.h"
 #include <adt/hashmap.h>
 
+
+// @DEPRECATED, MOVED IN COMPILER
+
 typedef struct
 {
 	ast_t* node;
