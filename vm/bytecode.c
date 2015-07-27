@@ -71,6 +71,12 @@ void insert_v2(list_t* buffer, opcode_t op, value_t* v1, value_t* v2)
 
 // Main functions
 
+void emit_bool(list_t* buffer, bool b)
+{
+	value_t* val = value_new_bool(b);
+	insert_v1(buffer, OP_PUSH, val);
+}
+
 void emit_int(list_t* buffer, I64 v)
 {
 	value_t* val = value_new_int(v);

@@ -136,6 +136,35 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	}
 	list_iterator_free(iter);
 
+	// Body analysis
+	iter = list_iterator_create(node->funcdecl.impl.body);
+	while(!list_iterator_end(iter))
+	{
+		ast_t* sub = list_iterator_next(iter);
+
+		if(sub->class == AST_DECLFUNC)
+		{
+			compiler_throw(compiler, node, "Function declaration in a function is not allowed");
+			break;
+		}
+
+		if(sub->class == AST_RETURN && !list_iterator_end(iter))
+		{
+			compiler_throw(compiler, node, "Return statement declared before end was reached");
+			break;
+		}
+
+		if(sub->class == AST_RETURN)
+		{
+			if(sub->returnstmt && node->funcdecl.rettype == DATA_VOID)
+			{
+				compiler_throw(compiler, node, "Functions with type void do not return a value");
+				break;
+			}
+		}
+	}
+	list_iterator_free(iter);
+
 	// Evaluate block and pop scope
 	eval_block(compiler, node->funcdecl.impl.body);
 	pop_scope(compiler);
@@ -202,6 +231,12 @@ datatype_t eval_number(compiler_t* compiler, ast_t* node)
 	return DATA_INT;
 }
 
+datatype_t eval_bool(compiler_t* compiler, ast_t* node)
+{
+	emit_bool(compiler->buffer, node->b);
+	return DATA_BOOL;
+}
+
 // Evaluates a binary
 // Example:
 // bin(a, b, +) -> a + b
@@ -214,17 +249,6 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 	token_type_t op = node->binary.op;
 
 	// Testing and internal optimization
-
-	// Do string testing
-	// String x String -> String
-	// String x Other = Invalid
-
-	if((lhs->class == AST_STRING && rhs->class != AST_STRING) ||
-		(lhs->class != AST_STRING && rhs->class == AST_STRING))
-	{
-		compiler_throw(compiler, node, "Invalid statement, objects of type string can only be compared with a another string");
-		return DATA_NULL;
-	}
 
 	if(lhs->class == AST_FLOAT && rhs->class == AST_FLOAT)
 	{
@@ -586,8 +610,10 @@ datatype_t compiler_eval(compiler_t* compiler, ast_t* node)
 		case AST_TOPLEVEL: return eval_block(compiler, node->toplevel);
 		case AST_DECLVAR: return eval_declvar(compiler, node);
 		case AST_DECLFUNC: return eval_declfunc(compiler, node);
+		case AST_RETURN: return compiler_eval(compiler, node->returnstmt);
 		case AST_FLOAT: return eval_number(compiler, node);
 		case AST_INT: return eval_number(compiler, node);
+		case AST_BOOL: return eval_bool(compiler, node);
 		case AST_STRING: return eval_string(compiler, node);
 		case AST_BINARY: return eval_binary(compiler, node);
 		case AST_IDENT: return eval_ident(compiler, node);

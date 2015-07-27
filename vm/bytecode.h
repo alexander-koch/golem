@@ -54,6 +54,7 @@ typedef struct
 
 const char* op2str(opcode_t code);
 
+void emit_bool(list_t* buffer, bool b);
 void emit_int(list_t* buffer, I64 v);
 void emit_float(list_t* buffer, F64 f);
 void emit_string(list_t* buffer, char* str);
