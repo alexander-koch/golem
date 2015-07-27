@@ -112,11 +112,6 @@ datatype_t eval_block(compiler_t* compiler, list_t* block)
 
 datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 {
-	// TODO: Symbol entries for functions, convert functions to addresses, instead of
-	// invoke, println, 1
-	// =>
-	// call, 0, 1 <-- call function at address 0, with 1 param
-
 	// Emit jump
 	value_t* addr = emit_jmp(compiler->buffer, 0);
 
@@ -427,7 +422,42 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 			if(hashmap_get(compiler->scope->symbols, call->ident, &val) != HMAP_MISSING)
 			{
 				symbol_t* symbol = (symbol_t*)val;
-				address = symbol->address;
+				if(symbol->node->class != AST_DECLFUNC)
+				{
+					compiler_throw(compiler, node, "Identifier '%s' is not a function", call->ident);
+					return DATA_NULL;
+				}
+				else
+				{
+					ast_t* func = symbol->node;
+					address = symbol->address;
+
+					// Param checking
+					size_t argc = list_size(node->call.args);
+					size_t paramc = list_size(func->funcdecl.impl.formals);
+					if(argc > paramc)
+					{
+						compiler_throw(compiler, node, "Too many arguments for function '%s'. Expected: %d", call->ident, paramc);
+						return DATA_NULL;
+					}
+					else if(argc < paramc)
+					{
+						compiler_throw(compiler, node, "Too few arguments for function '%s'. Expected: %d", call->ident, paramc);
+						return DATA_NULL;
+					}
+					else
+					{
+						// Valid
+						// TODO: Test types
+						// list_iterator_t* iter = list_iterator_create(symbol->node->impl.formals);
+						// while(!list_iterator_end(iter))
+						// {
+						// 	param_t* param = list_iterator_next(iter);
+						// 	list_get(compiler->buffer, )
+						// }
+						// list_iterator_free(iter);
+					}
+				}
 			}
 			else
 			{

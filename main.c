@@ -33,7 +33,7 @@ void run_repl(vm_t* vm, compiler_t* compiler)
 int main(int argc, char** argv)
 {
     compiler_t compiler;
-    compiler_init(&compiler, true);
+    compiler_init(&compiler, false);
 
     if(argc == 1)
     {

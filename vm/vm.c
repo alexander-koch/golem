@@ -108,7 +108,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 		case OP_SYSCALL:
 		{
 			char* name = value_string(instr->v1);
-			I64 args = value_int(instr->v2);
+			size_t args = value_int(instr->v2);
 
 			list_t* values = list_new();
 			for(int i = 0; i < args; i++)
@@ -383,7 +383,7 @@ void vm_execute(vm_t* vm, list_t* buffer)
 
 	// Clear
 	console("\n");
-	for(int i = 0; i < vm->sp; i++)
+	for(int i = 0; i < STACK_SIZE; i++)
 	{
 		value_free(vm->stack[i]);
 		vm->stack[i] = 0;
