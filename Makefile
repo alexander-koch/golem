@@ -2,11 +2,11 @@ CC = gcc
 MODULE = golem
 INC = -I.
 
-LLVMC = -IC:\llvm\build\include -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS #`llvm-config --cflags`
-LLVMLD = `llvm-config --cxxflags --ldflags --libs core analysis native bitwriter --system-libs`
+CFLAGS = -std=c99 -Wall -Wno-unused-function -Wno-unused-parameter -DNO_TRACE
 
-CFLAGS = -std=c99 -Wall -Wno-unused-function -Wno-unused-parameter #$(LLVMC) -D__USE_LLVM__
-LDFLAGS = #$(LLVMLD)
+# Options:
+# -DNO_TRACE <-- While bytecode is executed, stack + instructions are printed
+# -DNO_EXEC  <-- Bytecode is not executed
 
 FILES = main.c \
 		core/api.c \
@@ -20,7 +20,6 @@ FILES = main.c \
 		parser/parser.c \
 		parser/optimizer.c \
 		compiler/compiler.c \
-		compiler/llvm_compiler.c \
 		compiler/asm_compiler.c \
 		vm/value.c \
 		vm/bytecode.c \

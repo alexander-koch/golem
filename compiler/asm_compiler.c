@@ -24,7 +24,7 @@ void translate(FILE* fp, instruction_t* instr)
 	{
 		case OP_PUSH:
 		{
-			fprintf(fp, "\tmov rax, %li\n", (long int)value_int(instr->v1));
+			fprintf(fp, "\tmov rax, %d\n", value_int(instr->v1));
 			break;
 		}
 		case OP_INVOKE:

@@ -62,7 +62,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 {
 	instruction_t* instr = vm_peek(vm, buffer);
 
-#define NO_TRACE
 #ifndef NO_TRACE
 	console("  %.2d: %s [", vm->pc, op2str(instr->op));
 	for(int i = 0; i < vm->sp; i++)
@@ -87,6 +86,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 		}
 		case OP_STORE:
 		{
+			// Local variable storage
 			int offset = value_int(instr->v1);
 			value_free(vm->locals[vm->fp+offset]);
 			vm->locals[vm->fp+offset] = pop(vm);
@@ -122,7 +122,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 				list_push(values, val);
 			}
 
-			// TODO: wrap native functions in new method
+			// TODO: wrap native functions in new method, handle different
 			if(!strcmp(name, "println"))
 			{
 				for(int i = args; i > 0; i--)
@@ -131,6 +131,14 @@ void vm_process(vm_t* vm, list_t* buffer)
 					value_print(v);
 				}
 				console("\n");
+			}
+			else if(!strcmp(name, "getline"))
+			{
+				char buf[1024];
+				fgets(buf, sizeof(buf), stdin);
+
+				value_t* val = value_new_string(buf);
+				push(vm, val);
 			}
 
 			list_iterator_t* iter = list_iterator_create(values);

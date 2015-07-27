@@ -153,6 +153,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 
 	// Body analysis
 	iter = list_iterator_create(node->funcdecl.impl.body);
+	bool hasReturn = false;
 	while(!list_iterator_end(iter))
 	{
 		ast_t* sub = list_iterator_next(iter);
@@ -171,6 +172,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 
 		if(sub->class == AST_RETURN)
 		{
+			hasReturn = true;
 			if(sub->returnstmt && node->funcdecl.rettype == DATA_VOID)
 			{
 				compiler_throw(compiler, node, "Functions with type void do not return a value");
@@ -188,10 +190,15 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	{
 		// Just return 0 if void
 		emit_int(compiler->buffer, 0);
+		emit_return(compiler->buffer);
 	}
-
-	// Emit return
-	emit_return(compiler->buffer);
+	else
+	{
+		if(hasReturn == false)
+		{
+			compiler_throw(compiler, node, "Warning: Function without return statement");
+		}
+	}
 
 	// Set jump address to end
 	byte_address = list_size(compiler->buffer);
@@ -448,7 +455,7 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 	ast_t* call = node->call.callee;
 	if(call->class == AST_IDENT)
 	{
-		if(!strcmp(call->ident, "println"))
+		if(!strcmp(call->ident, "println") || !strcmp(call->ident, "getline"))
 		{
 			emit_syscall(compiler->buffer, call->ident, args);
 		}
@@ -862,38 +869,6 @@ void compiler_dump(ast_t* node, int level)
 	}
 }
 
-void llvm_compile(compiler_t* cmpl, ast_t* root)
-{
-#ifdef __USE_LLVM__
-	if(!cmpl->filename)
-	{
-		console("Non-files currently not supported");
-		return;
-	}
-
-	llvm_context_t* ctx = llvm_context_create(cmpl->filename);
-	llvm_traverse(ctx, root);
-
-/*	char *error = 0;
-	if(LLVMVerifyModule(ctx->module, LLVMAbortProcessAction, &error) != 0)
-	{
-		LLVMDisposeMessage(error);
-	}*/
-
-	if(cmpl->filename)
-	{
-		fprintf(stdout, "Writing bitcode to file...\n");
-		// Write out bitcode to file
-	    if (LLVMWriteBitcodeToFile(ctx->module, "out.bc") != 0) {
-	        fprintf(stderr, "Error writing bitcode to file, skipping\n");
-	    }
-	}
-
-	LLVMDumpModule(ctx->module);
-	llvm_context_free(ctx);
-#endif
-}
-
 /**
  *	Creates an instruction set based on source code @source
  */
@@ -916,8 +891,6 @@ list_t* compile_buffer(compiler_t* compiler, const char* source)
 			compiler_dump(root, 0);
 		}
 		compiler_eval(compiler, root);
-		//llvm_compile(compiler, root);
-
 		ast_free(root);
 	}
 
@@ -944,7 +917,7 @@ list_t* compile_buffer(compiler_t* compiler, const char* source)
 }
 
 /**
- *	Reads a file and converts it into a compiler
+ *	Reads a file and converts it into a buffer
  */
 list_t* compile_file(compiler_t* compiler, const char* filename)
 {
@@ -960,7 +933,7 @@ list_t* compile_file(compiler_t* compiler, const char* filename)
 
 	compiler->filename = strdup(filename);
 
-	// run vm with compiler
+	// Run vm with compiler
 	list_t* buffer = compile_buffer(compiler, source);
 	free(source);
 

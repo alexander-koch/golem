@@ -1,3 +1,7 @@
+// Compiler
+// @desc Compiles source AST to a list of bytecode instructions
+// @author Alexander Koch
+
 #ifndef compiler_h
 #define compiler_h
 
@@ -8,16 +12,9 @@
 #include <vm/bytecode.h>
 #include <adt/hashmap.h>
 
-#ifdef __USE_LLVM__
-#include <llvm-c/Core.h>
-#include <llvm-c/ExecutionEngine.h>
-#include <llvm-c/Target.h>
-#include <llvm-c/Analysis.h>
-#include <llvm-c/BitWriter.h>
-#include <compiler/llvm_compiler.h>
-#endif
-
-// Symbol, info on class, variable or function
+// Symbol is a certain info for the compiler,
+// can be a function, variable, class, etc.
+// everything that has to be identified.
 // variable => immutable / mutable + name + type
 // function => name + returntype
 // class => name + functions + variables
@@ -28,6 +25,7 @@ typedef struct symbol_t
 	datatype_t type;
 } symbol_t;
 
+// Scope: contains symbols
 typedef struct scope_t
 {
 	hashmap_t* symbols;
@@ -36,6 +34,9 @@ typedef struct scope_t
 	int address;
 } scope_t;
 
+// Compiler: manages scopes, converts every AST to multiple instructions
+// Throws errors if wrong code is detected
+// Also optimizes ASTs
 typedef struct compiler_t
 {
 	parser_t parser;
