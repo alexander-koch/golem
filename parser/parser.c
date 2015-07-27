@@ -703,6 +703,7 @@ list_t* parse_formals(parser_t* parser)
         param_t* param = malloc(sizeof(*param));
         param->name = name->value;
         param->type = parse_datatype(parser);
+        param->loc = get_location(parser);
 
         list_push(formals, param);
         if(!match_type(parser, TOKEN_COMMA) && !match_type(parser, TOKEN_RPAREN))

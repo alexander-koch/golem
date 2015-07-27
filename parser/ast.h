@@ -28,6 +28,7 @@ typedef struct
 {
     char* name;
     datatype_t type;
+    location_t loc;
 } param_t;
 
 typedef struct ast_s ast_t;

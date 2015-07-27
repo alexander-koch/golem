@@ -26,7 +26,9 @@
 
 | Special             | Description
 |---                  |---
-|invoke x y           | invoke method x with y args, push return value (always!)
+|syscall x, y         | invokes an internal known method named x, with y args, push return value
+|invoke x y           | invoke method at address x with y args, push return value
+|ret                  | returns from function to last instruction pointer
 |jmp x                | unconditional jump
 |jmpt x               | jump if true
 |jmpf X               | jump if false
@@ -54,7 +56,7 @@ This should compile to the following (unoptimized):
       05: iadd
       06: store, 0
       07: load, 0
-      08: invoke, println, 1
+      08: syscall, println, 1
 
 Optimized (not done by vm / interpreter):
 
@@ -62,7 +64,7 @@ Optimized (not done by vm / interpreter):
       01: iconst, 5
       02: iconst, 5
       03: iadd
-      04: invoke, println, 1
+      04: syscall, println, 1
 
 Result of execution:
 

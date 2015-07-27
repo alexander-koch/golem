@@ -117,7 +117,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	// =>
 	// call, 0, 1 <-- call function at address 0, with 1 param
 
-	// emit jmp
+	// Emit jump
 	value_t* addr = emit_jmp(compiler->buffer, 0);
 
 	// Register a symbol for the function, save the bytecode address
@@ -125,13 +125,15 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	symbol_t* fnSymbol = symbol_new(node, byte_address, node->funcdecl.rettype);
 	hashmap_set(compiler->scope->symbols, node->funcdecl.name, fnSymbol);
 
+	// Create a new scope
 	push_scope(compiler);
 
 	// Treat each parameter as a local variable, with no type or value
 	list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.formals);
-	int i = -list_size(node->funcdecl.impl.formals);
+	int i = -(list_size(node->funcdecl.impl.formals) + 3);
 	while(!list_iterator_end(iter))
 	{
+		// Create parameter in symbols list
 	 	param_t* param = list_iterator_next(iter);
 		symbol_t* symbol = symbol_new(0, i, param->type);
 		hashmap_set(compiler->scope->symbols, param->name, symbol);
@@ -139,9 +141,20 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	}
 	list_iterator_free(iter);
 
+	// Evaluate block and pop scope
 	eval_block(compiler, node->funcdecl.impl.body);
 	pop_scope(compiler);
 
+	if(node->funcdecl.rettype == DATA_VOID)
+	{
+		// Just return 0 if void
+		emit_int(compiler->buffer, 0);
+	}
+
+	// Emit return
+	emit_return(compiler->buffer);
+
+	// Set jump address to end
 	byte_address = list_size(compiler->buffer);
 	value_set_int(addr, byte_address);
 
@@ -403,7 +416,27 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 	ast_t* call = node->call.callee;
 	if(call->class == AST_IDENT)
 	{
-		emit_invoke(compiler->buffer, call->ident, args);
+		if(!strcmp(call->ident, "println"))
+		{
+			emit_syscall(compiler->buffer, call->ident, args);
+		}
+		else
+		{
+			int address = 0;
+			void* val;
+			if(hashmap_get(compiler->scope->symbols, call->ident, &val) != HMAP_MISSING)
+			{
+				symbol_t* symbol = (symbol_t*)val;
+				address = symbol->address;
+			}
+			else
+			{
+				compiler_throw(compiler, node, "Implicit declaration of function '%s'", call->ident);
+				return DATA_NULL;
+			}
+
+			emit_invoke(compiler->buffer, address, args);
+		}
 	}
 	else
 	{

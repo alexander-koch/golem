@@ -9,12 +9,16 @@
 #include <vm/bytecode.h>
 #include <vm/value.h>
 
+#define STACK_SIZE 1024
+#define LOCALS_SIZE 1024
+
 typedef struct
 {
-	bool error;
-	stack_t* stack;
+	value_t* stack[STACK_SIZE];
+	value_t* locals[LOCALS_SIZE];
 	int pc;
 	int fp;
+	int sp;
 	int numObjects;
 	int maxObjects;
 } vm_t;

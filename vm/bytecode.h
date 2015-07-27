@@ -31,16 +31,18 @@ typedef enum
 	OP_CONCAT = 15,
 
 	// Special
-	OP_INVOKE = 16,
-	OP_JMP = 17,
-	OP_JMPF = 18,
-	OP_JMPT = 19,
+	OP_SYSCALL = 16,
+	OP_INVOKE = 17,
+	OP_RET = 18,
+	OP_JMP = 19,
+	OP_JMPF = 20,
+	OP_JMPT = 21,
 
 	// Compare
-	OP_IEQ = 20,
-	OP_STREQ = 21,
-	OP_INE = 22,
-	OP_ILT = 23
+	OP_IEQ = 22,
+	OP_STREQ = 23,
+	OP_INE = 24,
+	OP_ILT = 25
 } opcode_t;
 
 typedef struct
@@ -58,7 +60,9 @@ void emit_string(list_t* buffer, char* str);
 void emit_pop(list_t* buffer);
 void emit_op(list_t* buffer, opcode_t op);
 void emit_tok2op(list_t* buffer, token_type_t tok, datatype_t type);
-void emit_invoke(list_t* buffer, char* str, size_t args);
+void emit_syscall(list_t* buffer, char* name, size_t args);
+void emit_invoke(list_t* buffer, size_t address, size_t args);
+void emit_return(list_t* buffer);
 void emit_store(list_t* buffer, int address);
 void emit_load(list_t* buffer, int address);
 

@@ -21,7 +21,9 @@ const char* op2str(opcode_t code)
 		case OP_BITOR: return "bit_or";
 		case OP_BITXOR: return "bit_xor";
 		case OP_CONCAT: return "concat";
+		case OP_SYSCALL: return "syscall";
 		case OP_INVOKE: return "invoke";
+		case OP_RET: return "ret";
 		case OP_JMP: return "jmp";
 		case OP_JMPF: return "jmpf";
 		case OP_JMPT: return "jmpt";
@@ -42,21 +44,21 @@ instruction_t* instruction_new(opcode_t op)
 	return ins;
 }
 
-void push(list_t* buffer, instruction_t* ins)
+void push_ins(list_t* buffer, instruction_t* ins)
 {
 	list_push(buffer, ins);
 }
 
 void insert(list_t* buffer, opcode_t op)
 {
-	push(buffer, instruction_new(op));
+	push_ins(buffer, instruction_new(op));
 }
 
 void insert_v1(list_t* buffer, opcode_t op, value_t* v1)
 {
 	instruction_t* ins = instruction_new(op);
 	ins->v1 = v1;
-	push(buffer, ins);
+	push_ins(buffer, ins);
 }
 
 void insert_v2(list_t* buffer, opcode_t op, value_t* v1, value_t* v2)
@@ -64,7 +66,7 @@ void insert_v2(list_t* buffer, opcode_t op, value_t* v1, value_t* v2)
 	instruction_t* ins = instruction_new(op);
 	ins->v1 = v1;
 	ins->v2 = v2;
-	push(buffer, ins);
+	push_ins(buffer, ins);
 }
 
 // Main functions
@@ -137,11 +139,23 @@ void emit_tok2op(list_t* buffer, token_type_t tok, datatype_t type)
 	emit_op(buffer, op);
 }
 
-void emit_invoke(list_t* buffer, char* str, size_t args)
+void emit_syscall(list_t* buffer, char* name, size_t args)
 {
-	value_t* v1 = value_new_string(str);
+	value_t* v1 = value_new_string(name);
+	value_t* v2 = value_new_int(args);
+	insert_v2(buffer, OP_SYSCALL, v1, v2);
+}
+
+void emit_invoke(list_t* buffer, size_t address, size_t args)
+{
+	value_t* v1 = value_new_int(address);
 	value_t* v2 = value_new_int(args);
 	insert_v2(buffer, OP_INVOKE, v1, v2);
+}
+
+void emit_return(list_t* buffer)
+{
+	insert(buffer, OP_RET);
 }
 
 void emit_store(list_t* buffer, int address)
