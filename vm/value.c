@@ -24,7 +24,7 @@ value_t* value_new_null()
 {
 	value_t* val = malloc(sizeof(*val));
 	val->type = VALUE_NULL;
-	val->refcount = 0;
+	val->marked = 0;
 	return val;
 }
 
@@ -97,7 +97,7 @@ value_t* value_copy(value_t* value)
 	val->classname = value->classname;
 
 	//TODO: obj pointer copying
-	//FIX UNSTABLE: could possibly create an error
+	//FIXME: unstable could possibly create an error, doesn't work for objects
 
 	return val;
 }
@@ -105,14 +105,6 @@ value_t* value_copy(value_t* value)
 const char* value_classname(value_t* value)
 {
 	return value->classname;
-}
-
-void value_retain(value_t* value)
-{
-	if(value)
-	{
-		value->refcount++;
-	}
 }
 
 void value_reset(value_t* value)
@@ -133,16 +125,9 @@ void value_free(value_t* value)
 {
 	if(!value) return;
 
-	if(value->refcount == 0)
-	{
-		value_reset(value);
-		free(value);
-		value = 0;
-	}
-	else
-	{
-		value->refcount--;
-	}
+	value_reset(value);
+	free(value);
+	value = 0;
 }
 
 void value_print(value_t* value)
@@ -178,5 +163,13 @@ void value_print(value_t* value)
 			}
 			default: break;
 		}
+	}
+}
+
+void value_mark(value_t* value)
+{
+	if(!value->marked)
+	{
+		value->marked = 1;
 	}
 }

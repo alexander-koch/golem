@@ -25,7 +25,16 @@ typedef struct symbol_t
 {
 	ast_t* node;
 	int address;
+	datatype_t type;
 } symbol_t;
+
+typedef struct scope_t
+{
+	hashmap_t* symbols;
+	struct scope_t* super;
+	list_t* subscopes;
+	int address;
+} scope_t;
 
 typedef struct compiler_t
 {
@@ -35,7 +44,7 @@ typedef struct compiler_t
 	bool debug;
 	int address;
 	bool error;
-	hashmap_t* symbols;
+	scope_t* scope;
 } compiler_t;
 
 void compiler_init(compiler_t* compiler, bool debugmode);

@@ -27,7 +27,8 @@ typedef struct value_t
 {
 	const char* classname;
 	value_type_t type;
-	size_t refcount;
+
+	unsigned int marked;
 	union
 	{
 		int i;
@@ -48,10 +49,11 @@ value_t* value_new_object(void* obj);
 value_t* value_copy(value_t* value);
 const char* value_classname(value_t* value);
 
-void value_retain(value_t* value);
 void value_reset(value_t* value);
 void value_free(value_t* value);
 void value_print(value_t* value);
+
+void value_mark(value_t* value);
 
 bool value_bool(value_t* value);
 int value_int(value_t* value);

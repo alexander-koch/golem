@@ -9,6 +9,8 @@ vm_t* vm_new()
 	vm->stack = 0;
 	vm->pc = 0;
 	vm->fp = 0;
+	vm->numObjects = 0;
+	vm->maxObjects = 0;
 	return vm;
 }
 
@@ -16,6 +18,19 @@ instruction_t* vm_peek(vm_t* vm, list_t* buffer)
 {
 	if(vm->pc >= list_size(buffer)) return 0;
 	return list_get(buffer, vm->pc);
+}
+
+void vm_mark_all(vm_t* vm)
+{
+	for(int i = 0; i < vm->stack->top; i++)
+	{
+		value_mark(vm->stack->content[i]);
+	}
+}
+
+void vm_sweep(vm_t* vm)
+{
+
 }
 
 void vm_print_code(vm_t* vm, list_t* buffer)
@@ -42,9 +57,7 @@ void vm_print_code(vm_t* vm, list_t* buffer)
 	vm->pc = 0;
 }
 
-/**
- *	Processes a buffer instruction based on instruction / program counter (pc).
- */
+// Processes a buffer instruction based on instruction / program counter (pc).
 void vm_process(vm_t* vm, list_t* buffer)
 {
 	instruction_t* instr = vm_peek(vm, buffer);
@@ -258,6 +271,16 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_free(v2);
 			break;
 		}
+		case OP_STREQ:
+		{
+			value_t* v2 = stack_pop(vm->stack);
+			value_t* v1 = stack_pop(vm->stack);
+			value_t* v = value_new_bool(!strcmp(value_string(v1), value_string(v2)));
+			stack_push(vm->stack, v);
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
 		case OP_INE:
 		{
 			value_t* v2 = stack_pop(vm->stack);
@@ -284,19 +307,22 @@ void vm_process(vm_t* vm, list_t* buffer)
 	vm->pc++;
 }
 
-/**
- *	Executes a buffer
- */
+// Executes a buffer / list of instructions
 void vm_execute(vm_t* vm, list_t* buffer)
 {
+	// Reset vm
 	vm->stack = stack_new();
 	vm->pc = 0;
-	vm->fp = 200;
+	vm->fp = 100;
 	vm->error = false;
-	stack_resize(vm->stack, STACK_SIZE);
-	vm_print_code(vm, buffer);
+	vm->maxObjects = 8;
 
+	// Initialize stack
+	stack_resize(vm->stack, STACK_SIZE);
 	memset(vm->stack->content, 0, STACK_SIZE * sizeof(void*));
+
+	// Print out bytecodes
+	vm_print_code(vm, buffer);
 
 	// Run
 #ifndef NO_EXEC
@@ -323,9 +349,7 @@ void vm_execute(vm_t* vm, list_t* buffer)
 	stack_free(vm->stack);
 }
 
-/**
- *	Frees the memory used by the vm
- */
+// Frees the memory used by the vm
 void vm_free(vm_t* vm)
 {
 	console("Freeing vm\n");

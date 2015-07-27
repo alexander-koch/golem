@@ -7,7 +7,7 @@
 #define KEYWORD_IF "if"
 #define KEYWORD_ELSE "else"
 #define KEYWORD_WHILE "while"
-#define KEYWORD_CLASS "class"
+#define KEYWORD_CLASS "object"
 #define KEYWORD_RETURN "return"
 #define KEYWORD_LAMBDA "lambda"
 

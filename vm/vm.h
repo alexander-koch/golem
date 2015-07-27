@@ -15,6 +15,8 @@ typedef struct
 	stack_t* stack;
 	int pc;
 	int fp;
+	int numObjects;
+	int maxObjects;
 } vm_t;
 
 vm_t* vm_new();

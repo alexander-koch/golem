@@ -1,7 +1,6 @@
-# Project Nemesis / Golem-lang
+# Project Golem-lang
 
 A programming language written in C.
-The language for the pure evil.
 
 # Project aims
 
@@ -35,10 +34,11 @@ The body is bound by egyptian style braces. You have to declare the parameters a
 		# body
 	}
 
-Classes are defined using the structure below. Two methods `new` and `free` describe the
-constructor and destructor.
+Classes are defined using the structure below. The methods `new` is the classes constructor.
+All classes are objects, similar to Scala. All attributes are private.
+To get field, getters are used to maintain encapsulation.
 
- 	class Main {
+ 	object Main {
 
 		# Attributes
 		let mut x = 2
@@ -57,9 +57,9 @@ constructor and destructor.
 
 		# More methods here [...]
 
-		# Destructor
-		func free() -> void {
-			# do some stuff here
+		# Example for encapsulation
+		func getX() -> int {
+			return x
 		}
 	}
 
@@ -82,7 +82,8 @@ While loops:
 
 
 Lambdas (Concept idea, not implemented):
-Lambda keyword followed by a parameter list, big arrow and expression
+Lambda keyword followed by a parameter list, big arrow and expression.
+Lambdas should fit in one line, if bigger needed, use a function instead.
 
 	func main(argc: int) -> void {
 		return lambda(x) => x + 2
@@ -98,6 +99,7 @@ Lambda keyword followed by a parameter list, big arrow and expression
 - array declaration
 - subscripts
 - expressions with precedence
+- classes
 
 # TODO
 
