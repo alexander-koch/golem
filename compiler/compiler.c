@@ -83,6 +83,21 @@ symbol_t* symbol_new(ast_t* node, int address, datatype_t type)
 	return symbol;
 }
 
+symbol_t* symbol_get(scope_t* scope, char* ident)
+{
+	void* val;
+	if(hashmap_get(scope->symbols, ident, &val) != HMAP_MISSING)
+	{
+		return (symbol_t*)val;
+	}
+
+	if(scope->super)
+	{
+		return symbol_get(scope->super, ident);
+	}
+	else return 0;
+}
+
 void compiler_throw(compiler_t* compiler, ast_t* node, const char* format, ...)
 {
 	compiler->error = true;
@@ -191,8 +206,8 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 {
 	// Test if variable is already created
-	void* val;
-	if(hashmap_get(compiler->scope->symbols, node->vardecl.name, &val) != HMAP_MISSING)
+	symbol_t* sym = symbol_get(compiler->scope, node->vardecl.name);
+	if(sym)
 	{
 		compiler_throw(compiler, node, "Redefinition of symbol '%s'", node->vardecl.name);
 		return DATA_NULL;
@@ -351,10 +366,9 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 	{
 		if(lhs->class == AST_IDENT)
 		{
-			void* val;
-			if(hashmap_get(compiler->scope->symbols, lhs->ident, &val) != HMAP_MISSING)
+			symbol_t* symbol = symbol_get(compiler->scope, lhs->ident);
+			if(symbol)
 			{
-				symbol_t* symbol = (symbol_t*)val;
 				if(symbol->node->class == AST_DECLVAR)
 				{
 					if(!symbol->node->vardecl.mutate)
@@ -415,10 +429,9 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 
 datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 {
-	void* val = 0;
-	if(hashmap_get(compiler->scope->symbols, node->ident, &val) != HMAP_MISSING)
+	symbol_t* ptr = symbol_get(compiler->scope, node->ident);
+	if(ptr)
 	{
-		symbol_t* ptr = (symbol_t*)val;
 		emit_load(compiler->buffer, ptr->address);
 		return ptr->type;
 	}
@@ -442,10 +455,10 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 		else
 		{
 			int address = 0;
-			void* val;
-			if(hashmap_get(compiler->scope->symbols, call->ident, &val) != HMAP_MISSING)
+
+			symbol_t* symbol = symbol_get(compiler->scope, call->ident);
+			if(symbol)
 			{
-				symbol_t* symbol = (symbol_t*)val;
 				if(symbol->node->class != AST_DECLFUNC)
 				{
 					compiler_throw(compiler, node, "Identifier '%s' is not a function", call->ident);
@@ -480,6 +493,8 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 						// 	list_get(compiler->buffer, )
 						// }
 						// list_iterator_free(iter);
+						emit_invoke(compiler->buffer, address, args);
+						return func->funcdecl.rettype;
 					}
 				}
 			}
@@ -488,8 +503,6 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 				compiler_throw(compiler, node, "Implicit declaration of function '%s'", call->ident);
 				return DATA_NULL;
 			}
-
-			emit_invoke(compiler->buffer, address, args);
 		}
 	}
 	else
@@ -600,6 +613,13 @@ datatype_t eval_while(compiler_t* compiler, ast_t* node)
 	return DATA_NULL;
 }
 
+datatype_t eval_return(compiler_t* compiler, ast_t* node)
+{
+	compiler_eval(compiler, node->returnstmt);
+	emit_return(compiler->buffer);
+	return DATA_NULL;
+}
+
 // Real compile function
 datatype_t compiler_eval(compiler_t* compiler, ast_t* node)
 {
@@ -610,7 +630,7 @@ datatype_t compiler_eval(compiler_t* compiler, ast_t* node)
 		case AST_TOPLEVEL: return eval_block(compiler, node->toplevel);
 		case AST_DECLVAR: return eval_declvar(compiler, node);
 		case AST_DECLFUNC: return eval_declfunc(compiler, node);
-		case AST_RETURN: return compiler_eval(compiler, node->returnstmt);
+		case AST_RETURN: return eval_return(compiler, node);
 		case AST_FLOAT: return eval_number(compiler, node);
 		case AST_INT: return eval_number(compiler, node);
 		case AST_BOOL: return eval_bool(compiler, node);
