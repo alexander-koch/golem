@@ -5,6 +5,7 @@ INC = -I.
 CFLAGS = -std=c99 -Wall -Wno-unused-function -Wno-unused-parameter -DNO_TRACE
 
 # Options:
+# -DNO_IR	 <-- Prints out immediate representation (bytecode)
 # -DNO_TRACE <-- While bytecode is executed, stack + instructions are printed
 # -DNO_EXEC  <-- Bytecode is not executed
 

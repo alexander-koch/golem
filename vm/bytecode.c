@@ -44,6 +44,8 @@ const char* op2str(opcode_t code)
 		case OP_INE: return "ine";
 		case OP_ILT: return "ilt";
 		case OP_IGT: return "igt";
+		case OP_ILE: return "ile";
+		case OP_IGE: return "ige";
 		case OP_BAND: return "band";
 		case OP_BOR: return "bor";
 		default: return "unknown";
@@ -167,6 +169,8 @@ opcode_t getOp(token_type_t tok, datatype_t type)
 		case TOKEN_NEQUAL: return OP_INE;
 		case TOKEN_LESS: return OP_ILT;
 		case TOKEN_GREATER: return OP_IGT;
+		case TOKEN_LEQUAL: return OP_ILE;
+		case TOKEN_GEQUAL: return OP_IGE;
 		case TOKEN_AND: return OP_BAND;
 		case TOKEN_OR: return OP_BOR;
 		default:

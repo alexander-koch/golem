@@ -12,8 +12,10 @@ The following instructions are currently supported.
 
 | Store               | Description
 |---                  |---
-|store x              | pops a value and stores it in field x
-|load x               | pushes the value of field x onto the stack
+|store x              | pops a value and stores it in the local field x
+|load x               | pushes the value of the local field x onto the stack
+|gstore x             | global store at address x
+|gload x              | global load at address x
 
 | Arithmetic          | Description
 |---                  |---
@@ -55,6 +57,8 @@ The following instructions are currently supported.
 |ine                  | integer not equal
 |ilt                  | integer less than
 |igt                  | integer greater than
+|ile                  | integer less equal
+|ige                  | integer greater equal
 |band                 | boolean and
 |bor                  | boolean or
 

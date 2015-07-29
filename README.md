@@ -15,8 +15,11 @@ A programming language written in C.
 - Systems language
 - FAST!!!
 
-# Ideas
+# Currently working on:
 
+- Implementing all operators for associated types in the vm / bytecodes
+- Finalize implementing functions
+- Subscripts
 - Lambdas
 
 # Concept (final concept may change)
@@ -88,12 +91,12 @@ While loops:
 	}
 ```
 
-Lambdas (Concept idea, not implemented):
-Lambda keyword followed by a parameter list, big arrow and expression.
+Lambdas (Concept idea, not implemented, final result may change):
+Lambda keyword followed by a parameter list, arrow and expression.
 Lambdas should fit in one line, if bigger needed, use a function instead.
 ```rust
 	func main(argc: int) -> void {
-		return lambda(x) => x + 2
+		return lambda(x) -> x + 2
 	}
 ```
 
@@ -109,6 +112,15 @@ Lambdas should fit in one line, if bigger needed, use a function instead.
 - expressions with precedence
 - classes
 
+# Currently supported (Langugage-based)
+
+- variable and function declaration
+- types int, string, float, bool, (void)
+- function calls, recursion
+- system internal functions, println + getline
+- fast bytecode vm
+- compiler error reports
+
 # TODO
 
 Langugage specific
@@ -119,12 +131,16 @@ Langugage specific
 - prefix operators
 - Lambdas
 - Typecasting
+- map function
 
 Implementation specific
 ===
 
 - performance and bytecode optimization
 - mark-sweep garbage collector for vm
+- JVM approach:
+	- compiler: source code => bytecodes => file
+ 	- vm: file => vm => execution
 
 # Stuff / Internet sources
 

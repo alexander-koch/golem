@@ -130,6 +130,13 @@ datatype_t eval_block(compiler_t* compiler, list_t* block)
 
 datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 {
+	// Check if existing
+	if(symbol_get(compiler->scope, node->funcdecl.name))
+	{
+		compiler_throw(compiler, node, "Redefinition of symbol '%s'", node->vardecl.name);
+		return DATA_NULL;
+	}
+
 	// Emit jump
 	value_t* addr = emit_jmp(compiler->buffer, 0);
 
@@ -189,6 +196,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	eval_block(compiler, node->funcdecl.impl.body);
 	pop_scope(compiler);
 
+	// Handle void return
 	if(node->funcdecl.rettype == DATA_VOID)
 	{
 		// Just return 0 if void
@@ -203,10 +211,9 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 		}
 	}
 
-	// Set jump address to end
+	// Set beginning jump address to end
 	byte_address = list_size(compiler->buffer);
 	value_set_int(addr, byte_address);
-
 	return DATA_NULL;
 }
 
@@ -215,9 +222,6 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 // Returns datatype NULL
 datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 {
-	// TODO: Test if global or not
-	bool global = false;
-
 	// Test if variable is already created
 	symbol_t* sym = symbol_get(compiler->scope, node->vardecl.name);
 	if(sym)
@@ -235,7 +239,7 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 	hashmap_set(compiler->scope->symbols, node->vardecl.name, symbol);
 
 	// Emit last bytecode
-	emit_store(compiler->buffer, symbol->address, global);
+	emit_store(compiler->buffer, symbol->address, symbol->global);
 
 	// Increase compiler address
 	compiler->address++;
@@ -462,13 +466,14 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 datatype_t eval_call(compiler_t* compiler, ast_t* node)
 {
 	size_t args = list_size(node->call.args);
-	eval_block(compiler, node->call.args);
+	// eval_block(compiler, node->call.args);
 
 	ast_t* call = node->call.callee;
 	if(call->class == AST_IDENT)
 	{
 		if(!strcmp(call->ident, "println") || !strcmp(call->ident, "getline"))
 		{
+			eval_block(compiler, node->call.args);
 			emit_syscall(compiler->buffer, call->ident, args);
 		}
 		else
@@ -505,13 +510,25 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 					{
 						// Valid
 						// TODO: Test types
-						// list_iterator_t* iter = list_iterator_create(symbol->node->impl.formals);
-						// while(!list_iterator_end(iter))
-						// {
-						// 	param_t* param = list_iterator_next(iter);
-						// 	list_get(compiler->buffer, )
-						// }
-						// list_iterator_free(iter);
+						list_iterator_t* iter = list_iterator_create(symbol->node->funcdecl.impl.formals);
+						list_iterator_t* args_iter = list_iterator_create(node->call.args);
+						int i = 1;
+						while(!list_iterator_end(iter))
+						{
+							datatype_t type = compiler_eval(compiler, list_iterator_next(args_iter));
+							param_t* param = list_iterator_next(iter);
+
+							if(param->type != type)
+							{
+								compiler_throw(compiler, node, "Warning: Parameter %d has the wrong type. Expected: %s", i, datatype2str(param->type));
+								break;
+							}
+							i++;
+						}
+						list_iterator_free(args_iter);
+						list_iterator_free(iter);
+
+						// Emit invocation
 						emit_invoke(compiler->buffer, address, args);
 						return func->funcdecl.rettype;
 					}

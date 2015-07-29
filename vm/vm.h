@@ -1,6 +1,7 @@
 #ifndef vm_h
 #define vm_h
 
+#include <time.h>
 #include <core/api.h>
 #include <adt/stack.h>
 #include <adt/list.h>

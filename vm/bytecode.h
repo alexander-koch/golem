@@ -63,6 +63,8 @@ typedef enum
 	OP_INE,
 	OP_ILT,
 	OP_IGT,
+	OP_ILE,
+	OP_IGE,
 	OP_BAND,
 	OP_BOR
 } opcode_t;

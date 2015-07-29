@@ -480,6 +480,26 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_free(v2);
 			break;
 		}
+		case OP_ILE:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_bool(value_int(v1) <= value_int(v2));
+			push(vm, v);
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
+		case OP_IGE:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_bool(value_int(v1) >= value_int(v2));
+			push(vm, v);
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
 		case OP_BAND:
 		{
 			value_t* v2 = pop(vm);
@@ -516,16 +536,23 @@ void vm_execute(vm_t* vm, list_t* buffer)
 	memset(vm->stack, 0, STACK_SIZE * sizeof(value_t*));
 	memset(vm->locals, 0, LOCALS_SIZE * sizeof(value_t*));
 
+#ifndef NO_IR
 	// Print out bytecodes
 	vm_print_code(vm, buffer);
+#endif
 
 	// Run
 #ifndef NO_EXEC
 	console("\nExecution:\n");
+	clock_t begin = clock();
 	while(vm->pc < list_size(buffer))
 	{
 		vm_process(vm, buffer);
 	}
+
+	clock_t end = clock();
+	double elapsed = (double)(end - begin) / CLOCKS_PER_SEC;
+	console("Elapsed time: %f sec\n", elapsed);
 #endif
 
 	// Clear
