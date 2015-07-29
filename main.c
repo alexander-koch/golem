@@ -25,7 +25,10 @@ void run_repl(vm_t* vm, compiler_t* compiler)
             return;
         }
         list_t* buffer = compile_buffer(compiler, buf);
-        vm_execute(vm, buffer);
+        if(buffer)
+        {
+            vm_execute(vm, buffer);
+        }
         compiler_clear(compiler);
     }
 }
