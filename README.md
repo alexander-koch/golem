@@ -4,14 +4,18 @@ A programming language written in C.
 
 # Project aims
 
-- Functional approach, but not purely functional
-- Immutability of objects
-- Everything is an object
+- Functional, object-oriented programming language
+=> Immutability of objects
+=> Everything is an object
+
+- Statically typed, exception: variables, type is set by context
+- Strong typing
+- High-order functions, currying
 - Fully functional fast bytecode vm or translation into x86 / x86_64 assembler machine code
 - Systems language
 - FAST!!!
 
-# New Ideas
+# Ideas
 
 - Lambdas
 
@@ -19,25 +23,28 @@ A programming language written in C.
 
 Each variable is immutable at first. Variables are defined / declared using the 'let' keyword.
 Example:
-
+```rust
 	let x = 5
+```
 
 Variables can be mutable, if they are declared using the 'mut' keyword.
-
+```rust
 	let mut x = 5
 	x = x + 1
+```
 
 Functions are declared using the 'func' keyword.
 The body is bound by egyptian style braces. You have to declare the parameters and the return type.
-
+```rust
 	func main(args: str) -> void {
 		# body
 	}
+```
 
 Classes are defined using the structure below. The methods `new` is the classes constructor.
 All classes are objects, similar to Scala. All attributes are private.
 To get field, getters are used to maintain encapsulation.
-
+```rust
  	object Main {
 
 		# Attributes
@@ -62,10 +69,10 @@ To get field, getters are used to maintain encapsulation.
 			return x
 		}
 	}
-
+```
 Control flows are created by if statements or while loops. Style is egyptian.
 Example:
-
+```rust
 	if(number == 5) {
 		println("Your number is odd.")
 	} else if(number == 3) {
@@ -73,21 +80,22 @@ Example:
 	} else {
 		println("Your number isn't 5 or 3.")
 	}
-
+```
 While loops:
-
+```rust
 	while(number == 5) {
 		number = number + 1
 	}
-
+```
 
 Lambdas (Concept idea, not implemented):
 Lambda keyword followed by a parameter list, big arrow and expression.
 Lambdas should fit in one line, if bigger needed, use a function instead.
-
+```rust
 	func main(argc: int) -> void {
 		return lambda(x) => x + 2
 	}
+```
 
 # Curently supported (AST)
 
@@ -110,12 +118,12 @@ Langugage specific
 - for loops
 - prefix operators
 - Lambdas
+- Typecasting
 
 Implementation specific
 ===
 
-- implement bytecode vm or an llvm compiler
-- compile to machine code (x86 / x86_64 => Intel syntax)
+- performance and bytecode optimization
 - mark-sweep garbage collector for vm
 
 # Stuff / Internet sources

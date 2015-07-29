@@ -1,25 +1,5 @@
 #include "value.h"
 
-bool value_bool(value_t* value)
-{
-	return (bool)value->v.i;
-}
-
-int value_int(value_t* value)
-{
-	return value->v.i;
-}
-
-float value_float(value_t* value)
-{
-	return value->v.f;
-}
-
-char* value_string(value_t* value)
-{
-	return value->v.str;
-}
-
 value_t* value_new_null()
 {
 	value_t* val = malloc(sizeof(*val));
@@ -59,7 +39,7 @@ value_t* value_new_string_const(const char* string)
 {
 	value_t* val = value_new_null();
 	val->type = VALUE_STRING;
-	val->v.str = strdup(string);
+	val->v.o = strdup(string);
 	val->classname = "string";
 	return val;
 }
@@ -68,7 +48,7 @@ value_t* value_new_string(char* string)
 {
 	value_t* val = value_new_null();
 	val->type = VALUE_STRING;
-	val->v.str = strdup(string);
+	val->v.o = strdup(string);
 	val->classname = "string";
 	return val;
 }
@@ -88,7 +68,7 @@ value_t* value_copy(value_t* value)
 	val->type = value->type;
 	if(val->type == VALUE_STRING)
 	{
-		val->v.str = strdup(value->v.str);
+		val->v.o = strdup(value->v.o);
 	}
 	else
 	{
@@ -109,12 +89,7 @@ const char* value_classname(value_t* value)
 
 void value_reset(value_t* value)
 {
-	if(value->type == VALUE_STRING)
-	{
-		free(value->v.str);
-		value->v.str = 0;
-	}
-	else if(value->type == VALUE_OBJECT)
+	if(value->type == VALUE_STRING || value->type == VALUE_OBJECT)
 	{
 		free(value->v.o);
 		value->v.o = 0;
@@ -153,7 +128,7 @@ void value_print(value_t* value)
 			}
 			case VALUE_STRING:
 			{
-				console("%s", value->v.str);
+				console("%s", (char*)value->v.o);
 				break;
 			}
 			case VALUE_NULL:

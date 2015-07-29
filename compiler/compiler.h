@@ -23,6 +23,7 @@ typedef struct symbol_t
 	ast_t* node;
 	int address;
 	datatype_t type;
+	bool global;
 } symbol_t;
 
 // Scope: contains symbols
@@ -46,6 +47,7 @@ typedef struct compiler_t
 	int address;
 	bool error;
 	scope_t* scope;
+	int depth;
 } compiler_t;
 
 void compiler_init(compiler_t* compiler, bool debugmode);

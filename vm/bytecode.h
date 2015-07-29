@@ -10,39 +10,61 @@
 typedef enum
 {
 	// Basic stack
-	OP_PUSH = 1,
-	OP_POP = 2,
+	OP_PUSH,
+	OP_POP,
 
 	// Store
-	OP_STORE = 3,
-	OP_LOAD = 4,
+	OP_STORE,
+	OP_LOAD,
+	OP_GSTORE,
+	OP_GLOAD,
 
 	// Arithmetic
-	OP_IADD = 5,
-	OP_ISUB = 6,
-	OP_IMUL = 7,
-	OP_IDIV = 8,
-	OP_MOD = 9,
-	OP_BITL = 10,
-	OP_BITR = 11,
-	OP_BITAND = 12,
-	OP_BITOR = 13,
-	OP_BITXOR = 14,
-	OP_CONCAT = 15,
+	// Integer
+	OP_IADD,
+	OP_ISUB,
+	OP_IMUL,
+	OP_IDIV,
+	OP_MOD,
+	OP_BITL,
+	OP_BITR,
+	OP_BITAND,
+	OP_BITOR,
+	OP_BITXOR,
+	OP_BITNOT,
+	OP_IMINUS,
+
+	// Float
+	OP_FADD,
+	OP_FSUB,
+	OP_FMUL,
+	OP_FDIV,
+	OP_FMINUS,
+
+	// Boolean
+	OP_NOT,
+
+	// String
+	OP_CONCAT,
 
 	// Special
-	OP_SYSCALL = 16,
-	OP_INVOKE = 17,
-	OP_RET = 18,
-	OP_JMP = 19,
-	OP_JMPF = 20,
-	OP_JMPT = 21,
+	OP_SYSCALL,
+	OP_INVOKE,
+	OP_RET,
+	OP_JMP,
+	OP_JMPF,
+	OP_JMPT,
 
 	// Compare
-	OP_IEQ = 22,
-	OP_STREQ = 23,
-	OP_INE = 24,
-	OP_ILT = 25
+	OP_BEQ,
+	OP_IEQ,
+	OP_FEQ,
+	OP_STREQ,
+	OP_INE,
+	OP_ILT,
+	OP_IGT,
+	OP_BAND,
+	OP_BOR
 } opcode_t;
 
 typedef struct
@@ -64,8 +86,8 @@ void emit_tok2op(list_t* buffer, token_type_t tok, datatype_t type);
 void emit_syscall(list_t* buffer, char* name, size_t args);
 void emit_invoke(list_t* buffer, size_t address, size_t args);
 void emit_return(list_t* buffer);
-void emit_store(list_t* buffer, int address);
-void emit_load(list_t* buffer, int address);
+void emit_store(list_t* buffer, int address, bool global);
+void emit_load(list_t* buffer, int address, bool global);
 
 value_t* emit_jmp(list_t* buffer, int address);
 value_t* emit_jmpf(list_t* buffer, int address);

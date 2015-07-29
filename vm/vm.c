@@ -60,7 +60,7 @@ void vm_print_code(vm_t* vm, list_t* buffer)
 // Processes a buffer instruction based on instruction / program counter (pc).
 void vm_process(vm_t* vm, list_t* buffer)
 {
-	instruction_t* instr = vm_peek(vm, buffer);
+	instruction_t* instr = list_get(buffer, vm->pc);
 
 #ifndef NO_TRACE
 	console("  %.2d: %s [", vm->pc, op2str(instr->op));
@@ -110,8 +110,23 @@ void vm_process(vm_t* vm, list_t* buffer)
 			}
 			break;
 		}
+		case OP_GSTORE:
+		{
+			int offset = value_int(instr->v1);
+			value_free(vm->locals[offset]);
+			vm->locals[offset] = pop(vm);
+			break;
+		}
+		case OP_GLOAD:
+		{
+			int offset = value_int(instr->v1);
+			value_t* v = vm->locals[offset];
+			push(vm, value_copy(v));
+			break;
+		}
 		case OP_SYSCALL:
 		{
+			// TODO: OPTIMIZE!!!
 			char* name = value_string(instr->v1);
 			size_t args = value_int(instr->v2);
 
@@ -179,6 +194,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 		}
 		case OP_RET:
 		{
+			// Returns to previous instruction pointer
 			value_t* ret = pop(vm);
 			vm->sp = vm->fp;
 
@@ -314,6 +330,74 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_free(v2);
 			break;
 		}
+		case OP_BITNOT:
+		{
+			value_t* v = pop(vm);
+			value_set_int(v, ~value_int(v));
+			push(vm, v);
+			break;
+		}
+		case OP_IMINUS:
+		{
+			value_t* v = pop(vm);
+			value_set_int(v, -value_int(v));
+			push(vm, v);
+			break;
+		}
+		case OP_FADD:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_float(value_float(v1) + value_float(v2));
+			push(vm, v);
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
+		case OP_FSUB:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_float(value_float(v1) - value_float(v2));
+			push(vm, v);
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
+		case OP_FMUL:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_float(value_float(v1) * value_float(v2));
+			push(vm, v);
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
+		case OP_FDIV:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_float(value_float(v1) / value_float(v2));
+			push(vm, v);
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
+		case OP_FMINUS:
+		{
+			value_t* v = pop(vm);
+			value_set_float(v, -value_float(v));
+			push(vm, v);
+			break;
+		}
+		case OP_NOT:
+		{
+			value_t* v = pop(vm);
+			value_set_bool(v, !value_bool(v));
+			push(vm, v);
+			break;
+		}
 		case OP_CONCAT:
 		{
 			value_t* v2 = pop(vm);
@@ -326,11 +410,31 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_free(v2);
 			break;
 		}
+		case OP_BEQ:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_bool(value_bool(v1) == value_bool(v2));
+			push(vm, v);
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
 		case OP_IEQ:
 		{
 			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_bool(value_int(v1) == value_int(v2));
+			push(vm, v);
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
+		case OP_FEQ:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_float(value_float(v1) == value_float(v2));
 			push(vm, v);
 			value_free(v1);
 			value_free(v2);
@@ -361,6 +465,36 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_bool(value_int(v1) < value_int(v2));
+			push(vm, v);
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
+		case OP_IGT:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_bool(value_int(v1) > value_int(v2));
+			push(vm, v);
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
+		case OP_BAND:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_bool(value_bool(v1) && value_bool(v2));
+			push(vm, v);
+			value_free(v1);
+			value_free(v2);
+			break;
+		}
+		case OP_BOR:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_bool(value_bool(v1) || value_bool(v2));
 			push(vm, v);
 			value_free(v1);
 			value_free(v2);

@@ -27,6 +27,14 @@ The following instructions are currently supported.
 |bit_and              | binary 'and' operation
 |bit_or               | binary 'or' operation
 |bit_xor              | binary 'xor' operation
+|bit_not              | binary 'not' operation
+|iminus               | integer sign change to minus
+|fadd                 | float addition
+|fsub                 | float subtraction
+|fmul                 | float multiplication
+|fdiv                 | float division
+|fminus               | float sign change to minus
+|not                  | logical negation operation
 |concat               | concatenate strings
 
 | Special             | Description
@@ -40,10 +48,15 @@ The following instructions are currently supported.
 
 | Comparison          | Description
 |---                  |---
+|beq                  | boolean equal
 |ieq                  | integer equal
+|feq                  | float equal
 |streq                | string equal
 |ine                  | integer not equal
 |ilt                  | integer less than
+|igt                  | integer greater than
+|band                 | boolean and
+|bor                  | boolean or
 
 # Example compilation
 

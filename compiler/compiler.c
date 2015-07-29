@@ -60,6 +60,7 @@ void push_scope(compiler_t* compiler)
 
 	// Set child active scope
 	compiler->scope = scope;
+	compiler->depth++;
 }
 
 void pop_scope(compiler_t* compiler)
@@ -72,14 +73,16 @@ void pop_scope(compiler_t* compiler)
 
 	// Reset compiler address
 	compiler->address = super->address;
+	compiler->depth--;
 }
 
-symbol_t* symbol_new(ast_t* node, int address, datatype_t type)
+symbol_t* symbol_new(compiler_t* compiler, ast_t* node, int address, datatype_t type)
 {
 	symbol_t* symbol = malloc(sizeof(*symbol));
 	symbol->node = node;
 	symbol->address = address;
 	symbol->type = type;
+	symbol->global = compiler->depth == 0 ? true : false;
 	return symbol;
 }
 
@@ -132,7 +135,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 
 	// Register a symbol for the function, save the bytecode address
 	int byte_address = list_size(compiler->buffer);
-	symbol_t* fnSymbol = symbol_new(node, byte_address, node->funcdecl.rettype);
+	symbol_t* fnSymbol = symbol_new(compiler, node, byte_address, node->funcdecl.rettype);
 	hashmap_set(compiler->scope->symbols, node->funcdecl.name, fnSymbol);
 
 	// Create a new scope
@@ -145,7 +148,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	{
 		// Create parameter in symbols list
 	 	param_t* param = list_iterator_next(iter);
-		symbol_t* symbol = symbol_new(0, i, param->type);
+		symbol_t* symbol = symbol_new(compiler, 0, i, param->type);
 		hashmap_set(compiler->scope->symbols, param->name, symbol);
 		i++;
 	}
@@ -212,6 +215,9 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 // Returns datatype NULL
 datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 {
+	// TODO: Test if global or not
+	bool global = false;
+
 	// Test if variable is already created
 	symbol_t* sym = symbol_get(compiler->scope, node->vardecl.name);
 	if(sym)
@@ -224,12 +230,12 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 	datatype_t vartype = compiler_eval(compiler, node->vardecl.initializer); // <-- get type
 
 	// Store symbol
-	symbol_t* symbol = symbol_new(node, compiler->address, vartype);
+	symbol_t* symbol = symbol_new(compiler, node, compiler->address, vartype);
 	symbol->node->vardecl.type = vartype;
 	hashmap_set(compiler->scope->symbols, node->vardecl.name, symbol);
 
 	// Emit last bytecode
-	emit_store(compiler->buffer, symbol->address);
+	emit_store(compiler->buffer, symbol->address, global);
 
 	// Increase compiler address
 	compiler->address++;
@@ -384,8 +390,14 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 						return DATA_NULL;
 					}
 
-					compiler_eval(compiler, rhs); // gettype here
-					emit_store(compiler->buffer, symbol->address);
+					datatype_t dt = compiler_eval(compiler, rhs);
+					if(dt != symbol->node->vardecl.type)
+					{
+						compiler_throw(compiler, node, "Wanring: Change of types is not permitted");
+						return DATA_NULL;
+					}
+
+					emit_store(compiler->buffer, symbol->address, symbol->global);
 				}
 				else if(symbol->node->class == AST_CLASS)
 				{
@@ -439,7 +451,7 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 	symbol_t* ptr = symbol_get(compiler->scope, node->ident);
 	if(ptr)
 	{
-		emit_load(compiler->buffer, ptr->address);
+		emit_load(compiler->buffer, ptr->address, ptr->global);
 		return ptr->type;
 	}
 
@@ -627,6 +639,81 @@ datatype_t eval_return(compiler_t* compiler, ast_t* node)
 	return DATA_NULL;
 }
 
+datatype_t eval_unary(compiler_t* compiler, ast_t* node)
+{
+	datatype_t type = compiler_eval(compiler, node->unary.expr);
+
+	if(node->unary.op == TOKEN_ADD)
+	{
+		// Seriously, who uses this?
+		// @generate nothing
+		return type;
+	}
+
+	// ADD; SUB; NOT; BITNOT
+	// OPCODES:
+	// 1. F / I / B -> float / integer / boolean
+	// 2. U -> unary
+
+	switch(type)
+	{
+		case DATA_INT:
+		{
+			// SUB, BITNOT
+			if(node->unary.op == TOKEN_NOT)
+			{
+				compiler_throw(compiler, node, "Logical negation can only be used with objects of type boolean");
+			}
+			else if(node->unary.op == TOKEN_SUB)
+			{
+				emit_op(compiler->buffer, OP_IMINUS);
+			}
+			else // Can only be Bitnot
+			{
+				emit_op(compiler->buffer, OP_BITNOT);
+			}
+			break;
+		}
+		case DATA_FLOAT:
+		{
+			// SUB
+
+			if(node->unary.op == TOKEN_BITNOT || node->unary.op == TOKEN_NOT)
+			{
+				compiler_throw(compiler, node, "Bit operations / logical negation can only be used with objects of type int");
+			}
+			else // Can only be float negation
+			{
+				emit_op(compiler->buffer, OP_FMINUS);
+			}
+			break;
+		}
+		case DATA_BOOL:
+		{
+			if(node->unary.op != TOKEN_NOT)
+			{
+				compiler_throw(compiler, node, "Arithmetic operations can not be applied on objects of type boolean");
+			}
+			else
+			{
+				emit_op(compiler->buffer, OP_NOT);
+			}
+			break;
+		}
+		case DATA_OBJECT:
+		case DATA_STRING:
+		case DATA_VOID:
+		case DATA_NULL:
+		default:
+		{
+			compiler_throw(compiler, node, "Invalid unary instruction, only applicable to numbers or booleans");
+			break;
+		}
+	}
+
+	return type;
+}
+
 // Real compile function
 datatype_t compiler_eval(compiler_t* compiler, ast_t* node)
 {
@@ -647,6 +734,7 @@ datatype_t compiler_eval(compiler_t* compiler, ast_t* node)
 		case AST_CALL: return eval_call(compiler, node);
 		case AST_IF: return eval_if(compiler, node);
 		case AST_WHILE: return eval_while(compiler, node);
+		case AST_UNARY: return eval_unary(compiler, node);
 		default: break;
 	}
 
@@ -878,6 +966,8 @@ list_t* compile_buffer(compiler_t* compiler, const char* source)
 	compiler_clear(compiler);
 	compiler->buffer = list_new();
 	compiler->address = 0;
+	compiler->error = false;
+	compiler->depth = 0;
 	compiler->scope = scope_new();
 
 	// Run the parser

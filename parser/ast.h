@@ -20,8 +20,8 @@ typedef enum
     DATA_FLOAT = 4, //0x8,
     DATA_STRING = 5, //0x10,
     DATA_OBJECT = 6, //0x20,
-    DATA_VOID = 7 //0x40
-    // 0x80
+    DATA_VOID = 7, //0x40
+    DATA_LAMBDA = 8 // 0x80
 } datatype_t;
 
 typedef struct

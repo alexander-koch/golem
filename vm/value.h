@@ -11,7 +11,12 @@
 
 #define value_set_bool(val, b) val->v.i = b
 #define value_set_int(val, in) val->v.i = in
-#define value_set_float(val, f) val->v.f = f
+#define value_set_float(val, fl) val->v.f = fl
+
+#define value_bool(val) (bool)val->v.i
+#define value_int(val) val->v.i
+#define value_float(val) val->v.f
+#define value_string(val) (char*)val->v.o
 
 typedef enum
 {
@@ -33,7 +38,6 @@ typedef struct value_t
 	{
 		int i;
 	 	float f;
-		char* str;
 		void* o;
 	} v;
 } value_t;
@@ -54,10 +58,5 @@ void value_free(value_t* value);
 void value_print(value_t* value);
 
 void value_mark(value_t* value);
-
-bool value_bool(value_t* value);
-int value_int(value_t* value);
-float value_float(value_t* value);
-char* value_string(value_t* value);
 
 #endif

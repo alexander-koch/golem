@@ -12,6 +12,12 @@
 #define STACK_SIZE 512
 #define LOCALS_SIZE 512
 
+// Stack: classic stack for vm, push, pop values
+// Locals: Random access memory for storing local variables
+// pc: Program counter / instruction pointer, points to current instruction
+// fp: frame pointer, used for functions
+// sp: stack pointer, points to current memory location in stack
+
 typedef struct
 {
 	value_t* stack[STACK_SIZE];

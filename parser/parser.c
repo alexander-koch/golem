@@ -42,7 +42,7 @@ int parser_end(parser_t* parser)
 
 token_t* current_token(parser_t* parser)
 {
-    return  &parser->buffer[parser->cursor];
+    return &parser->buffer[parser->cursor];
 }
 
 location_t get_location(parser_t* parser)
@@ -399,14 +399,14 @@ ast_t* parse_expression_primary(parser_t* parser)
         }
     }
     else if(match_type(parser, TOKEN_ADD) || match_type(parser, TOKEN_SUB) ||
-        match_type(parser, TOKEN_NOT) || match_type(parser, TOKEN_BITNOT) ||
-        match_type(parser, TOKEN_MUL))
+        match_type(parser, TOKEN_NOT) || match_type(parser, TOKEN_BITNOT))
     {
+        // Binary operators: plus, minus, not, bitnot
+
         // +2 -> unary(+, 2)
         // -2 -> unary(-, 2)
         // !true -> unary(!, true)
         // ~2 -> unary(~, 2)
-        // *x -> unary(*, x) -> pointer to something / value of
         // -2 + 3 -> bin(unary(-, 2), 3)
         // -(2 + 3) -> unary(-, bin(2,3))
 
@@ -543,25 +543,25 @@ ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
                 case TOKEN_LEQUAL:
                 {
                     lhs->class = AST_BOOL;
-                    lhs->b = (lhs->i <= lhs->i);
+                    lhs->b = (lhs->i <= rhs->i);
                     break;
                 }
                 case TOKEN_GEQUAL:
                 {
                     lhs->class = AST_BOOL;
-                    lhs->b = (lhs->i >= lhs->i);
+                    lhs->b = (lhs->i >= rhs->i);
                     break;
                 }
                 case TOKEN_LESS:
                 {
                     lhs->class = AST_BOOL;
-                    lhs->b = (lhs->i < lhs->i);
+                    lhs->b = (lhs->i < rhs->i);
                     break;
                 }
                 case TOKEN_GREATER:
                 {
                     lhs->class = AST_BOOL;
-                    lhs->b = (lhs->i > lhs->i);
+                    lhs->b = (lhs->i > rhs->i);
                     break;
                 }
                 default:
