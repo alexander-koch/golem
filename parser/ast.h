@@ -79,6 +79,7 @@ typedef struct
     char* name;
     ast_lambda_t impl;
     datatype_t rettype;
+    bool external;
 } ast_func_t;
 
 typedef struct

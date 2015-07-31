@@ -230,8 +230,8 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 		return DATA_NULL;
 	}
 
-	// First eval initializer
-	datatype_t vartype = compiler_eval(compiler, node->vardecl.initializer); // <-- get type
+	// First eval initializer to get type
+	datatype_t vartype = compiler_eval(compiler, node->vardecl.initializer);
 
 	// Store symbol
 	symbol_t* symbol = symbol_new(compiler, node, compiler->address, vartype);
@@ -246,7 +246,6 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 
 	// Debug variables
 	//console("Created variable %s: %s with data type %d\n", node->vardecl.name, node->vardecl.mutate ? "mut" : "immut", vartype);
-
 	return DATA_NULL;
 }
 
@@ -281,7 +280,6 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 	token_type_t op = node->binary.op;
 
 	// Testing and internal optimization
-
 	if(lhs->class == AST_FLOAT && rhs->class == AST_FLOAT)
 	{
 		switch(op)
@@ -368,6 +366,13 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 				free(lhs->string);
 				break;
 			}
+			case TOKEN_NEQUAL:
+			{
+				lhs->class = AST_BOOL;
+				lhs->b = strcmp(lhs->string, rhs->string) != 0;
+				free(lhs->string);
+				break;
+			}
 			default:
 			{
 				compiler_throw(compiler, node, "Invalid operator. Operator might not be available for strings");
@@ -443,8 +448,14 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 			return DATA_NULL;
 		}
 
-		// Emit operator
-		emit_tok2op(compiler->buffer, op, lhs_type);
+		// Emit operator and test if allowed
+		bool valid = emit_tok2op(compiler->buffer, op, lhs_type);
+		if(!valid)
+		{
+			compiler_throw(compiler, node, "Cannot perform operation '%s' on the types '%s' and '%s'", tok2str(op), datatype2str(lhs_type), datatype2str(rhs_type));
+			return DATA_NULL;
+		}
+
 		return lhs_type;
 	}
 	return DATA_NULL;
@@ -508,8 +519,7 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 					}
 					else
 					{
-						// Valid
-						// TODO: Test types
+						// Valid, test types
 						list_iterator_t* iter = list_iterator_create(symbol->node->funcdecl.impl.formals);
 						list_iterator_t* args_iter = list_iterator_create(node->call.args);
 						int i = 1;
@@ -543,7 +553,7 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 	}
 	else
 	{
-		// TODO: Subscript?, FIX!!
+		// TODO: Subscript, Namespace?, FIX!!
 	}
 
 	return DATA_NULL;
@@ -656,6 +666,38 @@ datatype_t eval_return(compiler_t* compiler, ast_t* node)
 	return DATA_NULL;
 }
 
+datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
+{
+	datatype_t exprType = compiler_eval(compiler, node->subscript.expr);
+	datatype_t keyType = compiler_eval(compiler, node->subscript.key);
+	if(keyType != DATA_INT)
+	{
+		compiler_throw(compiler, node, "Key must be of type integer");
+		return DATA_NULL;
+	}
+
+	if(exprType == DATA_STRING)
+	{
+		if(node->subscript.expr->class == AST_SUBSCRIPT)
+		{
+			compiler_throw(compiler, node, "Warning: Array index out of bounds");
+			return DATA_STRING;
+		}
+
+		emit_op(compiler->buffer, OP_STRSUB);
+		return DATA_STRING;
+	}
+	else
+	{
+		// TODO: support!
+		// # FIXME
+		compiler_throw(compiler, node, "TODO: Operation is currently not supported");
+		return DATA_NULL;
+	}
+
+	return DATA_NULL;
+}
+
 datatype_t eval_unary(compiler_t* compiler, ast_t* node)
 {
 	datatype_t type = compiler_eval(compiler, node->unary.expr);
@@ -731,6 +773,13 @@ datatype_t eval_unary(compiler_t* compiler, ast_t* node)
 	return type;
 }
 
+datatype_t eval_include(compiler_t* compiler, ast_t* node)
+{
+	// TODO: register symbols
+	// or include actual file
+	return DATA_NULL;
+}
+
 // Real compile function
 datatype_t compiler_eval(compiler_t* compiler, ast_t* node)
 {
@@ -752,6 +801,8 @@ datatype_t compiler_eval(compiler_t* compiler, ast_t* node)
 		case AST_IF: return eval_if(compiler, node);
 		case AST_WHILE: return eval_while(compiler, node);
 		case AST_UNARY: return eval_unary(compiler, node);
+		case AST_SUBSCRIPT: return eval_subscript(compiler, node);
+		case AST_INCLUDE: return eval_include(compiler, node);
 		default: break;
 	}
 

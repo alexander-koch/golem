@@ -26,9 +26,18 @@ typedef struct
 	int pc;
 	int fp;
 	int sp;
+
+	value_t* firstVal;
 	int numObjects;
 	int maxObjects;
 } vm_t;
+
+// External method definition
+typedef struct GolemMethodDef
+{
+	const char* name;
+	int (*func)(vm_t*, size_t);
+} GolemMethodDef;
 
 vm_t* vm_new();
 instruction_t* vm_peek(vm_t* vm, list_t* buffer);

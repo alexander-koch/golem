@@ -54,11 +54,18 @@ The following instructions are currently supported.
 |ieq                  | integer equal
 |feq                  | float equal
 |streq                | string equal
+|bne                  | boolean not equal
 |ine                  | integer not equal
+|fne                  | float not equal
+|strne                | string not equal
 |ilt                  | integer less than
 |igt                  | integer greater than
 |ile                  | integer less equal
 |ige                  | integer greater equal
+|flt                  | float less than
+|fgt                  | float greater than
+|fle                  | float less equal
+|fge                  | float greater equal
 |band                 | boolean and
 |bor                  | boolean or
 

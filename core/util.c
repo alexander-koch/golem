@@ -35,3 +35,14 @@ char* concat(char* s1, char* s2)
     strcat(result, s2);
     return result;
 }
+
+unsigned long djb2(unsigned char *str)
+{
+    unsigned long hash = 5381;
+    int c;
+    while ((c = *str++))
+    {
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+    }
+    return hash;
+}

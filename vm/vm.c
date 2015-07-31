@@ -1,21 +1,128 @@
 #include "vm.h"
 
+void push(vm_t* vm, value_t* val);
+value_t* pop(vm_t* vm);
+
+// Standard Library
+// TODO:
+// something like binary find function in dll
+// =>
+// int golem_println(VARARGS) {
+//		pop();
+//
+//}
+// Return -1 if fail
+
+int golem_println(vm_t* vm, size_t argc)
+{
+	// Order values
+	list_t* values = list_new();
+	for(int i = 0; i < argc; i++)
+	{
+		value_t* val = pop(vm);
+		list_push(values, val);
+	}
+
+	// Print values
+	for(int i = argc; i > 0; i--)
+	{
+		value_t* v = list_get(values, i-1);
+		value_print(v);
+	}
+	console("\n");
+	list_free(values);
+	return 0;
+}
+
+int golem_getline(vm_t* vm, size_t argc)
+{
+	char buf[1024];
+	fgets(buf, sizeof(buf), stdin);
+	value_t* val = value_new_string(buf);
+	push(vm, val);
+	return 0;
+}
+
+static GolemMethodDef system_methods[] = {
+	{"println", golem_println},
+	{"getline", golem_getline},
+	{0, 0}	/* sentinel */
+};
+
 vm_t* vm_new()
 {
 	vm_t* vm = malloc(sizeof(*vm));
 	vm->pc = 0;
 	vm->fp = 0;
 	vm->sp = 0;
+	vm->firstVal = 0;
 	vm->numObjects = 0;
-	vm->maxObjects = 0;
+	vm->maxObjects = 8;
 	return vm;
+}
+
+void mark(value_t* v)
+{
+	if(!v->marked)
+	{
+		v->marked = 1;
+	}
+}
+
+void markAll(vm_t* vm)
+{
+	for(int i = 0; i < vm->sp; i++)
+	{
+		mark(vm->stack[i]);
+	}
+}
+
+void sweep(vm_t* vm)
+{
+	value_t** val = &vm->firstVal;
+	while(*val)
+	{
+		if(!(*val)->marked)
+		{
+			value_t* unreached = *val;
+			*val = unreached->next;
+			free(unreached);
+			unreached = 0;
+			vm->numObjects--;
+		}
+		else
+		{
+			(*val)->marked = 0;
+			val = &(*val)->next;
+		}
+	}
+}
+
+void gc(vm_t* vm)
+{
+#ifndef NO_TRACE
+	console("Collecting garbage...\n");
+#endif
+	markAll(vm);
+	sweep(vm);
+	vm->maxObjects = vm->numObjects * 2;
 }
 
 void push(vm_t* vm, value_t* val)
 {
-	value_free(vm->stack[vm->sp]);
+	if(vm->numObjects == vm->maxObjects)
+	{
+		gc(vm);
+	}
+
+	//value_free(vm->stack[vm->sp]);
 	vm->stack[vm->sp] = val;
 	vm->sp++;
+
+	val->marked = 0;
+	val->next = vm->firstVal;
+	vm->firstVal = val;
+	vm->numObjects++;
 }
 
 value_t* pop(vm_t* vm)
@@ -81,7 +188,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 		}
 		case OP_POP:
 		{
-			value_free((value_t*)pop(vm));
+			pop(vm);
 			break;
 		}
 		case OP_STORE:
@@ -89,7 +196,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 			// Local variable storage
 			int offset = value_int(instr->v1);
 			value_free(vm->locals[vm->fp+offset]);
-			vm->locals[vm->fp+offset] = pop(vm);
+			vm->locals[vm->fp+offset] = value_copy(pop(vm));
 			break;
 		}
 		case OP_LOAD:
@@ -114,7 +221,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 		{
 			int offset = value_int(instr->v1);
 			value_free(vm->locals[offset]);
-			vm->locals[offset] = pop(vm);
+			vm->locals[offset] = value_copy(pop(vm));
 			break;
 		}
 		case OP_GLOAD:
@@ -126,44 +233,19 @@ void vm_process(vm_t* vm, list_t* buffer)
 		}
 		case OP_SYSCALL:
 		{
-			// TODO: OPTIMIZE!!!
 			char* name = value_string(instr->v1);
-			size_t args = value_int(instr->v2);
+			size_t argc = value_int(instr->v2);
 
-			list_t* values = list_new();
-			for(int i = 0; i < args; i++)
+			int i = 0;
+			while(system_methods[i].name)
 			{
-				value_t* val = pop(vm);
-				list_push(values, val);
-			}
-
-			// TODO: wrap native functions in new method, handle different
-			if(!strcmp(name, "println"))
-			{
-				for(int i = args; i > 0; i--)
+				if(!strcmp(system_methods[i].name, name))
 				{
-					value_t* v = list_get(values, i-1);
-					value_print(v);
+					system_methods[i].func(vm, argc);
+					break;
 				}
-				console("\n");
-			}
-			else if(!strcmp(name, "getline"))
-			{
-				char buf[1024];
-				fgets(buf, sizeof(buf), stdin);
-
-				value_t* val = value_new_string(buf);
-				push(vm, val);
 			}
 
-			list_iterator_t* iter = list_iterator_create(values);
-			while(!list_iterator_end(iter))
-			{
-				value_t* v = list_iterator_next(iter);
-				value_free(v);
-			}
-			list_free(values);
-			list_iterator_free(iter);
 			break;
 		}
 		case OP_INVOKE:
@@ -175,18 +257,18 @@ void vm_process(vm_t* vm, list_t* buffer)
 			push(vm, value_new_int(vm->fp));
 			push(vm, value_new_int(vm->pc));
 
-			// STACK_BOTTOM
-			// ...
-			// Arg0			-7
-			// Arg1			-6
-			// Arg2			-5
-			// ...			-4
-			// NUM_ARGS		-3
-			// FP			-2
-			// PC			-1
-			// ...			 0	<-- current position sp
-			// ...			+1
-			// STACK_TOP
+			// |   STACK_BOTTOM	  |
+			// |...				  |
+			// |Arg0			-7|
+			// |Arg1			-6|
+			// |Arg2			-5|
+			// |...				-4|
+			// |NUM_ARGS		-3|
+			// |FP				-2|
+			// |PC				-1|
+			// |...				 0|	<-- current position sp
+			// |...				+1|
+			// |    STACK_TOP     |
 
 			vm->fp = vm->sp;
 			vm->pc = address;
@@ -202,15 +284,12 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* fp_ptr = pop(vm);
 			vm->pc = value_int(pc_ptr);
 			vm->fp = value_int(fp_ptr);
-			value_free(pc_ptr);
-			value_free(fp_ptr);
 
 			value_t* args_ptr = pop(vm);
 			size_t args = value_int(args_ptr);
-			value_free(args_ptr);
 
 			vm->sp -= args;
-			push(vm, ret);
+			push(vm, value_copy(ret));
 			break;
 		}
 		case OP_JMP:
@@ -222,7 +301,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 		{
 			value_t* v = pop(vm);
 			bool result = value_bool(v);
-			value_free(v);
+			//value_free(v);
 			if(!result)
 			{
 				vm->pc = value_int(instr->v1);
@@ -236,8 +315,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_int(value_int(v1) + value_int(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_ISUB:
@@ -246,8 +323,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_int(value_int(v1) - value_int(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_IMUL:
@@ -256,8 +331,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_int(value_int(v1) * value_int(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_IDIV:
@@ -266,8 +339,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_int(value_int(v1) / value_int(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_MOD:
@@ -276,8 +347,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_int(value_int(v1) % value_int(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_BITL:
@@ -286,8 +355,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_int(value_int(v1) << value_int(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_BITR:
@@ -296,8 +363,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_int(value_int(v1) >> value_int(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_BITAND:
@@ -306,8 +371,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_int(value_int(v1) & value_int(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_BITOR:
@@ -316,8 +379,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_int(value_int(v1) | value_int(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_BITXOR:
@@ -326,21 +387,19 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_int(value_int(v1) ^ value_int(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_BITNOT:
 		{
-			value_t* v = pop(vm);
-			value_set_int(v, ~value_int(v));
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_int(~value_int(v1));
 			push(vm, v);
 			break;
 		}
 		case OP_IMINUS:
 		{
-			value_t* v = pop(vm);
-			value_set_int(v, -value_int(v));
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_int(-value_int(v1));
 			push(vm, v);
 			break;
 		}
@@ -350,8 +409,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_float(value_float(v1) + value_float(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_FSUB:
@@ -360,8 +417,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_float(value_float(v1) - value_float(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_FMUL:
@@ -370,8 +425,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_float(value_float(v1) * value_float(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_FDIV:
@@ -380,21 +433,19 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_float(value_float(v1) / value_float(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_FMINUS:
 		{
-			value_t* v = pop(vm);
-			value_set_float(v, -value_float(v));
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_float(-value_float(v1));
 			push(vm, v);
 			break;
 		}
 		case OP_NOT:
 		{
-			value_t* v = pop(vm);
-			value_set_bool(v, !value_bool(v));
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_bool(!value_bool(v1));
 			push(vm, v);
 			break;
 		}
@@ -406,8 +457,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v = value_new_string(str);
 			push(vm, v);
 			free(str);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_BEQ:
@@ -416,8 +465,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_bool(value_bool(v1) == value_bool(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_IEQ:
@@ -426,8 +473,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_bool(value_int(v1) == value_int(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_FEQ:
@@ -436,8 +481,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_float(value_float(v1) == value_float(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_STREQ:
@@ -446,8 +489,14 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_bool(!strcmp(value_string(v1), value_string(v2)));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
+			break;
+		}
+		case OP_BNE:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_bool(value_bool(v1) != value_bool(v2));
+			push(vm, v);
 			break;
 		}
 		case OP_INE:
@@ -456,8 +505,22 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_bool(value_int(v1) != value_int(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
+			break;
+		}
+		case OP_FNE:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_float(value_float(v1) != value_float(v2));
+			push(vm, v);
+			break;
+		}
+		case OP_STRNE:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_bool(strcmp(value_string(v1), value_string(v2)) != 0);
+			push(vm, v);
 			break;
 		}
 		case OP_ILT:
@@ -466,8 +529,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_bool(value_int(v1) < value_int(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_IGT:
@@ -476,8 +537,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_bool(value_int(v1) > value_int(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_ILE:
@@ -486,8 +545,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_bool(value_int(v1) <= value_int(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_IGE:
@@ -496,8 +553,38 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_bool(value_int(v1) >= value_int(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
+			break;
+		}
+		case OP_FLT:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_bool(value_float(v1) < value_float(v2));
+			push(vm, v);
+			break;
+		}
+		case OP_FGT:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_bool(value_float(v1) > value_float(v2));
+			push(vm, v);
+			break;
+		}
+		case OP_FLE:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_bool(value_float(v1) <= value_float(v2));
+			push(vm, v);
+			break;
+		}
+		case OP_FGE:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_bool(value_float(v1) >= value_float(v2));
+			push(vm, v);
 			break;
 		}
 		case OP_BAND:
@@ -506,8 +593,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_bool(value_bool(v1) && value_bool(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
 			break;
 		}
 		case OP_BOR:
@@ -516,8 +601,23 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_bool(value_bool(v1) || value_bool(v2));
 			push(vm, v);
-			value_free(v1);
-			value_free(v2);
+			break;
+		}
+		case OP_STRSUB:
+		{
+			value_t* key = pop(vm);
+			value_t* object = pop(vm);
+
+			char* str = value_string(object);
+			int idx = value_int(key);
+			char* nw = malloc(sizeof(char)*2);
+			nw[0] = str[idx];
+			nw[1] = '\0';
+
+			value_t* v = value_new_string(nw);
+			push(vm, v);
+
+			free(nw);
 			break;
 		}
 		default: break;
@@ -552,8 +652,10 @@ void vm_execute(vm_t* vm, list_t* buffer)
 
 	clock_t end = clock();
 	double elapsed = (double)(end - begin) / CLOCKS_PER_SEC;
-	console("Elapsed time: %f sec\n", elapsed);
+	console("Elapsed time: %.4f (sec)\n", elapsed);
 #endif
+
+	gc(vm);
 
 	// Clear
 	console("\n");

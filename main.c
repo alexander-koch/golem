@@ -13,6 +13,8 @@
 #include <compiler/asm_compiler.h>
 #include <vm/vm.h>
 
+#include <compiler/bytecode_writer.h>
+
 void run_repl(vm_t* vm, compiler_t* compiler)
 {
     char buf[1024];
@@ -36,7 +38,7 @@ void run_repl(vm_t* vm, compiler_t* compiler)
 int main(int argc, char** argv)
 {
     compiler_t compiler;
-    compiler_init(&compiler, false);
+    compiler_init(&compiler, true);
 
     if(argc == 1)
     {

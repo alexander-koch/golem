@@ -24,7 +24,8 @@ FILES = main.c \
 		compiler/asm_compiler.c \
 		vm/value.c \
 		vm/bytecode.c \
-		vm/vm.c
+		vm/vm.c \
+		compiler/bytecode_writer.c
 
 debug:
 	$(CC) $(CFLAGS) $(INC) -c $(FILES)

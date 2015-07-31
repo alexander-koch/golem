@@ -41,13 +41,21 @@ const char* op2str(opcode_t code)
 		case OP_IEQ: return "ieq";
 		case OP_FEQ: return "feq";
 		case OP_STREQ: return "streq";
+		case OP_BNE: return "bne";
 		case OP_INE: return "ine";
+		case OP_FNE: return "fne";
+		case OP_STRNE: return "strne";
 		case OP_ILT: return "ilt";
 		case OP_IGT: return "igt";
 		case OP_ILE: return "ile";
 		case OP_IGE: return "ige";
+		case OP_FLT: return "flt";
+		case OP_FGT: return "fgt";
+		case OP_FLE: return "fle";
+		case OP_FGE: return "fge";
 		case OP_BAND: return "band";
 		case OP_BOR: return "bor";
+		case OP_STRSUB: return "strsub";
 		default: return "unknown";
 	}
 }
@@ -166,11 +174,38 @@ opcode_t getOp(token_type_t tok, datatype_t type)
 			if(type == DATA_STRING) return OP_STREQ;
 			return -1;
 		}
-		case TOKEN_NEQUAL: return OP_INE;
-		case TOKEN_LESS: return OP_ILT;
-		case TOKEN_GREATER: return OP_IGT;
-		case TOKEN_LEQUAL: return OP_ILE;
-		case TOKEN_GEQUAL: return OP_IGE;
+		case TOKEN_NEQUAL:
+		{
+			if(type == DATA_BOOL) return OP_BNE;
+			if(type == DATA_INT) return OP_INE;
+			if(type == DATA_FLOAT) return OP_FNE;
+			if(type == DATA_STRING) return OP_STRNE;
+			return -1;
+		}
+		case TOKEN_LESS:
+		{
+			if(type == DATA_INT) return OP_ILT;
+			if(type == DATA_FLOAT) return OP_FLT;
+			return -1;
+		}
+		case TOKEN_GREATER:
+		{
+			if(type == DATA_INT) return OP_IGT;
+			if(type == DATA_FLOAT) return OP_FGT;
+			return -1;
+		}
+		case TOKEN_LEQUAL:
+		{
+			if(type == DATA_INT) return OP_ILE;
+			if(type == DATA_FLOAT) return OP_FLE;
+			return -1;
+		}
+		case TOKEN_GEQUAL:
+		{
+			if(type == DATA_INT) return OP_IGE;
+			if(type == DATA_FLOAT) return OP_FGE;
+			return -1;
+		}
 		case TOKEN_AND: return OP_BAND;
 		case TOKEN_OR: return OP_BOR;
 		default:
@@ -180,10 +215,11 @@ opcode_t getOp(token_type_t tok, datatype_t type)
 	}
 }
 
-void emit_tok2op(list_t* buffer, token_type_t tok, datatype_t type)
+bool emit_tok2op(list_t* buffer, token_type_t tok, datatype_t type)
 {
 	opcode_t op = getOp(tok, type);
 	emit_op(buffer, op);
+	return op == -1 ? false : true;
 }
 
 void emit_syscall(list_t* buffer, char* name, size_t args)

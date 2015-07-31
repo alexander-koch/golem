@@ -60,13 +60,23 @@ typedef enum
 	OP_IEQ,
 	OP_FEQ,
 	OP_STREQ,
+	OP_BNE,
 	OP_INE,
+	OP_FNE,
+	OP_STRNE,
 	OP_ILT,
 	OP_IGT,
 	OP_ILE,
 	OP_IGE,
+	OP_FLT,
+	OP_FGT,
+	OP_FLE,
+	OP_FGE,
 	OP_BAND,
-	OP_BOR
+	OP_BOR,
+
+	// Subscript
+	OP_STRSUB
 } opcode_t;
 
 typedef struct
@@ -84,7 +94,7 @@ void emit_float(list_t* buffer, F64 f);
 void emit_string(list_t* buffer, char* str);
 void emit_pop(list_t* buffer);
 void emit_op(list_t* buffer, opcode_t op);
-void emit_tok2op(list_t* buffer, token_type_t tok, datatype_t type);
+bool emit_tok2op(list_t* buffer, token_type_t tok, datatype_t type);
 void emit_syscall(list_t* buffer, char* name, size_t args);
 void emit_invoke(list_t* buffer, size_t address, size_t args);
 void emit_return(list_t* buffer);

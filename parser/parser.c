@@ -1,6 +1,6 @@
 #include "parser.h"
 
-#define KEYWORD_INCLUDE "use"
+#define KEYWORD_INCLUDE "import"
 #define KEYWORD_DECLARATION "let"
 #define KEYWORD_MUTATE "mut"
 #define KEYWORD_FUNCTION "func"
@@ -869,7 +869,7 @@ ast_t* parser_run(parser_t* parser, const char* content)
 
 ast_t* parse_include_declaration(parser_t* parser, location_t loc)
 {
-    // use "io" \n
+    // <KEYWORD_INCLUDE> "io" \n
     ast_t* node = ast_class_create(AST_INCLUDE, loc);
     token_t* inc = accept_token_string(parser, KEYWORD_INCLUDE);
     token_t* val = accept_token_type(parser, TOKEN_STRING);

@@ -14,6 +14,7 @@ A programming language written in C.
 - Fully functional fast bytecode vm or translation into x86 / x86_64 assembler machine code
 - Systems language
 - FAST!!!
+- Python's "Batteries included" philosophy for standard libraries
 
 # Currently working on:
 
