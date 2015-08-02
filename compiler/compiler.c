@@ -280,6 +280,106 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 	token_type_t op = node->binary.op;
 
 	// Testing and internal optimization
+	if(lhs->class == AST_INT && rhs->class == AST_INT)
+	{
+	    switch(op)
+	    {
+	        case TOKEN_ADD:
+	        {
+	            lhs->i = lhs->i + rhs->i;
+	            break;
+	        }
+	        case TOKEN_SUB:
+	        {
+	            lhs->i = lhs->i - rhs->i;
+	            break;
+	        }
+	        case TOKEN_MUL:
+	        {
+	            lhs->i = lhs->i * rhs->i;
+	            break;
+	        }
+	        case TOKEN_DIV:
+	        {
+	            lhs->i = lhs->i / rhs->i;
+	            break;
+	        }
+	        case TOKEN_MOD:
+	        {
+	            lhs->i = lhs->i % rhs->i;
+	            break;
+	        }
+	        case TOKEN_BITLSHIFT:
+	        {
+	            lhs->i = lhs->i << rhs->i;
+	            break;
+	        }
+	        case TOKEN_BITRSHIFT:
+	        {
+	            lhs->i = lhs->i >> rhs->i;
+	            break;
+	        }
+	        case TOKEN_BITAND:
+	        {
+	            lhs->i = lhs->i & rhs->i;
+	            break;
+	        }
+	        case TOKEN_BITOR:
+	        {
+	            lhs->i = lhs->i | rhs->i;
+	            break;
+	        }
+	        case TOKEN_BITXOR:
+	        {
+	            lhs->i = lhs->i ^ rhs->i;
+	            break;
+	        }
+	        case TOKEN_EQUAL:
+	        {
+	            lhs->class = AST_BOOL;
+	            lhs->b = (lhs->i == rhs->i);
+	            break;
+	        }
+	        case TOKEN_NEQUAL:
+	        {
+	            lhs->class = AST_BOOL;
+	            lhs->b = (lhs->i != rhs->i);
+	            break;
+	        }
+	        case TOKEN_LEQUAL:
+	        {
+	            lhs->class = AST_BOOL;
+	            lhs->b = (lhs->i <= rhs->i);
+	            break;
+	        }
+	        case TOKEN_GEQUAL:
+	        {
+	            lhs->class = AST_BOOL;
+	            lhs->b = (lhs->i >= rhs->i);
+	            break;
+	        }
+	        case TOKEN_LESS:
+	        {
+	            lhs->class = AST_BOOL;
+	            lhs->b = (lhs->i < rhs->i);
+	            break;
+	        }
+	        case TOKEN_GREATER:
+	        {
+	            lhs->class = AST_BOOL;
+	            lhs->b = (lhs->i > rhs->i);
+	            break;
+	        }
+	        default:
+	        {
+				compiler_throw(compiler, node, "Invalid operator. Operator might not be available for integers");
+	            return DATA_NULL;
+	        }
+	    }
+
+		return compiler_eval(compiler, lhs);
+	}
+
 	if(lhs->class == AST_FLOAT && rhs->class == AST_FLOAT)
 	{
 		switch(op)
@@ -346,6 +446,8 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 				return DATA_NULL;
 			}
 		}
+
+		return compiler_eval(compiler, lhs);
 	}
 
 	if(lhs->class == AST_STRING && rhs->class == AST_STRING)
@@ -379,6 +481,8 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 				return DATA_NULL;
 			}
 		}
+
+		return compiler_eval(compiler, lhs);
 	}
 
 	// TODO: How to eval properly?
@@ -456,7 +560,21 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 			return DATA_NULL;
 		}
 
-		return lhs_type;
+		switch(op)
+		{
+			case TOKEN_EQUAL:
+			case TOKEN_NEQUAL:
+			case TOKEN_LESS:
+			case TOKEN_GREATER:
+			case TOKEN_LEQUAL:
+			case TOKEN_GEQUAL:
+			case TOKEN_AND:
+			case TOKEN_OR: return DATA_BOOL;
+			default:
+			{
+				return lhs_type;
+			}
+		}
 	}
 	return DATA_NULL;
 }
@@ -482,10 +600,23 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 	ast_t* call = node->call.callee;
 	if(call->class == AST_IDENT)
 	{
-		if(!strcmp(call->ident, "println") || !strcmp(call->ident, "getline"))
+		if(!strcmp(call->ident, "println"))
 		{
 			eval_block(compiler, node->call.args);
 			emit_syscall(compiler->buffer, call->ident, args);
+			return DATA_NULL;
+		}
+		else if(!strcmp(call->ident, "getline"))
+		{
+			eval_block(compiler, node->call.args);
+			emit_syscall(compiler->buffer, call->ident, args);
+			return DATA_STRING;
+		}
+		else if(!strcmp(call->ident, "length"))
+		{
+			eval_block(compiler, node->call.args);
+			emit_syscall(compiler->buffer, call->ident, args);
+			return DATA_INT;
 		}
 		else
 		{
@@ -563,6 +694,49 @@ datatype_t eval_string(compiler_t* compiler, ast_t* node)
 {
 	emit_string(compiler->buffer, node->string);
 	return DATA_STRING;
+}
+
+// Every array is immutable, elements can't be changed or swapped
+datatype_t eval_array(compiler_t* compiler, ast_t* node)
+{
+	if(list_size(node->array) <= 0)
+	{
+		compiler_throw(compiler, node, "Invalid: Immutable array has zero elements");
+		return DATA_NULL;
+	}
+
+	datatype_t dt = DATA_NULL;
+	list_iterator_t* iter = list_iterator_create(node->array);
+	dt = compiler_eval(compiler, list_iterator_next(iter));
+
+	if(dt == DATA_VOID || dt == DATA_NULL)
+	{
+		compiler_throw(compiler, node, "Invalid array. Also, how the heck did you manage to create a void array?");
+		return DATA_NULL;
+	}
+
+	size_t idx = 1;
+	while(!list_iterator_end(iter))
+	{
+		datatype_t tmp = compiler_eval(compiler, list_iterator_next(iter));
+		if(tmp != dt)
+		{
+			compiler_throw(compiler, node, "Invalid array. An array can only hold one type of elements (@element %d)", idx);
+			return DATA_NULL;
+		}
+
+		if(tmp == DATA_NULL)
+		{
+			compiler_throw(compiler, node, "Invalid array. (@element %d)", idx);
+			return tmp;
+		}
+		idx++;
+	}
+	list_iterator_free(iter);
+
+	emit_int(compiler->buffer, list_size(node->array));
+	emit_op(compiler->buffer, OP_ARR);
+	return DATA_ARRAY;
 }
 
 datatype_t eval_if(compiler_t* compiler, ast_t* node)
@@ -795,6 +969,7 @@ datatype_t compiler_eval(compiler_t* compiler, ast_t* node)
 		case AST_INT: return eval_number(compiler, node);
 		case AST_BOOL: return eval_bool(compiler, node);
 		case AST_STRING: return eval_string(compiler, node);
+		case AST_ARRAY: return eval_array(compiler, node);
 		case AST_BINARY: return eval_binary(compiler, node);
 		case AST_IDENT: return eval_ident(compiler, node);
 		case AST_CALL: return eval_call(compiler, node);
@@ -981,19 +1156,19 @@ void compiler_dump(ast_t* node, int level)
 			fprintf(stdout, ">");
 			break;
 		}
-		// case AST_ARRAY:
-		// {
-		// 	fprintf(stdout, ":array<");
-		//
-		// 	list_iterator_t* iter = list_iterator_create(node->array);
-		// 	while(!list_iterator_end(iter))
-		// 	{
-		// 		compiler_dump(list_iterator_next(iter), 0);
-		// 	}
-		// 	list_iterator_free(iter);
-		// 	fprintf(stdout, ">");
-		// 	break;
-		// }
+		case AST_ARRAY:
+		{
+			fprintf(stdout, ":array<");
+
+			list_iterator_t* iter = list_iterator_create(node->array);
+			while(!list_iterator_end(iter))
+			{
+				compiler_dump(list_iterator_next(iter), 0);
+			}
+			list_iterator_free(iter);
+			fprintf(stdout, ">");
+			break;
+		}
 		case AST_CLASS:
 		{
 			fprintf(stdout, ":class<%s>\n", node->classstmt.name);

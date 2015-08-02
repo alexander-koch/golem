@@ -20,8 +20,9 @@ typedef enum
     DATA_FLOAT = 4, //0x8,
     DATA_STRING = 5, //0x10,
     DATA_OBJECT = 6, //0x20,
-    DATA_VOID = 7, //0x40
-    DATA_LAMBDA = 8 // 0x80
+    DATA_VOID = 7, //0x40,
+    DATA_ARRAY = 8, // 0x80
+    DATA_LAMBDA = 9
 } datatype_t;
 
 typedef struct
@@ -41,6 +42,7 @@ typedef enum
     AST_INT,
     AST_BOOL,
     AST_STRING,
+    AST_ARRAY,
     AST_BINARY,
     AST_UNARY,
     AST_SUBSCRIPT,
@@ -106,6 +108,7 @@ struct ast_s
         char* string;
         list_t* toplevel;
         list_t* ifstmt;
+        list_t* array;
         I64 i;
         F64 f;
         bool b;

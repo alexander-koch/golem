@@ -49,11 +49,12 @@ value_t* value_new_string(char* string)
 	return val;
 }
 
-value_t* value_new_object(void* obj)
+value_t* value_new_object(void* obj, int (*func)(void*))
 {
 	value_t* val = value_new_null();
 	val->type = VALUE_OBJECT;
 	val->v.o = obj;
+	val->v.func = func;
 	return val;
 }
 
@@ -64,6 +65,12 @@ value_t* value_copy(value_t* value)
 	if(val->type == VALUE_STRING)
 	{
 		val->v.o = strdup(value->v.o);
+	}
+	else if(val->type == VALUE_OBJECT)
+	{
+		// TODO: copying
+		val->v.o = 0;
+		val->v.func = 0;
 	}
 	else
 	{
@@ -78,10 +85,19 @@ value_t* value_copy(value_t* value)
 
 void value_reset(value_t* value)
 {
-	if(value->type == VALUE_STRING || value->type == VALUE_OBJECT)
+	if(value->type == VALUE_STRING)
 	{
 		free(value->v.o);
 		value->v.o = 0;
+	}
+	else if(value->type == VALUE_OBJECT)
+	{
+		// Call destructor with data pointer
+		if(value->v.func)
+		{
+			value->v.func(value->v.o);
+			value->v.o = 0;
+		}
 	}
 }
 

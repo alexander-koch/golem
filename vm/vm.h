@@ -36,7 +36,7 @@ typedef struct
 typedef struct GolemMethodDef
 {
 	const char* name;
-	int (*func)(vm_t*, size_t);
+	int (*func)(vm_t*);
 } GolemMethodDef;
 
 vm_t* vm_new();
@@ -44,5 +44,8 @@ instruction_t* vm_peek(vm_t* vm, list_t* buffer);
 void vm_process(vm_t* vm, list_t* buffer);
 void vm_execute(vm_t* vm, list_t* buffer);
 void vm_free(vm_t* vm);
+
+void push(vm_t* vm, value_t* val);
+value_t* pop(vm_t* vm);
 
 #endif

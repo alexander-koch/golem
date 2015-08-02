@@ -58,14 +58,10 @@ The following instructions are currently supported.
 |ine                  | integer not equal
 |fne                  | float not equal
 |strne                | string not equal
-|ilt                  | integer less than
-|igt                  | integer greater than
-|ile                  | integer less equal
-|ige                  | integer greater equal
-|flt                  | float less than
-|fgt                  | float greater than
-|fle                  | float less equal
-|fge                  | float greater equal
+|lt                   | number less than
+|gt                   | number greater than
+|le                   | number less equal
+|ge                   | number greater equal
 |band                 | boolean and
 |bor                  | boolean or
 
@@ -78,20 +74,20 @@ The following instructions are currently supported.
 This should compile to the following (unoptimized):
 
     Code:
-      01: iconst, 5
-      02: store, 0
-      03: load, 0
-      04: iconst, 5
+      01: push, 5
+      02: gstore, 0
+      03: gload, 0
+      04: push, 5
       05: iadd
-      06: store, 0
-      07: load, 0
+      06: gstore, 0
+      07: gload, 0
       08: syscall, println, 1
 
 Optimized (not done by vm / interpreter):
 
     Code:
-      01: iconst, 5
-      02: iconst, 5
+      01: push, 5
+      02: push, 5
       03: iadd
       04: syscall, println, 1
 

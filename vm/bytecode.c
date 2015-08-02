@@ -37,6 +37,7 @@ const char* op2str(opcode_t code)
 		case OP_JMP: return "jmp";
 		case OP_JMPF: return "jmpf";
 		case OP_JMPT: return "jmpt";
+		case OP_ARR: return "arr";
 		case OP_BEQ: return "beq";
 		case OP_IEQ: return "ieq";
 		case OP_FEQ: return "feq";
@@ -45,14 +46,10 @@ const char* op2str(opcode_t code)
 		case OP_INE: return "ine";
 		case OP_FNE: return "fne";
 		case OP_STRNE: return "strne";
-		case OP_ILT: return "ilt";
-		case OP_IGT: return "igt";
-		case OP_ILE: return "ile";
-		case OP_IGE: return "ige";
-		case OP_FLT: return "flt";
-		case OP_FGT: return "fgt";
-		case OP_FLE: return "fle";
-		case OP_FGE: return "fge";
+		case OP_LT: return "lt";
+		case OP_GT: return "gt";
+		case OP_LE: return "le";
+		case OP_GE: return "ge";
 		case OP_BAND: return "band";
 		case OP_BOR: return "bor";
 		case OP_STRSUB: return "strsub";
@@ -182,30 +179,10 @@ opcode_t getOp(token_type_t tok, datatype_t type)
 			if(type == DATA_STRING) return OP_STRNE;
 			return -1;
 		}
-		case TOKEN_LESS:
-		{
-			if(type == DATA_INT) return OP_ILT;
-			if(type == DATA_FLOAT) return OP_FLT;
-			return -1;
-		}
-		case TOKEN_GREATER:
-		{
-			if(type == DATA_INT) return OP_IGT;
-			if(type == DATA_FLOAT) return OP_FGT;
-			return -1;
-		}
-		case TOKEN_LEQUAL:
-		{
-			if(type == DATA_INT) return OP_ILE;
-			if(type == DATA_FLOAT) return OP_FLE;
-			return -1;
-		}
-		case TOKEN_GEQUAL:
-		{
-			if(type == DATA_INT) return OP_IGE;
-			if(type == DATA_FLOAT) return OP_FGE;
-			return -1;
-		}
+		case TOKEN_LESS: return OP_LT;
+		case TOKEN_GREATER: return OP_GT;
+		case TOKEN_LEQUAL: return OP_LE;
+		case TOKEN_GEQUAL: return OP_GE;
 		case TOKEN_AND: return OP_BAND;
 		case TOKEN_OR: return OP_BOR;
 		default:

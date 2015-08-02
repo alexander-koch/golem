@@ -11,6 +11,8 @@ const char* datatype2str(datatype_t type)
 		case DATA_STRING: return "string";
 		case DATA_OBJECT: return "object";
 		case DATA_VOID: return "void";
+		case DATA_ARRAY: return "array";
+		case DATA_LAMBDA: return "lambda";
 		default: return "unknown";
 	}
 }
@@ -35,6 +37,7 @@ const char* ast_classname(ast_class_t class)
 		case AST_FLOAT: return "float";
 		case AST_INT: return "integer";
 		case AST_STRING: return "string";
+		case AST_ARRAY: return "array";
 		case AST_BINARY: return "binary";
 		case AST_UNARY: return "unary";
 		case AST_SUBSCRIPT: return "subscript";
@@ -105,17 +108,17 @@ void ast_free(ast_t* ast)
 			ast_free(ast->unary.expr);
 			break;
 		}
-		// case AST_ARRAY:
-		// {
-		// 	iter = list_iterator_create(ast->array);
-		// 	while(!list_iterator_end(iter))
-		// 	{
-		// 		ast_free(list_iterator_next(iter));
-		// 	}
-		// 	list_iterator_free(iter);
-		// 	list_free(ast->array);
-		// 	break;
-		// }
+		case AST_ARRAY:
+		{
+			iter = list_iterator_create(ast->array);
+			while(!list_iterator_end(iter))
+			{
+				ast_free(list_iterator_next(iter));
+			}
+			list_iterator_free(iter);
+			list_free(ast->array);
+			break;
+		}
 		case AST_SUBSCRIPT:
 		{
 			ast_free(ast->subscript.key);

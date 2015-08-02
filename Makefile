@@ -25,7 +25,10 @@ FILES = main.c \
 		vm/value.c \
 		vm/bytecode.c \
 		vm/vm.c \
-		compiler/bytecode_writer.c
+		lib/gmathlib.c \
+		lib/gio.c \
+		lib/ginit.c
+
 
 debug:
 	$(CC) $(CFLAGS) $(INC) -c $(FILES)

@@ -4,7 +4,7 @@ A programming language written in C.
 
 # Project aims
 
-- Functional, object-oriented programming language
+- Functional, object-oriented scripting / programming language
 => Immutability of objects
 => Everything is an object
 
@@ -13,15 +13,35 @@ A programming language written in C.
 - High-order functions, currying
 - Fully functional fast bytecode vm or translation into x86 / x86_64 assembler machine code
 - Systems language
-- FAST!!!
 - Python's "Batteries included" philosophy for standard libraries
+- Garbage collected
+- FAST!!!
 
-# Currently working on:
 
-- Implementing all operators for associated types in the vm / bytecodes
-- Finalize implementing functions
-- Subscripts
+# TODO
+
+- Implementing all operators for associated types in the vm / bytecodes (Done.)
+- Finalize implementing functions (Done.)
+- mark-sweep garbage collector for vm (Done.)
+- Subscripts (Working on it)
+- Lambdas (Prototype)
+
+Langugage specific
+===
+
+- AST optimization
+- prefix operators
 - Lambdas
+- Typecasting
+
+Implementation specific
+===
+
+- map / filter / curry methods
+- performance and bytecode optimization
+- JVM approach:
+	- compiler: source code => bytecodes => file
+ 	- vm: file => vm => execution
 
 # Concept (final concept may change)
 
@@ -40,7 +60,7 @@ Variables can be mutable, if they are declared using the 'mut' keyword.
 Functions are declared using the 'func' keyword.
 The body is bound by egyptian style braces. You have to declare the parameters and the return type.
 ```rust
-	func main(args: str) -> void {
+	func main(args: str[]) -> void {
 		# body
 	}
 ```
@@ -121,27 +141,6 @@ Lambdas should fit in one line, if bigger needed, use a function instead.
 - system internal functions, println + getline
 - fast bytecode vm
 - compiler error reports
-
-# TODO
-
-Langugage specific
-===
-
-- AST optimization
-- for loops
-- prefix operators
-- Lambdas
-- Typecasting
-- map function
-
-Implementation specific
-===
-
-- performance and bytecode optimization
-- mark-sweep garbage collector for vm
-- JVM approach:
-	- compiler: source code => bytecodes => file
- 	- vm: file => vm => execution
 
 # Stuff / Internet sources
 

@@ -1,7 +1,6 @@
 #include "vm.h"
 
-void push(vm_t* vm, value_t* val);
-value_t* pop(vm_t* vm);
+extern void gopen_libs(vm_t*);
 
 // Standard Library
 // TODO:
@@ -13,8 +12,10 @@ value_t* pop(vm_t* vm);
 //}
 // Return -1 if fail
 
-int golem_println(vm_t* vm, size_t argc)
+int golem_println(vm_t* vm)
 {
+	size_t argc = value_int(pop(vm));
+
 	// Order values
 	list_t* values = list_new();
 	for(int i = 0; i < argc; i++)
@@ -34,20 +35,54 @@ int golem_println(vm_t* vm, size_t argc)
 	return 0;
 }
 
-int golem_getline(vm_t* vm, size_t argc)
+int golem_getline(vm_t* vm)
 {
-	char buf[1024];
+	pop(vm);
+
+	char buf[512];
 	fgets(buf, sizeof(buf), stdin);
 	value_t* val = value_new_string(buf);
 	push(vm, val);
 	return 0;
 }
 
+int golem_strlen(vm_t* vm)
+{
+	pop(vm);
+
+	value_t* str = pop(vm);
+	if(str->type != VALUE_STRING)
+	{
+		return -1;
+	}
+
+	// Don't mind the null-terminator
+	size_t len = strlen(value_string(str))-1;
+	value_t* v = value_new_int(len);
+	push(vm, v);
+	return 0;
+}
+
 static GolemMethodDef system_methods[] = {
-	{"println", golem_println},
-	{"getline", golem_getline},
+	{"println", golem_println},	// io
+	{"getline", golem_getline},	// io
+	{"length", golem_strlen},	// strutils
 	{0, 0}	/* sentinel */
 };
+
+int value_list_free(void* data)
+{
+	list_t* list = data;
+	list_iterator_t* iter = list_iterator_create(list);
+	while(!list_iterator_end(iter))
+	{
+		value_t* val = list_iterator_next(iter);
+		value_free(val);
+	}
+	list_iterator_free(iter),
+	list_free(data);
+	return 0;
+}
 
 vm_t* vm_new()
 {
@@ -58,6 +93,9 @@ vm_t* vm_new()
 	vm->firstVal = 0;
 	vm->numObjects = 0;
 	vm->maxObjects = 8;
+
+	//vm->libs = hashmap_new();
+	//vm_open_libs(vm);
 	return vm;
 }
 
@@ -86,7 +124,7 @@ void sweep(vm_t* vm)
 		{
 			value_t* unreached = *val;
 			*val = unreached->next;
-			free(unreached);
+			value_free(unreached);
 			unreached = 0;
 			vm->numObjects--;
 		}
@@ -100,6 +138,7 @@ void sweep(vm_t* vm)
 
 void gc(vm_t* vm)
 {
+// Garbage day!
 #ifndef NO_TRACE
 	console("Collecting garbage...\n");
 #endif
@@ -115,7 +154,6 @@ void push(vm_t* vm, value_t* val)
 		gc(vm);
 	}
 
-	//value_free(vm->stack[vm->sp]);
 	vm->stack[vm->sp] = val;
 	vm->sp++;
 
@@ -234,16 +272,18 @@ void vm_process(vm_t* vm, list_t* buffer)
 		case OP_SYSCALL:
 		{
 			char* name = value_string(instr->v1);
-			size_t argc = value_int(instr->v2);
+			value_t* v = value_copy(instr->v2);
+			push(vm, v);
 
 			int i = 0;
 			while(system_methods[i].name)
 			{
 				if(!strcmp(system_methods[i].name, name))
 				{
-					system_methods[i].func(vm, argc);
+					system_methods[i].func(vm);
 					break;
 				}
+				i++;
 			}
 
 			break;
@@ -301,12 +341,27 @@ void vm_process(vm_t* vm, list_t* buffer)
 		{
 			value_t* v = pop(vm);
 			bool result = value_bool(v);
-			//value_free(v);
 			if(!result)
 			{
 				vm->pc = value_int(instr->v1);
 				return;
 			}
+			break;
+		}
+		case OP_ARR:
+		{
+			// TODO: Handle object destruction + subscript
+
+			size_t elsz = value_int(pop(vm));
+			list_t* list = list_new();
+			for(int i = 0; i < elsz; i++)
+			{
+				value_t* val = value_copy(pop(vm));
+				list_push(list, val);
+			}
+			// Creates object of type list, with destructor
+			value_t* ret = value_new_object(list, value_list_free);
+			push(vm, ret);
 			break;
 		}
 		case OP_IADD:
@@ -523,67 +578,35 @@ void vm_process(vm_t* vm, list_t* buffer)
 			push(vm, v);
 			break;
 		}
-		case OP_ILT:
+		case OP_LT:
 		{
 			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_bool(value_int(v1) < value_int(v2));
+			value_t* v = value_new_bool(value_number(v1) < value_number(v2));
 			push(vm, v);
 			break;
 		}
-		case OP_IGT:
+		case OP_GT:
 		{
 			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_bool(value_int(v1) > value_int(v2));
+			value_t* v = value_new_bool(value_number(v1) > value_number(v2));
 			push(vm, v);
 			break;
 		}
-		case OP_ILE:
+		case OP_LE:
 		{
 			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_bool(value_int(v1) <= value_int(v2));
+			value_t* v = value_new_bool(value_number(v1) <= value_number(v2));
 			push(vm, v);
 			break;
 		}
-		case OP_IGE:
+		case OP_GE:
 		{
 			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_bool(value_int(v1) >= value_int(v2));
-			push(vm, v);
-			break;
-		}
-		case OP_FLT:
-		{
-			value_t* v2 = pop(vm);
-			value_t* v1 = pop(vm);
-			value_t* v = value_new_bool(value_float(v1) < value_float(v2));
-			push(vm, v);
-			break;
-		}
-		case OP_FGT:
-		{
-			value_t* v2 = pop(vm);
-			value_t* v1 = pop(vm);
-			value_t* v = value_new_bool(value_float(v1) > value_float(v2));
-			push(vm, v);
-			break;
-		}
-		case OP_FLE:
-		{
-			value_t* v2 = pop(vm);
-			value_t* v1 = pop(vm);
-			value_t* v = value_new_bool(value_float(v1) <= value_float(v2));
-			push(vm, v);
-			break;
-		}
-		case OP_FGE:
-		{
-			value_t* v2 = pop(vm);
-			value_t* v1 = pop(vm);
-			value_t* v = value_new_bool(value_float(v1) >= value_float(v2));
+			value_t* v = value_new_bool(value_number(v1) >= value_number(v2));
 			push(vm, v);
 			break;
 		}

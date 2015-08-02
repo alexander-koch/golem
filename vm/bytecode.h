@@ -54,6 +54,7 @@ typedef enum
 	OP_JMP,
 	OP_JMPF,
 	OP_JMPT,
+	OP_ARR,
 
 	// Compare
 	OP_BEQ,
@@ -64,14 +65,10 @@ typedef enum
 	OP_INE,
 	OP_FNE,
 	OP_STRNE,
-	OP_ILT,
-	OP_IGT,
-	OP_ILE,
-	OP_IGE,
-	OP_FLT,
-	OP_FGT,
-	OP_FLE,
-	OP_FGE,
+	OP_LT,
+	OP_GT,
+	OP_LE,
+	OP_GE,
 	OP_BAND,
 	OP_BOR,
 

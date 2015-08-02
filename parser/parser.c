@@ -317,38 +317,39 @@ ast_t* parse_simpleliteral(parser_t* parser)
 
 /**
  *  Array parsing function
+ *  let x = [1,2,3,4,5]
  */
-// ast_t* parse_array(parser_t* parser)
-// {
-//     ast_t* ast = ast_class_create(AST_ARRAY, get_location(parser));
-//     ast->array = list_new();
-//
-//     token_t* tmp = accept_token_type(parser, TOKEN_LBRACKET);
-//     if(!tmp)
-//     {
-//         parser_throw(parser, "Expected array begin");
-//     }
-//
-//     ast_t* expr = 0;
-//     while(!match_type(parser, TOKEN_RBRACKET) && (expr = parse_expression(parser)))
-//     {
-//         list_push(ast->array, (void*)expr);
-//         if(!match_type(parser, TOKEN_COMMA))
-//         {
-//             break;
-//         }
-//         else
-//         {
-//             accept_token(parser);
-//         }
-//     }
-//     tmp = accept_token_type(parser, TOKEN_RBRACKET);
-//     if(!tmp)
-//     {
-//         parser_throw(parser, "Expected array end");
-//     }
-//     return ast;
-// }
+ast_t* parse_array(parser_t* parser)
+{
+    ast_t* ast = ast_class_create(AST_ARRAY, get_location(parser));
+    ast->array = list_new();
+
+    token_t* tmp = accept_token_type(parser, TOKEN_LBRACKET);
+    if(!tmp)
+    {
+        parser_throw(parser, "Expected array begin");
+    }
+
+    ast_t* expr = 0;
+    while(!match_type(parser, TOKEN_RBRACKET) && (expr = parse_expression(parser)))
+    {
+        list_push(ast->array, (void*)expr);
+        if(!match_type(parser, TOKEN_COMMA))
+        {
+            break;
+        }
+        else
+        {
+            accept_token(parser);
+        }
+    }
+    tmp = accept_token_type(parser, TOKEN_RBRACKET);
+    if(!tmp)
+    {
+        parser_throw(parser, "Expected array end");
+    }
+    return ast;
+}
 
 /**
  *  Parses a literal
@@ -359,6 +360,10 @@ ast_t* parse_literal(parser_t* parser)
     if(match_simple(parser))
     {
         return parse_simpleliteral(parser);
+    }
+    else if(match_type(parser, TOKEN_LBRACKET))
+    {
+        return parse_array(parser);
     }
     else
     {
@@ -468,113 +473,6 @@ ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
             if(!rhs)
             {
                 return 0;
-            }
-        }
-
-        // Optimize syntax tree
-        // Integer optimization
-        if(lhs->class == AST_INT && rhs->class == AST_INT)
-        {
-            bool opt = true;
-            switch(op)
-            {
-                case TOKEN_ADD:
-                {
-                    lhs->i = lhs->i + rhs->i;
-                    break;
-                }
-                case TOKEN_SUB:
-                {
-                    lhs->i = lhs->i - rhs->i;
-                    break;
-                }
-                case TOKEN_MUL:
-                {
-                    lhs->i = lhs->i * rhs->i;
-                    break;
-                }
-                case TOKEN_DIV:
-                {
-                    lhs->i = lhs->i / rhs->i;
-                    break;
-                }
-                case TOKEN_MOD:
-                {
-                    lhs->i = lhs->i % rhs->i;
-                    break;
-                }
-                case TOKEN_BITLSHIFT:
-                {
-                    lhs->i = lhs->i << rhs->i;
-                    break;
-                }
-                case TOKEN_BITRSHIFT:
-                {
-                    lhs->i = lhs->i >> rhs->i;
-                    break;
-                }
-                case TOKEN_BITAND:
-                {
-                    lhs->i = lhs->i & rhs->i;
-                    break;
-                }
-                case TOKEN_BITOR:
-                {
-                    lhs->i = lhs->i | rhs->i;
-                    break;
-                }
-                case TOKEN_BITXOR:
-                {
-                    lhs->i = lhs->i ^ rhs->i;
-                    break;
-                }
-                case TOKEN_EQUAL:
-                {
-                    lhs->class = AST_BOOL;
-                    lhs->b = (lhs->i == rhs->i);
-                    break;
-                }
-                case TOKEN_NEQUAL:
-                {
-                    lhs->class = AST_BOOL;
-                    lhs->b = (lhs->i != rhs->i);
-                    break;
-                }
-                case TOKEN_LEQUAL:
-                {
-                    lhs->class = AST_BOOL;
-                    lhs->b = (lhs->i <= rhs->i);
-                    break;
-                }
-                case TOKEN_GEQUAL:
-                {
-                    lhs->class = AST_BOOL;
-                    lhs->b = (lhs->i >= rhs->i);
-                    break;
-                }
-                case TOKEN_LESS:
-                {
-                    lhs->class = AST_BOOL;
-                    lhs->b = (lhs->i < rhs->i);
-                    break;
-                }
-                case TOKEN_GREATER:
-                {
-                    lhs->class = AST_BOOL;
-                    lhs->b = (lhs->i > rhs->i);
-                    break;
-                }
-                default:
-                {
-                    opt = false;
-                    break;
-                }
-            }
-
-            if(opt)
-            {
-                ast_free(rhs);
-                continue;
             }
         }
 
