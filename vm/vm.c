@@ -70,20 +70,6 @@ static GolemMethodDef system_methods[] = {
 	{0, 0}	/* sentinel */
 };
 
-int value_list_free(void* data)
-{
-	list_t* list = data;
-	list_iterator_t* iter = list_iterator_create(list);
-	while(!list_iterator_end(iter))
-	{
-		value_t* val = list_iterator_next(iter);
-		value_free(val);
-	}
-	list_iterator_free(iter),
-	list_free(data);
-	return 0;
-}
-
 vm_t* vm_new()
 {
 	vm_t* vm = malloc(sizeof(*vm));
@@ -350,17 +336,18 @@ void vm_process(vm_t* vm, list_t* buffer)
 		}
 		case OP_ARR:
 		{
-			// TODO: Handle object destruction + subscript
-
+			// Reverse list sorting
 			size_t elsz = value_int(pop(vm));
 			list_t* list = list_new();
-			for(int i = 0; i < elsz; i++)
+			for(int i = elsz; i > 0; i--)
 			{
-				value_t* val = value_copy(pop(vm));
-				list_push(list, val);
+				value_t* val = vm->stack[vm->sp - i];
+				list_push(list, value_copy(val));
+				vm->stack[vm->sp - i] = 0;
 			}
-			// Creates object of type list, with destructor
-			value_t* ret = value_new_object(list, value_list_free);
+			vm->sp -= elsz;
+
+			value_t* ret = value_new_list(list);
 			push(vm, ret);
 			break;
 		}

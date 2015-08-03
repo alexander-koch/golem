@@ -8,6 +8,7 @@
 #include <core/mem.h>
 #include <core/api.h>
 #include <core/util.h>
+#include <adt/list.h>
 
 #define value_set_bool(val, b) val->v.i = b
 #define value_set_int(val, in) val->v.i = in
@@ -16,9 +17,9 @@
 #define value_bool(val) (bool)val->v.i
 #define value_int(val) val->v.i
 #define value_float(val) val->v.f
+#define value_number(val) (val->type == VALUE_INT ? value_int(val) : value_float(val))
 #define value_string(val) (char*)val->v.o
-
-#define value_number(v) (v->type == VALUE_INT ? value_int(v) : value_float(v))
+#define value_list(val) (list_t*)val->v.o
 
 typedef enum
 {
@@ -27,6 +28,7 @@ typedef enum
 	VALUE_FLOAT,
 	VALUE_INT,
 	VALUE_STRING,
+	VALUE_LIST,
 	VALUE_OBJECT,
 } value_type_t;
 
@@ -37,11 +39,7 @@ typedef struct value_t
 	{
 		int i;
 	 	float f;
-
-		struct {
-			void* o;
-			int (*func)(void*);
-		};
+		void* o;
 	} v;
 
 	unsigned char marked;
@@ -55,7 +53,8 @@ value_t* value_new_int(int number);
 value_t* value_new_float(float number);
 value_t* value_new_string_const(const char* string);
 value_t* value_new_string(char* string);
-value_t* value_new_object(void* obj, int (*func)(void*));
+value_t* value_new_list(list_t* list);
+value_t* value_new_object(void* obj);
 
 // Value copy
 value_t* value_copy(value_t* value);

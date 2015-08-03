@@ -6,6 +6,7 @@ value_t* value_new_null()
 	val->type = VALUE_NULL;
 	val->marked = 0;
 	val->next = 0;
+	val->v.o = 0;
 	return val;
 }
 
@@ -49,12 +50,19 @@ value_t* value_new_string(char* string)
 	return val;
 }
 
-value_t* value_new_object(void* obj, int (*func)(void*))
+value_t* value_new_list(list_t* list)
+{
+	value_t* val = value_new_null();
+	val->type = VALUE_LIST;
+	val->v.o = list;
+	return val;
+}
+
+value_t* value_new_object(void* obj)
 {
 	value_t* val = value_new_null();
 	val->type = VALUE_OBJECT;
 	val->v.o = obj;
-	val->v.func = func;
 	return val;
 }
 
@@ -66,11 +74,19 @@ value_t* value_copy(value_t* value)
 	{
 		val->v.o = strdup(value->v.o);
 	}
-	else if(val->type == VALUE_OBJECT)
+	else if(val->type == VALUE_LIST)
 	{
-		// TODO: copying
-		val->v.o = 0;
-		val->v.func = 0;
+		// TODO: computational expensive, improve the performance
+
+		list_t* list = list_new();
+		list_iterator_t* iter = list_iterator_create(value->v.o);
+		while(!list_iterator_end(iter))
+		{
+			value_t* val = list_iterator_next(iter);
+			list_push(list, value_copy(val));
+		}
+		list_iterator_free(iter);
+		val->v.o = list;
 	}
 	else
 	{
@@ -90,14 +106,17 @@ void value_reset(value_t* value)
 		free(value->v.o);
 		value->v.o = 0;
 	}
-	else if(value->type == VALUE_OBJECT)
+	else if(value->type == VALUE_LIST)
 	{
-		// Call destructor with data pointer
-		if(value->v.func)
+		list_t* list = (list_t*)value->v.o;
+		list_iterator_t* iter = list_iterator_create(list);
+		while(!list_iterator_end(iter))
 		{
-			value->v.func(value->v.o);
-			value->v.o = 0;
+			value_t* val = list_iterator_next(iter);
+			value_free(val);
 		}
+		list_iterator_free(iter);
+		list_free(list);
 	}
 }
 
@@ -134,6 +153,21 @@ void value_print(value_t* value)
 			case VALUE_STRING:
 			{
 				console("%s", (char*)value->v.o);
+				break;
+			}
+			case VALUE_LIST:
+			{
+				console("[");
+				list_t* list = (list_t*)value->v.o;
+				list_iterator_t* iter = list_iterator_create(list);
+				while(!list_iterator_end(iter))
+				{
+					value_t* val = list_iterator_next(iter);
+					value_print(val);
+					if(!list_iterator_end(iter)) console(", ");
+				}
+				list_iterator_free(iter);
+				console("]");
 				break;
 			}
 			case VALUE_NULL:

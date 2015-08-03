@@ -20,11 +20,11 @@ A programming language written in C.
 
 # TODO
 
-- Implementing all operators for associated types in the vm / bytecodes (Done.)
-- Finalize implementing functions (Done.)
-- mark-sweep garbage collector for vm (Done.)
-- Subscripts (Working on it)
-- Lambdas (Prototype)
+- Implementing all (basic) operators for associated types in the vm / bytecodes => (Done.)
+- Finalize implementing functions => (Done.)
+- mark-sweep garbage collector for vm => (Done.)
+- Subscripts (Arrays / Strings) => (Working on it)
+- Lambdas => (Prototype / Concept)
 
 Langugage specific
 ===

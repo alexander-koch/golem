@@ -38,7 +38,7 @@ void run_repl(vm_t* vm, compiler_t* compiler)
 int main(int argc, char** argv)
 {
     compiler_t compiler;
-    compiler_init(&compiler, true);
+    compiler_init(&compiler);
 
     if(argc == 1)
     {
@@ -69,7 +69,6 @@ int main(int argc, char** argv)
         // Compile to assembly
         if(!strcmp(argv[1], "-c"))
         {
-            compiler.debug = false;
             list_t* buffer = compile_file(&compiler, argv[2]);
             if(buffer)
             {

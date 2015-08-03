@@ -2,11 +2,10 @@
 
 datatype_t compiler_eval(compiler_t* compiler, ast_t* node);
 
-void compiler_init(compiler_t* compiler, bool debugmode)
+void compiler_init(compiler_t* compiler)
 {
 	compiler->buffer = 0;
 	compiler->filename = 0;
-	compiler->debug = debugmode;
 	compiler->error = false;
 	compiler->scope = 0;
 }
@@ -1218,11 +1217,10 @@ list_t* compile_buffer(compiler_t* compiler, const char* source)
 	ast_t* root = parser_run(&compiler->parser, source);
 	if(root)
 	{
-		if(compiler->debug)
-		{
-			console("Abstract syntax tree:\n");
-			compiler_dump(root, 0);
-		}
+#ifndef NO_AST
+		console("Abstract syntax tree:\n");
+		compiler_dump(root, 0);
+#endif
 		compiler_eval(compiler, root);
 		ast_free(root);
 	}

@@ -43,14 +43,13 @@ typedef struct compiler_t
 	parser_t parser;
 	list_t* buffer;
 	char* filename;
-	bool debug;
 	int address;
 	bool error;
 	scope_t* scope;
 	int depth;
 } compiler_t;
 
-void compiler_init(compiler_t* compiler, bool debugmode);
+void compiler_init(compiler_t* compiler);
 list_t* compile_buffer(compiler_t* compiler, const char* source);
 list_t* compile_file(compiler_t* compiler, const char* filename);
 void compiler_clear(compiler_t* compiler);
