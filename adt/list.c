@@ -46,6 +46,33 @@ void* list_pop(list_t* list)
 	return val;
 }
 
+void* list_pop_back(list_t* list)
+{
+	assert(list->tail != 0);
+	list_node_t* rem = list->tail;
+	void* val = rem->val;
+
+	if(list->head != list->tail)
+	{
+		list_node_t* temp = list->head;
+		while(temp->next != rem)
+		{
+			temp = temp->next;
+		}
+		list->tail = temp;
+		temp->next = 0;
+	}
+	else
+	{
+		list->head = 0;
+		list->tail = 0;
+	}
+
+	free(rem);
+	list->size--;
+	return val;
+}
+
 void* list_get(list_t* list, size_t index)
 {
 	list_node_t* node = list->head;

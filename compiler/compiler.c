@@ -877,6 +877,49 @@ datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 		if(expr->class == AST_SUBSCRIPT)
 		{
 			compiler_throw(compiler, node, "Warning: Array index out of bounds");
+			return DATA_NULL;
+		}
+		else if(expr->class == AST_STRING)
+		{
+			// Direct string element access, e.g.: "Hello World"[0]
+			// optimize!
+			// push "Hello World"
+			// push 0
+			// strsub
+
+			// Assuming that type is of integer, do the following:
+			// Get the last index instruction and discard it
+			instruction_t* index = list_pop_back(compiler->buffer);
+			int idx = value_int(index->v1);
+			free(index->v1);
+			free(index);
+
+			// Get the element, that we want the subelement from
+			instruction_t* last = list_top(compiler->buffer);
+			value_t* str = last->v1;
+
+			// Get the raw string, test the index
+			char* raw_str = value_string(str);
+			if(idx < 0 || idx >= strlen(raw_str))
+			{
+				compiler_throw(compiler, node, "Warning: Array index out of bounds");
+				return DATA_NULL;
+			}
+
+			// Get the indexed element
+			// Allocate space + assign
+			char* indexedElement = malloc(sizeof(char)*2);
+			indexedElement[0] = raw_str[idx];
+			indexedElement[1] = '\0';
+
+			// Free old value pointer
+			value_free(str);
+
+			// Assign new allocated memory (gets copied)
+			str = value_new_string(indexedElement);
+
+			// Free old indexed
+			free(indexedElement);
 			return DATA_STRING;
 		}
 
@@ -894,6 +937,7 @@ datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 		compiler_throw(compiler, node, "TODO: Operation is currently not supported");
 		return DATA_NULL;
 	}
+
 
 	// Check the return type
 	if(expr->class == AST_IDENT)
@@ -914,8 +958,9 @@ datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 		}
 	}
 	else if(expr->class == AST_ARRAY) {
-
 		// Direct access, e.g.: [1,2,3,4,5][0]
+		// This should not happen
+		// TODO: Implement a method to simplify this to throw just 1
 		return expr->array.type;
 	}
 	else
