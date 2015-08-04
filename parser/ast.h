@@ -108,7 +108,6 @@ struct ast_s
         char* string;
         list_t* toplevel;
         list_t* ifstmt;
-        list_t* array;
         I64 i;
         F64 f;
         bool b;
@@ -120,6 +119,12 @@ struct ast_s
         ast_cond_t ifclause;
         ast_cond_t whilestmt;
         ast_struct_t classstmt;
+
+        struct
+        {
+            list_t* elements;
+            datatype_t type;
+        } array;
 
         struct
         {

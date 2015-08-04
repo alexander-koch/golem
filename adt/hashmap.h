@@ -1,3 +1,8 @@
+/** hashmap.h
+ *	@author Alexander Koch
+ * 	@desc Hashmap implementation
+ */
+
 #ifndef hashmap_h
 #define hashmap_h
 

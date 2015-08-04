@@ -630,6 +630,17 @@ void vm_process(vm_t* vm, list_t* buffer)
 			free(nw);
 			break;
 		}
+		case OP_ARRSUB:
+		{
+			value_t* key = pop(vm);
+			value_t* object = pop(vm);
+
+			list_t* list = value_list(object);
+			int idx = value_int(key);
+			value_t* v = value_copy(list_get(list, idx));
+			push(vm, v);
+			break;
+		}
 		default: break;
 	}
 

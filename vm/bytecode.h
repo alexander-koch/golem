@@ -73,7 +73,8 @@ typedef enum
 	OP_BOR,
 
 	// Subscript
-	OP_STRSUB
+	OP_STRSUB,
+	OP_ARRSUB
 } opcode_t;
 
 typedef struct

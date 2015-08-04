@@ -9,6 +9,13 @@ list_t* list_new()
 	return list;
 }
 
+void* list_top(list_t* list)
+{
+	list_node_t* top = list->tail;
+	void* val = top->val;
+	return val;
+}
+
 void list_push(list_t* list, void* val)
 {
 	list_node_t* node = malloc(sizeof(list_node_t));

@@ -25,6 +25,7 @@ A programming language written in C.
 - mark-sweep garbage collector for vm => (Done.)
 - Subscripts (Arrays / Strings) => (Working on it)
 - Lambdas => (Prototype / Concept)
+- Bytecode optimizations => (Working on it)
 
 Langugage specific
 ===
@@ -159,6 +160,6 @@ http://bartoszsypytkowski.com/simple-virtual-machine/
 https://github.com/gphat/babyvm/blob/master/babyvm.c
 
 # Licence
-Copyright (c) Alexander Koch 2015
+Copyright (c) Alexander Koch 2015 All Rights Reserved.
 Inception at 18.05.2015
 Based on Project Ozone

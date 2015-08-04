@@ -110,13 +110,13 @@ void ast_free(ast_t* ast)
 		}
 		case AST_ARRAY:
 		{
-			iter = list_iterator_create(ast->array);
+			iter = list_iterator_create(ast->array.elements);
 			while(!list_iterator_end(iter))
 			{
 				ast_free(list_iterator_next(iter));
 			}
 			list_iterator_free(iter);
-			list_free(ast->array);
+			list_free(ast->array.elements);
 			break;
 		}
 		case AST_SUBSCRIPT:

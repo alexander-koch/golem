@@ -244,7 +244,9 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 	compiler->address++;
 
 	// Debug variables
-	//console("Created variable %s: %s with data type %d\n", node->vardecl.name, node->vardecl.mutate ? "mut" : "immut", vartype);
+#ifdef DB_VARS
+	console("Created %s variable '%s' of data type <%s>\n", node->vardecl.mutate ? "mutable" : "immutable", node->vardecl.name, datatype2str(vartype));
+#endif
 	return DATA_NULL;
 }
 
@@ -511,32 +513,32 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 
 					emit_store(compiler->buffer, symbol->address, symbol->global);
 				}
-				else if(symbol->node->class == AST_CLASS)
-				{
-
-				}
-				else if(symbol->node->class == AST_SUBSCRIPT)
-				{
-
-				}
-				else if(symbol->node->class == AST_DECLFUNC)
-				{
-
-				}
+				// TODO: manage these
 				else
 				{
-					// TODO: What if this is a subscript or a class field ?
+					compiler_throw(compiler, node, "TODO: Unknown identifier assignement operation");
+					return DATA_NULL;
 				}
 			}
+			// If symbol is not found
 			else
 			{
 				compiler_throw(compiler, node, "Warning: Implicit declaration of field '%s'", lhs->ident);
 				return DATA_NULL;
 			}
 		}
+		// If it's not an identifier
+		else if(lhs->class == AST_SUBSCRIPT)
+		{
+			// TODO: subscript sugar is permitted !
+
+			compiler_throw(compiler, node, "Warning: Direct modification of subelements is not permitted");
+			return DATA_NULL;
+		}
 		else
 		{
-			// TODO: We got a subscript or else, see above
+			compiler_throw(compiler, node, "TODO: Unknown assignment operation");
+			return DATA_NULL;
 		}
 	}
 	else
@@ -583,6 +585,20 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 	symbol_t* ptr = symbol_get(compiler->scope, node->ident);
 	if(ptr)
 	{
+		// TODO: load optimization for
+		// gstore
+		// gload
+		// invoke
+		// end
+		//
+		// pseudo
+		// if last instruction == emit_store() then
+		//		suspect: one time storage
+		//		loads for store ++
+		// onEnd:
+		// 		if loads for store == 1
+		//			remove dead code
+
 		emit_load(compiler->buffer, ptr->address, ptr->global);
 		return ptr->type;
 	}
@@ -594,11 +610,11 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 datatype_t eval_call(compiler_t* compiler, ast_t* node)
 {
 	size_t args = list_size(node->call.args);
-	// eval_block(compiler, node->call.args);
 
 	ast_t* call = node->call.callee;
 	if(call->class == AST_IDENT)
 	{
+		// TODO: symbol table for this
 		if(!strcmp(call->ident, "println"))
 		{
 			eval_block(compiler, node->call.args);
@@ -696,17 +712,19 @@ datatype_t eval_string(compiler_t* compiler, ast_t* node)
 }
 
 // Every array is immutable, elements can't be changed or swapped
+// Only the variable field can be changed
 datatype_t eval_array(compiler_t* compiler, ast_t* node)
 {
-	if(list_size(node->array) <= 0)
+	if(list_size(node->array.elements) <= 0)
 	{
-		compiler_throw(compiler, node, "Invalid: Immutable array has zero elements");
+		compiler_throw(compiler, node, "Warning: Immutable array has zero elements");
 		return DATA_NULL;
 	}
 
 	datatype_t dt = DATA_NULL;
-	list_iterator_t* iter = list_iterator_create(node->array);
+	list_iterator_t* iter = list_iterator_create(node->array.elements);
 	dt = compiler_eval(compiler, list_iterator_next(iter));
+	node->array.type = dt;
 
 	if(dt == DATA_VOID || dt == DATA_NULL)
 	{
@@ -714,13 +732,14 @@ datatype_t eval_array(compiler_t* compiler, ast_t* node)
 		return DATA_NULL;
 	}
 
-	size_t idx = 1;
+	// We already evaluated one element
+	size_t idx = 2;
 	while(!list_iterator_end(iter))
 	{
 		datatype_t tmp = compiler_eval(compiler, list_iterator_next(iter));
 		if(tmp != dt)
 		{
-			compiler_throw(compiler, node, "Invalid array. An array can only hold one type of elements (@element %d)", idx);
+			compiler_throw(compiler, node, "An array can only hold one type of elements (@element %d)", idx);
 			return DATA_NULL;
 		}
 
@@ -733,7 +752,7 @@ datatype_t eval_array(compiler_t* compiler, ast_t* node)
 	}
 	list_iterator_free(iter);
 
-	emit_int(compiler->buffer, list_size(node->array));
+	emit_int(compiler->buffer, list_size(node->array.elements));
 	emit_op(compiler->buffer, OP_ARR);
 	return DATA_ARRAY;
 }
@@ -841,8 +860,11 @@ datatype_t eval_return(compiler_t* compiler, ast_t* node)
 
 datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 {
-	datatype_t exprType = compiler_eval(compiler, node->subscript.expr);
-	datatype_t keyType = compiler_eval(compiler, node->subscript.key);
+	ast_t* expr = node->subscript.expr;
+	ast_t* key = node->subscript.key;
+
+	datatype_t exprType = compiler_eval(compiler, expr);
+	datatype_t keyType = compiler_eval(compiler, key);
 	if(keyType != DATA_INT)
 	{
 		compiler_throw(compiler, node, "Key must be of type integer");
@@ -851,7 +873,8 @@ datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 
 	if(exprType == DATA_STRING)
 	{
-		if(node->subscript.expr->class == AST_SUBSCRIPT)
+		// We got a string and want to access an element
+		if(expr->class == AST_SUBSCRIPT)
 		{
 			compiler_throw(compiler, node, "Warning: Array index out of bounds");
 			return DATA_STRING;
@@ -860,15 +883,47 @@ datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 		emit_op(compiler->buffer, OP_STRSUB);
 		return DATA_STRING;
 	}
+	else if(exprType == DATA_ARRAY)
+	{
+		// We got an array and want to access an element
+		emit_op(compiler->buffer, OP_ARRSUB);
+	}
 	else
 	{
 		// TODO: support!
-		// # FIXME
 		compiler_throw(compiler, node, "TODO: Operation is currently not supported");
 		return DATA_NULL;
 	}
 
-	return DATA_NULL;
+	// Check the return type
+	if(expr->class == AST_IDENT)
+	{
+		// Symbol access, e.g.: arr[0]
+		symbol_t* symbol = symbol_get(compiler->scope, expr->ident);
+
+		if(symbol->node->class == AST_DECLVAR)
+		{
+			// Access array in initializer of the variable declaration
+			return symbol->node->vardecl.initializer->array.type;
+		}
+		else
+		{
+			// TODO: symbol typechecking, for now assume variable, better: create a function for this
+			compiler_throw(compiler, node, "Warning: Identifier is invalid");
+			return DATA_NULL;
+		}
+	}
+	else if(expr->class == AST_ARRAY) {
+
+		// Direct access, e.g.: [1,2,3,4,5][0]
+		return expr->array.type;
+	}
+	else
+	{
+		// Else, we don't know, just null
+		compiler_throw(compiler, node, "Warning: Array subscript led to undefined behavior");
+		return DATA_NULL;
+	}
 }
 
 datatype_t eval_unary(compiler_t* compiler, ast_t* node)
@@ -1159,7 +1214,7 @@ void compiler_dump(ast_t* node, int level)
 		{
 			fprintf(stdout, ":array<");
 
-			list_iterator_t* iter = list_iterator_create(node->array);
+			list_iterator_t* iter = list_iterator_create(node->array.elements);
 			while(!list_iterator_end(iter))
 			{
 				compiler_dump(list_iterator_next(iter), 0);

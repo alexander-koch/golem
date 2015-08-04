@@ -1,6 +1,6 @@
 # Golem Bytecode
 
-Golem runs on an internal stack-based bytecode virtual machine.
+Golem runs on an internal stack-based bytecode virtual machine (gvm).
 The following instructions are currently supported.
 
 # Bytecode Instruction Set
@@ -65,13 +65,18 @@ The following instructions are currently supported.
 |band                 | boolean and
 |bor                  | boolean or
 
+| Subscript           | Description
+|---                  |---
+|strsub               | string subscript / sub-element
+|arrsub               | array subscript / sub-element
+
 # Example compilation
 
     let mut x = 5
     x = x + 5
     println(x)
 
-This should compile to the following (unoptimized):
+This should compile to the following instructions (unoptimized):
 
     Code:
       01: push, 5
@@ -83,7 +88,7 @@ This should compile to the following (unoptimized):
       07: gload, 0
       08: syscall, println, 1
 
-Optimized (not done by vm / interpreter):
+Optimized (not done by vm or compiler):
 
     Code:
       01: push, 5

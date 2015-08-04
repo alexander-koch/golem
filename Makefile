@@ -5,10 +5,13 @@ INC = -I.
 CFLAGS = -std=c99 -Wall -Wno-unused-function -Wno-unused-parameter -DNO_TRACE -DNO_AST
 
 # Options:
+# Disable:
 # -DNO_AST   <-- Prints out the abstract syntax tree
 # -DNO_IR	 <-- Prints out immediate representation (bytecode)
 # -DNO_TRACE <-- While bytecode is executed, stack + instructions are printed
 # -DNO_EXEC  <-- Bytecode is not executed
+# Enable:
+# -DDB_VARS	 <-- Debugs all variables by printing a message
 
 FILES = main.c \
 		core/api.c \
@@ -23,6 +26,7 @@ FILES = main.c \
 		parser/optimizer.c \
 		compiler/compiler.c \
 		compiler/asm_compiler.c \
+		compiler/bytecode_writer.c \
 		vm/value.c \
 		vm/bytecode.c \
 		vm/vm.c \
@@ -35,9 +39,3 @@ debug:
 	$(CC) $(CFLAGS) $(INC) -c $(FILES)
 	$(CXX) *.o $(LDFLAGS) -o $(MODULE)
 	-rm *.o
-
-bitcode:
-	llvm-dis out.bc
-
-asm:
-	llc out.bc -o out.s

@@ -1,4 +1,4 @@
-/** Copryright (c) Alexander Koch 2015 **/
+/** Copyright (c) 2015 Alexander Koch All Rights Reserved. **/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,7 +83,7 @@ int main(int argc, char** argv)
         }
         else
         {
-            fprintf(stderr, "Flag: '%s' is invalid\n\n", argv[2]);
+            fprintf(stderr, "Flag: '%s' is invalid\n\n", argv[1]);
         }
     }
     else

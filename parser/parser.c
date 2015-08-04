@@ -322,7 +322,7 @@ ast_t* parse_simpleliteral(parser_t* parser)
 ast_t* parse_array(parser_t* parser)
 {
     ast_t* ast = ast_class_create(AST_ARRAY, get_location(parser));
-    ast->array = list_new();
+    ast->array.elements = list_new();
 
     token_t* tmp = accept_token_type(parser, TOKEN_LBRACKET);
     if(!tmp)
@@ -333,7 +333,7 @@ ast_t* parse_array(parser_t* parser)
     ast_t* expr = 0;
     while(!match_type(parser, TOKEN_RBRACKET) && (expr = parse_expression(parser)))
     {
-        list_push(ast->array, (void*)expr);
+        list_push(ast->array.elements, (void*)expr);
         if(!match_type(parser, TOKEN_COMMA))
         {
             break;
