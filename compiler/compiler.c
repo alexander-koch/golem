@@ -756,7 +756,7 @@ datatype_t eval_array(compiler_t* compiler, ast_t* node)
 
 	emit_int(compiler->buffer, list_size(node->array.elements));
 	emit_op(compiler->buffer, OP_ARR);
-	return DATA_ARRAY;
+	return DATA_ARRAY | node->array.type;
 }
 
 datatype_t eval_if(compiler_t* compiler, ast_t* node)
@@ -930,7 +930,7 @@ datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 		emit_op(compiler->buffer, OP_STRSUB);
 		return DATA_STRING;
 	}
-	else if(exprType == DATA_ARRAY)
+	else if((exprType & DATA_ARRAY) == DATA_ARRAY)
 	{
 		// We got an array and want to access an element
 		emit_op(compiler->buffer, OP_ARRSUB);

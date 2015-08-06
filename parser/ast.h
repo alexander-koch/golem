@@ -14,16 +14,15 @@
 
 typedef enum
 {
-    DATA_NULL = 1,// 0x1,
-    DATA_BOOL = 2, //0x2,
-    DATA_INT = 3, //0x4,
-    DATA_FLOAT = 4, //0x8,
-    DATA_STRING = 5, //0x10,
-    DATA_OBJECT = 6, //0x20,
-    DATA_VOID = 7, //0x40,
-    DATA_ARRAY = 8, // 0x80
-    DATA_VARARGS = 9,
-    DATA_LAMBDA = 10
+    DATA_NULL = 1 << 1,// 0x1,
+    DATA_BOOL = 1 << 2, //0x2,
+    DATA_INT = 1 << 3, //0x4,
+    DATA_FLOAT = 1 << 4, //0x8,
+    DATA_STRING = 1 << 5, //0x10,
+    DATA_OBJECT = 1 << 6, //0x20,
+    DATA_VOID = 1 << 7, //0x40,
+    DATA_ARRAY = 1 << 8, // 0x80
+    DATA_VARARGS = 1 << 9
 } datatype_t;
 
 typedef struct

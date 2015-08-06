@@ -13,8 +13,17 @@ const char* datatype2str(datatype_t type)
 		case DATA_VOID: return "void";
 		case DATA_ARRAY: return "array";
 		case DATA_VARARGS: return "varargs";
-		case DATA_LAMBDA: return "lambda";
-		default: return "unknown";
+		default:
+		{
+			if((type & DATA_ARRAY) == DATA_ARRAY)
+			{
+				return "array";
+			}
+			else
+			{
+				return "unknown";
+			}
+		}
 	}
 }
 

@@ -554,24 +554,24 @@ datatype_t parse_datatype(parser_t* parser)
         type = DATA_OBJECT;
     }
 
-    // if(match_type(parser, TOKEN_LBRACKET))
-    // {
-    //     accept_token(parser);
-    //     token_t* rbrac = accept_token_type(parser, TOKEN_RBRACKET);
-    //     if(!rbrac)
-    //     {
-    //         parser_throw(parser, "Expected closing bracket");
-    //         return DATA_NULL;
-    //     }
-    //
-    //     if(type == DATA_VOID)
-    //     {
-    //         parser_throw(parser, "Invalid: array of type void");
-    //         return DATA_NULL;
-    //     }
-    //
-    //     type = DATA_ARRAY | type;
-    // }
+    if(match_type(parser, TOKEN_LBRACKET))
+    {
+        accept_token(parser);
+        token_t* rbrac = accept_token_type(parser, TOKEN_RBRACKET);
+        if(!rbrac)
+        {
+            parser_throw(parser, "Expected closing bracket");
+            return DATA_NULL;
+        }
+
+        if(type == DATA_VOID)
+        {
+            parser_throw(parser, "Invalid: array of type void");
+            return DATA_NULL;
+        }
+
+        type = DATA_ARRAY | type;
+    }
 
     return type;
 }
