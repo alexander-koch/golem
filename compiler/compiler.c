@@ -494,7 +494,10 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 		return compiler_eval(compiler, lhs);
 	}
 
-	// TODO: How to eval properly?
+	////-----------------------------------------
+	////- Actual code begins here
+	////-----------------------------------------
+	////-----------------------------------------
 
 	// Immutability check
 	if(op == TOKEN_ASSIGN)
@@ -536,11 +539,55 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 			}
 		}
 		// If it's not an identifier
+		// e.g.: myArray[5] = 28
 		else if(lhs->class == AST_SUBSCRIPT)
 		{
-			// TODO: subscript sugar is permitted !
+			// TODO: subscript is permitted if the variable is mutable!
+			// Subscript: expr, key: myArray[key]
+			// expr must be an identifier
+			ast_t* expr = lhs->subscript.expr;
+			ast_t* key = lhs->subscript.key;
 
-			compiler_throw(compiler, node, "Warning: Direct modification of subelements is not permitted");
+			if(expr->class != AST_IDENT)
+			{
+				compiler_throw(compiler, node, "Warning: Identifier for index access expected");
+			}
+			else
+			{
+				symbol_t* symbol = symbol_get(compiler->scope, expr->ident);
+				if(symbol)
+				{
+					ast_t* node = symbol->node;
+					if(node->class != AST_DECLVAR)
+					{
+						// TODO: Implement this for namespaces / Classes
+						// Can be valid too, but currently not supported
+						compiler_throw(compiler, node, "Warning: Operation is not supported (Deprecated compiler ?)");
+					}
+					else
+					{
+						if(!node->vardecl.mutate)
+						{
+							compiler_throw(compiler, node, "The field '%s' is immutable", expr->ident);
+						}
+						else
+						{
+							// TODO: Typechecking
+
+							// emit operators to modifiy
+							compiler_eval(compiler, rhs);
+							compiler_eval(compiler, expr);
+							compiler_eval(compiler, key);
+							emit_op(compiler->buffer, OP_SETSUB);
+							emit_store(compiler->buffer, symbol->address, symbol->global);
+						}
+					}
+				}
+				else
+				{
+					compiler_throw(compiler, node, "Warning: Implicit declaration of field '%s'", expr->ident);
+				}
+			}
 			return DATA_NULL;
 		}
 		else
@@ -730,7 +777,7 @@ datatype_t eval_array(compiler_t* compiler, ast_t* node)
 
 	if(dt == DATA_VOID || dt == DATA_NULL)
 	{
-		compiler_throw(compiler, node, "Invalid array. Also, how the heck did you manage to create a void array?");
+		compiler_throw(compiler, node, "Invalid: Array is composed of NULL elements");
 		return DATA_NULL;
 	}
 
@@ -742,12 +789,14 @@ datatype_t eval_array(compiler_t* compiler, ast_t* node)
 		if(tmp != dt)
 		{
 			compiler_throw(compiler, node, "An array can only hold one type of elements (@element %d)", idx);
+			list_iterator_free(iter);
 			return DATA_NULL;
 		}
 
 		if(tmp == DATA_NULL)
 		{
 			compiler_throw(compiler, node, "Invalid array. (@element %d)", idx);
+			list_iterator_free(iter);
 			return tmp;
 		}
 		idx++;
@@ -927,13 +976,13 @@ datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 		}
 #endif
 
-		emit_op(compiler->buffer, OP_STRSUB);
+		emit_op(compiler->buffer, OP_GETSUB);
 		return DATA_STRING;
 	}
 	else if((exprType & DATA_ARRAY) == DATA_ARRAY)
 	{
 		// We got an array and want to access an element
-		emit_op(compiler->buffer, OP_ARRSUB);
+		emit_op(compiler->buffer, OP_GETSUB);
 	}
 	else if(exprType == DATA_VOID || exprType == DATA_NULL)
 	{

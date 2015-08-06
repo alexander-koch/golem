@@ -564,7 +564,12 @@ datatype_t parse_datatype(parser_t* parser)
             return DATA_NULL;
         }
 
-        if(type == DATA_VOID)
+        if(type == DATA_VARARGS)
+        {
+            parser_throw(parser, "Invalid: array of varargs");
+            return DATA_NULL;
+        }
+        else if(type == DATA_VOID)
         {
             parser_throw(parser, "Invalid: array of type void");
             return DATA_NULL;

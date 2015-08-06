@@ -564,32 +564,71 @@ void vm_process(vm_t* vm, list_t* buffer)
 			push(vm, v);
 			break;
 		}
-		case OP_STRSUB:
+		case OP_GETSUB:
 		{
+			// Stack:
+			// | object |
+			// | key 	|
+			// | getsub |
 			value_t* key = pop(vm);
 			value_t* object = pop(vm);
 
-			char* str = value_string(object);
-			int idx = value_int(key);
-			char* nw = malloc(sizeof(char)*2);
-			nw[0] = str[idx];
-			nw[1] = '\0';
+			if(key->type == VALUE_STRING)
+			{
+				char* str = value_string(object);
+				int idx = value_int(key);
+				char* nw = malloc(sizeof(char)*2);
+				nw[0] = str[idx];
+				nw[1] = '\0';
 
-			value_t* v = value_new_string(nw);
-			push(vm, v);
-
-			free(nw);
+				value_t* v = value_new_string(nw);
+				push(vm, v);
+				free(nw);
+			}
+			else
+			{
+				list_t* list = value_list(object);
+				int idx = value_int(key);
+				value_t* v = value_copy(list_get(list, idx));
+				push(vm, v);
+			}
 			break;
 		}
-		case OP_ARRSUB:
+		case OP_SETSUB:
 		{
+			// Stack:
+			// | value	|
+			// | object |
+			// | key 	|
+			// | setsub |
 			value_t* key = pop(vm);
 			value_t* object = pop(vm);
+			value_t* val = pop(vm);
 
-			list_t* list = value_list(object);
-			int idx = value_int(key);
-			value_t* v = value_copy(list_get(list, idx));
-			push(vm, v);
+			if(object->type == VALUE_LIST)
+			{
+				list_iterator_t* iter = list_iterator_create(value_list(object));
+				int i = 0;
+				int idx = value_int(key);
+
+				list_t* nl = list_new();
+				while(!list_iterator_end(iter))
+				{
+					if(i == idx)
+					{
+						list_push(nl, value_copy(val));
+					}
+					else
+					{
+						list_push(nl, value_copy(list_iterator_next(iter)));
+					}
+					i++;
+				}
+				list_iterator_free(iter);
+
+				value_t* v = value_new_list(nl);
+				push(vm, v);
+			}
 			break;
 		}
 		default: break;

@@ -52,8 +52,8 @@ const char* op2str(opcode_t code)
 		case OP_GE: return "ge";
 		case OP_BAND: return "band";
 		case OP_BOR: return "bor";
-		case OP_STRSUB: return "strsub";
-		case OP_ARRSUB: return "arrsub";
+		case OP_GETSUB: return "getsub";
+		case OP_SETSUB: return "setsub";
 		default: return "unknown";
 	}
 }

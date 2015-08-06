@@ -67,8 +67,7 @@ The following instructions are currently supported.
 
 | Subscript           | Description
 |---                  |---
-|strsub               | string subscript / sub-element
-|arrsub               | array subscript / sub-element
+|getsub               | get the sub-element of the value, expects index (first) and value on top of the stack
 
 # Example compilation
 
