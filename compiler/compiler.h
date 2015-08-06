@@ -17,7 +17,7 @@
 // everything that has to be identified.
 // variable => immutable / mutable + name + type
 // function => name + returntype
-// class => name + functions + variables
+// class    => name + functions + variables
 typedef struct symbol_t
 {
 	ast_t* node;

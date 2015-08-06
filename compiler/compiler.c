@@ -136,6 +136,14 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 		return DATA_NULL;
 	}
 
+	// External sentinel
+	if(node->funcdecl.external)
+	{
+		symbol_t* sym = symbol_new(compiler, node, -1, node->funcdecl.rettype);
+		hashmap_set(compiler->scope->symbols, node->funcdecl.name, sym);
+		return DATA_NULL;
+	}
+
 	// Emit jump
 	value_t* addr = emit_jmp(compiler->buffer, 0);
 
@@ -609,92 +617,86 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 
 datatype_t eval_call(compiler_t* compiler, ast_t* node)
 {
-	size_t args = list_size(node->call.args);
+	size_t argc = list_size(node->call.args);
 
 	ast_t* call = node->call.callee;
 	if(call->class == AST_IDENT)
 	{
-		// TODO: symbol table for this
-		if(!strcmp(call->ident, "println"))
+		symbol_t* symbol = symbol_get(compiler->scope, call->ident);
+		if(symbol)
 		{
-			eval_block(compiler, node->call.args);
-			emit_syscall(compiler->buffer, call->ident, args);
-			return DATA_NULL;
-		}
-		else if(!strcmp(call->ident, "getline"))
-		{
-			eval_block(compiler, node->call.args);
-			emit_syscall(compiler->buffer, call->ident, args);
-			return DATA_STRING;
-		}
-		else if(!strcmp(call->ident, "length"))
-		{
-			eval_block(compiler, node->call.args);
-			emit_syscall(compiler->buffer, call->ident, args);
-			return DATA_INT;
-		}
-		else
-		{
-			int address = 0;
-
-			symbol_t* symbol = symbol_get(compiler->scope, call->ident);
-			if(symbol)
+			if(symbol->node->class != AST_DECLFUNC)
 			{
-				if(symbol->node->class != AST_DECLFUNC)
+				compiler_throw(compiler, node, "Identifier '%s' is not a function", call->ident);
+				return DATA_NULL;
+			}
+			else
+			{
+				ast_t* func = symbol->node;
+				int address = symbol->address;
+				size_t paramc = list_size(func->funcdecl.impl.formals);
+
+				// Param checking
+				if(argc > paramc)
 				{
-					compiler_throw(compiler, node, "Identifier '%s' is not a function", call->ident);
+					compiler_throw(compiler, node, "Too many arguments for function '%s'. Expected: %d", call->ident, paramc);
+					return DATA_NULL;
+				}
+				else if(argc < paramc)
+				{
+					compiler_throw(compiler, node, "Too few arguments for function '%s'. Expected: %d", call->ident, paramc);
 					return DATA_NULL;
 				}
 				else
 				{
-					ast_t* func = symbol->node;
-					address = symbol->address;
-
-					// Param checking
-					size_t argc = list_size(node->call.args);
-					size_t paramc = list_size(func->funcdecl.impl.formals);
-					if(argc > paramc)
+					if(list_size(symbol->node->funcdecl.impl.formals) > 0)
 					{
-						compiler_throw(compiler, node, "Too many arguments for function '%s'. Expected: %d", call->ident, paramc);
-						return DATA_NULL;
-					}
-					else if(argc < paramc)
-					{
-						compiler_throw(compiler, node, "Too few arguments for function '%s'. Expected: %d", call->ident, paramc);
-						return DATA_NULL;
-					}
-					else
-					{
-						// Valid, test types
-						list_iterator_t* iter = list_iterator_create(symbol->node->funcdecl.impl.formals);
-						list_iterator_t* args_iter = list_iterator_create(node->call.args);
-						int i = 1;
-						while(!list_iterator_end(iter))
+						param_t* first = list_top(func->funcdecl.impl.formals);
+						if(first->type == DATA_VARARGS && list_size(func->funcdecl.impl.formals) == 1)
 						{
-							datatype_t type = compiler_eval(compiler, list_iterator_next(args_iter));
-							param_t* param = list_iterator_next(iter);
-
-							if(param->type != type)
-							{
-								compiler_throw(compiler, node, "Warning: Parameter %d has the wrong type. Expected: %s", i, datatype2str(param->type));
-								break;
-							}
-							i++;
+							//Variable args
+							eval_block(compiler, node->call.args);
 						}
-						list_iterator_free(args_iter);
-						list_iterator_free(iter);
+						else
+						{
+							// Valid, test types
+							list_iterator_t* iter = list_iterator_create(symbol->node->funcdecl.impl.formals);
+							list_iterator_t* args_iter = list_iterator_create(node->call.args);
+							int i = 1;
+							while(!list_iterator_end(iter))
+							{
+								datatype_t type = compiler_eval(compiler, list_iterator_next(args_iter));
+								param_t* param = list_iterator_next(iter);
 
-						// Emit invocation
-						emit_invoke(compiler->buffer, address, args);
-						return func->funcdecl.rettype;
+								if(param->type != type)
+								{
+									compiler_throw(compiler, node, "Warning: Parameter %d has the wrong type. Expected: %s", i, datatype2str(param->type));
+									break;
+								}
+								i++;
+							}
+							list_iterator_free(args_iter);
+							list_iterator_free(iter);
+						}
 					}
 				}
+
+				// Emit invocation
+				if(func->funcdecl.external)
+				{
+					emit_syscall(compiler->buffer, func->funcdecl.name, argc);
+				}
+				else
+				{
+					emit_invoke(compiler->buffer, address, argc);
+				}
+				return func->funcdecl.rettype;
 			}
-			else
-			{
-				compiler_throw(compiler, node, "Implicit declaration of function '%s'", call->ident);
-				return DATA_NULL;
-			}
+		}
+		else
+		{
+			compiler_throw(compiler, node, "Implicit declaration of function '%s'", call->ident);
+			return DATA_NULL;
 		}
 	}
 	else
@@ -879,6 +881,7 @@ datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 			compiler_throw(compiler, node, "Warning: Array index out of bounds");
 			return DATA_NULL;
 		}
+#ifdef CODE_OPT
 		else if(expr->class == AST_STRING)
 		{
 			// Direct string element access, e.g.: "Hello World"[0]
@@ -922,6 +925,7 @@ datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 			free(indexedElement);
 			return DATA_STRING;
 		}
+#endif
 
 		emit_op(compiler->buffer, OP_STRSUB);
 		return DATA_STRING;
@@ -931,10 +935,14 @@ datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 		// We got an array and want to access an element
 		emit_op(compiler->buffer, OP_ARRSUB);
 	}
+	else if(exprType == DATA_VOID || exprType == DATA_NULL)
+	{
+		compiler_throw(compiler, node, "Invalid subscript operation");
+		return DATA_NULL;
+	}
 	else
 	{
-		// TODO: support!
-		compiler_throw(compiler, node, "TODO: Operation is currently not supported");
+		compiler_throw(compiler, node, "Warning: Operation is not supported");
 		return DATA_NULL;
 	}
 
@@ -960,7 +968,7 @@ datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 	else if(expr->class == AST_ARRAY) {
 		// Direct access, e.g.: [1,2,3,4,5][0]
 		// This should not happen
-		// TODO: Implement a method to simplify this to throw just 1
+		// TODO: Implement a method to simplify this to throw just 1, new optimization
 		return expr->array.type;
 	}
 	else
@@ -1046,17 +1054,14 @@ datatype_t eval_unary(compiler_t* compiler, ast_t* node)
 	return type;
 }
 
-datatype_t eval_include(compiler_t* compiler, ast_t* node)
-{
-	// TODO: register symbols
-	// or include actual file
-	return DATA_NULL;
-}
-
 // Real compile function
 datatype_t compiler_eval(compiler_t* compiler, ast_t* node)
 {
 	if(compiler->error) return DATA_NULL;
+
+#ifdef DB_EVAL
+	console("Evaluating: %s\n", ast_classname(node->class));
+#endif
 
 	switch(node->class)
 	{
@@ -1076,7 +1081,6 @@ datatype_t compiler_eval(compiler_t* compiler, ast_t* node)
 		case AST_WHILE: return eval_while(compiler, node);
 		case AST_UNARY: return eval_unary(compiler, node);
 		case AST_SUBSCRIPT: return eval_subscript(compiler, node);
-		case AST_INCLUDE: return eval_include(compiler, node);
 		default: break;
 	}
 
@@ -1123,7 +1127,7 @@ void compiler_dump(ast_t* node, int level)
 			while(!list_iterator_end(iter))
 			{
 				param_t* param = list_iterator_next(iter);
-				fprintf(stdout, "%s: %d", param->name, param->type);
+				fprintf(stdout, "%s: %s", param->name, datatype2str(param->type));
 
 				if(!list_iterator_end(iter))
 				{
@@ -1248,11 +1252,9 @@ void compiler_dump(ast_t* node, int level)
 			list_iterator_free(iter);
 			break;
 		}
-		case AST_INCLUDE:
+		case AST_IMPORT:
 		{
-			fprintf(stdout, ":use<");
-			compiler_dump(node->include, 0);
-			fprintf(stdout, ">");
+			fprintf(stdout, ":import<%s>", node->import);
 			break;
 		}
 		case AST_ARRAY:

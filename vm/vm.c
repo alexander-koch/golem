@@ -1,7 +1,5 @@
 #include "vm.h"
 
-extern void gopen_libs(vm_t*);
-
 // Standard Library
 // TODO:
 // something like binary find function in dll
@@ -12,61 +10,14 @@ extern void gopen_libs(vm_t*);
 //}
 // Return -1 if fail
 
-int golem_println(vm_t* vm)
-{
-	size_t argc = value_int(pop(vm));
+extern int io_println(vm_t* vm);
+extern int io_getline(vm_t* vm);
+extern int str_strlen(vm_t* vm);
 
-	// Order values
-	list_t* values = list_new();
-	for(int i = 0; i < argc; i++)
-	{
-		value_t* val = pop(vm);
-		list_push(values, val);
-	}
-
-	// Print values
-	for(int i = argc; i > 0; i--)
-	{
-		value_t* v = list_get(values, i-1);
-		value_print(v);
-	}
-	console("\n");
-	list_free(values);
-	return 0;
-}
-
-int golem_getline(vm_t* vm)
-{
-	pop(vm);
-
-	char buf[512];
-	fgets(buf, sizeof(buf), stdin);
-	value_t* val = value_new_string(buf);
-	push(vm, val);
-	return 0;
-}
-
-int golem_strlen(vm_t* vm)
-{
-	pop(vm);
-
-	value_t* str = pop(vm);
-	if(str->type != VALUE_STRING)
-	{
-		return -1;
-	}
-
-	// Don't mind the null-terminator
-	size_t len = strlen(value_string(str))-1;
-	value_t* v = value_new_int(len);
-	push(vm, v);
-	return 0;
-}
-
-static GolemMethodDef system_methods[] = {
-	{"println", golem_println},	// io
-	{"getline", golem_getline},	// io
-	{"length", golem_strlen},	// strutils
+static FunctionDef system_methods[] = {
+	{"println", io_println},	// io
+	{"getline", io_getline},	// io
+	{"length", str_strlen},	    // str
 	{0, 0}	/* sentinel */
 };
 

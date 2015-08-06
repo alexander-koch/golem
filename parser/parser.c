@@ -1,6 +1,6 @@
 #include "parser.h"
 
-#define KEYWORD_INCLUDE "import"
+#define KEYWORD_IMPORT "import"
 #define KEYWORD_DECLARATION "let"
 #define KEYWORD_MUTATE "mut"
 #define KEYWORD_FUNCTION "func"
@@ -11,7 +11,7 @@
 #define KEYWORD_RETURN "return"
 #define KEYWORD_LAMBDA "lambda"
 
-ast_t* parse_include_declaration(parser_t* parser, location_t loc);
+ast_t* parse_import_declaration(parser_t* parser, location_t loc);
 ast_t* parse_var_declaration(parser_t* parser, location_t loc);
 ast_t* parse_fn_declaration(parser_t* parser, location_t loc);
 ast_t* parse_if_declaration(parser_t* parser, location_t loc);
@@ -688,7 +688,7 @@ ast_t* parse_stmt(parser_t* parser)
         ast_t* (*fn)(parser_t*, location_t);
     } parsers[] =
     {
-        {KEYWORD_INCLUDE, parse_include_declaration},
+        {KEYWORD_IMPORT, parse_import_declaration},
         {KEYWORD_DECLARATION, parse_var_declaration},
         {KEYWORD_FUNCTION, parse_fn_declaration},
         {KEYWORD_IF, parse_if_declaration},
@@ -741,6 +741,7 @@ ast_t* parser_run(parser_t* parser, const char* content)
     // Create toplevel program scope
     ast_t* ast = ast_class_create(AST_TOPLEVEL, get_location(parser));
     ast->toplevel = list_new();
+    parser->top = ast;
 
     // Parse each statement and abort if an error occurs
     while(!parser_end(parser))
@@ -758,6 +759,7 @@ ast_t* parser_run(parser_t* parser, const char* content)
         list_push(ast->toplevel, node);
     }
 
+    parser->top = 0;
     return ast;
 }
 
@@ -765,22 +767,40 @@ ast_t* parser_run(parser_t* parser, const char* content)
 // Parsing subroutines
 //////------------------
 
-ast_t* parse_include_declaration(parser_t* parser, location_t loc)
+extern void io_gen_signatures(list_t* list);
+ast_t* parse_import_declaration(parser_t* parser, location_t loc)
 {
-    // <KEYWORD_INCLUDE> "io" \n
-    ast_t* node = ast_class_create(AST_INCLUDE, loc);
-    token_t* inc = accept_token_string(parser, KEYWORD_INCLUDE);
+    // <KEYWORD_IMPORT> "io" \n
+    ast_t* node = ast_class_create(AST_IMPORT, loc);
+    token_t* inc = accept_token_string(parser, KEYWORD_IMPORT);
     token_t* val = accept_token_type(parser, TOKEN_STRING);
 
     if(inc && val)
     {
-        ast_t* str = ast_class_create(AST_STRING, get_location(parser));
-        str->string = val->value;
-        node->include = str;
+        node->import = val->value;
+
+        if(!strcmp(node->import, "stdio"))
+        {
+            io_gen_signatures(parser->top->toplevel);
+
+            location_t loc = {0, 0};
+        	ast_t* len = ast_class_create(AST_DECLFUNC, loc);
+        	len->funcdecl.name = strdup("length");
+        	len->funcdecl.impl.formals = list_new();
+        	len->funcdecl.impl.body = 0;
+        	len->funcdecl.rettype = DATA_INT;
+        	len->funcdecl.external = true;
+
+            param_t* param = malloc(sizeof(*param));
+        	param->name = 0;
+        	param->type = DATA_STRING;
+        	list_push(len->funcdecl.impl.formals, param);
+            list_push(parser->top->toplevel, len);
+        }
     }
     else
     {
-        parser_throw(parser, "Malformed import / include statement");
+        parser_throw(parser, "Malformed import statement");
     }
 
     return node;
@@ -836,6 +856,7 @@ ast_t* parse_fn_declaration(parser_t* parser, location_t loc)
         node->funcdecl.name = ident->value;
         node->funcdecl.impl.formals = parse_formals(parser);
         node->funcdecl.rettype = DATA_NULL;
+        node->funcdecl.external = false;
 
         if(!match_type(parser, TOKEN_ARROW))
         {

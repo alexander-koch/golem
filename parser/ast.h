@@ -22,7 +22,8 @@ typedef enum
     DATA_OBJECT = 6, //0x20,
     DATA_VOID = 7, //0x40,
     DATA_ARRAY = 8, // 0x80
-    DATA_LAMBDA = 9
+    DATA_VARARGS = 9,
+    DATA_LAMBDA = 10
 } datatype_t;
 
 typedef struct
@@ -52,7 +53,7 @@ typedef enum
     AST_IF,
     AST_IFCLAUSE,
     AST_WHILE,
-    AST_INCLUDE,
+    AST_IMPORT,
     AST_CLASS,
     AST_RETURN,
     AST_TOPLEVEL,
@@ -105,13 +106,13 @@ struct ast_s
     union
     {
         char* ident;
+        char* import;
         char* string;
         list_t* toplevel;
         list_t* ifstmt;
         I64 i;
         F64 f;
         bool b;
-        ast_t* include;
         ast_t* returnstmt;
         ast_field_t subscript;
         ast_func_t funcdecl;

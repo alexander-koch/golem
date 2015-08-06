@@ -20,6 +20,7 @@ typedef struct
     size_t num_tokens;
     size_t cursor;
     bool error;
+    ast_t* top;
 } parser_t;
 
 void parser_init(parser_t* parser);

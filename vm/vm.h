@@ -33,11 +33,11 @@ typedef struct
 } vm_t;
 
 // External method definition
-typedef struct GolemMethodDef
+typedef struct FunctionDef
 {
 	const char* name;
 	int (*func)(vm_t*);
-} GolemMethodDef;
+} FunctionDef;
 
 vm_t* vm_new();
 instruction_t* vm_peek(vm_t* vm, list_t* buffer);

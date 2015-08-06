@@ -12,6 +12,7 @@ const char* datatype2str(datatype_t type)
 		case DATA_OBJECT: return "object";
 		case DATA_VOID: return "void";
 		case DATA_ARRAY: return "array";
+		case DATA_VARARGS: return "varargs";
 		case DATA_LAMBDA: return "lambda";
 		default: return "unknown";
 	}
@@ -46,7 +47,7 @@ const char* ast_classname(ast_class_t class)
 		case AST_DECLFUNC: return "function declaration";
 		case AST_IF: return "if condition";
 		case AST_WHILE: return "while loop";
-		case AST_INCLUDE: return "use";
+		case AST_IMPORT: return "import";
 		case AST_CLASS: return "class";
 		case AST_RETURN: return "return";
 		case AST_TOPLEVEL: return "toplevel";
@@ -95,6 +96,11 @@ void ast_free(ast_t* ast)
 			}
 			list_iterator_free(iter);
 			list_free(ast->funcdecl.impl.formals);
+
+			if(ast->funcdecl.external)
+			{
+				free(ast->funcdecl.name);
+			}
 			break;
 		}
 		case AST_BINARY:
@@ -158,11 +164,6 @@ void ast_free(ast_t* ast)
 			list_iterator_free(iter);
 			list_free(ast->whilestmt.body);
 			ast_free(ast->whilestmt.cond);
-			break;
-		}
-		case AST_INCLUDE:
-		{
-			ast_free(ast->include);
 			break;
 		}
 		case AST_CLASS:
