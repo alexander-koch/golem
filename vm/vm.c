@@ -666,16 +666,12 @@ void vm_execute(vm_t* vm, list_t* buffer)
 	console("Elapsed time: %.4f (sec)\n", elapsed);
 #endif
 
+	// Move stack pointer to zero, -> clears all elements by gc
+	vm->sp = 0;
 	gc(vm);
 
 	// Clear
 	console("\n");
-	for(int i = 0; i < STACK_SIZE; i++)
-	{
-		value_free(vm->stack[i]);
-		vm->stack[i] = 0;
-	}
-
 	for(int i = 0; i < LOCALS_SIZE; i++)
 	{
 		value_free(vm->locals[i]);

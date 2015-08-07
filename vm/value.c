@@ -76,7 +76,7 @@ value_t* value_copy(value_t* value)
 	}
 	else if(val->type == VALUE_LIST)
 	{
-		// TODO: computational expensive, improve the performance
+		// TODO: computationally expensive, improve the performance
 
 		list_t* list = list_new();
 		list_iterator_t* iter = list_iterator_create(value->v.o);

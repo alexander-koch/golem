@@ -27,6 +27,8 @@ A programming language written in C.
 - Lambdas => (Prototype / Concept)
 - Bytecode optimizations => (Working on it)
 
+- Fix value assignment of void function
+
 Langugage specific
 ===
 
