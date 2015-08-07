@@ -26,8 +26,7 @@ A programming language written in C.
 - Subscripts (Arrays / Strings) => (Working on it)
 - Lambdas => (Prototype / Concept)
 - Bytecode optimizations => (Working on it)
-
-- Fix value assignment of void function
+- Mutable parameters (Working on it)
 
 Langugage specific
 ===
@@ -62,6 +61,7 @@ Variables can be mutable, if they are declared using the 'mut' keyword.
 
 Functions are declared using the 'func' keyword.
 The body is bound by egyptian style braces. You have to declare the parameters and the return type.
+Parameters are always immutable.
 ```rust
 	func main(args: str[]) -> void {
 		# body

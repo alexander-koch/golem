@@ -239,6 +239,12 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 
 	// First eval initializer to get type
 	datatype_t vartype = compiler_eval(compiler, node->vardecl.initializer);
+	if(vartype == DATA_NULL || vartype == DATA_VOID)
+	{
+		compiler_throw(compiler, node, "Trying to assign a function to a value (Currently not supported)");
+		return DATA_NULL;
+	}
+
 
 	// Store symbol
 	symbol_t* symbol = symbol_new(compiler, node, compiler->address, vartype);

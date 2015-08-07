@@ -466,6 +466,12 @@ ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
         // TODO: Test if next is a valid operator
 
         ast_t* rhs = parse_expression_primary(parser);
+        if(rhs == 0)
+        {
+            parser_throw(parser, "Operator with missing second operand");
+            return lhs;
+        }
+
         int nextprec = parse_precedence(current_token(parser)->type);
         if(prec < nextprec)
         {
@@ -594,6 +600,12 @@ list_t* parse_formals(parser_t* parser)
             parser_throw(parser, "Invalid argument list");
             return formals;
         }
+
+        // Mutable parameter
+        // if(match_next(parser, "mut"))
+        // {
+        //     accept_token(parser);
+        // }
 
         token_t* name = accept_token(parser);
         if(!match_type(parser, TOKEN_COLON))
@@ -790,7 +802,7 @@ ast_t* parse_import_declaration(parser_t* parser, location_t loc)
 
             location_t loc = {0, 0};
         	ast_t* len = ast_class_create(AST_DECLFUNC, loc);
-        	len->funcdecl.name = strdup("length");
+        	len->funcdecl.name = strdup("strlen");
         	len->funcdecl.impl.formals = list_new();
         	len->funcdecl.impl.body = 0;
         	len->funcdecl.rettype = DATA_INT;

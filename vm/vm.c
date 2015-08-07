@@ -17,7 +17,7 @@ extern int str_strlen(vm_t* vm);
 static FunctionDef system_methods[] = {
 	{"println", io_println},	// io
 	{"getline", io_getline},	// io
-	{"length", str_strlen},	    // str
+	{"strlen", str_strlen},	    // str
 	{0, 0}	/* sentinel */
 };
 
@@ -617,6 +617,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 					if(i == idx)
 					{
 						list_push(nl, value_copy(val));
+						list_iterator_next(iter);
 					}
 					else
 					{
@@ -650,11 +651,11 @@ void vm_execute(vm_t* vm, list_t* buffer)
 #ifndef NO_IR
 	// Print out bytecodes
 	vm_print_code(vm, buffer);
+	console("\nExecution:\n");
 #endif
 
 	// Run
 #ifndef NO_EXEC
-	console("\nExecution:\n");
 	clock_t begin = clock();
 	while(vm->pc < list_size(buffer))
 	{
@@ -667,6 +668,7 @@ void vm_execute(vm_t* vm, list_t* buffer)
 #endif
 
 	// Move stack pointer to zero, -> clears all elements by gc
+	// Discard the rest
 	vm->sp = 0;
 	gc(vm);
 

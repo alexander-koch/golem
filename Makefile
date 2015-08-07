@@ -2,7 +2,7 @@ CC = gcc
 MODULE = golem
 INC = -I.
 
-CFLAGS = -std=c99 -Wall -Wno-unused-function -Wno-unused-parameter -DCODE_OPT -DNO_TRACE #-DNO_AST
+CFLAGS = -std=c99 -Wall -Wno-unused-function -Wno-unused-parameter -DCODE_OPT -DNO_TRACE -DNO_AST -DNO_IR
 
 # Options:
 # Disable:
