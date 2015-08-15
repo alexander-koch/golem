@@ -10,14 +10,16 @@
 //}
 // Return -1 if fail
 
-extern int io_println(vm_t* vm);
-extern int io_getline(vm_t* vm);
-extern int str_strlen(vm_t* vm);
+extern int stdlib_println(vm_t* vm);
+extern int stdlib_getline(vm_t* vm);
+extern int stdlib_f2i(vm_t* vm);
+extern int stdlib_i2f(vm_t* vm);
 
 static FunctionDef system_methods[] = {
-	{"println", io_println},	// io
-	{"getline", io_getline},	// io
-	{"strlen", str_strlen},	    // str
+	{"println", stdlib_println},
+	{"getline", stdlib_getline},
+	{"f2i", stdlib_f2i},
+	{"i2f", stdlib_i2f},
 	{0, 0}	/* sentinel */
 };
 
@@ -170,8 +172,15 @@ void vm_process(vm_t* vm, list_t* buffer)
 		{
 			// Local variable storage
 			int offset = value_int(instr->v1);
-			value_free(vm->locals[vm->fp+offset]);
-			vm->locals[vm->fp+offset] = value_copy(pop(vm));
+			if(offset < 0)
+			{
+				vm->stack[vm->fp+offset] = pop(vm);
+			}
+			else
+			{
+				value_free(vm->locals[vm->fp+offset]);
+				vm->locals[vm->fp+offset] = value_copy(pop(vm));
+			}
 			break;
 		}
 		case OP_LOAD:
@@ -442,16 +451,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			push(vm, v);
 			break;
 		}
-		case OP_CONCAT:
-		{
-			value_t* v2 = pop(vm);
-			value_t* v1 = pop(vm);
-			char* str = concat(value_string(v1), value_string(v2));
-			value_t* v = value_new_string(str);
-			push(vm, v);
-			free(str);
-			break;
-		}
 		case OP_BEQ:
 		{
 			value_t* v2 = pop(vm);
@@ -476,14 +475,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			push(vm, v);
 			break;
 		}
-		case OP_STREQ:
-		{
-			value_t* v2 = pop(vm);
-			value_t* v1 = pop(vm);
-			value_t* v = value_new_bool(!strcmp(value_string(v1), value_string(v2)));
-			push(vm, v);
-			break;
-		}
 		case OP_BNE:
 		{
 			value_t* v2 = pop(vm);
@@ -505,14 +496,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_t* v = value_new_float(value_float(v1) != value_float(v2));
-			push(vm, v);
-			break;
-		}
-		case OP_STRNE:
-		{
-			value_t* v2 = pop(vm);
-			value_t* v1 = pop(vm);
-			value_t* v = value_new_bool(strcmp(value_string(v1), value_string(v2)) != 0);
 			push(vm, v);
 			break;
 		}
@@ -573,17 +556,14 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* key = pop(vm);
 			value_t* object = pop(vm);
 
-			if(key->type == VALUE_STRING)
+			if(object->type == VALUE_STRING)
 			{
 				char* str = value_string(object);
 				int idx = value_int(key);
-				char* nw = malloc(sizeof(char)*2);
-				nw[0] = str[idx];
-				nw[1] = '\0';
+				char c = str[idx];
 
-				value_t* v = value_new_string(nw);
+				value_t* v = value_new_char(c);
 				push(vm, v);
-				free(nw);
 			}
 			else
 			{
@@ -628,6 +608,16 @@ void vm_process(vm_t* vm, list_t* buffer)
 				list_iterator_free(iter);
 
 				value_t* v = value_new_list(nl);
+				push(vm, v);
+			}
+			else if(object->type == VALUE_STRING)
+			{
+				char* data = value_string(object);
+				int idx = value_int(key);
+				char c = value_char(val);
+				data[idx] = c;
+
+				value_t* v = value_new_string(data);
 				push(vm, v);
 			}
 			break;

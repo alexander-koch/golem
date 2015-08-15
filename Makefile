@@ -2,7 +2,7 @@ CC = gcc
 MODULE = golem
 INC = -I.
 
-CFLAGS = -std=c99 -Wall -Wno-unused-function -Wno-unused-parameter -DCODE_OPT -DNO_TRACE -DNO_AST -DNO_IR
+CFLAGS = -std=c99 -Wall -Wno-unused-function -Wno-unused-parameter -DNO_TRACE -DNO_AST
 
 # Options:
 # Disable:
@@ -12,7 +12,7 @@ CFLAGS = -std=c99 -Wall -Wno-unused-function -Wno-unused-parameter -DCODE_OPT -D
 # -DNO_EXEC  <-- Bytecode is not executed
 # Enable:
 # -DDB_VARS	 <-- Debugs all variables by printing a message
-# -DB_EVAL	 <-- Debugs every ast evaluation
+# -DDB_EVAL	 <-- Debugs every ast evaluation
 # -DCODE_OPT <-- Optimizes bytecode
 
 FILES = main.c \
@@ -25,22 +25,19 @@ FILES = main.c \
 		lexis/lexer.c \
 		parser/ast.c \
 		parser/parser.c \
-		parser/optimizer.c \
 		compiler/compiler.c \
 		compiler/asm_compiler.c \
 		compiler/bytecode_writer.c \
 		vm/value.c \
 		vm/bytecode.c \
 		vm/vm.c \
-		lib/iolib.c \
+		lib/stdlib.c \
 		lib/strlib.c \
-		lib/mathlib.c \
-		lib/ginit.c
-
+		lib/mathlib.c
 
 debug:
 	$(CC) $(CFLAGS) $(INC) -c $(FILES)
-	$(CXX) *.o $(LDFLAGS) -o $(MODULE)
+	$(CC) *.o $(LDFLAGS) -o $(MODULE)
 	-rm *.o
 
 asm:

@@ -8,13 +8,18 @@ const char* datatype2str(datatype_t type)
 		case DATA_BOOL: return "bool";
 		case DATA_INT: return "int";
 		case DATA_FLOAT: return "float";
-		case DATA_STRING: return "string";
+		case DATA_CHAR: return "char";
 		case DATA_OBJECT: return "object";
 		case DATA_VOID: return "void";
 		case DATA_ARRAY: return "array";
 		case DATA_VARARGS: return "varargs";
 		default:
 		{
+			if(type == DATA_STRING)
+			{
+				return "string";
+			}
+
 			if((type & DATA_ARRAY) == DATA_ARRAY)
 			{
 				return "array";
@@ -100,8 +105,8 @@ void ast_free(ast_t* ast)
 			iter = list_iterator_create(ast->funcdecl.impl.formals);
 			while(!list_iterator_end(iter))
 			{
-				param_t* param = list_iterator_next(iter);
-				free(param);
+				ast_t* param = list_iterator_next(iter);
+				ast_free(param);
 			}
 			list_iterator_free(iter);
 			list_free(ast->funcdecl.impl.formals);

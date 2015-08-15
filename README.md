@@ -10,23 +10,23 @@ A programming language written in C.
 
 - Statically typed, exception: variables, type is set by context
 - Strong typing
-- High-order functions, currying
+- Strings are arrays of characters, not a standalone type
 - Fully functional fast bytecode vm or translation into x86 / x86_64 assembler machine code
 - Systems language
 - Python's "Batteries included" philosophy for standard libraries
+- High-order functions, currying
 - Garbage collected
 - FAST!!!
-
 
 # TODO
 
 - Implementing all (basic) operators for associated types in the vm / bytecodes => (Done.)
 - Finalize implementing functions => (Done.)
 - mark-sweep garbage collector for vm => (Done.)
-- Subscripts (Arrays / Strings) => (Working on it)
-- Lambdas => (Prototype / Concept)
+- Mutable parameters (Done.)
+- Subscripts (Arrays / Strings) => (Done.)
 - Bytecode optimizations => (Working on it)
-- Mutable parameters (Working on it)
+- Lambdas => (Prototype / Concept)
 
 Langugage specific
 ===
@@ -63,7 +63,7 @@ Functions are declared using the 'func' keyword.
 The body is bound by egyptian style braces. You have to declare the parameters and the return type.
 Parameters are always immutable.
 ```rust
-	func main(args: str[]) -> void {
+	func main(arg0: char[]) -> void {
 		# body
 	}
 ```
@@ -131,6 +131,7 @@ Lambdas should fit in one line, if bigger needed, use a function instead.
 - if statements
 - while loop
 - function calls
+- library imports
 - array declaration
 - subscripts
 - expressions with precedence
@@ -139,8 +140,9 @@ Lambdas should fit in one line, if bigger needed, use a function instead.
 # Currently supported (Langugage-based)
 
 - variable and function declaration
-- types int, string, float, bool, (void)
+- types int, char, float, bool, (void)
 - function calls, recursion
+- arrays
 - system internal functions, println + getline
 - fast bytecode vm
 - compiler error reports

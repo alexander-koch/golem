@@ -44,9 +44,6 @@ typedef enum
 	// Boolean
 	OP_NOT,
 
-	// String
-	OP_CONCAT,
-
 	// Special
 	OP_SYSCALL,
 	OP_INVOKE,
@@ -60,11 +57,9 @@ typedef enum
 	OP_BEQ,
 	OP_IEQ,
 	OP_FEQ,
-	OP_STREQ,
 	OP_BNE,
 	OP_INE,
 	OP_FNE,
-	OP_STRNE,
 	OP_LT,
 	OP_GT,
 	OP_LE,
@@ -90,6 +85,7 @@ void emit_bool(list_t* buffer, bool b);
 void emit_int(list_t* buffer, I64 v);
 void emit_float(list_t* buffer, F64 f);
 void emit_string(list_t* buffer, char* str);
+void emit_char(list_t* buffer, char c);
 void emit_pop(list_t* buffer);
 void emit_op(list_t* buffer, opcode_t op);
 bool emit_tok2op(list_t* buffer, token_type_t tok, datatype_t type);

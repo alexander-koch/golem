@@ -9,7 +9,6 @@
 #define KEYWORD_WHILE "while"
 #define KEYWORD_CLASS "object"
 #define KEYWORD_RETURN "return"
-#define KEYWORD_LAMBDA "lambda"
 
 ast_t* parse_import_declaration(parser_t* parser, location_t loc);
 ast_t* parse_var_declaration(parser_t* parser, location_t loc);
@@ -18,7 +17,6 @@ ast_t* parse_if_declaration(parser_t* parser, location_t loc);
 ast_t* parse_while_declaration(parser_t* parser, location_t loc);
 ast_t* parse_class_declaration(parser_t* parser, location_t loc);
 ast_t* parse_return_declaration(parser_t* parser, location_t loc);
-ast_t* parse_lambda_declaration(parser_t* parser, location_t loc);
 ast_t* parse_expression(parser_t* parser);
 
 ast_t* parse_stmt(parser_t* parser);
@@ -131,8 +129,7 @@ void parser_throw(parser_t* parser, const char* format, ...)
     fprintf(stdout, "\n");
 }
 
-// real parsing functions begin
-
+// Parsing Functions
 int match_simple(parser_t* parser)
 {
     return match_type(parser, TOKEN_INT) ||
@@ -174,9 +171,11 @@ int parse_precedence(token_type_t type)
     }
 }
 
-/**
- *  Parses a call structure
- */
+// Parser.parseCall()
+// Parses a call structure
+// Example: func(), foo(baz, bar)
+// EBNF:
+// call = expr, "(", {expr, {",", expr}}, ")";
 ast_t* parse_call(parser_t* parser, ast_t* node)
 {
     ast_t* class = ast_class_create(AST_CALL, node->location);
@@ -217,9 +216,10 @@ ast_t* parse_call(parser_t* parser, ast_t* node)
     return class;
 }
 
-/**
- *  Parses a subscript, bracket based myarray[5] = x
- */
+// Parser.parseSubscript()
+// Parses a subscript, bracket based.
+// Example: myarray[5] = x
+// subscript = ident, "[", ident, "]", [subscript];
 ast_t* parse_subscript(parser_t* parser, ast_t* node)
 {
     ast_t* ast = ast_class_create(AST_SUBSCRIPT, node->location);
@@ -242,9 +242,11 @@ ast_t* parse_subscript(parser_t* parser, ast_t* node)
     return ast;
 }
 
-/**
- *  Parses a subscript, dot based. Example: myclass.x = 5
- */
+// Parser.parseSubscriptSugar()
+// Parses a special type of a subscript.
+// The subscript uses a dot instead of brackets.
+// Example: myclass.x = 5
+// subscript_sugar = ident, ".", ident, [call | subscript | subscript_sugar];
 ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node)
 {
     ast_t* ast = ast_class_create(AST_SUBSCRIPT, node->location);
@@ -278,9 +280,11 @@ ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node)
     return ast;
 }
 
-/**
- *  Parses simple literal structures -> Float / Integer / String / Boolean
- */
+// Parser.parseSimpleLiteral()
+// Parses simple literal structures -> Float / Integer / String / Boolean
+// EBNF:
+// number = float / integer;
+// simpleliteral = number | string | boolean;
 ast_t* parse_simpleliteral(parser_t* parser)
 {
     ast_t* node = ast_class_create(-1, get_location(parser));
@@ -300,6 +304,12 @@ ast_t* parse_simpleliteral(parser_t* parser)
     {
         node->class = AST_STRING;
         node->string = accept_token(parser)->value;
+
+        if(strlen(node->string) == 1)
+        {
+            node->class = AST_CHAR;
+            node->ch = node->string[0];
+        }
         return node;
     }
     else if(match_type(parser, TOKEN_BOOL))
@@ -315,10 +325,13 @@ ast_t* parse_simpleliteral(parser_t* parser)
     return node;
 }
 
-/**
- *  Array parsing function
- *  let x = [1,2,3,4,5]
- */
+// Parser.parseArray()
+// Array parsing function
+// Example:
+// let x = [1,2,3,4,5]
+// -----
+// EBNF:
+// array = "[", expr, "]";
 ast_t* parse_array(parser_t* parser)
 {
     ast_t* ast = ast_class_create(AST_ARRAY, get_location(parser));
@@ -351,10 +364,12 @@ ast_t* parse_array(parser_t* parser)
     return ast;
 }
 
-/**
- *  Parses a literal
- *  A literal is either a number / string / boolean or an array
- */
+// Parser.parseLiteral()
+// Parses a literal.
+// A literal is either a number, a string, a boolean or an array.
+// EBNF:
+// simpleliteral = number | string | boolean;
+// literal = simpleliteral | array;
 ast_t* parse_literal(parser_t* parser)
 {
     if(match_simple(parser))
@@ -372,6 +387,11 @@ ast_t* parse_literal(parser_t* parser)
     return 0;
 }
 
+// Parser.parseExpressionPrimary()
+// Parses a primary expression.
+// ---------------
+// EBNF:
+// expr_primary = literal | ident | expr | unary | call | subscript | subscript_sugar;
 ast_t* parse_expression_primary(parser_t* parser)
 {
     if(match_type(parser, TOKEN_NEWLINE))
@@ -522,6 +542,11 @@ ast_t* parse_expression(parser_t* parser)
     return lhs;
 }
 
+// Parser.parseDatatype()
+// Reads a datatype.
+// EBNF:
+// basicType = "int" | "float" | "char" | "bool" | "void" | custom;
+// datatype = basicType, ["[]"];
 datatype_t parse_datatype(parser_t* parser)
 {
     token_t* typestr = accept_token_type(parser, TOKEN_WORD);
@@ -542,9 +567,9 @@ datatype_t parse_datatype(parser_t* parser)
     {
         type = DATA_FLOAT;
     }
-    else if(!strcmp(v, "str"))
+    else if(!strcmp(v, "char"))
     {
-        type = DATA_STRING;
+        type = DATA_CHAR;
     }
     else if(!strcmp(v, "bool"))
     {
@@ -587,25 +612,32 @@ datatype_t parse_datatype(parser_t* parser)
     return type;
 }
 
-/**
- *  Parse formals -> e.g. argument list for functions
- */
+// Parser.parseFormals()
+// The function parses the paramters of a function.
+// Every parameter is stored in a variable declaration AST
+// and returned in a list.
+// ---------------
+// EBNF:
+// formal = ["mut"], ident, ":", datatype;
+// formal_list = "(", {formal}, ")";
 list_t* parse_formals(parser_t* parser)
 {
     list_t* formals = list_new();
     while(!match_type(parser, TOKEN_RPAREN))
     {
+        // Mutable parameter
+        bool mutable = false;
+        if(match_string(parser, "mut"))
+        {
+            accept_token(parser);
+            mutable = true;
+        }
+
         if(!match_type(parser, TOKEN_WORD))
         {
             parser_throw(parser, "Invalid argument list");
             return formals;
         }
-
-        // Mutable parameter
-        // if(match_next(parser, "mut"))
-        // {
-        //     accept_token(parser);
-        // }
 
         token_t* name = accept_token(parser);
         if(!match_type(parser, TOKEN_COLON))
@@ -615,12 +647,12 @@ list_t* parse_formals(parser_t* parser)
         }
         accept_token(parser); // ':'
 
-        param_t* param = malloc(sizeof(*param));
-        param->name = name->value;
-        param->type = parse_datatype(parser);
-        param->loc = get_location(parser);
-
+        ast_t* param = ast_class_create(AST_DECLVAR, get_location(parser));
+        param->vardecl.name = name->value;
+        param->vardecl.type = parse_datatype(parser);
+        param->vardecl.mutate = mutable;
         list_push(formals, param);
+
         if(!match_type(parser, TOKEN_COMMA) && !match_type(parser, TOKEN_RPAREN))
         {
             parser_throw(parser, "Expected seperator");
@@ -641,10 +673,10 @@ list_t* parse_formals(parser_t* parser)
     return formals;
 }
 
-/**
- *  Parses block until end
- *  DOES NOT PARSE BEGIN WITH AN OPENING BRACE
- */
+// Parser.parseBlock()
+// Parses a block until a closing brace is reached.
+// This does not include the opening brace.
+// Every statement is returned as a list.
 list_t* parse_block(parser_t* parser)
 {
     list_t* statements = list_new();
@@ -673,9 +705,7 @@ list_t* parse_block(parser_t* parser)
     return statements;
 }
 
-/**
- *  Newline testing, throws error if not
- */
+// Newline testing, throws error if there is none
 void test_newline(parser_t* parser)
 {
     if(!parser->error)
@@ -691,14 +721,15 @@ void test_newline(parser_t* parser)
     }
 }
 
-/**
- *  Statement parsing
- *  Every statment is followed by a newline
- */
+// Parser.parseStatement()
+// Every statement is followed by a newline
+// ---------------
+// EBNF:
+// newline = "\n";
+// stmt = expr, newline;
 ast_t* parse_stmt(parser_t* parser)
 {
     location_t pos = get_location(parser);
-
     static const struct
     {
         const char* token;
@@ -784,35 +815,21 @@ ast_t* parser_run(parser_t* parser, const char* content)
 // Parsing subroutines
 //////------------------
 
-extern void io_gen_signatures(list_t* list);
+extern void stdlib_gen_signatures(list_t* list);
 ast_t* parse_import_declaration(parser_t* parser, location_t loc)
 {
-    // <KEYWORD_IMPORT> "io" \n
+    // <KEYWORD_IMPORT> io \n
     ast_t* node = ast_class_create(AST_IMPORT, loc);
     token_t* inc = accept_token_string(parser, KEYWORD_IMPORT);
-    token_t* val = accept_token_type(parser, TOKEN_STRING);
+    token_t* val = accept_token_type(parser, TOKEN_WORD);
 
     if(inc && val)
     {
         node->import = val->value;
 
-        if(!strcmp(node->import, "stdio"))
+        if(!strcmp(node->import, "stdlib"))
         {
-            io_gen_signatures(parser->top->toplevel);
-
-            location_t loc = {0, 0};
-        	ast_t* len = ast_class_create(AST_DECLFUNC, loc);
-        	len->funcdecl.name = strdup("strlen");
-        	len->funcdecl.impl.formals = list_new();
-        	len->funcdecl.impl.body = 0;
-        	len->funcdecl.rettype = DATA_INT;
-        	len->funcdecl.external = true;
-
-            param_t* param = malloc(sizeof(*param));
-        	param->name = 0;
-        	param->type = DATA_STRING;
-        	list_push(len->funcdecl.impl.formals, param);
-            list_push(parser->top->toplevel, len);
+            stdlib_gen_signatures(parser->top->toplevel);
         }
     }
     else
@@ -1057,11 +1074,4 @@ ast_t* parse_return_declaration(parser_t* parser, location_t loc)
     }
 
     return node;
-}
-
-ast_t* parse_lambda_declaration(parser_t* parser, location_t loc)
-{
-    //ast_t* node = ast_class_create(AST_LAMBDA, loc);
-
-    return 0;
 }

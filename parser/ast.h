@@ -9,7 +9,6 @@
 #include <core/mem.h>
 #include <core/api.h>
 
-// needed types? i32, f32, i64, f64, bool, str, custom classes
 // types: void, bool, str, int, float, custom classes
 
 typedef enum
@@ -18,19 +17,14 @@ typedef enum
     DATA_BOOL = 1 << 2, //0x2,
     DATA_INT = 1 << 3, //0x4,
     DATA_FLOAT = 1 << 4, //0x8,
-    DATA_STRING = 1 << 5, //0x10,
+    DATA_CHAR = 1 << 5, //0x10,
     DATA_OBJECT = 1 << 6, //0x20,
     DATA_VOID = 1 << 7, //0x40,
     DATA_ARRAY = 1 << 8, // 0x80
     DATA_VARARGS = 1 << 9
 } datatype_t;
 
-typedef struct
-{
-    char* name;
-    datatype_t type;
-    location_t loc;
-} param_t;
+#define DATA_STRING (DATA_ARRAY | DATA_CHAR)
 
 typedef struct ast_s ast_t;
 
@@ -42,6 +36,7 @@ typedef enum
     AST_INT,
     AST_BOOL,
     AST_STRING,
+    AST_CHAR,
     AST_ARRAY,
     AST_BINARY,
     AST_UNARY,
@@ -107,6 +102,7 @@ struct ast_s
         char* ident;
         char* import;
         char* string;
+        char ch;
         list_t* toplevel;
         list_t* ifstmt;
         I64 i;

@@ -15,9 +15,9 @@ const char* reg(int i) {
 	}
 }
 
-void asm_write_prologue(FILE* fp, int stack_size)
+void asm_write_prologue(FILE* fp, int stack_size, int bias)
 {
-	fprintf(fp, "extern printf\nsection .data\n\tsize equ %d\n", stack_size);
+	fprintf(fp, "extern printf\nsection .data\n\tsize equ %d\n\tbias equ %d\n", stack_size, bias);
 	fprintf(fp, "\tprintNum db \"%%d\", 10, 0\n\n");
 	fprintf(fp, "section .text\n");
 	fprintf(fp, "global instr_add\n");
@@ -32,12 +32,12 @@ void asm_write_prologue(FILE* fp, int stack_size)
 	fprintf(fp, "\tmov rax, rcx\n\tret\n");
 
 	fprintf(fp, "\nWinMain:\n\t; prologue\n\tmov [rsp+8],rcx\n\tpush r14\n\tpush r13\n");
-	fprintf(fp, "\tsub rsp, size\n\tlea r13,[rsp]\n\n");
+	fprintf(fp, "\tsub rsp, size\n\tlea r13,[bias+rsp]\n\n");
 }
 
 void asm_write_epilogue(FILE* fp)
 {
-	fprintf(fp, "\t; epilogue\n\tlea rsp,[r13]\n\tadd rsp,size\n");
+	fprintf(fp, "\t; epilogue\n\tlea rsp,[r13+size-bias]\n");
 	fprintf(fp, "\tpop r13\n\tpop r14\n\tret\n");
 }
 
@@ -53,38 +53,50 @@ void translate(FILE* fp, instruction_t* instr)
 		}
 		case OP_GSTORE:
 		{
-			//fprintf(fp, "\tmov [rsp]");
+			int offset = value_int(instr->v1);
+			fprintf(fp, "\tmov [r13-%d], %s\n", (offset+1) * 4, reg(--vars));
+			//vars--;
+			break;
+		}
+		case OP_GLOAD:
+		{
+			int offset = value_int(instr->v1);
+			fprintf(fp, "\tmov %s, [r13-%d]\n", reg(vars), (offset+1) * 4);
+			vars++;
 			break;
 		}
 		case OP_IADD:
 		{
-			fprintf(fp, "\tcall instr_add\n");
-			break;
-		}
-		case OP_ISUB:
-		{
-			fprintf(fp, "\tcall instr_sub\n");
+			//fprintf(fp, "\tpop rcx\n\tpop rdx\n");
+			fprintf(fp, "\tmov rcx, %s\n", reg(vars));
+			vars--;
+			fprintf(fp, "\tmov rdx, %s\n", reg(vars));
+			vars--;
+			fprintf(fp, "\tadd rcx, rdx\n");
+			fprintf(fp, "\tmov rax, rcx\n");
 			break;
 		}
 		case OP_SYSCALL:
 		{
 			if(!strcmp(value_string(instr->v1), "println"))
 			{
+				fprintf(fp, "\tpop rdx\n");
 				fprintf(fp, "\tmov rcx, printNum\n");
-				fprintf(fp, "\tmov rdx, rax\n");
 				fprintf(fp, "\tcall printf\n");
 			}
 			break;
 		}
 		default: break;
 	}
+
+	fprintf(fp, "\n");
 }
 
 int asm_write(compiler_t* compiler, const char* filename)
 {
 	FILE* fp = fopen(filename, "wb");
 	if(!fp) return 1;
-	asm_write_prologue(fp, 256);
+	asm_write_prologue(fp, 256, 8);
 
 	fprintf(fp, "\t; main code\n");
 	list_iterator_t* iter = list_iterator_create(compiler->buffer);

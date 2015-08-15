@@ -51,6 +51,7 @@ int main(int argc, char** argv)
     {
         // Generate and execute bytecode
         vm_t* vm = vm_new();
+
         list_t* buffer = compile_file(&compiler, argv[1]);
         if(buffer)
         {
@@ -72,14 +73,28 @@ int main(int argc, char** argv)
             list_t* buffer = compile_file(&compiler, argv[2]);
             if(buffer)
             {
-                asm_write(&compiler, "out.asm");
+                //asm_write(&compiler, "out.asm");
+                write_bytecode("out.app", compiler.buffer);
                 compiler_clear(&compiler);
-                fprintf(stdout, "Wrote assembly code to file 'out.asm'\n");
+                fprintf(stdout, "Wrote assembly code to file 'out.app'\n");
             }
             else
             {
                 fprintf(stdout, "Could not compile file '%s'\n\n", argv[2]);
             }
+        }
+        else if(!strcmp(argv[1], "-r"))
+        {
+            vm_t* vm = vm_new();
+            list_t* buffer = list_new();
+            bool ok = read_bytecode(argv[2], &buffer);
+            compiler.buffer = buffer;
+            if(ok)
+            {
+                vm_execute(vm, buffer);
+            }
+            compiler_clear(&compiler);
+            vm_free(vm);
         }
         else
         {

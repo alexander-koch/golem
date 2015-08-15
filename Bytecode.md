@@ -37,7 +37,6 @@ The following instructions are currently supported.
 |fdiv                 | float division
 |fminus               | float sign change to minus
 |not                  | logical negation operation
-|concat               | concatenate strings
 
 | Special             | Description
 |---                  |---
@@ -53,11 +52,9 @@ The following instructions are currently supported.
 |beq                  | boolean equal
 |ieq                  | integer equal
 |feq                  | float equal
-|streq                | string equal
 |bne                  | boolean not equal
 |ine                  | integer not equal
 |fne                  | float not equal
-|strne                | string not equal
 |lt                   | number less than
 |gt                   | number greater than
 |le                   | number less equal
@@ -68,6 +65,7 @@ The following instructions are currently supported.
 | Subscript           | Description
 |---                  |---
 |getsub               | get the sub-element of the value, expects index (first) and value on top of the stack
+|setsub               | sets the sub-element of the value, same mechanism as above
 
 # Example compilation
 

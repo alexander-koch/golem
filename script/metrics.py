@@ -31,14 +31,18 @@ for source_path in files:
     with open(source_path, "r") as input:
         for line in input:
             num_semicolons += line.count(';')
+            num_code += 1
+
             match = TODO_PATTERN.match(line)
             if match:
                 num_todos += 1
+                num_docs += 1
                 continue
 
             match = FIXME_PATTERN.match(line)
             if match:
                 num_fixmes += 1
+                num_docs += 1
                 continue
 
             match = DOC_PATTERN.match(line)
@@ -48,15 +52,21 @@ for source_path in files:
 
             if (line.strip() == ""):
                 num_empty += 1
-                continue
 
-            num_code += 1
+lloc = num_code - num_docs - num_empty
+llocp = float(lloc) / float(num_code)
+mcomm = float(num_docs) / float(lloc)
 
-print("Metrics:")
+print("Quality indicators:")
 print("  files           " + str(num_files))
 print("  semicolons      " + str(num_semicolons))
 print("  TODOs           " + str(num_todos))
 print("  FIXMEs          " + str(num_fixmes))
 print("  comment lines   " + str(num_docs))
-print("  lines of code   " + str(num_code))
 print("  empty lines     " + str(num_empty))
+print("  LOC             " + str(num_code))
+print("\n")
+print("Metrics:")
+print("  LLOC            " + str(lloc))
+print("  LLOC%           " + str(llocp))
+print("  MCOMM%          " + str(mcomm) + " <= Expected 20%")

@@ -34,6 +34,14 @@ value_t* value_new_float(float number)
 	return val;
 }
 
+value_t* value_new_char(char character)
+{
+	value_t* val = value_new_null();
+	val->type = VALUE_CHAR;
+	val->v.c = character;
+	return val;
+}
+
 value_t* value_new_string_const(const char* string)
 {
 	value_t* val = value_new_null();
@@ -47,6 +55,14 @@ value_t* value_new_string(char* string)
 	value_t* val = value_new_null();
 	val->type = VALUE_STRING;
 	val->v.o = strdup(string);
+	return val;
+}
+
+value_t* value_new_string_nocopy(char* string)
+{
+	value_t* val = value_new_null();
+	val->type = VALUE_STRING;
+	val->v.o = string;
 	return val;
 }
 
@@ -153,6 +169,11 @@ void value_print(value_t* value)
 			case VALUE_STRING:
 			{
 				console("%s", (char*)value->v.o);
+				break;
+			}
+			case VALUE_CHAR:
+			{
+				console("%c", value->v.c);
 				break;
 			}
 			case VALUE_LIST:

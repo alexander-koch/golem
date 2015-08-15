@@ -30,7 +30,6 @@ const char* op2str(opcode_t code)
 		case OP_FDIV: return "fdiv";
 		case OP_FMINUS: return "fminus";
 		case OP_NOT: return "not";
-		case OP_CONCAT: return "concat";
 		case OP_SYSCALL: return "syscall";
 		case OP_INVOKE: return "invoke";
 		case OP_RET: return "ret";
@@ -41,11 +40,9 @@ const char* op2str(opcode_t code)
 		case OP_BEQ: return "beq";
 		case OP_IEQ: return "ieq";
 		case OP_FEQ: return "feq";
-		case OP_STREQ: return "streq";
 		case OP_BNE: return "bne";
 		case OP_INE: return "ine";
 		case OP_FNE: return "fne";
-		case OP_STRNE: return "strne";
 		case OP_LT: return "lt";
 		case OP_GT: return "gt";
 		case OP_LE: return "le";
@@ -112,6 +109,12 @@ void emit_float(list_t* buffer, F64 f)
 	insert_v1(buffer, OP_PUSH, val);
 }
 
+void emit_char(list_t* buffer, char c)
+{
+	value_t* val = value_new_char(c);
+	insert_v1(buffer, OP_PUSH, val);
+}
+
 void emit_string(list_t* buffer, char* str)
 {
 	value_t* val = value_new_string(str);
@@ -136,7 +139,6 @@ opcode_t getOp(token_type_t tok, datatype_t type)
 		{
 			if(type == DATA_INT) return OP_IADD;
 			if(type == DATA_FLOAT) return OP_FADD;
-			if(type == DATA_STRING) return OP_CONCAT;
 			return -1;
 		}
 		case TOKEN_SUB:
@@ -169,7 +171,6 @@ opcode_t getOp(token_type_t tok, datatype_t type)
 			if(type == DATA_BOOL) return OP_BEQ;
 			if(type == DATA_INT) return OP_IEQ;
 			if(type == DATA_FLOAT) return OP_FEQ;
-			if(type == DATA_STRING) return OP_STREQ;
 			return -1;
 		}
 		case TOKEN_NEQUAL:
@@ -177,7 +178,6 @@ opcode_t getOp(token_type_t tok, datatype_t type)
 			if(type == DATA_BOOL) return OP_BNE;
 			if(type == DATA_INT) return OP_INE;
 			if(type == DATA_FLOAT) return OP_FNE;
-			if(type == DATA_STRING) return OP_STRNE;
 			return -1;
 		}
 		case TOKEN_LESS: return OP_LT;
