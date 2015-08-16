@@ -4,7 +4,7 @@
 #include <vm/vm.h>
 #include <adt/hashmap.h>
 
-int stdlib_println(vm_t* vm)
+int stdlib_print(vm_t* vm)
 {
 	size_t argc = value_int(pop(vm));
 
@@ -22,9 +22,15 @@ int stdlib_println(vm_t* vm)
 		value_t* v = list_get(values, i-1);
 		value_print(v);
 	}
-	console("\n");
 	list_free(values);
 	return 0;
+}
+
+int stdlib_println(vm_t* vm)
+{
+	int ret = stdlib_print(vm);
+	printf("\n");
+	return ret;
 }
 
 int stdlib_getline(vm_t* vm)
@@ -59,6 +65,7 @@ int stdlib_i2f(vm_t* vm)
 }
 
 static const FunctionDef stdlib[] = {
+	{"print", stdlib_print},
 	{"println", stdlib_println},
 	{"getline", stdlib_getline},
 	{"f2i", stdlib_f2i},
@@ -80,6 +87,10 @@ void stdlib_gen_signatures(list_t* toplevel)
 	SIGNATURE_BEGIN()
 
 	FUNCTION_NEW("getline", DATA_STRING)
+	FUNCTION_PUSH(toplevel)
+
+	FUNCTION_NEW("print", DATA_VOID)
+	ADD_PARAM(DATA_VARARGS)
 	FUNCTION_PUSH(toplevel)
 
 	FUNCTION_NEW("println", DATA_VOID)

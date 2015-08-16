@@ -43,7 +43,6 @@ typedef struct compiler_t
 	parser_t parser;
 	list_t* buffer;
 	char* filename;
-	int address;
 	bool error;
 	scope_t* scope;
 	int depth;

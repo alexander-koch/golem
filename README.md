@@ -5,17 +5,16 @@ A programming language written in C.
 # Project aims
 
 - Functional, object-oriented scripting / programming language
-=> Immutability of objects
-=> Everything is an object
 
-- Statically typed, exception: variables, type is set by context
-- Strong typing
-- Strings are arrays of characters, not a standalone type
-- Fully functional fast bytecode vm or translation into x86 / x86_64 assembler machine code
+- Immutablitiy of everything
+- Explicit mutable declaration
+- Statically, strong typed
+- Type inference => automatic deduction of data types
+- Strings as arrays of characters, not a standalone type
 - Systems language
-- Python's "Batteries included" philosophy for standard libraries
 - High-order functions, currying
-- Garbage collected
+- Fully functional fast bytecode vm or translation into x86 / x86_64 assembler machine code
+- Garbage collected vm
 - FAST!!!
 
 # TODO
@@ -26,7 +25,7 @@ A programming language written in C.
 - Mutable parameters (Done.)
 - Subscripts (Arrays / Strings) => (Done.)
 - Bytecode optimizations => (Working on it)
-- Lambdas => (Prototype / Concept)
+- Lambdas, Closures, Anonymous functions => (Prototype / Concept)
 
 Langugage specific
 ===
@@ -34,16 +33,13 @@ Langugage specific
 - AST optimization
 - prefix operators
 - Lambdas
-- Typecasting
+- Typecasting => Done by std library
 
 Implementation specific
 ===
 
 - map / filter / curry methods
 - performance and bytecode optimization
-- JVM approach:
-	- compiler: source code => bytecodes => file
- 	- vm: file => vm => execution
 
 # Concept (final concept may change)
 
@@ -162,6 +158,10 @@ https://www.youtube.com/watch?v=OjaAToVkoTw
 http://journal.stuffwithstuff.com/2013/12/08/babys-first-garbage-collector/
 http://bartoszsypytkowski.com/simple-virtual-machine/
 https://github.com/gphat/babyvm/blob/master/babyvm.c
+https://en.wikibooks.org/wiki/X86_Disassembly/Functions_and_Stack_Frames
+https://en.wikipedia.org/wiki/Lambda_lifting
+https://en.wikipedia.org/wiki/Call_stack#Structure
+https://en.wikipedia.org/wiki/Nested_function#Implementation
 
 # Licence
 Copyright (c) Alexander Koch 2015 All Rights Reserved.

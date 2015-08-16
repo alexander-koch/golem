@@ -69,7 +69,8 @@ typedef enum
 
 	// Subscript
 	OP_GETSUB,
-	OP_SETSUB
+	OP_SETSUB,
+	OP_UPVAL
 } opcode_t;
 
 typedef struct
@@ -80,6 +81,10 @@ typedef struct
 } instruction_t;
 
 const char* op2str(opcode_t code);
+
+void insert(list_t* buffer, opcode_t op);
+void insert_v1(list_t* buffer, opcode_t op, value_t* v1);
+void insert_v2(list_t* buffer, opcode_t op, value_t* v1, value_t* v2);
 
 void emit_bool(list_t* buffer, bool b);
 void emit_int(list_t* buffer, I64 v);

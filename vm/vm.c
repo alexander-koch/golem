@@ -10,12 +10,14 @@
 //}
 // Return -1 if fail
 
+extern int stdlib_print(vm_t* vm);
 extern int stdlib_println(vm_t* vm);
 extern int stdlib_getline(vm_t* vm);
 extern int stdlib_f2i(vm_t* vm);
 extern int stdlib_i2f(vm_t* vm);
 
 static FunctionDef system_methods[] = {
+	{"print", stdlib_print},
 	{"println", stdlib_println},
 	{"getline", stdlib_getline},
 	{"f2i", stdlib_f2i},
@@ -32,9 +34,6 @@ vm_t* vm_new()
 	vm->firstVal = 0;
 	vm->numObjects = 0;
 	vm->maxObjects = 8;
-
-	//vm->libs = hashmap_new();
-	//vm_open_libs(vm);
 	return vm;
 }
 
@@ -186,9 +185,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 		case OP_LOAD:
 		{
 			int offset = value_int(instr->v1);
-
-			// HACK: Using < 0 for locals
-			// Still works, wondering if it really is a HACK.
 			if(offset < 0)
 			{
 				value_t* v = vm->stack[vm->fp+offset];
@@ -212,6 +208,31 @@ void vm_process(vm_t* vm, list_t* buffer)
 		{
 			int offset = value_int(instr->v1);
 			value_t* v = vm->locals[offset];
+			push(vm, value_copy(v));
+			break;
+		}
+		case OP_UPVAL:
+		{
+			int scopes = value_int(instr->v1);
+			int offset = value_int(instr->v2);
+
+			int fp = vm->fp;
+			int sp = vm->sp;
+
+			for(int i = 0; i < scopes; i++)
+			{
+				vm->fp = value_int(vm->stack[vm->fp - 2]);
+			}
+			vm->sp = vm->fp;
+
+			value_t* v = 0;
+			if(offset < 0)
+				v = vm->stack[vm->fp+offset];
+			else
+				v = vm->locals[vm->fp+offset];
+
+			vm->sp = sp;
+			vm->fp = fp;
 			push(vm, value_copy(v));
 			break;
 		}
@@ -250,9 +271,9 @@ void vm_process(vm_t* vm, list_t* buffer)
 			// |Arg2			-5|
 			// |...				-4|
 			// |NUM_ARGS		-3|
-			// |FP				-2|
+			// |FP				-2|	<-- vm->fp - 2
 			// |PC				-1|
-			// |...				 0|	<-- current position sp
+			// |...				 0|	<-- current position sp / fp
 			// |...				+1|
 			// |    STACK_TOP     |
 
@@ -266,13 +287,10 @@ void vm_process(vm_t* vm, list_t* buffer)
 			value_t* ret = pop(vm);
 			vm->sp = vm->fp;
 
-			value_t* pc_ptr = pop(vm);
-			value_t* fp_ptr = pop(vm);
-			vm->pc = value_int(pc_ptr);
-			vm->fp = value_int(fp_ptr);
+			vm->pc = value_int(pop(vm));
+			vm->fp = value_int(pop(vm));
 
-			value_t* args_ptr = pop(vm);
-			size_t args = value_int(args_ptr);
+			size_t args = value_int(pop(vm));
 
 			vm->sp -= args;
 			push(vm, value_copy(ret));

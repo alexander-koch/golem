@@ -22,6 +22,7 @@ files = itertools.chain(glob.iglob("adt/*.[ch]"),
                         glob.iglob("compiler/*.[ch]"),
                         glob.iglob("core/*.[ch]"),
                         glob.iglob("lexis/*.[ch]"),
+                        glob.iglob("lib/*.[ch]"),
                         glob.iglob("parser/*.[ch]"),
                         glob.iglob("vm/*.[ch]"),
                         glob.iglob("*.[ch]"))

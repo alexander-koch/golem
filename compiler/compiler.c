@@ -20,6 +20,7 @@ scope_t* scope_new()
 	scope->symbols = hashmap_new();
 	scope->super = 0;
 	scope->subscopes = list_new();
+	scope->address = 0;
 	return scope;
 }
 
@@ -57,14 +58,13 @@ void push_scope(compiler_t* compiler)
 	scope_t* scope = scope_new();
 	scope->super = compiler->scope;
 
-	// Register new scope in parent, store current address
+	// Register new scope in parent
 	list_push(compiler->scope->subscopes, scope);
-	compiler->scope->address = compiler->address;
-	compiler->address = 0;
 
 	// Set child active scope
 	compiler->scope = scope;
 	compiler->depth++;
+	compiler->scope->address = 0;
 }
 
 void pop_scope(compiler_t* compiler)
@@ -74,9 +74,6 @@ void pop_scope(compiler_t* compiler)
 
 	// Set parent scope to active
 	compiler->scope = super;
-
-	// Reset compiler address
-	compiler->address = super->address;
 	compiler->depth--;
 }
 
@@ -91,6 +88,18 @@ symbol_t* symbol_new(compiler_t* compiler, ast_t* node, int address, datatype_t 
 	symbol->type = type;
 	symbol->global = compiler->depth == 0 ? true : false;
 	return symbol;
+}
+
+// Symbol.isLocal(string ident)
+// Checks if the symbol is stored in the current local scope.
+bool symbol_is_local(scope_t* scope, char* ident)
+{
+	void* val;
+	if(hashmap_get(scope->symbols, ident, &val) != HMAP_MISSING)
+	{
+		return true;
+	}
+	return false;
 }
 
 // Symbol.get(string ident)
@@ -111,7 +120,7 @@ symbol_t* symbol_get(scope_t* scope, char* ident)
 	{
 		return symbol_get(scope->super, ident);
 	}
-	else return 0;
+	return 0;
 }
 
 // Compiler.throw(node, message)
@@ -215,6 +224,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 		// {
 		// 	compiler_throw(compiler, node, "Function declaration in a function is not allowed");
 		// 	break;
+		// 	// Lambda lifting?
 		// }
 
 		if(sub->class == AST_RETURN && !list_iterator_end(iter))
@@ -232,11 +242,10 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 				break;
 			}
 		}
+		compiler_eval(compiler, sub);
 	}
-	list_iterator_free(iter);
 
-	// Evaluate block and pop scope
-	eval_block(compiler, node->funcdecl.impl.body);
+	list_iterator_free(iter);
 	pop_scope(compiler);
 
 	// Handle void return
@@ -285,7 +294,7 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 	}
 
 	// Store the symbol
-	symbol_t* symbol = symbol_new(compiler, node, compiler->address, vartype);
+	symbol_t* symbol = symbol_new(compiler, node, compiler->scope->address, vartype);
 	symbol->node->vardecl.type = vartype;
 	hashmap_set(compiler->scope->symbols, node->vardecl.name, symbol);
 
@@ -293,7 +302,7 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 	emit_store(compiler->buffer, symbol->address, symbol->global);
 
 	// Increase compiler address
-	compiler->address++;
+	compiler->scope->address++;
 
 	// Debug variables if flag is set
 #ifdef DB_VARS
@@ -689,7 +698,23 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 		// 		if loads for store == 1
 		//			remove dead code
 
-		emit_load(compiler->buffer, ptr->address, ptr->global);
+		scope_t* curr = compiler->scope;
+		if(!symbol_is_local(compiler->scope, node->ident))
+		{
+			compiler->scope = compiler->scope->super;
+			int depth = 1;
+			while(!symbol_is_local(compiler->scope, node->ident)) {
+				compiler->scope = compiler->scope->super;
+				depth++;
+			}
+			compiler->scope = curr;
+
+			insert_v2(compiler->buffer, OP_UPVAL, value_new_int(depth), value_new_int(ptr->address));
+		}
+		else
+		{
+			emit_load(compiler->buffer, ptr->address, ptr->global);
+		}
 		return ptr->type;
 	}
 
@@ -722,6 +747,18 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 				int address = symbol->address;
 				size_t paramc = list_size(func->funcdecl.impl.formals);
 
+				// Check if variadic function
+				if(list_size(symbol->node->funcdecl.impl.formals) > 0)
+				{
+					ast_t* first = list_top(func->funcdecl.impl.formals);
+					if(first->vardecl.type == DATA_VARARGS)
+					{
+						eval_block(compiler, node->call.args);
+						emit_syscall(compiler->buffer, func->funcdecl.name, argc);
+						return DATA_NULL;
+					}
+				}
+
 				// Param checking
 				if(argc > paramc)
 				{
@@ -737,35 +774,26 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 				{
 					if(list_size(symbol->node->funcdecl.impl.formals) > 0)
 					{
-						ast_t* first = list_top(func->funcdecl.impl.formals);
-						if(first->vardecl.type == DATA_VARARGS && list_size(func->funcdecl.impl.formals) == 1)
+						// Valid, test parameter types
+						list_iterator_t* iter = list_iterator_create(symbol->node->funcdecl.impl.formals);
+						list_iterator_t* args_iter = list_iterator_create(node->call.args);
+						int i = 1;
+						while(!list_iterator_end(iter))
 						{
-							//Variable args
-							eval_block(compiler, node->call.args);
-						}
-						else
-						{
-							// Valid, test parameter types
-							list_iterator_t* iter = list_iterator_create(symbol->node->funcdecl.impl.formals);
-							list_iterator_t* args_iter = list_iterator_create(node->call.args);
-							int i = 1;
-							while(!list_iterator_end(iter))
-							{
-								datatype_t type = compiler_eval(compiler, list_iterator_next(args_iter));
-								ast_t* param = list_iterator_next(iter);
+							datatype_t type = compiler_eval(compiler, list_iterator_next(args_iter));
+							ast_t* param = list_iterator_next(iter);
 
-								if(param->vardecl.type != type)
-								{
-									compiler_throw(compiler, node,
-										"Parameter %d has the wrong type.\nFound: %s, expected: %s",
-										i, datatype2str(type), datatype2str(param->vardecl.type));
-									break;
-								}
-								i++;
+							if(param->vardecl.type != type)
+							{
+								compiler_throw(compiler, node,
+									"Parameter %d has the wrong type.\nFound: %s, expected: %s",
+									i, datatype2str(type), datatype2str(param->vardecl.type));
+								break;
 							}
-							list_iterator_free(args_iter);
-							list_iterator_free(iter);
+							i++;
 						}
+						list_iterator_free(args_iter);
+						list_iterator_free(iter);
 					}
 				}
 
@@ -1400,7 +1428,6 @@ list_t* compile_buffer(compiler_t* compiler, const char* source)
 	// Reset compiler
 	compiler_clear(compiler);
 	compiler->buffer = list_new();
-	compiler->address = 0;
 	compiler->error = false;
 	compiler->depth = 0;
 	compiler->scope = scope_new();

@@ -1,4 +1,4 @@
-# Golem Bytecode
+# Golem Bytecode Set
 
 Golem runs on an internal stack-based bytecode virtual machine (gvm).
 The following instructions are currently supported.
@@ -66,6 +66,28 @@ The following instructions are currently supported.
 |---                  |---
 |getsub               | get the sub-element of the value, expects index (first) and value on top of the stack
 |setsub               | sets the sub-element of the value, same mechanism as above
+
+# Method calling convention
+
+All argument are first pushed on the stack, from first to last.
+Then the number of arguments is pushed, followed by the current frame pointer and program counter.
+The frame pointer becomes the stack pointer, the pc is assigned to the new address.
+
+| Stack        | Address |
+|---           |---      |
+|Stack bottom  |   0x00  |
+|...		   |      ...|
+|Arg0		   |       -7|
+|Arg1		   |       -6|
+|Arg2		   |       -5|
+|...		   |	   -4|
+|NUM_ARGS	   |       -3|
+|FP			   |       -2|
+|PC			   |       -1|  <-- Return address
+|...		   |	    0|	<-- current position fp / sp
+|...		   |       +1|
+|...           |      ...|
+| Stack top    |    0x200|
 
 # Example compilation
 
