@@ -92,14 +92,21 @@ symbol_t* symbol_new(compiler_t* compiler, ast_t* node, int address, datatype_t 
 
 // Symbol.isLocal(string ident)
 // Checks if the symbol is stored in the current local scope.
-bool symbol_is_local(scope_t* scope, char* ident)
+symbol_t* symbol_get_ext(scope_t* scope, char* ident, int* depth)
 {
+	(*depth)++;
+
 	void* val;
 	if(hashmap_get(scope->symbols, ident, &val) != HMAP_MISSING)
 	{
-		return true;
+		return (symbol_t*)val;
 	}
-	return false;
+
+	if(scope->super)
+	{
+		return symbol_get_ext(scope->super, ident, depth);
+	}
+	return 0;
 }
 
 // Symbol.get(string ident)
@@ -681,39 +688,17 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 // This function evaluates an occuring symbol and loads its content.
 datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 {
-	symbol_t* ptr = symbol_get(compiler->scope, node->ident);
+	int depth = -1;
+	symbol_t* ptr = symbol_get_ext(compiler->scope, node->ident, &depth);
 	if(ptr)
 	{
-		// TODO: load optimization for
-		// gstore
-		// gload
-		// invoke
-		// end
-		//
-		// pseudo
-		// if last instruction == emit_store() then
-		//		suspect: one time storage
-		//		loads for store ++
-		// onEnd:
-		// 		if loads for store == 1
-		//			remove dead code
-
-		scope_t* curr = compiler->scope;
-		if(!symbol_is_local(compiler->scope, node->ident))
+		if(depth == 0 || ptr->global)
 		{
-			compiler->scope = compiler->scope->super;
-			int depth = 1;
-			while(!symbol_is_local(compiler->scope, node->ident)) {
-				compiler->scope = compiler->scope->super;
-				depth++;
-			}
-			compiler->scope = curr;
-
-			insert_v2(compiler->buffer, OP_UPVAL, value_new_int(depth), value_new_int(ptr->address));
+			emit_load(compiler->buffer, ptr->address, ptr->global);
 		}
 		else
 		{
-			emit_load(compiler->buffer, ptr->address, ptr->global);
+			insert_v2(compiler->buffer, OP_UPVAL, value_new_int(depth), value_new_int(ptr->address));
 		}
 		return ptr->type;
 	}

@@ -51,6 +51,7 @@ const char* op2str(opcode_t code)
 		case OP_BOR: return "bor";
 		case OP_GETSUB: return "getsub";
 		case OP_SETSUB: return "setsub";
+		case OP_UPVAL: return "upval";
 		default: return "unknown";
 	}
 }

@@ -22,8 +22,9 @@ A programming language written in C.
 - Implementing all (basic) operators for associated types in the vm / bytecodes => (Done.)
 - Finalize implementing functions => (Done.)
 - mark-sweep garbage collector for vm => (Done.)
-- Mutable parameters (Done.)
+- Mutable parameters => (Done.)
 - Subscripts (Arrays / Strings) => (Done.)
+- Nested functions => (Done.)
 - Bytecode optimizations => (Working on it)
 - Lambdas, Closures, Anonymous functions => (Prototype / Concept)
 
