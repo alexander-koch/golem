@@ -31,14 +31,14 @@ FILES = main.c \
 		vm/value.c \
 		vm/bytecode.c \
 		vm/vm.c \
-		lib/stdlib.c \
+		lib/corelib.c \
 		lib/strlib.c \
 		lib/mathlib.c
 
 debug:
 	$(CC) $(CFLAGS) $(INC) -c $(FILES)
 	$(CC) *.o $(LDFLAGS) -o $(MODULE)
-	-rm *.o
+	rm *.o
 
 asm:
 	nasm -fwin64 out.asm

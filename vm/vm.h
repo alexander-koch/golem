@@ -12,6 +12,7 @@
 
 #define STACK_SIZE 512
 #define LOCALS_SIZE 512
+#define ADD_LCLS_PER_SCOPE 10
 
 // Stack: classic stack for vm, push, pop values
 // Locals: RAM for storing local variables

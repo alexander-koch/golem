@@ -77,7 +77,7 @@ void pop_scope(compiler_t* compiler)
 	compiler->depth--;
 }
 
-// Symbol.new()
+// Symbol.new(node, address, type)
 // Stores an indentifier with an address, an AST and a type
 // If the scope depth is zero, the  global flag is set to true
 symbol_t* symbol_new(compiler_t* compiler, ast_t* node, int address, datatype_t type)
@@ -90,7 +90,7 @@ symbol_t* symbol_new(compiler_t* compiler, ast_t* node, int address, datatype_t 
 	return symbol;
 }
 
-// Symbol.isLocal(string ident)
+// Symbol.isLocal(string ident, ref int depth)
 // Checks if the symbol is stored in the current local scope.
 symbol_t* symbol_get_ext(scope_t* scope, char* ident, int* depth)
 {
@@ -146,8 +146,8 @@ void compiler_throw(compiler_t* compiler, ast_t* node, const char* format, ...)
     fprintf(stdout, "\n");
 }
 
-// Symbol.exists(string name)
-// Test if given identifier exists in symbol-table.
+// Symbol.exists(node, string name)
+// Test if given identifier exists in the symbol-table.
 // If so, an exception is thrown and true returned.
 bool symbol_exists(compiler_t* compiler, ast_t* node, char* ident)
 {
@@ -721,7 +721,15 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 	return DATA_NULL;
 }
 
-datatype_t eval_func_body(compiler_t* compiler, ast_t* func, ast_t* node, int address)
+// Eval.compareAndCall(func, node, address)
+// @param func Function declaration node
+// @param node Node that causes the call
+// @param address Address to call, if the function is internal
+// -----
+// Helper function for eval_call
+// Checks the given values and compares them with the function parameters.
+// If they match, the bytecode is emitted.
+datatype_t eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int address)
 {
 	size_t argc = list_size(node->call.args);
 	ast_t* call = node->call.callee;
@@ -810,7 +818,7 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 				return DATA_NULL;
 			}
 
-			return eval_func_body(compiler, symbol->node, node, symbol->address);
+			return eval_compare_and_call(compiler, symbol->node, node, symbol->address);
 		}
 
 		compiler_throw(compiler, node, "Implicit declaration of function '%s'", call->ident);
@@ -1032,6 +1040,30 @@ datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 
 	return DATA_NULL;
 }
+
+// datatype_t eval_subscript_sugar(compiler_t* compiler, ast_t* node)
+// {
+// 	ast_t* expr = node->subscript.expr;
+// 	ast_t* key = node->subscript.key;
+//
+// 	if(expr->class != AST_IDENT)
+// 	{
+// 		compiler_throw(compiler, node, "Namespace must be an identifier");
+// 		return DATA_NULL;
+// 	}
+//
+// 	if(key->class != AST_CALL)
+// 	{
+// 		compiler_throw(compiler, node, "Key must be a function call");
+// 		return DATA_NULL;
+// 	}
+//
+// 	char* namespace = expr->ident;
+// 	char* index = key->ident;
+//
+// 	namespace_index;
+//
+// }
 
 // Eval.unary(node)
 // Compiles prefix operators.
@@ -1310,6 +1342,15 @@ void compiler_dump(ast_t* node, int level)
 		case AST_SUBSCRIPT:
 		{
 			fprintf(stdout, ":subscript<(key)");
+			compiler_dump(node->subscript.key, 0);
+			fprintf(stdout, "; (expr)");
+			compiler_dump(node->subscript.expr, 0);
+			fprintf(stdout, ">");
+			break;
+		}
+		case AST_SUBSCRIPT_SUGAR:
+		{
+			fprintf(stdout, ":subscript_sugar<(key)");
 			compiler_dump(node->subscript.key, 0);
 			fprintf(stdout, "; (expr)");
 			compiler_dump(node->subscript.expr, 0);

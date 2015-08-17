@@ -8,6 +8,7 @@
 #define KEYWORD_ELSE "else"
 #define KEYWORD_WHILE "while"
 #define KEYWORD_CLASS "object"
+#define KEYWORD_MODULE "module"
 #define KEYWORD_RETURN "return"
 
 ast_t* parse_import_declaration(parser_t* parser, location_t loc);
@@ -249,7 +250,7 @@ ast_t* parse_subscript(parser_t* parser, ast_t* node)
 // subscript_sugar = ident, ".", ident, [call | subscript | subscript_sugar];
 ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node)
 {
-    ast_t* ast = ast_class_create(AST_SUBSCRIPT, node->location);
+    ast_t* ast = ast_class_create(AST_SUBSCRIPT_SUGAR, node->location);
     ast->subscript.expr = node;
     if(!match_type(parser, TOKEN_WORD))
     {
@@ -341,6 +342,12 @@ ast_t* parse_array(parser_t* parser)
     if(!tmp)
     {
         parser_throw(parser, "Expected array begin");
+    }
+
+    if(match_type(parser, TOKEN_RBRACKET))
+    {
+        parser_throw(parser, "Initialized array with no elements");
+        return ast;
     }
 
     ast_t* expr = 0;
@@ -745,7 +752,7 @@ ast_t* parse_stmt(parser_t* parser)
         {KEYWORD_FUNCTION, parse_fn_declaration},
         {KEYWORD_IF, parse_if_declaration},
         {KEYWORD_WHILE, parse_while_declaration},
-        {KEYWORD_CLASS, parse_class_declaration},
+        //{KEYWORD_CLASS, parse_class_declaration},
         {KEYWORD_RETURN, parse_return_declaration}
     };
 
@@ -819,7 +826,7 @@ ast_t* parser_run(parser_t* parser, const char* content)
 // Parsing subroutines
 //////------------------
 
-extern void stdlib_gen_signatures(list_t* list);
+extern void core_gen_signatures(list_t* list);
 ast_t* parse_import_declaration(parser_t* parser, location_t loc)
 {
     // <KEYWORD_IMPORT> io \n
@@ -831,9 +838,9 @@ ast_t* parse_import_declaration(parser_t* parser, location_t loc)
     {
         node->import = val->value;
 
-        if(!strcmp(node->import, "stdlib"))
+        if(!strcmp(node->import, "core"))
         {
-            stdlib_gen_signatures(parser->top->toplevel);
+            core_gen_signatures(parser->top->toplevel);
         }
     }
     else

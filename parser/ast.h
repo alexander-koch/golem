@@ -42,6 +42,7 @@ typedef enum
     AST_BINARY,
     AST_UNARY,
     AST_SUBSCRIPT,
+    AST_SUBSCRIPT_SUGAR,
     AST_CALL,
     AST_DECLVAR,
     AST_DECLFUNC,

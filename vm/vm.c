@@ -10,18 +10,22 @@
 //}
 // Return -1 if fail
 
-extern int stdlib_print(vm_t* vm);
-extern int stdlib_println(vm_t* vm);
-extern int stdlib_getline(vm_t* vm);
-extern int stdlib_f2i(vm_t* vm);
-extern int stdlib_i2f(vm_t* vm);
+extern int core_print(vm_t* vm);
+extern int core_println(vm_t* vm);
+extern int core_getline(vm_t* vm);
+extern int core_f2i(vm_t* vm);
+extern int core_i2f(vm_t* vm);
+extern int core_c2i(vm_t* vm);
+extern int core_parseFloat(vm_t* vm);
 
 static FunctionDef system_methods[] = {
-	{"print", stdlib_print},
-	{"println", stdlib_println},
-	{"getline", stdlib_getline},
-	{"f2i", stdlib_f2i},
-	{"i2f", stdlib_i2f},
+	{"print", core_print},
+	{"println", core_println},
+	{"getline", core_getline},
+	{"f2i", core_f2i},
+	{"i2f", core_i2f},
+	{"c2i", core_c2i},
+	{"parseFloat", core_parseFloat},
 	{0, 0}	/* sentinel */
 };
 
@@ -170,6 +174,11 @@ void vm_process(vm_t* vm, list_t* buffer)
 		case OP_STORE:
 		{
 			// Local variable storage
+			// HACK: adding locals offset
+			// Otherwise:
+			// If too many locals in last scope e.g. from 1 - 11
+			// Then new scope overwrites old values e.g. fp at 5, overwrites 5- 11
+
 			int offset = value_int(instr->v1);
 			if(offset < 0)
 			{
@@ -177,8 +186,8 @@ void vm_process(vm_t* vm, list_t* buffer)
 			}
 			else
 			{
-				value_free(vm->locals[vm->fp+offset]);
-				vm->locals[vm->fp+offset] = value_copy(pop(vm));
+				value_free(vm->locals[vm->fp+offset+ADD_LCLS_PER_SCOPE]);
+				vm->locals[vm->fp+offset+ADD_LCLS_PER_SCOPE] = value_copy(pop(vm));
 			}
 			break;
 		}
@@ -191,7 +200,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 			}
 			else
 			{
-				push(vm, value_copy(vm->locals[vm->fp+offset]));
+				push(vm, value_copy(vm->locals[vm->fp+offset+ADD_LCLS_PER_SCOPE]));
 			}
 			break;
 		}
@@ -258,6 +267,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 			// Arguments already on the stack
 			int address = value_int(instr->v1);
 			size_t args = value_int(instr->v2);
+
 			push(vm, value_new_int(args));
 			push(vm, value_new_int(vm->fp));
 			push(vm, value_new_int(vm->pc));
@@ -301,8 +311,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 		}
 		case OP_JMPF:
 		{
-			value_t* v = pop(vm);
-			bool result = value_bool(v);
+			bool result = value_bool(pop(vm));
 			if(!result)
 			{
 				vm->pc = value_int(instr->v1);
