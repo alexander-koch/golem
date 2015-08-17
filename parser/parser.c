@@ -404,6 +404,10 @@ ast_t* parse_expression_primary(parser_t* parser)
     {
         ast = parse_literal(parser);
     }
+    // else if(match_string(parser, KEYWORD_FUNCTION))
+    // {
+    //     ast = parse_fn_declaration(parser, get_location(parser));
+    // }
     else if(match_type(parser, TOKEN_WORD))
     {
         ast = ast_class_create(AST_IDENT, get_location(parser));
@@ -878,7 +882,8 @@ ast_t* parse_var_declaration(parser_t* parser, location_t loc)
 
 ast_t* parse_fn_declaration(parser_t* parser, location_t loc)
 {
-    // fn name (params) -> int { \n
+    // func name(params) -> datatype { \n
+    // lambda (params) -> int { \n
     ast_t* node = ast_class_create(AST_DECLFUNC, loc);
 
     token_t* fn = accept_token_string(parser, KEYWORD_FUNCTION);

@@ -303,7 +303,7 @@ int lex_string(lexer_t* lexer, token_t* token)
             lex_error(lexer, "Never ending string");
             return 0;
         }
-        if(lexer->cursor[0] == '\n' || lexer->cursor[0] == '\r')
+        else if(lexer->cursor[0] == '\n' || lexer->cursor[0] == '\r')
         {
             lex_error(lexer, "Strings may not contain newlines");
             return 0;

@@ -15,6 +15,7 @@ A programming language written in C.
 - High-order functions, currying
 - Fully functional fast bytecode vm or translation into x86 / x86_64 assembler machine code
 - Garbage collected vm
+- Easily readable and learnable
 - FAST!!!
 
 # TODO

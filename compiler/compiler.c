@@ -202,7 +202,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 
 	// Register a symbol for the function, save the bytecode address
 	int byte_address = list_size(compiler->buffer);
-	symbol_t* fnSymbol = symbol_new(compiler, node, byte_address, node->funcdecl.rettype);
+	symbol_t* fnSymbol = symbol_new(compiler, node, byte_address, DATA_LAMBDA);
 	hashmap_set(compiler->scope->symbols, node->funcdecl.name, fnSymbol);
 
 	// Create a new scope
@@ -248,6 +248,11 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 				compiler_throw(compiler, node, "Functions with type void do not return a value");
 				break;
 			}
+			else if(!sub->returnstmt && node->funcdecl.rettype != DATA_VOID)
+			{
+				compiler_throw(compiler, node, "Return statement without a value");
+				break;
+			}
 		}
 		compiler_eval(compiler, sub);
 	}
@@ -273,7 +278,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	// Set beginning jump address to end
 	byte_address = list_size(compiler->buffer);
 	value_set_int(addr, byte_address);
-	return DATA_NULL;
+	return DATA_LAMBDA;
 }
 
 // Eval.declvar(node)
@@ -294,22 +299,31 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 		return DATA_NULL;
 	}
 
-	if(vartype == DATA_VOID)
+	if(vartype == DATA_LAMBDA)
 	{
 		compiler_throw(compiler, node, "Trying to assign a function to a value (Currently not supported)");
 		return DATA_NULL;
+		// symbol_t* lambdaSymb = symbol_get(compiler->scope, node->vardecl.initializer->ident);
+		// if(lambdaSymb)
+		// {
+		// 	symbol_t* symbol = symbol_new(compiler, node, lambdaSymb->address, vartype);
+		// 	symbol->node->vardecl.type = vartype;
+		// 	hashmap_set(compiler->scope->symbols, node->vardecl.name, symbol);
+		// }
 	}
+	else
+	{
+		// Store the symbol
+		symbol_t* symbol = symbol_new(compiler, node, compiler->scope->address, vartype);
+		symbol->node->vardecl.type = vartype;
+		hashmap_set(compiler->scope->symbols, node->vardecl.name, symbol);
 
-	// Store the symbol
-	symbol_t* symbol = symbol_new(compiler, node, compiler->scope->address, vartype);
-	symbol->node->vardecl.type = vartype;
-	hashmap_set(compiler->scope->symbols, node->vardecl.name, symbol);
+		// Emit last bytecode
+		emit_store(compiler->buffer, symbol->address, symbol->global);
 
-	// Emit last bytecode
-	emit_store(compiler->buffer, symbol->address, symbol->global);
-
-	// Increase compiler address
-	compiler->scope->address++;
+		// Increase compiler address
+		compiler->scope->address++;
+	}
 
 	// Debug variables if flag is set
 #ifdef DB_VARS
@@ -707,6 +721,76 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 	return DATA_NULL;
 }
 
+datatype_t eval_func_body(compiler_t* compiler, ast_t* func, ast_t* node, int address)
+{
+	size_t argc = list_size(node->call.args);
+	ast_t* call = node->call.callee;
+
+	list_t* formals = func->funcdecl.impl.formals;
+	size_t paramc = list_size(formals);
+
+	// Check if variadic function
+	if(paramc > 0)
+	{
+		ast_t* first = list_top(formals);
+		if(first->vardecl.type == DATA_VARARGS)
+		{
+			eval_block(compiler, node->call.args);
+			emit_syscall(compiler->buffer, func->funcdecl.name, argc);
+			return DATA_NULL;
+		}
+	}
+
+	// Param checking
+	if(argc > paramc)
+	{
+		compiler_throw(compiler, node, "Too many arguments for function '%s'. Expected: %d", call->ident, paramc);
+		return DATA_NULL;
+	}
+	else if(argc < paramc)
+	{
+		compiler_throw(compiler, node, "Too few arguments for function '%s'. Expected: %d", call->ident, paramc);
+		return DATA_NULL;
+	}
+	else
+	{
+		if(paramc > 0)
+		{
+			// Valid, test parameter types
+			list_iterator_t* iter = list_iterator_create(formals);
+			list_iterator_t* args_iter = list_iterator_create(node->call.args);
+			int i = 1;
+			while(!list_iterator_end(iter))
+			{
+				datatype_t type = compiler_eval(compiler, list_iterator_next(args_iter));
+				ast_t* param = list_iterator_next(iter);
+
+				if(param->vardecl.type != type)
+				{
+					compiler_throw(compiler, node,
+						"Parameter %d has the wrong type.\nFound: %s, expected: %s",
+						i, datatype2str(type), datatype2str(param->vardecl.type));
+					break;
+				}
+				i++;
+			}
+			list_iterator_free(args_iter);
+			list_iterator_free(iter);
+		}
+	}
+
+	// Emit invocation
+	if(func->funcdecl.external)
+	{
+		emit_syscall(compiler->buffer, func->funcdecl.name, argc);
+	}
+	else
+	{
+		emit_invoke(compiler->buffer, address, argc);
+	}
+	return func->funcdecl.rettype;
+}
+
 // Eval.call(node)
 // Evaluates a call:
 // Tries to find the given function,
@@ -714,7 +798,6 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 // returns the functions return type.
 datatype_t eval_call(compiler_t* compiler, ast_t* node)
 {
-	size_t argc = list_size(node->call.args);
 	ast_t* call = node->call.callee;
 	if(call->class == AST_IDENT)
 	{
@@ -726,85 +809,17 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 				compiler_throw(compiler, node, "Identifier '%s' is not a function", call->ident);
 				return DATA_NULL;
 			}
-			else
-			{
-				ast_t* func = symbol->node;
-				int address = symbol->address;
-				size_t paramc = list_size(func->funcdecl.impl.formals);
 
-				// Check if variadic function
-				if(list_size(symbol->node->funcdecl.impl.formals) > 0)
-				{
-					ast_t* first = list_top(func->funcdecl.impl.formals);
-					if(first->vardecl.type == DATA_VARARGS)
-					{
-						eval_block(compiler, node->call.args);
-						emit_syscall(compiler->buffer, func->funcdecl.name, argc);
-						return DATA_NULL;
-					}
-				}
-
-				// Param checking
-				if(argc > paramc)
-				{
-					compiler_throw(compiler, node, "Too many arguments for function '%s'. Expected: %d", call->ident, paramc);
-					return DATA_NULL;
-				}
-				else if(argc < paramc)
-				{
-					compiler_throw(compiler, node, "Too few arguments for function '%s'. Expected: %d", call->ident, paramc);
-					return DATA_NULL;
-				}
-				else
-				{
-					if(list_size(symbol->node->funcdecl.impl.formals) > 0)
-					{
-						// Valid, test parameter types
-						list_iterator_t* iter = list_iterator_create(symbol->node->funcdecl.impl.formals);
-						list_iterator_t* args_iter = list_iterator_create(node->call.args);
-						int i = 1;
-						while(!list_iterator_end(iter))
-						{
-							datatype_t type = compiler_eval(compiler, list_iterator_next(args_iter));
-							ast_t* param = list_iterator_next(iter);
-
-							if(param->vardecl.type != type)
-							{
-								compiler_throw(compiler, node,
-									"Parameter %d has the wrong type.\nFound: %s, expected: %s",
-									i, datatype2str(type), datatype2str(param->vardecl.type));
-								break;
-							}
-							i++;
-						}
-						list_iterator_free(args_iter);
-						list_iterator_free(iter);
-					}
-				}
-
-				// Emit invocation
-				if(func->funcdecl.external)
-				{
-					emit_syscall(compiler->buffer, func->funcdecl.name, argc);
-				}
-				else
-				{
-					emit_invoke(compiler->buffer, address, argc);
-				}
-				return func->funcdecl.rettype;
-			}
+			return eval_func_body(compiler, symbol->node, node, symbol->address);
 		}
-		else
-		{
-			compiler_throw(compiler, node, "Implicit declaration of function '%s'", call->ident);
-			return DATA_NULL;
-		}
+
+		compiler_throw(compiler, node, "Implicit declaration of function '%s'", call->ident);
+		return DATA_NULL;
 	}
 	else
 	{
-		// Call with no identifier, must be lambda or else
-		// For now not valid
-		compiler_throw(compiler, node, "Callee has to be an identifier");
+		// lamdba(x,y,z)- > void { body} (6,2,3) will never occur due to parsing
+		compiler_throw(compiler, node, "Callee has to be an identifier or a lambda");
 	}
 
 	return DATA_NULL;

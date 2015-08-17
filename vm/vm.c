@@ -187,13 +187,11 @@ void vm_process(vm_t* vm, list_t* buffer)
 			int offset = value_int(instr->v1);
 			if(offset < 0)
 			{
-				value_t* v = vm->stack[vm->fp+offset];
-				push(vm, value_copy(v));
+				push(vm, value_copy(vm->stack[vm->fp+offset]));
 			}
 			else
 			{
-				value_t* v = vm->locals[vm->fp+offset];
-				push(vm, value_copy(v));
+				push(vm, value_copy(vm->locals[vm->fp+offset]));
 			}
 			break;
 		}
@@ -578,9 +576,8 @@ void vm_process(vm_t* vm, list_t* buffer)
 			{
 				char* str = value_string(object);
 				int idx = value_int(key);
-				char c = str[idx];
 
-				value_t* v = value_new_char(c);
+				value_t* v = value_new_char(str[idx]);
 				push(vm, v);
 			}
 			else
@@ -605,11 +602,10 @@ void vm_process(vm_t* vm, list_t* buffer)
 
 			if(object->type == VALUE_LIST)
 			{
+				list_t* nl = list_new();
 				list_iterator_t* iter = list_iterator_create(value_list(object));
 				int i = 0;
 				int idx = value_int(key);
-
-				list_t* nl = list_new();
 				while(!list_iterator_end(iter))
 				{
 					if(i == idx)
@@ -632,8 +628,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 			{
 				char* data = value_string(object);
 				int idx = value_int(key);
-				char c = value_char(val);
-				data[idx] = c;
+				data[idx] = value_char(val);
 
 				value_t* v = value_new_string(data);
 				push(vm, v);
@@ -672,7 +667,7 @@ void vm_execute(vm_t* vm, list_t* buffer)
 
 	clock_t end = clock();
 	double elapsed = (double)(end - begin) / CLOCKS_PER_SEC;
-	console("Elapsed time: %.4f (sec)\n", elapsed);
+	console("Elapsed time: %.5f (sec)\n", elapsed);
 #endif
 
 	// Move stack pointer to zero, -> clears all elements by gc
