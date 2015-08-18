@@ -5,7 +5,6 @@ A programming language written in C.
 # Project aims
 
 - Functional, object-oriented scripting / programming language
-
 - Immutablitiy of everything
 - Explicit mutable declaration
 - Statically, strong typed
@@ -29,21 +28,22 @@ A programming language written in C.
 - Bytecode optimizations => (Working on it)
 - Lambdas, Closures, Anonymous functions => (Prototype / Concept)
 
-Langugage specific
-===
+#### Langugage specific
+
 
 - AST optimization
 - prefix operators
 - Lambdas
 - Typecasting => Done by std library
 
-Implementation specific
-===
+#### Implementation specific
 
 - map / filter / curry methods
 - performance and bytecode optimization
 
 # Concept (final concept may change)
+
+### Variables
 
 Each variable is immutable at first. Variables are defined / declared using the 'let' keyword.
 Example:
@@ -54,21 +54,37 @@ Example:
 Variables can be mutable, if they are declared using the 'mut' keyword.
 ```rust
 	let mut x = 5
-	x = x + 1
+x = x + 1
 ```
+
+### Functions
 
 Functions are declared using the 'func' keyword.
 The body is bound by egyptian style braces. You have to declare the parameters and the return type.
-Parameters are always immutable.
+Parameters are always immutable, if the 'mut' mutability keyword is not set.
 ```rust
 	func main(arg0: char[]) -> void {
-		# body
-	}
+	# body
+}
 ```
 
-Classes are defined using the structure below. The methods `new` is the classes constructor.
-All classes are objects, similar to Scala. All attributes are private.
-To get field, getters are used to maintain encapsulation.
+### Arrays
+
+Arrays are defined using two brackets, in which the content is placed.
+An array can only be of one datatype and can not be replaced of modified if it is immutable.
+For character arrays, a string initializer can be used.
+
+Integer array:
+```rust
+	let arr = [1,2,3,4,5]
+let str = "Hello World" // Same as ["H", "E", "L", ...]
+```
+
+### Classes (Not implemented, Still concept)
+
+Classes are defined using the structure below. The method `new` is the classes constructor.
+All attributes are private.
+To get a field, getters are used to maintain encapsulation.
 ```rust
  	object Main {
 
@@ -95,6 +111,9 @@ To get field, getters are used to maintain encapsulation.
 		}
 	}
 ```
+
+### Control Flow
+
 Control flows are created by if statements or while loops. Style is egyptian.
 Example:
 ```rust
@@ -113,16 +132,9 @@ While loops:
 	}
 ```
 
-Lambdas (Concept idea, not implemented, final result may change):
-Lambda keyword followed by a parameter list, arrow and expression.
-Lambdas should fit in one line, if bigger needed, use a function instead.
-```rust
-	func main(argc: int) -> void {
-		return lambda(x) -> x + 2
-	}
-```
+# Curently supported
 
-# Curently supported (AST)
+### AST
 
 - variable declaration (immutable/mutable)
 - function declaration
@@ -135,7 +147,7 @@ Lambdas should fit in one line, if bigger needed, use a function instead.
 - expressions with precedence
 - classes
 
-# Currently supported (Langugage-based)
+### Langugage-based
 
 - variable and function declaration
 - types int, char, float, bool, (void)

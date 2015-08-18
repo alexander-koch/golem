@@ -52,9 +52,11 @@ The following instructions are currently supported.
 |beq                  | boolean equal
 |ieq                  | integer equal
 |feq                  | float equal
+|ceq                  | character equal
 |bne                  | boolean not equal
 |ine                  | integer not equal
 |fne                  | float not equal
+|cne                  | character not equal
 |lt                   | number less than
 |gt                   | number greater than
 |le                   | number less equal
@@ -89,11 +91,17 @@ The frame pointer becomes the stack pointer, the pc is assigned to the new addre
 |...           |      ...|
 | Stack top    |    0x200|
 
+Function arguments are accessed using a negative index.
+
 # Example compilation
 
-    let mut x = 5
-    x = x + 5
-    println(x)
+```rust
+    import core
+
+let mut x = 5
+x = x + 5
+println(x)
+```
 
 This should compile to the following instructions (unoptimized):
 

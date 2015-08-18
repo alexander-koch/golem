@@ -313,9 +313,7 @@ void vm_process(vm_t* vm, vector_t* buffer)
 			vm->pc = value_int(pop(vm));
 			vm->fp = value_int(pop(vm));
 
-			size_t args = value_int(pop(vm));
-
-			vm->sp -= args;
+			vm->sp -= value_int(pop(vm));
 			push(vm, value_copy(ret));
 			break;
 		}
@@ -511,7 +509,15 @@ void vm_process(vm_t* vm, vector_t* buffer)
 		{
 			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_float(value_float(v1) == value_float(v2));
+			value_t* v = value_new_bool(value_float(v1) == value_float(v2));
+			push(vm, v);
+			break;
+		}
+		case OP_CEQ:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_bool(value_char(v1) == value_char(v2));
 			push(vm, v);
 			break;
 		}
@@ -535,7 +541,15 @@ void vm_process(vm_t* vm, vector_t* buffer)
 		{
 			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_float(value_float(v1) != value_float(v2));
+			value_t* v = value_new_bool(value_float(v1) != value_float(v2));
+			push(vm, v);
+			break;
+		}
+		case OP_CNE:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_bool(value_char(v1) != value_char(v2));
 			push(vm, v);
 			break;
 		}
