@@ -4,7 +4,7 @@
 #include <time.h>
 #include <core/api.h>
 #include <adt/stack.h>
-#include <adt/list.h>
+#include <adt/vector.h>
 #include <adt/hashmap.h>
 
 #include <vm/bytecode.h>
@@ -21,12 +21,14 @@
 
 typedef struct
 {
+	// Stack
 	value_t* stack[STACK_SIZE];
 	value_t* locals[LOCALS_SIZE];
 	int pc;
 	int fp;
 	int sp;
 
+	// Gargabe collection
 	value_t* firstVal;
 	int numObjects;
 	int maxObjects;
@@ -40,9 +42,9 @@ typedef struct FunctionDef
 } FunctionDef;
 
 vm_t* vm_new();
-instruction_t* vm_peek(vm_t* vm, list_t* buffer);
-void vm_process(vm_t* vm, list_t* buffer);
-void vm_execute(vm_t* vm, list_t* buffer);
+instruction_t* vm_peek(vm_t* vm, vector_t* buffer);
+void vm_process(vm_t* vm, vector_t* buffer);
+void vm_execute(vm_t* vm, vector_t* buffer);
 void vm_free(vm_t* vm);
 
 void push(vm_t* vm, value_t* val);

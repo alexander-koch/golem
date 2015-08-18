@@ -113,19 +113,19 @@ value_t* pop(vm_t* vm)
 	return v;
 }
 
-instruction_t* vm_peek(vm_t* vm, list_t* buffer)
+instruction_t* vm_peek(vm_t* vm, vector_t* buffer)
 {
-	if(vm->pc >= list_size(buffer)) return 0;
-	return list_get(buffer, vm->pc);
+	if(vm->pc >= vector_size(buffer)) return 0;
+	return vector_get(buffer, vm->pc);
 }
 
 // Just prints out instruction codes
-void vm_print_code(vm_t* vm, list_t* buffer)
+void vm_print_code(vm_t* vm, vector_t* buffer)
 {
 	console("\nImmediate code:\n");
-	while(vm->pc < list_size(buffer))
+	while(vm->pc < vector_size(buffer))
 	{
-		instruction_t* instr = list_get(buffer, vm->pc);
+		instruction_t* instr = vector_get(buffer, vm->pc);
 
 		console("  %.2d: %s", vm->pc, op2str(instr->op));
 		if(instr->v1)
@@ -145,16 +145,29 @@ void vm_print_code(vm_t* vm, list_t* buffer)
 }
 
 // Processes a buffer instruction based on instruction / program counter (pc).
-void vm_process(vm_t* vm, list_t* buffer)
+void vm_process(vm_t* vm, vector_t* buffer)
 {
-	instruction_t* instr = list_get(buffer, vm->pc);
+	instruction_t* instr = vector_get(buffer, vm->pc);
 
 #ifndef NO_TRACE
-	console("  %.2d: %s [", vm->pc, op2str(instr->op));
+	console("  %.2d: %s", vm->pc, op2str(instr->op));
+	if(instr->v1)
+	{
+		console(", ");
+		value_print(instr->v1);
+	}
+	if(instr->v2)
+	{
+		console(", ");
+		value_print(instr->v2);
+	}
+	console(" => STACK [");
 	for(int i = 0; i < vm->sp; i++)
 	{
-		value_print(vm->stack[i]);
-		if(i < vm->sp-1) console(", ");
+		if(vm->stack[i]) {
+			value_print(vm->stack[i]);
+			if(i < vm->sp-1) console(", ");
+		}
 	}
 	console("]\n");
 #endif
@@ -210,7 +223,6 @@ void vm_process(vm_t* vm, list_t* buffer)
 			int offset = value_int(instr->v1);
 			value_free(vm->locals[offset]);
 			vm->locals[offset] = value_copy(pop(vm));
-
 			vm->sp++;
 			break;
 		}
@@ -654,7 +666,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 }
 
 // Executes a buffer / list of instructions
-void vm_execute(vm_t* vm, list_t* buffer)
+void vm_execute(vm_t* vm, vector_t* buffer)
 {
 	// Reset vm
 	vm->sp = 0;
@@ -672,7 +684,7 @@ void vm_execute(vm_t* vm, list_t* buffer)
 	// Run
 #ifndef NO_EXEC
 	clock_t begin = clock();
-	while(vm->pc < list_size(buffer))
+	while(vm->pc < vector_size(buffer))
 	{
 		vm_process(vm, buffer);
 	}

@@ -2,7 +2,7 @@ CC = gcc
 MODULE = golem
 INC = -I.
 
-CFLAGS = -std=c99 -Wall -Wno-unused-function -Wno-unused-parameter -DNO_TRACE -DNO_AST
+CFLAGS = -std=c99 -Wall -Wno-unused-function -Wno-unused-parameter -DNO_TRACE -DNO_AST -DNO_IR
 
 # Options:
 # Disable:
@@ -21,16 +21,17 @@ FILES = main.c \
 		adt/queue.c \
 		adt/stack.c \
 		adt/list.c \
+		adt/vector.c \
 		adt/hashmap.c \
 		lexis/lexer.c \
 		parser/ast.c \
 		parser/parser.c \
 		compiler/compiler.c \
-		compiler/asm_compiler.c \
 		compiler/bytecode_writer.c \
 		vm/value.c \
 		vm/bytecode.c \
 		vm/vm.c \
+		vm/jit.c \
 		lib/corelib.c \
 		lib/strlib.c \
 		lib/mathlib.c

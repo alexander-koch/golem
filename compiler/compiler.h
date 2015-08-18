@@ -41,7 +41,7 @@ typedef struct scope_t
 typedef struct compiler_t
 {
 	parser_t parser;
-	list_t* buffer;
+	vector_t* buffer;
 	char* filename;
 	bool error;
 	scope_t* scope;
@@ -49,8 +49,8 @@ typedef struct compiler_t
 } compiler_t;
 
 void compiler_init(compiler_t* compiler);
-list_t* compile_buffer(compiler_t* compiler, const char* source);
-list_t* compile_file(compiler_t* compiler, const char* filename);
+vector_t* compile_buffer(compiler_t* compiler, const char* source);
+vector_t* compile_file(compiler_t* compiler, const char* filename);
 void compiler_clear(compiler_t* compiler);
 void compiler_free_symbols(compiler_t* compiler);
 

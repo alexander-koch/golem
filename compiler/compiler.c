@@ -201,7 +201,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	value_t* addr = emit_jmp(compiler->buffer, 0);
 
 	// Register a symbol for the function, save the bytecode address
-	int byte_address = list_size(compiler->buffer);
+	int byte_address = vector_size(compiler->buffer);
 	symbol_t* fnSymbol = symbol_new(compiler, node, byte_address, DATA_LAMBDA);
 	hashmap_set(compiler->scope->symbols, node->funcdecl.name, fnSymbol);
 
@@ -276,7 +276,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	}
 
 	// Set beginning jump address to end
-	byte_address = list_size(compiler->buffer);
+	byte_address = vector_size(compiler->buffer);
 	value_set_int(addr, byte_address);
 	return DATA_LAMBDA;
 }
@@ -953,9 +953,10 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
 		// Generate jump to next clause
 		if(subnode->ifclause.cond)
 		{
-			instr->v.i = list_size(compiler->buffer);
+			instr->v.i = vector_size(compiler->buffer);
 		}
 	}
+
 	list_iterator_free(iter);
 
 	// Set the jump points to end after whole if block
@@ -963,7 +964,7 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
 	while(!list_iterator_end(iter))
 	{
 		value_t* pos = list_iterator_next(iter);
-		pos->v.i = list_size(compiler->buffer);
+		pos->v.i = vector_size(compiler->buffer);
 	}
 	list_iterator_free(iter);
 	list_free(jmps);
@@ -979,7 +980,7 @@ datatype_t eval_ifclause(compiler_t* compiler, ast_t* node)
 	compiler_eval(compiler, node->ifclause.cond);
 	value_t* instr = emit_jmpf(compiler->buffer, 0);
 	eval_block(compiler, node->ifclause.body);
-	value_set_int(instr, list_size(compiler->buffer));
+	value_set_int(instr, vector_size(compiler->buffer));
 	return DATA_NULL;
 }
 
@@ -992,12 +993,12 @@ datatype_t eval_ifclause(compiler_t* compiler, ast_t* node)
 // 04: jmp 2
 datatype_t eval_while(compiler_t* compiler, ast_t* node)
 {
-	size_t start = list_size(compiler->buffer);
+	size_t start = vector_size(compiler->buffer);
 	compiler_eval(compiler, node->whilestmt.cond);
 	value_t* instr = emit_jmpf(compiler->buffer, 0);
 	eval_block(compiler, node->ifclause.body);
 	emit_jmp(compiler->buffer, start);
-	value_set_int(instr, list_size(compiler->buffer));
+	value_set_int(instr, vector_size(compiler->buffer));
 	return DATA_NULL;
 }
 
@@ -1145,7 +1146,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 	list_t* body = node->classstmt.body;
 
 	// Emit jump and store as symbol
-	size_t byte_address = list_size(compiler->buffer);
+	size_t byte_address = vector_size(compiler->buffer);
 
 	if(symbol_exists(compiler, node, name)) return DATA_NULL;
 	symbol_t* symbol = symbol_new(compiler, node, byte_address, DATA_OBJECT);
@@ -1194,7 +1195,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 	list_iterator_free(iter);
 
 	// Set the beggining byte address; end
-	byte_address = list_size(compiler->buffer);
+	byte_address = vector_size(compiler->buffer);
 	value_set_int(val, byte_address);
 	return DATA_NULL;
 }
@@ -1464,11 +1465,11 @@ void compiler_dump(ast_t* node, int level)
 
 // Compiler.compileBuffer(string code)
 // Compiles code into bytecode instructions
-list_t* compile_buffer(compiler_t* compiler, const char* source)
+vector_t* compile_buffer(compiler_t* compiler, const char* source)
 {
 	// Reset compiler
 	compiler_clear(compiler);
-	compiler->buffer = list_new();
+	compiler->buffer = vector_new();
 	compiler->error = false;
 	compiler->depth = 0;
 	compiler->scope = scope_new();
@@ -1510,7 +1511,7 @@ list_t* compile_buffer(compiler_t* compiler, const char* source)
 
 // Compiler.compileFile(string filename)
 // Compiles a file into an instruction set
-list_t* compile_file(compiler_t* compiler, const char* filename)
+vector_t* compile_file(compiler_t* compiler, const char* filename)
 {
 	FILE* file = fopen(filename, "rb");
 	if(!file) return 0;
@@ -1525,7 +1526,7 @@ list_t* compile_file(compiler_t* compiler, const char* filename)
 	compiler->filename = strdup(filename);
 
 	// Run vm with compiler
-	list_t* buffer = compile_buffer(compiler, source);
+	vector_t* buffer = compile_buffer(compiler, source);
 	free(source);
 	return buffer;
 }
@@ -1536,16 +1537,15 @@ void compiler_clear(compiler_t* compiler)
 {
 	if(compiler->buffer)
 	{
-		list_iterator_t* iter = list_iterator_create(compiler->buffer);
-		while(!list_iterator_end(iter))
+		for(size_t i = 0; i < vector_size(compiler->buffer); i++)
 		{
-			instruction_t* instr = (instruction_t*)list_iterator_next(iter);
+			instruction_t* instr = vector_get(compiler->buffer, i);
 			if(instr->v1) value_free(instr->v1);
 			if(instr->v2) value_free(instr->v2);
 			free(instr);
 		}
-		list_iterator_free(iter);
-		list_free(compiler->buffer);
+
+		vector_free(compiler->buffer);
 		compiler->buffer = 0;
 	}
 }

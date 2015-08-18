@@ -1,4 +1,4 @@
-#include "asm_compiler.h"
+#include "asm_printer.h"
 
 int vars = 1;
 
@@ -10,7 +10,12 @@ const char* reg(int i) {
 		case 2: return "rdx";
 		case 3: return "r8";
 		case 4: return "r9";
-		case 5: return "push";
+		case 5: return "r10";
+		case 6: return "r11";
+		case 7: return "r12";
+		case 8: return "r13";
+		case 9: return "r14";
+		case 10: return "r15";
 		default: return "push";
 	}
 }
@@ -88,8 +93,6 @@ void translate(FILE* fp, instruction_t* instr)
 		}
 		default: break;
 	}
-
-	fprintf(fp, "\n");
 }
 
 int asm_write(compiler_t* compiler, const char* filename)

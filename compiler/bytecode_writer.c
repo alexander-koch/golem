@@ -103,32 +103,28 @@ void write_instruction(FILE* fp, instruction_t* ins)
 	if(args > 1) write_value(fp, ins->v2);
 }
 
-bool write_bytecode(const char* filename, list_t* instructions)
+bool write_bytecode(const char* filename, vector_t* instructions)
 {
 	FILE* fp = fopen(filename, "wb");
 	if(!fp) return false;
 
 	// Write magic number + amount of instructions to fetch
 	uint32_t magic = 0x1337;
-	uint32_t codes = list_size(instructions);
+	uint32_t codes = vector_size(instructions);
 	fwrite((const void*)&magic, sizeof(uint32_t), 1, fp);
 	fwrite((const void*)&codes, sizeof(uint32_t), 1, fp);
 
-	// Write each instruction
-	list_iterator_t* iter = list_iterator_create(instructions);
-	while(!list_iterator_end(iter))
+	for(size_t i = 0; i < vector_size(instructions); i++)
 	{
-		instruction_t* ins = list_iterator_next(iter);
+		instruction_t* ins = vector_get(instructions, i);
 		write_instruction(fp, ins);
 	}
 
-	// Free buffers
-	list_iterator_free(iter);
 	fclose(fp);
 	return true;
 }
 
-bool read_bytecode(const char* filename, list_t** out)
+bool read_bytecode(const char* filename, vector_t** out)
 {
 	FILE* fp = fopen(filename, "rb");
 	if(!fp) return false;
@@ -161,7 +157,7 @@ bool read_bytecode(const char* filename, list_t** out)
 		// Read the values
 		if(args > 0) ins->v1 = read_value(fp);
 		if(args > 1) ins->v2 = read_value(fp);
-		list_push((*out), ins);
+		vector_push((*out), ins);
 	}
 
 	// Read success!

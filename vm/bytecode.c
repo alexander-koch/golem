@@ -65,24 +65,24 @@ instruction_t* instruction_new(opcode_t op)
 	return ins;
 }
 
-void push_ins(list_t* buffer, instruction_t* ins)
+void push_ins(vector_t* buffer, instruction_t* ins)
 {
-	list_push(buffer, ins);
+	vector_push(buffer, ins);
 }
 
-void insert(list_t* buffer, opcode_t op)
+void insert(vector_t* buffer, opcode_t op)
 {
 	push_ins(buffer, instruction_new(op));
 }
 
-void insert_v1(list_t* buffer, opcode_t op, value_t* v1)
+void insert_v1(vector_t* buffer, opcode_t op, value_t* v1)
 {
 	instruction_t* ins = instruction_new(op);
 	ins->v1 = v1;
 	push_ins(buffer, ins);
 }
 
-void insert_v2(list_t* buffer, opcode_t op, value_t* v1, value_t* v2)
+void insert_v2(vector_t* buffer, opcode_t op, value_t* v1, value_t* v2)
 {
 	instruction_t* ins = instruction_new(op);
 	ins->v1 = v1;
@@ -92,42 +92,42 @@ void insert_v2(list_t* buffer, opcode_t op, value_t* v1, value_t* v2)
 
 // Main functions
 
-void emit_bool(list_t* buffer, bool b)
+void emit_bool(vector_t* buffer, bool b)
 {
 	value_t* val = value_new_bool(b);
 	insert_v1(buffer, OP_PUSH, val);
 }
 
-void emit_int(list_t* buffer, I64 v)
+void emit_int(vector_t* buffer, I64 v)
 {
 	value_t* val = value_new_int(v);
 	insert_v1(buffer, OP_PUSH, val);
 }
 
-void emit_float(list_t* buffer, F64 f)
+void emit_float(vector_t* buffer, F64 f)
 {
 	value_t* val = value_new_float(f);
 	insert_v1(buffer, OP_PUSH, val);
 }
 
-void emit_char(list_t* buffer, char c)
+void emit_char(vector_t* buffer, char c)
 {
 	value_t* val = value_new_char(c);
 	insert_v1(buffer, OP_PUSH, val);
 }
 
-void emit_string(list_t* buffer, char* str)
+void emit_string(vector_t* buffer, char* str)
 {
 	value_t* val = value_new_string(str);
 	insert_v1(buffer, OP_PUSH, val);
 }
 
-void emit_pop(list_t* buffer)
+void emit_pop(vector_t* buffer)
 {
 	insert(buffer, OP_POP);
 }
 
-void emit_op(list_t* buffer, opcode_t op)
+void emit_op(vector_t* buffer, opcode_t op)
 {
 	insert(buffer, op);
 }
@@ -194,59 +194,59 @@ opcode_t getOp(token_type_t tok, datatype_t type)
 	}
 }
 
-bool emit_tok2op(list_t* buffer, token_type_t tok, datatype_t type)
+bool emit_tok2op(vector_t* buffer, token_type_t tok, datatype_t type)
 {
 	opcode_t op = getOp(tok, type);
 	emit_op(buffer, op);
 	return op == -1 ? false : true;
 }
 
-void emit_syscall(list_t* buffer, char* name, size_t args)
+void emit_syscall(vector_t* buffer, char* name, size_t args)
 {
 	value_t* v1 = value_new_string(name);
 	value_t* v2 = value_new_int(args);
 	insert_v2(buffer, OP_SYSCALL, v1, v2);
 }
 
-void emit_invoke(list_t* buffer, size_t address, size_t args)
+void emit_invoke(vector_t* buffer, size_t address, size_t args)
 {
 	value_t* v1 = value_new_int(address);
 	value_t* v2 = value_new_int(args);
 	insert_v2(buffer, OP_INVOKE, v1, v2);
 }
 
-void emit_return(list_t* buffer)
+void emit_return(vector_t* buffer)
 {
 	insert(buffer, OP_RET);
 }
 
-void emit_store(list_t* buffer, int address, bool global)
+void emit_store(vector_t* buffer, int address, bool global)
 {
 	value_t* val = value_new_int(address);
 	insert_v1(buffer, global? OP_GSTORE : OP_STORE, val);
 }
 
-void emit_load(list_t* buffer, int address, bool global)
+void emit_load(vector_t* buffer, int address, bool global)
 {
 	value_t* val = value_new_int(address);
 	insert_v1(buffer, global? OP_GLOAD : OP_LOAD, val);
 }
 
-value_t* emit_jmp(list_t* buffer, int address)
+value_t* emit_jmp(vector_t* buffer, int address)
 {
 	value_t* val = value_new_int(address);
 	insert_v1(buffer, OP_JMP, val);
 	return val;
 }
 
-value_t* emit_jmpf(list_t* buffer, int address)
+value_t* emit_jmpf(vector_t* buffer, int address)
 {
 	value_t* val = value_new_int(address);
 	insert_v1(buffer, OP_JMPF, val);
 	return val;
 }
 
-value_t* emit_jmpt(list_t* buffer, int address)
+value_t* emit_jmpt(vector_t* buffer, int address)
 {
 	value_t* val = value_new_int(address);
 	insert_v1(buffer, OP_JMPT, val);
