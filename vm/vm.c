@@ -53,7 +53,7 @@ void markAll(vm_t* vm)
 {
 	for(int i = 0; i < vm->sp; i++)
 	{
-		mark(vm->stack[i]);
+		if(vm->stack[i]) mark(vm->stack[i]);
 	}
 }
 
@@ -174,7 +174,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 		case OP_STORE:
 		{
 			// Local variable storage
-			// HACK: adding locals offset
+			// HACK: increasing stack pointer
 			// Otherwise:
 			// If too many locals in last scope e.g. from 1 - 11
 			// Then new scope overwrites old values e.g. fp at 5, overwrites 5- 11
@@ -186,8 +186,9 @@ void vm_process(vm_t* vm, list_t* buffer)
 			}
 			else
 			{
-				value_free(vm->locals[vm->fp+offset+ADD_LCLS_PER_SCOPE]);
-				vm->locals[vm->fp+offset+ADD_LCLS_PER_SCOPE] = value_copy(pop(vm));
+				value_free(vm->locals[vm->fp+offset]);
+				vm->locals[vm->fp+offset] = value_copy(pop(vm));
+				vm->sp++;
 			}
 			break;
 		}
@@ -200,7 +201,7 @@ void vm_process(vm_t* vm, list_t* buffer)
 			}
 			else
 			{
-				push(vm, value_copy(vm->locals[vm->fp+offset+ADD_LCLS_PER_SCOPE]));
+				push(vm, value_copy(vm->locals[vm->fp+offset]));
 			}
 			break;
 		}
@@ -209,6 +210,8 @@ void vm_process(vm_t* vm, list_t* buffer)
 			int offset = value_int(instr->v1);
 			value_free(vm->locals[offset]);
 			vm->locals[offset] = value_copy(pop(vm));
+
+			vm->sp++;
 			break;
 		}
 		case OP_GLOAD:
