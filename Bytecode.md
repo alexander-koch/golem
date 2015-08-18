@@ -85,7 +85,7 @@ The frame pointer becomes the stack pointer, the pc is assigned to the new addre
 |...		   |	   -4|
 |NUM_ARGS	   |       -3|
 |FP			   |       -2|
-|PC			   |       -1|  <-- Return address
+|PC			   |       -1| 
 |...		   |	    0|	<-- current position fp / sp
 |...		   |       +1|
 |...           |      ...|

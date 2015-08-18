@@ -215,6 +215,8 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	{
 		// Create parameter in symbols list
 	 	ast_t* param = list_iterator_next(iter);
+
+		if(symbol_exists(compiler, param, param->vardecl.name)) return DATA_NULL;
 		symbol_t* symbol = symbol_new(compiler, param, i, param->vardecl.type);
 		hashmap_set(compiler->scope->symbols, param->vardecl.name, symbol);
 		i++;
@@ -227,13 +229,6 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	while(!list_iterator_end(iter))
 	{
 		ast_t* sub = list_iterator_next(iter);
-		// if(sub->class == AST_DECLFUNC)
-		// {
-		// 	compiler_throw(compiler, node, "Function declaration in a function is not allowed");
-		// 	break;
-		// 	// Lambda lifting?
-		// }
-
 		if(sub->class == AST_RETURN && !list_iterator_end(iter))
 		{
 			compiler_throw(compiler, node, "Return statement declared before end was reached");

@@ -19,14 +19,20 @@ A programming language written in C.
 
 # TODO
 
-- Implementing all (basic) operators for associated types in the vm / bytecodes => (Done.)
-- Finalize implementing functions => (Done.)
-- mark-sweep garbage collector for vm => (Done.)
-- Mutable parameters => (Done.)
-- Subscripts (Arrays / Strings) => (Done.)
-- Nested functions => (Done.)
-- Bytecode optimizations => (Working on it)
-- Lambdas, Closures, Anonymous functions => (Prototype / Concept)
+#### Serious issues
+
+- [ ] When trying to replace an **Upvalue**, wrong storage address is used => (Recognized, Working on it immediately)
+
+#### Other
+
+- [ ] Nested functions => (Nearly done.)
+- [ ] Bytecode optimizations => (Working on it)
+- [ ] Lambdas, Closures, Anonymous functions => (Prototype / Concept)
+- [x] Implementing all (basic) operators for associated types in the vm / bytecodes => (Done.)
+- [x] Finalize implementing functions => (Done.)
+- [x] mark-sweep garbage collector for vm => (Done.)
+- [x] Mutable parameters => (Done.)
+- [x] Subscripts (Arrays / Strings) => (Done.)
 
 #### Langugage specific
 
@@ -34,7 +40,7 @@ A programming language written in C.
 - AST optimization
 - prefix operators
 - Lambdas
-- Typecasting => Done by std library
+- Typecasting > Done by std library
 
 #### Implementation specific
 
@@ -62,8 +68,8 @@ x = x + 1
 Functions are declared using the 'func' keyword.
 The body is bound by egyptian style braces. You have to declare the parameters and the return type.
 Parameters are always immutable, if the 'mut' mutability keyword is not set.
-```rust
-	func main(arg0: char[]) -> void {
+```ruby
+	func main(arg0:char[]) -> void {
 	# body
 }
 ```
@@ -85,31 +91,43 @@ let str = "Hello World" // Same as ["H", "E", "L", ...]
 Classes are defined using the structure below. The method `new` is the classes constructor.
 All attributes are private.
 To get a field, getters are used to maintain encapsulation.
-```rust
- 	object Main {
+```ruby
+	import core
 
-		# Attributes
-		let mut x = 2
-		let mut y = 4
+object Class {
 
-		# Constructor
-		func new(x: int, y: int, z: int) -> void {
-			this.x = 2
-			this.y = 4
-		}
+	# Attributes
+	let mut x = 0
+	let mut y = 0
+	let z = 0
 
-		# Method 1
-		func run() -> void {
-			println("Running with x:", self.x, "and y:", self.y)
-		}
-
-		# More methods here [...]
-
-		# Example for encapsulation
-		func getX() -> int {
-			return x
-		}
+	# Constructor
+	func new(x: int, y: int, z: int) -> void {
+		self.x = x
+		self.y = y
+		self.z = z
 	}
+
+	# Method 1
+	func run() -> void {
+		println("Running with x:", self.x, "and y:", self.y)
+	}
+
+	# More methods here [...]
+
+	# Example for encapsulation
+	func getX() -> int {
+		return x
+	}
+}
+
+func main() -> void {
+	let cls = Class::new(7,5,2)
+	cls.run()
+	println(cls.getX())
+}
+
+main()
 ```
 
 ### Control Flow
@@ -118,18 +136,18 @@ Control flows are created by if statements or while loops. Style is egyptian.
 Example:
 ```rust
 	if(number == 5) {
-		println("Your number is odd.")
-	} else if(number == 3) {
-		println("Your number is odd and it's three.")
-	} else {
-		println("Your number isn't 5 or 3.")
-	}
+	println("Your number is odd.")
+} else if(number == 3) {
+	println("Your number is odd and it's three.")
+} else {
+	println("Your number isn't 5 or 3.")
+}
 ```
 While loops:
-```rust
+```ruby
 	while(number == 5) {
-		number = number + 1
-	}
+	number = number + 1
+}
 ```
 
 # Curently supported

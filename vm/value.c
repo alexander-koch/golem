@@ -133,6 +133,7 @@ void value_reset(value_t* value)
 		}
 		list_iterator_free(iter);
 		list_free(list);
+		value->v.o = 0;
 	}
 }
 
