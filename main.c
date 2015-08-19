@@ -9,9 +9,8 @@
 #include <core/mem.h>
 #include <parser/ast.h>
 #include <parser/parser.h>
-#include <compiler/compiler.h>
 #include <vm/vm.h>
-
+#include <compiler/compiler.h>
 #include <compiler/bytecode_writer.h>
 
 void run_repl(vm_t* vm, compiler_t* compiler)

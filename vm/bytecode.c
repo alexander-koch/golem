@@ -54,6 +54,7 @@ const char* op2str(opcode_t code)
 		case OP_GETSUB: return "getsub";
 		case OP_SETSUB: return "setsub";
 		case OP_UPVAL: return "upval";
+		case OP_UPSTORE: return "upstore";
 		default: return "unknown";
 	}
 }
@@ -234,6 +235,16 @@ void emit_load(vector_t* buffer, int address, bool global)
 {
 	value_t* val = value_new_int(address);
 	insert_v1(buffer, global? OP_GLOAD : OP_LOAD, val);
+}
+
+void emit_load_upval(vector_t* buffer, int depth, int address)
+{
+	insert_v2(buffer, OP_UPVAL, value_new_int(depth), value_new_int(address));
+}
+
+void emit_store_upval(vector_t* buffer, int depth, int address)
+{
+	insert_v2(buffer, OP_UPSTORE, value_new_int(depth), value_new_int(address));
 }
 
 value_t* emit_jmp(vector_t* buffer, int address)

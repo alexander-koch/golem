@@ -201,7 +201,7 @@ void vm_process(vm_t* vm, vector_t* buffer)
 			{
 				value_free(vm->locals[vm->fp+offset]);
 				vm->locals[vm->fp+offset] = value_copy(pop(vm));
-				vm->sp++;
+				if(vm->fp + offset > vm->sp) vm->sp = vm->fp + offset;
 			}
 			break;
 		}
@@ -223,7 +223,8 @@ void vm_process(vm_t* vm, vector_t* buffer)
 			int offset = value_int(instr->v1);
 			value_free(vm->locals[offset]);
 			vm->locals[offset] = value_copy(pop(vm));
-			vm->sp++;
+			//vm->sp++;
+			if(vm->fp + offset > vm->sp) vm->sp = vm->fp + offset;
 			break;
 		}
 		case OP_GLOAD:
@@ -256,6 +257,31 @@ void vm_process(vm_t* vm, vector_t* buffer)
 			vm->sp = sp;
 			vm->fp = fp;
 			push(vm, value_copy(v));
+			break;
+		}
+		case OP_UPSTORE:
+		{
+			value_t* newVal = pop(vm);
+
+			int scopes = value_int(instr->v1);
+			int offset = value_int(instr->v2);
+
+			int fp = vm->fp;
+			int sp = vm->sp;
+
+			for(int i = 0; i < scopes; i++)
+			{
+				vm->fp = value_int(vm->stack[vm->fp - 2]);
+			}
+			vm->sp = vm->fp;
+
+			if(offset < 0)
+				vm->stack[vm->fp+offset] = newVal;
+			else
+				vm->locals[vm->fp+offset] = newVal;
+
+			vm->sp = sp;
+			vm->fp = fp;
 			break;
 		}
 		case OP_SYSCALL:
@@ -336,16 +362,17 @@ void vm_process(vm_t* vm, vector_t* buffer)
 		{
 			// Reverse list sorting
 			size_t elsz = value_int(pop(vm));
-			list_t* list = list_new();
+			value_t** arr = malloc(sizeof(value_t*) * elsz);
+
 			for(int i = elsz; i > 0; i--)
 			{
 				value_t* val = vm->stack[vm->sp - i];
-				list_push(list, value_copy(val));
+				arr[elsz - i] = value_copy(val);
 				vm->stack[vm->sp - i] = 0;
 			}
-			vm->sp -= elsz;
 
-			value_t* ret = value_new_list(list);
+			vm->sp -= elsz;
+			value_t* ret = value_new_array(arr, elsz);
 			push(vm, ret);
 			break;
 		}
@@ -620,9 +647,9 @@ void vm_process(vm_t* vm, vector_t* buffer)
 			}
 			else
 			{
-				list_t* list = value_list(object);
+				array_t* arr = value_array(object);
 				int idx = value_int(key);
-				value_t* v = value_copy(list_get(list, idx));
+				value_t* v = value_copy(arr->data[idx]);
 				push(vm, v);
 			}
 			break;
@@ -638,29 +665,16 @@ void vm_process(vm_t* vm, vector_t* buffer)
 			value_t* object = pop(vm);
 			value_t* val = pop(vm);
 
-			if(object->type == VALUE_LIST)
+			if(object->type == VALUE_ARRAY)
 			{
-				list_t* nl = list_new();
-				list_iterator_t* iter = list_iterator_create(value_list(object));
-				int i = 0;
-				int idx = value_int(key);
-				while(!list_iterator_end(iter))
-				{
-					if(i == idx)
-					{
-						list_push(nl, value_copy(val));
-						list_iterator_next(iter);
-					}
-					else
-					{
-						list_push(nl, value_copy(list_iterator_next(iter)));
-					}
-					i++;
-				}
-				list_iterator_free(iter);
+				value_t* newArr = value_copy(object);
+				array_t* newArrData = value_array(newArr);
 
-				value_t* v = value_new_list(nl);
-				push(vm, v);
+				int idx = value_int(key);
+				value_free(newArrData->data[idx]);
+				newArrData->data[idx] = value_copy(val);
+
+				push(vm, newArr);
 			}
 			else if(object->type == VALUE_STRING)
 			{
@@ -725,6 +739,5 @@ void vm_execute(vm_t* vm, vector_t* buffer)
 // Frees the memory used by the vm
 void vm_free(vm_t* vm)
 {
-	console("Freeing vm\n");
 	free(vm);
 }

@@ -18,7 +18,7 @@
 #define value_number(val) (val->type == VALUE_INT ? value_int(val) : value_float(val))
 #define value_char(val) val->v.c
 #define value_string(val) (char*)val->v.o
-#define value_list(val) (list_t*)val->v.o
+#define value_array(val) (array_t*)val->v.o
 
 typedef enum
 {
@@ -28,7 +28,7 @@ typedef enum
 	VALUE_INT,
 	VALUE_CHAR,
 	VALUE_STRING,
-	VALUE_LIST,
+	VALUE_ARRAY,
 	VALUE_OBJECT,
 } value_type_t;
 
@@ -47,6 +47,12 @@ typedef struct value_t
 	struct value_t* next;
 } value_t;
 
+typedef struct array_t
+{
+	value_t** data;
+	size_t size;
+} array_t;
+
 typedef struct object_t
 {
 	value_t** fields;
@@ -64,7 +70,7 @@ value_t* value_new_char(char character);
 value_t* value_new_string_const(const char* string);
 value_t* value_new_string(char* string);
 value_t* value_new_string_nocopy(char* string);
-value_t* value_new_list(list_t* list);
+value_t* value_new_array(value_t** data, size_t length);
 value_t* value_new_object(void* obj);
 
 // Value copy

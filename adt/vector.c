@@ -24,14 +24,15 @@ void vector_push(vector_t* vector, void* data)
 void* vector_pop(vector_t* vector)
 {
 	vector->size--;
-	return vector->data[vector->size];
+	void* data = vector->data[vector->size];
 
-	// Shrink if no more space is needed?
-	// if(vector->size == vector->capacity)
-	// {
-	// 	vector->capacity /= 2;
-	// 	vector->data = realloc(vector->data, sizeof(void*) * vector->capacity);
-	// }
+	if(vector->size == vector->capacity-VECTOR_CAPACITY)
+	{
+		vector->capacity -= VECTOR_CAPACITY;
+		vector->data = realloc(vector->data, sizeof(void*) * vector->capacity);
+		assert(vector->data != 0);
+	}
+	return data;
 }
 
 void vector_set(vector_t* vector, size_t index, void* data)

@@ -66,11 +66,15 @@ value_t* value_new_string_nocopy(char* string)
 	return val;
 }
 
-value_t* value_new_list(list_t* list)
+value_t* value_new_array(value_t** data, size_t length)
 {
+	array_t* array = malloc(sizeof(*array));
+	array->data = data;
+	array->size = length;
+
 	value_t* val = value_new_null();
-	val->type = VALUE_LIST;
-	val->v.o = list;
+	val->type = VALUE_ARRAY;
+	val->v.o = array;
 	return val;
 }
 
@@ -90,27 +94,25 @@ value_t* value_copy(value_t* value)
 	{
 		val->v.o = strdup(value->v.o);
 	}
-	else if(val->type == VALUE_LIST)
+	else if(val->type == VALUE_ARRAY)
 	{
-		// TODO: computationally expensive, improve the performance
-
-		list_t* list = list_new();
-		list_iterator_t* iter = list_iterator_create(value->v.o);
-		while(!list_iterator_end(iter))
+		array_t* arr = value_array(value);
+		array_t* newArr = malloc(sizeof(*newArr));
+		newArr->data = malloc(sizeof(value_t*) * arr->size);
+		newArr->size = arr->size;
+		for(int i = 0; i < arr->size; i++)
 		{
-			value_t* val = list_iterator_next(iter);
-			list_push(list, value_copy(val));
+			newArr->data[i] = value_copy(arr->data[i]);
 		}
-		list_iterator_free(iter);
-		val->v.o = list;
+		val->v.o = newArr;
 	}
 	else
 	{
 		val->v = value->v;
 	}
 
-	//TODO: obj pointer copying
-	//FIXME: unstable could possibly create an error, doesn't work for objects
+	// TODO: obj pointer copying
+	// FIXME: unstable could possibly create an error, doesn't work for objects
 
 	return val;
 }
@@ -122,17 +124,15 @@ void value_reset(value_t* value)
 		free(value->v.o);
 		value->v.o = 0;
 	}
-	else if(value->type == VALUE_LIST)
+	else if(value->type == VALUE_ARRAY)
 	{
-		list_t* list = (list_t*)value->v.o;
-		list_iterator_t* iter = list_iterator_create(list);
-		while(!list_iterator_end(iter))
+		array_t* arr = value_array(value);
+		for(int i = 0; i < arr->size; i++)
 		{
-			value_t* val = list_iterator_next(iter);
-			value_free(val);
+			value_free(arr->data[i]);
 		}
-		list_iterator_free(iter);
-		list_free(list);
+		free(arr->data);
+		free(arr);
 		value->v.o = 0;
 	}
 }
@@ -177,19 +177,29 @@ void value_print(value_t* value)
 				console("%c", value->v.c);
 				break;
 			}
-			case VALUE_LIST:
+			case VALUE_ARRAY:
 			{
+				array_t* arr = value_array(value);
 				console("[");
-				list_t* list = (list_t*)value->v.o;
-				list_iterator_t* iter = list_iterator_create(list);
-				while(!list_iterator_end(iter))
+				for(int i = 0; i < arr->size; i++)
 				{
-					value_t* val = list_iterator_next(iter);
-					value_print(val);
-					if(!list_iterator_end(iter)) console(", ");
+					value_t* idx = arr->data[i];
+					value_print(idx);
+					if(i < arr->size-1) console(", ");
 				}
-				list_iterator_free(iter);
 				console("]");
+
+				// console("[");
+				// list_t* list = (list_t*)value->v.o;
+				// list_iterator_t* iter = list_iterator_create(list);
+				// while(!list_iterator_end(iter))
+				// {
+				// 	value_t* val = list_iterator_next(iter);
+				// 	value_print(val);
+				// 	if(!list_iterator_end(iter)) console(", ");
+				// }
+				// list_iterator_free(iter);
+				// console("]");
 				break;
 			}
 			case VALUE_NULL:

@@ -10,6 +10,22 @@ void compiler_init(compiler_t* compiler)
 	compiler->scope = 0;
 }
 
+// Compiler.throw(node, message)
+// If an error occurs, this function can be used as an exception.
+// It halts the compilation, and prints an error message to the console.
+// The parameter node is needed to get the location in the source-code that is wrong.
+void compiler_throw(compiler_t* compiler, ast_t* node, const char* format, ...)
+{
+	compiler->error = true;
+    location_t loc = node->location;
+    fprintf(stdout, "[line %d, column %d] (Semantic): ", loc.line, loc.column);
+    va_list argptr;
+    va_start(argptr, format);
+    vfprintf(stdout, format, argptr);
+    va_end(argptr);
+    fprintf(stdout, "\n");
+}
+
 // Scope.new()
 // Scopes store the local state of the compiler.
 // These are mainly used for functions and
@@ -94,8 +110,6 @@ symbol_t* symbol_new(compiler_t* compiler, ast_t* node, int address, datatype_t 
 // Checks if the symbol is stored in the current local scope.
 symbol_t* symbol_get_ext(scope_t* scope, char* ident, int* depth)
 {
-	(*depth)++;
-
 	void* val;
 	if(hashmap_get(scope->symbols, ident, &val) != HMAP_MISSING)
 	{
@@ -104,6 +118,7 @@ symbol_t* symbol_get_ext(scope_t* scope, char* ident, int* depth)
 
 	if(scope->super)
 	{
+		(*depth)++;
 		return symbol_get_ext(scope->super, ident, depth);
 	}
 	return 0;
@@ -130,23 +145,7 @@ symbol_t* symbol_get(scope_t* scope, char* ident)
 	return 0;
 }
 
-// Compiler.throw(node, message)
-// If an error occurs, this function can be used as an exception.
-// It halts the compilation, and prints an error message to the console.
-// The parameter node is needed to get the location in the source-code that is wrong.
-void compiler_throw(compiler_t* compiler, ast_t* node, const char* format, ...)
-{
-	compiler->error = true;
-    location_t loc = node->location;
-    fprintf(stdout, "[line %d, column %d] (Semantic): ", loc.line, loc.column);
-    va_list argptr;
-    va_start(argptr, format);
-    vfprintf(stdout, format, argptr);
-    va_end(argptr);
-    fprintf(stdout, "\n");
-}
-
-// Symbol.exists(node, string name)
+// Symbol.exists(node, name)
 // Test if given identifier exists in the symbol-table.
 // If so, an exception is thrown and true returned.
 bool symbol_exists(compiler_t* compiler, ast_t* node, char* ident)
@@ -161,6 +160,21 @@ bool symbol_exists(compiler_t* compiler, ast_t* node, char* ident)
 		return true;
 	}
 	return false;
+}
+
+void symbol_replace(compiler_t* compiler, symbol_t* symbol)
+{
+	int depth = 0;
+	symbol_get_ext(compiler->scope, symbol->node->vardecl.name, &depth);
+
+	if(depth == 0 || symbol->global)
+	{
+		emit_store(compiler->buffer, symbol->address, symbol->global);
+	}
+	else
+	{
+		emit_store_upval(compiler->buffer, depth, symbol->address);
+	}
 }
 
 // Eval.block(List<Block>)
@@ -559,7 +573,8 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 						return DATA_NULL;
 					}
 
-					emit_store(compiler->buffer, symbol->address, symbol->global);
+					//emit_store(compiler->buffer, symbol->address, symbol->global);
+					symbol_replace(compiler, symbol);
 				}
 				else
 				{
@@ -633,7 +648,8 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 
 							compiler_eval(compiler, key);
 							emit_op(compiler->buffer, OP_SETSUB);
-							emit_store(compiler->buffer, symbol->address, symbol->global);
+							//emit_store(compiler->buffer, symbol->address, symbol->global);
+							symbol_replace(compiler, symbol);
 						}
 					}
 				}
@@ -697,7 +713,7 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 // This function evaluates an occuring symbol and loads its content.
 datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 {
-	int depth = -1;
+	int depth = 0;
 	symbol_t* ptr = symbol_get_ext(compiler->scope, node->ident, &depth);
 	if(ptr)
 	{
@@ -707,7 +723,7 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 		}
 		else
 		{
-			insert_v2(compiler->buffer, OP_UPVAL, value_new_int(depth), value_new_int(ptr->address));
+			emit_load_upval(compiler->buffer, depth, ptr->address);
 		}
 		return ptr->type;
 	}

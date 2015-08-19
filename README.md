@@ -177,23 +177,23 @@ While loops:
 
 # Stuff / Internet sources
 
-http://markmail.org/download.xqy?id=vhdi5dbzkrdbchxq&number=1
-http://llvm.org/docs/LangRef.html
-http://llvm.org/docs/doxygen/html/group__LLVMCCoreValueGeneral.html
-https://github.com/TheThirdOne/llvm-tutorial-gitbook/blob/master/mutable.md
-http://ducklang.org/designing-a-programming-language-i
-http://www.codejury.com/a-walk-in-x64-land/
-http://www.d.umn.edu/~rmaclin/cs5641/Notes/L19_CodeGenerationI.pdf
-http://www.incubatorgames.com/20110621/simple-scripting-language-part-5/
-http://byteworm.com/2010/11/21/the-fastest-vm-bytecode-interpreter/
-https://www.youtube.com/watch?v=OjaAToVkoTw
-http://journal.stuffwithstuff.com/2013/12/08/babys-first-garbage-collector/
-http://bartoszsypytkowski.com/simple-virtual-machine/
-https://github.com/gphat/babyvm/blob/master/babyvm.c
-https://en.wikibooks.org/wiki/X86_Disassembly/Functions_and_Stack_Frames
-https://en.wikipedia.org/wiki/Lambda_lifting
-https://en.wikipedia.org/wiki/Call_stack#Structure
-https://en.wikipedia.org/wiki/Nested_function#Implementation
+* [LLVM-C Tutorial](http://markmail.org/download.xqy?id=vhdi5dbzkrdbchxq&number=1)
+* [LLVM LangRef](http://llvm.org/docs/LangRef.html)
+* [LLVMCCoreValueGeneral](http://llvm.org/docs/doxygen/html/group__LLVMCCoreValueGeneral.html)
+* [LLVM Mutable](https://github.com/TheThirdOne/llvm-tutorial-gitbook/blob/master/mutable.md)
+* [Ducklang programming language design](http://ducklang.org/designing-a-programming-language-i)
+* [A Walk in x86_64 Assembly Land](http://www.codejury.com/a-walk-in-x64-land/)
+* [Stack machine](http://www.d.umn.edu/~rmaclin/cs5641/Notes/L19_CodeGenerationI.pdf)
+* [Simple scripting language part 5](http://www.incubatorgames.com/20110621/simple-scripting-language-part-5/)
+* [Fastest bytecode interpreter (Contest)](http://byteworm.com/2010/11/21/the-fastest-vm-bytecode-interpreter/)
+* [Virtual machine](https://www.youtube.com/watch?v=OjaAToVkoTw)
+* [http://journal.stuffwithstuff.com/2013/12/08/babys-first-garbage-collector/]()
+* [http://bartoszsypytkowski.com/simple-virtual-machine/]()
+* [https://github.com/gphat/babyvm/blob/master/babyvm.c]()
+* [https://en.wikibooks.org/wiki/X86_Disassembly/Functions_and_Stack_Frames]()
+* [https://en.wikipedia.org/wiki/Lambda_lifting]()
+* [https://en.wikipedia.org/wiki/Call_stack#Structure]()
+* [https://en.wikipedia.org/wiki/Nested_function#Implementation]()
 
 # Licence
 Copyright (c) Alexander Koch 2015 All Rights Reserved.

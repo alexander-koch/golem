@@ -72,7 +72,10 @@ typedef enum
 	// Subscript
 	OP_GETSUB,
 	OP_SETSUB,
-	OP_UPVAL
+
+	// Upval
+	OP_UPVAL,
+	OP_UPSTORE
 } opcode_t;
 
 typedef struct
@@ -101,6 +104,8 @@ void emit_invoke(vector_t* buffer, size_t address, size_t args);
 void emit_return(vector_t* buffer);
 void emit_store(vector_t* buffer, int address, bool global);
 void emit_load(vector_t* buffer, int address, bool global);
+void emit_load_upval(vector_t* buffer, int depth, int address);
+void emit_store_upval(vector_t* buffer, int depth, int address);
 
 value_t* emit_jmp(vector_t* buffer, int address);
 value_t* emit_jmpf(vector_t* buffer, int address);

@@ -85,10 +85,14 @@ void mem_free(void* ptr)
 
 void mem_leak_check()
 {
-    fprintf(stdout, "%d allocations.\n", allocs);
-    fprintf(stdout, "%d deallocations.\n", frees);
-    fprintf(stdout, "%lu bytes leaked.\n", bytes);
-    fprintf(stdout, "%lu bytes used.\n", used_bytes);
+    fprintf(stdout, "Allocations:\n");
+    fprintf(stdout, "  %d allocations.\n", allocs);
+    fprintf(stdout, "  %d deallocations.\n", frees);
+    fprintf(stdout, "  %lu bytes leaked.\n", bytes);
+    fprintf(stdout, "Byte usage:\n");
+    fprintf(stdout, "  %lu bytes used.\n", used_bytes);
+    fprintf(stdout, "  %lu kilo bytes used.\n", used_bytes / 1024);
+    fprintf(stdout, "  %lu mega bytes used.\n", used_bytes / 1024 / 1024);
 }
 
 #endif

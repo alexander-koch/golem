@@ -37,6 +37,12 @@ FILES = main.c \
 		lib/mathlib.c
 
 debug:
+	$(CC) -O2 $(CFLAGS) $(INC) $(FILES) $(LDFLAGS) -g -o $(MODULE)
+
+release:
+	$(CC) -O3 $(CFLAGS) $(INC) $(FILES) $(LDFLAGS) -o $(MODULE)
+
+old:
 	$(CC) $(CFLAGS) $(INC) -c $(FILES)
 	$(CC) *.o $(LDFLAGS) -o $(MODULE)
 	rm *.o
