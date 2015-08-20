@@ -110,10 +110,6 @@ value_t* value_copy(value_t* value)
 	{
 		val->v = value->v;
 	}
-
-	// TODO: obj pointer copying
-	// FIXME: unstable could possibly create an error, doesn't work for objects
-
 	return val;
 }
 

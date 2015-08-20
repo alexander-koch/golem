@@ -103,6 +103,7 @@ symbol_t* symbol_new(compiler_t* compiler, ast_t* node, int address, datatype_t 
 	symbol->address = address;
 	symbol->type = type;
 	symbol->global = compiler->depth == 0 ? true : false;
+	symbol->used = 1;
 	return symbol;
 }
 
@@ -113,7 +114,9 @@ symbol_t* symbol_get_ext(scope_t* scope, char* ident, int* depth)
 	void* val;
 	if(hashmap_get(scope->symbols, ident, &val) != HMAP_MISSING)
 	{
-		return (symbol_t*)val;
+		symbol_t* sym = (symbol_t*)val;
+		sym->used++;
+		return sym;
 	}
 
 	if(scope->super)
@@ -135,7 +138,9 @@ symbol_t* symbol_get(scope_t* scope, char* ident)
 	void* val;
 	if(hashmap_get(scope->symbols, ident, &val) != HMAP_MISSING)
 	{
-		return (symbol_t*)val;
+		symbol_t* sym = (symbol_t*)val;
+		sym->used++;
+		return sym;
 	}
 
 	if(scope->super)
@@ -302,37 +307,52 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 
 	// First eval initializer to get type
 	datatype_t vartype = compiler_eval(compiler, node->vardecl.initializer);
-	if(vartype == DATA_NULL)
+	if(vartype == DATA_VOID)
+	{
+		compiler_throw(compiler, node, "Variable initializer is of type VOID");
+		return DATA_NULL;
+	}
+	else if(vartype == DATA_NULL)
 	{
 		compiler_throw(compiler, node, "Variable initializer is NULL");
 		return DATA_NULL;
 	}
 
+#ifdef NO_EXPERIMENTAL
 	if(vartype == DATA_LAMBDA)
 	{
 		compiler_throw(compiler, node, "Trying to assign a function to a value (Currently not supported)");
 		return DATA_NULL;
-		// symbol_t* lambdaSymb = symbol_get(compiler->scope, node->vardecl.initializer->ident);
-		// if(lambdaSymb)
-		// {
-		// 	symbol_t* symbol = symbol_new(compiler, node, lambdaSymb->address, vartype);
-		// 	symbol->node->vardecl.type = vartype;
-		// 	hashmap_set(compiler->scope->symbols, node->vardecl.name, symbol);
-		// }
+	}
+#endif
+
+	// Store the symbol
+	symbol_t* symbol = symbol_new(compiler, node, compiler->scope->address, vartype);
+	symbol->node->vardecl.type = vartype;
+	hashmap_set(compiler->scope->symbols, node->vardecl.name, symbol);
+
+	// Lambda works as referece
+	if(vartype != DATA_LAMBDA)
+	{
+		// Emit last bytecode
+		emit_store(compiler->buffer, symbol->address, symbol->global);
 	}
 	else
 	{
-		// Store the symbol
-		symbol_t* symbol = symbol_new(compiler, node, compiler->scope->address, vartype);
-		symbol->node->vardecl.type = vartype;
-		hashmap_set(compiler->scope->symbols, node->vardecl.name, symbol);
-
-		// Emit last bytecode
-		emit_store(compiler->buffer, symbol->address, symbol->global);
-
-		// Increase compiler address
-		compiler->scope->address++;
+		if(node->vardecl.initializer->class == AST_IDENT)
+		{
+			symbol_t* funcSymbol = symbol_get(compiler->scope, node->vardecl.initializer->ident);
+			symbol->ref = funcSymbol;
+		}
+		else
+		{
+			compiler_throw(compiler, node, "Direct lambda assignment to a variable is currently not supported");
+			return DATA_NULL;
+		}
 	}
+
+	// Increase compiler address
+	compiler->scope->address++;
 
 	// Debug variables if flag is set
 #ifdef DB_VARS
@@ -569,12 +589,31 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 					datatype_t dt = compiler_eval(compiler, rhs);
 					if(dt != symbol->node->vardecl.type)
 					{
-						compiler_throw(compiler, node, "Wanring: Change of types is not permitted");
+						compiler_throw(compiler, node, "Warning: Change of types is not permitted");
 						return DATA_NULL;
 					}
 
-					//emit_store(compiler->buffer, symbol->address, symbol->global);
-					symbol_replace(compiler, symbol);
+					// Now do lambda testing
+					// If it is a lambda it has to be handled differently than
+					// a regular ast.
+					// A regular ast just emits a store opcode and is handled externally in the vm.
+					// A lambda just works like a reference.
+					if(dt == DATA_LAMBDA)
+					{
+						if(rhs->class == AST_IDENT)
+						{
+							symbol->ref = symbol_get(compiler->scope, rhs->ident);
+						}
+						else
+						{
+							compiler_throw(compiler, node, "Direct lambda assignment is currently not supported");
+							return DATA_NULL;
+						}
+					}
+					else
+					{
+						symbol_replace(compiler, symbol);
+					}
 				}
 				else
 				{
@@ -717,13 +756,16 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 	symbol_t* ptr = symbol_get_ext(compiler->scope, node->ident, &depth);
 	if(ptr)
 	{
-		if(depth == 0 || ptr->global)
+		if(ptr->node->class == AST_DECLVAR)
 		{
-			emit_load(compiler->buffer, ptr->address, ptr->global);
-		}
-		else
-		{
-			emit_load_upval(compiler->buffer, depth, ptr->address);
+			if(depth == 0 || ptr->global)
+			{
+				emit_load(compiler->buffer, ptr->address, ptr->global);
+			}
+			else
+			{
+				emit_load_upval(compiler->buffer, depth, ptr->address);
+			}
 		}
 		return ptr->type;
 	}
@@ -747,18 +789,6 @@ datatype_t eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node,
 
 	list_t* formals = func->funcdecl.impl.formals;
 	size_t paramc = list_size(formals);
-
-	// Check if variadic function
-	if(paramc > 0)
-	{
-		ast_t* first = list_top(formals);
-		if(first->vardecl.type == DATA_VARARGS)
-		{
-			eval_block(compiler, node->call.args);
-			emit_syscall(compiler->buffer, func->funcdecl.name, argc);
-			return DATA_NULL;
-		}
-	}
 
 	// Param checking
 	if(argc > paramc)
@@ -784,7 +814,7 @@ datatype_t eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node,
 				datatype_t type = compiler_eval(compiler, list_iterator_next(args_iter));
 				ast_t* param = list_iterator_next(iter);
 
-				if(param->vardecl.type != type)
+				if(param->vardecl.type != type && param->vardecl.type != DATA_GENERIC)
 				{
 					compiler_throw(compiler, node,
 						"Parameter %d has the wrong type.\nFound: %s, expected: %s",
@@ -810,6 +840,8 @@ datatype_t eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node,
 	return func->funcdecl.rettype;
 }
 
+extern char* gen_signature(char* name, list_t* formals);
+
 // Eval.call(node)
 // Evaluates a call:
 // Tries to find the given function,
@@ -823,13 +855,22 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 		symbol_t* symbol = symbol_get(compiler->scope, call->ident);
 		if(symbol)
 		{
-			if(symbol->node->class != AST_DECLFUNC)
+			if(symbol->node->class == AST_DECLFUNC)
+			{
+				return eval_compare_and_call(compiler, symbol->node, node, symbol->address);
+			}
+			else if(symbol->node->class == AST_DECLVAR && symbol->node->vardecl.type == DATA_LAMBDA)
+			{
+				// If variable, set function to reference
+
+				symbol = symbol->ref;
+				return eval_compare_and_call(compiler, symbol->node, node, symbol->address);
+			}
+			else
 			{
 				compiler_throw(compiler, node, "Identifier '%s' is not a function", call->ident);
 				return DATA_NULL;
 			}
-
-			return eval_compare_and_call(compiler, symbol->node, node, symbol->address);
 		}
 
 		compiler_throw(compiler, node, "Implicit declaration of function '%s'", call->ident);
@@ -837,7 +878,7 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 	}
 	else
 	{
-		// lamdba(x,y,z)- > void { body} (6,2,3) will never occur due to parsing
+		// lamdba(x,y,z)- > void { body} (6,2,3) will never occur due to parsing (maybe in future versions)
 		compiler_throw(compiler, node, "Callee has to be an identifier or a lambda");
 	}
 
@@ -1474,6 +1515,24 @@ void compiler_dump(ast_t* node, int level)
 	}
 }
 
+void symbols_track_usage(compiler_t* compiler, scope_t* scope)
+{
+	hashmap_iterator_t* iter = hashmap_iterator_create(scope->symbols);
+	while(!hashmap_iterator_end(iter))
+	{
+		hashmap_iterator_next(iter);
+	}
+	hashmap_iterator_free(iter);
+
+	// list_iterator_t* l_iter = list_iterator_create(scope->subscopes);
+	// while(!list_iterator_end(l_iter))
+	// {
+	// 	scope_t* subscope = list_iterator_next(l_iter);
+	// 	symbols_track_usage(compiler, subscope);
+	// }
+	// list_iterator_free(l_iter);
+}
+
 // Compiler.compileBuffer(string code)
 // Compiles code into bytecode instructions
 vector_t* compile_buffer(compiler_t* compiler, const char* source)
@@ -1494,18 +1553,15 @@ vector_t* compile_buffer(compiler_t* compiler, const char* source)
 		console("Abstract syntax tree:\n");
 		compiler_dump(root, 0);
 #endif
+		//symbols_track_usage(compiler, compiler->scope);
+
 		compiler_eval(compiler, root);
 		ast_free(root);
 	}
 
-	// Free filename and parser
-	if(compiler->filename)
-	{
-		free(compiler->filename);
-	}
+	// Free filename and scope and parser
+	if(compiler->filename) free(compiler->filename);
 	parser_free(&compiler->parser);
-
-	// Clean up symbol table / debugging symbols
 	scope_free(compiler->scope);
 
 	// Return bytecode if valid

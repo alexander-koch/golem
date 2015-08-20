@@ -1,7 +1,7 @@
 #ifndef jit_h
 #define jit_h
 
-#include <adt/list.h>
+#include <adt/vector.h>
 #include <vm/bytecode.h>
 
 typedef int (JitFunc)();
@@ -17,6 +17,6 @@ typedef struct
 void* jit_malloc_exec(unsigned int size);
 void jit_free_exec(void* ptr, unsigned int size);
 
-JitFunc* jit_compile(list_t* buffer);
+JitFunc* jit_compile(vector_t* buffer);
 
 #endif

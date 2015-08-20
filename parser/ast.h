@@ -21,9 +21,15 @@ typedef enum
     DATA_OBJECT = 1 << 6, //0x20,
     DATA_VOID = 1 << 7, //0x40,
     DATA_ARRAY = 1 << 8, // 0x80
-    DATA_VARARGS = 1 << 9,
+    DATA_GENERIC = 1 << 9,
     DATA_LAMBDA = 1 << 10
 } datatype_t;
+
+// typedef struct datatype_t
+// {
+//     type_t type;
+//     void* data;
+// } datatype_t;
 
 #define DATA_STRING (DATA_ARRAY | DATA_CHAR)
 

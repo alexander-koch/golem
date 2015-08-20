@@ -72,7 +72,6 @@ int core_c2i(vm_t* vm)
 	return 0;
 }
 
-
 int core_parseFloat(vm_t* vm)
 {
 	pop(vm);
@@ -109,11 +108,11 @@ void core_gen_signatures(list_t* toplevel)
 	FUNCTION_PUSH(toplevel)
 
 	FUNCTION_NEW("print", DATA_VOID)
-	ADD_PARAM(DATA_VARARGS)
+	ADD_PARAM(DATA_GENERIC)
 	FUNCTION_PUSH(toplevel)
 
 	FUNCTION_NEW("println", DATA_VOID)
-	ADD_PARAM(DATA_VARARGS)
+	ADD_PARAM(DATA_GENERIC)
 	FUNCTION_PUSH(toplevel)
 
 	FUNCTION_NEW("f2i", DATA_INT)

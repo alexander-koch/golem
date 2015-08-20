@@ -2,24 +2,6 @@
 
 int vars = 1;
 
-const char* reg(int i) {
-	switch(i)
-	{
-		case 0: return "rax";
-		case 1: return "rcx";
-		case 2: return "rdx";
-		case 3: return "r8";
-		case 4: return "r9";
-		case 5: return "r10";
-		case 6: return "r11";
-		case 7: return "r12";
-		case 8: return "r13";
-		case 9: return "r14";
-		case 10: return "r15";
-		default: return "push";
-	}
-}
-
 void asm_write_prologue(FILE* fp, int stack_size, int bias)
 {
 	fprintf(fp, "extern printf\nsection .data\n\tsize equ %d\n\tbias equ %d\n", stack_size, bias);
@@ -101,15 +83,12 @@ int asm_write(compiler_t* compiler, const char* filename)
 	if(!fp) return 1;
 	asm_write_prologue(fp, 256, 8);
 
-	fprintf(fp, "\t; main code\n");
-	list_iterator_t* iter = list_iterator_create(compiler->buffer);
-	while(!list_iterator_end(iter))
+	vector_t* buffer = compiler->buffer;
+	for(size_t i = 0; i < vector_size(buffer); i++)
 	{
-		instruction_t* instr = (instruction_t*)list_iterator_next(iter);
-		translate(fp, instr);
+		instruction_t* ins = vector_get(i);
+		translate(fp, ins);
 	}
-	list_iterator_free(iter);
-	fprintf(fp, "\n");
 
 	asm_write_epilogue(fp);
 	fclose(fp);

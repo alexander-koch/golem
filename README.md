@@ -21,13 +21,15 @@ A programming language written in C.
 
 #### Serious issues
 
-- [ ] When trying to replace an **Upvalue**, wrong storage address is used => (Recognized, Working on it immediately)
+- Currently None.
 
-#### Other
+#### Other (Sorted by importance)
 
-- [ ] Nested functions => (Nearly done.)
+- [ ] Classes / Objects parsing + compilation => (Working on it.)
+- [ ] Lambdas, Closures, Anonymous functions => (Working on it.)
 - [ ] Bytecode optimizations => (Working on it)
-- [ ] Lambdas, Closures, Anonymous functions => (Prototype / Concept)
+- [x] When trying to replace an **Upvalue**, wrong storage address is used => (Done.)
+- [x] Nested functions => (Done.)
 - [x] Implementing all (basic) operators for associated types in the vm / bytecodes => (Done.)
 - [x] Finalize implementing functions => (Done.)
 - [x] mark-sweep garbage collector for vm => (Done.)
@@ -36,11 +38,11 @@ A programming language written in C.
 
 #### Langugage specific
 
-
 - AST optimization
 - prefix operators
 - Lambdas
 - Typecasting > Done by std library
+- for loops using iterators (only usable for arrays) using pipe syntax, e.g. |x|
 
 #### Implementation specific
 
@@ -86,43 +88,32 @@ Integer array:
 let str = "Hello World" // Same as ["H", "E", "L", ...]
 ```
 
-### Classes (Not implemented, Still concept)
+### Classes (Not implemented, Final concept)
 
-Classes are defined using the structure below. The method `new` is the classes constructor.
+Classes are defined using the structure below.
 All attributes are private.
 To get a field, getters are used to maintain encapsulation.
+Class declaration is also the constructor to maintain immutability.
+Class keyword might change.
 ```ruby
 	import core
 
-object Class {
+class Class(x:int, y:int, z:int) {
+	let mut x = x
+	let mut y = y
+	let z = z
 
-	# Attributes
-	let mut x = 0
-	let mut y = 0
-	let z = 0
-
-	# Constructor
-	func new(x: int, y: int, z: int) -> void {
-		self.x = x
-		self.y = y
-		self.z = z
-	}
-
-	# Method 1
 	func run() -> void {
-		println("Running with x:", self.x, "and y:", self.y)
+		println("Running with x:", x, "and y:", y)
 	}
 
-	# More methods here [...]
-
-	# Example for encapsulation
 	func getX() -> int {
 		return x
 	}
 }
 
 func main() -> void {
-	let cls = Class::new(7,5,2)
+	let cls = new Class(7,5,2)
 	cls.run()
 	println(cls.getX())
 }
@@ -147,6 +138,13 @@ While loops:
 ```ruby
 	while(number == 5) {
 	number = number + 1
+}
+```
+
+For loops:
+```ruby
+	for(|iter| in [1,2,3,4,5]) {
+	print(iter)
 }
 ```
 
@@ -186,14 +184,14 @@ While loops:
 * [Stack machine](http://www.d.umn.edu/~rmaclin/cs5641/Notes/L19_CodeGenerationI.pdf)
 * [Simple scripting language part 5](http://www.incubatorgames.com/20110621/simple-scripting-language-part-5/)
 * [Fastest bytecode interpreter (Contest)](http://byteworm.com/2010/11/21/the-fastest-vm-bytecode-interpreter/)
-* [Virtual machine](https://www.youtube.com/watch?v=OjaAToVkoTw)
-* [http://journal.stuffwithstuff.com/2013/12/08/babys-first-garbage-collector/]()
-* [http://bartoszsypytkowski.com/simple-virtual-machine/]()
-* [https://github.com/gphat/babyvm/blob/master/babyvm.c]()
-* [https://en.wikibooks.org/wiki/X86_Disassembly/Functions_and_Stack_Frames]()
-* [https://en.wikipedia.org/wiki/Lambda_lifting]()
-* [https://en.wikipedia.org/wiki/Call_stack#Structure]()
-* [https://en.wikipedia.org/wiki/Nested_function#Implementation]()
+* [Virtual machine (Youtube video)](https://www.youtube.com/watch?v=OjaAToVkoTw)
+* [Bob Nystrom's Garbage Collector Explanation](http://journal.stuffwithstuff.com/2013/12/08/babys-first-garbage-collector/) @munificent
+* [Simple virtual machine](http://bartoszsypytkowski.com/simple-virtual-machine/)
+* [Functions and stack frames](https://en.wikibooks.org/wiki/X86_Disassembly/Functions_and_Stack_Frames)
+* [Lambda lifting](https://en.wikipedia.org/wiki/Lambda_lifting)
+* [Call stack](https://en.wikipedia.org/wiki/Call_stack#Structure)
+* [Nested function - implementation](https://en.wikipedia.org/wiki/Nested_function#Implementation)
+* [Immutable stack](http://amitdev.github.io/coding/2013/12/31/Functional-Stack/)
 
 # Licence
 Copyright (c) Alexander Koch 2015 All Rights Reserved.

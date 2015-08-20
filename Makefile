@@ -40,7 +40,7 @@ debug:
 	$(CC) -O2 $(CFLAGS) $(INC) $(FILES) $(LDFLAGS) -g -o $(MODULE)
 
 release:
-	$(CC) -O3 $(CFLAGS) $(INC) $(FILES) $(LDFLAGS) -o $(MODULE)
+	$(CC) -O3 $(CFLAGS) -DNO_IR -DNO_TIME -DNO_MEMINFO $(INC) $(FILES) $(LDFLAGS) -o $(MODULE)
 
 old:
 	$(CC) $(CFLAGS) $(INC) -c $(FILES)
@@ -50,5 +50,4 @@ old:
 asm:
 	nasm -fwin64 out.asm
 	gcc out.obj
-	rm -f out.obj
-	#rm -f out.asm
+	rm out.obj

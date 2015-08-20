@@ -13,6 +13,8 @@
 #include <compiler/compiler.h>
 #include <compiler/bytecode_writer.h>
 
+#include <vm/jit.h>
+
 void run_repl(vm_t* vm, compiler_t* compiler)
 {
     char buf[1024];
@@ -80,6 +82,23 @@ int main(int argc, char** argv)
                 fprintf(stdout, "Could not compile file '%s'\n\n", argv[2]);
             }
         }
+        else if(!strcmp(argv[1], "-jit"))
+        {
+            printf("[Experimental runtime]\n");
+            vector_t* buffer = compile_file(&compiler, argv[2]);
+            if(buffer)
+            {
+                JitFunc* func = jit_compile(buffer);
+                int value = func();
+                printf("> %d\n", value);
+
+                compiler_clear(&compiler);
+            }
+            else
+            {
+                fprintf(stdout, "Could not compile file '%s'\n\n", argv[2]);
+            }
+        }
         else if(!strcmp(argv[1], "-r"))
         {
             vm_t* vm = vm_new();
@@ -106,6 +125,8 @@ int main(int argc, char** argv)
         return -1;
     }
 
+#ifndef NO_MEMINFO
     mem_leak_check();
+#endif
     return 0;
 }

@@ -12,7 +12,7 @@ const char* datatype2str(datatype_t type)
 		case DATA_OBJECT: return "object";
 		case DATA_VOID: return "void";
 		case DATA_ARRAY: return "array";
-		case DATA_VARARGS: return "varargs";
+		case DATA_GENERIC: return "generic";
 		case DATA_LAMBDA: return "lambda";
 		default:
 		{

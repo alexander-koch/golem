@@ -6,6 +6,11 @@
 #undef calloc
 #include <windows.h>
 
+#define EAX 0
+#define ECX 1
+#define EDX 2
+#define EBX 3
+
 // X86_64 64 bit general purpose integer registers.
 typedef enum
 {
@@ -51,67 +56,97 @@ typedef enum
 
 void* jit_malloc_exec(unsigned int size)
 {
-// #if defined(JIT_WIN32_PLATFORM)
-	return VirtualAlloc(0, size,
-				MEM_COMMIT | MEM_RESERVE,
-			    PAGE_EXECUTE_READWRITE);
-// #elif defined(JIT_USE_MMAP)
-// 	void *ptr = mmap(0, size,
-// 			 PROT_READ | PROT_WRITE | PROT_EXEC,
-// 			 MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-// 	if(ptr == (void *)-1)
-// 	{
-// 		return (void *)0;
-// 	}
-// 	return ptr;
-// #else
-// 	return malloc(size);
-// #endif
+	return VirtualAlloc(0, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 }
 
 void jit_free_exec(void* ptr, unsigned int size)
 {
 	if(ptr)
 	{
-	// #if defined(JIT_WIN32_PLATFORM)
 		VirtualFree(ptr, 0, MEM_RELEASE);
-	// #elif defined(JIT_USE_MMAP)
-	// 	munmap(ptr, size);
-	// #else
-	// 	free(ptr);
-	// #endif
 	}
 }
 
-JitFunc* jit_compile(list_t* buffer)
+void jit_x86_64_put(jit_context_t* jit, u8 val, size_t len)
+{
+	if(jit->size - (jit->ptr - jit->start) < len)
+	{
+		size_t dist = jit->ptr - jit->start;
+		jit->size += 2048;
+    	jit->start = (u8*)realloc(jit->start, sizeof(u8) * jit->size);
+    	jit->ptr = jit->start + dist;
+  	}
+
+	if(len == sizeof(u8))
+		*jit->ptr = (u8)val;
+  	else if (len == sizeof(int))
+    	*((int *)jit->ptr) = (int)val;
+
+  	jit->ptr += len;
+}
+
+JitFunc* jit_compile(vector_t* buffer)
 {
 	jit_context_t ctx;
 	jit_context_t* jit = &ctx;
 
 	jit->size = 2048;
-	jit->start = jit->ptr = malloc(jit->size);
+	jit->start = jit->ptr = malloc(sizeof(u8) * jit->size);
 
+	// prologue
+	// push %ebp
+	jit_x86_64_put(jit, 0x55, sizeof(u8));
 
-	// Write code
-	list_iterator_t* iter = list_iterator_create(buffer);
-	while(!list_iterator_end(iter))
+	// movq %rsp,%rbp
+	jit_x86_64_put(jit, 0x48, sizeof(u8));
+	jit_x86_64_put(jit, 0x89, sizeof(u8));
+	jit_x86_64_put(jit, 0xe5, sizeof(u8));
+
+	u8 reg[] = {EAX, ECX, EDX, EBX};
+	u8 rp = 0;
+
+	#define REG_PUSH() reg[rp++]
+	#define REG_POP() reg[--rp]
+	#define REG_XFER(r1, r2) 0xC0 | r1 << 3 | r2
+
+	for(size_t i = 0; i < vector_size(buffer); i++)
 	{
-		instruction_t* instr = list_iterator_next(iter);
+		instruction_t* instr = vector_get(buffer, i);
 		switch(instr->op)
 		{
 			case OP_PUSH:
 			{
 				if(instr->v1->type == VALUE_INT)
 				{
-					
+					// mov [int], reg
+					jit_x86_64_put(jit, 0xB8 + REG_PUSH(), sizeof(u8));
+					jit_x86_64_put(jit, value_int(instr->v1), sizeof(int));
 				}
-
+				break;
+			}
+			case OP_IADD:
+			{
+				// add r1,r2
+				u8 r1 = REG_POP();
+				u8 r2 = REG_POP();
+				jit_x86_64_put(jit, 0x01, sizeof(u8));
+				jit_x86_64_put(jit, REG_XFER(r1, r2), sizeof(u8));
+				break;
+			}
+			case OP_SYSCALL:
+			{
 				break;
 			}
 			default: break;
 		}
 	}
-	list_iterator_free(iter);
+
+	// epilogue
+	// leave
+	jit_x86_64_put(jit, 0xC9, sizeof(u8));
+
+	// ret
+	jit_x86_64_put(jit, 0xC3, sizeof(u8));
 
 	jit->size = jit->ptr - jit->start;
 	JitFunc *func = (JitFunc*)jit_malloc_exec(jit->size);

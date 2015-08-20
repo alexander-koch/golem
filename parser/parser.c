@@ -7,12 +7,13 @@
 #define KEYWORD_IF "if"
 #define KEYWORD_ELSE "else"
 #define KEYWORD_WHILE "while"
-#define KEYWORD_CLASS "object"
+#define KEYWORD_CLASS "class"
 #define KEYWORD_MODULE "module"
 #define KEYWORD_RETURN "return"
 
 ast_t* parse_import_declaration(parser_t* parser, location_t loc);
 ast_t* parse_var_declaration(parser_t* parser, location_t loc);
+ast_t* parse_lambda_declaration(parser_t* parser, location_t loc);
 ast_t* parse_fn_declaration(parser_t* parser, location_t loc);
 ast_t* parse_if_declaration(parser_t* parser, location_t loc);
 ast_t* parse_while_declaration(parser_t* parser, location_t loc);
@@ -220,7 +221,8 @@ ast_t* parse_call(parser_t* parser, ast_t* node)
 // Parser.parseSubscript()
 // Parses a subscript, bracket based.
 // Example: myarray[5] = x
-// subscript = ident, "[", ident, "]", [subscript];
+// EBNF:
+// subscript = ident, "[", expr, "]", "=", expr;
 ast_t* parse_subscript(parser_t* parser, ast_t* node)
 {
     ast_t* ast = ast_class_create(AST_SUBSCRIPT, node->location);
@@ -247,7 +249,8 @@ ast_t* parse_subscript(parser_t* parser, ast_t* node)
 // Parses a special type of a subscript.
 // The subscript uses a dot instead of brackets.
 // Example: myclass.x = 5
-// subscript_sugar = ident, ".", ident, [call | subscript | subscript_sugar];
+// EBNF:
+// subscript_sugar = expr, ".", ident, [call | subscript | subscript_sugar];
 ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node)
 {
     ast_t* ast = ast_class_create(AST_SUBSCRIPT_SUGAR, node->location);
@@ -332,7 +335,7 @@ ast_t* parse_simpleliteral(parser_t* parser)
 // let x = [1,2,3,4,5]
 // -----
 // EBNF:
-// array = "[", expr, "]";
+// array = "[", {expr, {",", expr}}, "]";
 ast_t* parse_array(parser_t* parser)
 {
     ast_t* ast = ast_class_create(AST_ARRAY, get_location(parser));
@@ -413,7 +416,7 @@ ast_t* parse_expression_primary(parser_t* parser)
     }
     // else if(match_string(parser, KEYWORD_FUNCTION))
     // {
-    //     ast = parse_fn_declaration(parser, get_location(parser));
+    //     ast = parse_lambda_declaration(parser, get_location(parser));
     // }
     else if(match_type(parser, TOKEN_WORD))
     {
@@ -535,9 +538,9 @@ ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
     return 0;
 }
 
-/**
- *  Parses an expression using two subroutines
- */
+// Parses one expression
+// EBNF:
+// expr = expr_primary, {op, expr_primary};
 ast_t* parse_expression(parser_t* parser)
 {
     ast_t* lhs = parse_expression_primary(parser);
@@ -556,7 +559,8 @@ ast_t* parse_expression(parser_t* parser)
 // Parser.parseDatatype()
 // Reads a datatype.
 // EBNF:
-// basicType = "int" | "float" | "char" | "bool" | "void" | custom;
+// object = string;
+// basicType = "int" | "float" | "char" | "bool" | "void" | object;
 // datatype = basicType, ["[]"];
 datatype_t parse_datatype(parser_t* parser)
 {
@@ -590,10 +594,19 @@ datatype_t parse_datatype(parser_t* parser)
     {
         type = DATA_VOID;
     }
+    // DEV
+    // else if(!strcmp(v, "lambda"))
+    // {
+    //     type = DATA_LAMBDA;
+    // }
     else
     {
         // unknown identifier, treat as object for now
-        type = DATA_OBJECT;
+        //type = DATA_OBJECT;
+
+        // Objects aren't supported
+        parser_throw(parser, "Invalid type");
+        return DATA_NULL;
     }
 
     if(match_type(parser, TOKEN_LBRACKET))
@@ -606,12 +619,7 @@ datatype_t parse_datatype(parser_t* parser)
             return DATA_NULL;
         }
 
-        if(type == DATA_VARARGS)
-        {
-            parser_throw(parser, "Invalid: array of varargs");
-            return DATA_NULL;
-        }
-        else if(type == DATA_VOID)
+        if(type == DATA_VOID)
         {
             parser_throw(parser, "Invalid: array of type void");
             return DATA_NULL;
@@ -630,7 +638,7 @@ datatype_t parse_datatype(parser_t* parser)
 // ---------------
 // EBNF:
 // formal = ["mut"], ident, ":", datatype;
-// formal_list = "(", {formal}, ")";
+// formal_list = "(", {formal, {",", "formal"}}, ")";
 list_t* parse_formals(parser_t* parser)
 {
     list_t* formals = list_new();
@@ -687,7 +695,9 @@ list_t* parse_formals(parser_t* parser)
 // Parser.parseBlock()
 // Parses a block until a closing brace is reached.
 // This does not include the opening brace.
-// Every statement is returned as a list.
+// Every statement is returned in a list.
+// EBNF:
+// block = {stmt}, "}", newline
 list_t* parse_block(parser_t* parser)
 {
     list_t* statements = list_new();
@@ -717,6 +727,7 @@ list_t* parse_block(parser_t* parser)
 }
 
 // Newline testing, throws error if there is none
+// Newline ::= '\r\n' / '\n'
 void test_newline(parser_t* parser)
 {
     if(!parser->error)
@@ -736,8 +747,9 @@ void test_newline(parser_t* parser)
 // Every statement is followed by a newline
 // ---------------
 // EBNF:
-// newline = "\n";
-// stmt = expr, newline;
+// newline = "\n" | "\r\n";
+// declaration = import | variable | function | if | while | class | return;
+// stmt = (expr | declaration), newline;
 ast_t* parse_stmt(parser_t* parser)
 {
     location_t pos = get_location(parser);
@@ -752,7 +764,7 @@ ast_t* parse_stmt(parser_t* parser)
         {KEYWORD_FUNCTION, parse_fn_declaration},
         {KEYWORD_IF, parse_if_declaration},
         {KEYWORD_WHILE, parse_while_declaration},
-        //{KEYWORD_CLASS, parse_class_declaration},
+        {KEYWORD_CLASS, parse_class_declaration},
         {KEYWORD_RETURN, parse_return_declaration}
     };
 
@@ -827,6 +839,11 @@ ast_t* parser_run(parser_t* parser, const char* content)
 //////------------------
 
 extern void core_gen_signatures(list_t* list);
+
+// Parser.parseImportDeclaration()
+// Parses an import statement and handles internal libraries.
+// EBNF:
+// import = KEYWORD_IMPORT, ident, newline;
 ast_t* parse_import_declaration(parser_t* parser, location_t loc)
 {
     // <KEYWORD_IMPORT> io \n
@@ -838,6 +855,7 @@ ast_t* parse_import_declaration(parser_t* parser, location_t loc)
     {
         node->import = val->value;
 
+        // Built-in core library
         if(!strcmp(node->import, "core"))
         {
             core_gen_signatures(parser->top->toplevel);
@@ -851,6 +869,10 @@ ast_t* parse_import_declaration(parser_t* parser, location_t loc)
     return node;
 }
 
+// Parser.parseVarDeclaration
+// Parses a variable declaration, returns AST of class 'AST_DECLVAR'.
+// EBNF:
+// vardecl = "let", ["mut"], ident, "=", expr, newline;
 ast_t* parse_var_declaration(parser_t* parser, location_t loc)
 {
     // let x = expr \n
@@ -887,6 +909,57 @@ ast_t* parse_var_declaration(parser_t* parser, location_t loc)
     return node;
 }
 
+// Experimental, for now @unused
+ast_t* parse_lambda_declaration(parser_t* parser, location_t loc)
+{
+    // lambda (params) -> <returntype> { \n
+    ast_t* node = ast_class_create(AST_DECLFUNC, loc);
+
+    token_t* fn = accept_token_string(parser, KEYWORD_FUNCTION);
+    token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
+
+    if(fn && lparen)
+    {
+        node->funcdecl.name = 0;
+        node->funcdecl.impl.formals = parse_formals(parser);
+        node->funcdecl.rettype = DATA_NULL;
+        node->funcdecl.external = false;
+
+        if(!match_type(parser, TOKEN_ARROW))
+        {
+            parser_throw(parser, "Return type expected");
+            return node;
+        }
+        else
+        {
+            accept_token(parser);
+            datatype_t tp = parse_datatype(parser);
+            node->funcdecl.rettype = tp;
+        }
+
+        if(!match_type(parser, TOKEN_LBRACE))
+        {
+            parser_throw(parser, "Block begin expected");
+        }
+        else
+        {
+            accept_token(parser);
+            accept_token_type(parser, TOKEN_NEWLINE);
+            node->funcdecl.impl.body = parse_block(parser);
+        }
+    }
+    else
+    {
+        parser_throw(parser, "Malformed function declaration");
+    }
+
+    return node;
+}
+
+// Parser.parseFnDeclaration()
+// Parses a function declaration.
+// EBNF:
+// funcdecl = "func", ident, formal_list, "{", newline, block;
 ast_t* parse_fn_declaration(parser_t* parser, location_t loc)
 {
     // func name(params) -> datatype { \n
@@ -935,6 +1008,21 @@ ast_t* parse_fn_declaration(parser_t* parser, location_t loc)
     return node;
 }
 
+// Parser.parseIfDelcaration()
+// Parses an if-statment-chain, consisting of if, else-if and else statements.
+// EBNF:
+// else = "else", "{", newline, block;
+// else if = "else", " ", "if", "(", expr, ")", "{", newline, block, [elseif, else];
+// if = "if", "(", expr, ")", "{", newline, block, [elseif | else];
+// -----
+// Example:
+// if(cond1) {
+//     do1()
+// } else if(cond2) {
+//     do2()
+// } else {
+//     do3()
+// }
 ast_t* parse_if_declaration(parser_t* parser, location_t loc)
 {
     // if (expr) { \n
@@ -1010,6 +1098,10 @@ ast_t* parse_if_declaration(parser_t* parser, location_t loc)
     return node;
 }
 
+// Parser.parseWhileDeclaration()
+// Builds an ast for a while loop
+// EBNF:
+// while_loop = "while", "(", expr, ")", "{", newline, block;
 ast_t* parse_while_declaration(parser_t* parser, location_t loc)
 {
     // while (expr) { \n
@@ -1042,15 +1134,26 @@ ast_t* parse_while_declaration(parser_t* parser, location_t loc)
     return node;
 }
 
+// Parses a class declaration.
+// EBNF:
+// class = "class", ident, formal_list, "{", newline, block
 ast_t* parse_class_declaration(parser_t* parser, location_t loc)
 {
-    // class expr { \n
+    // Due to constructor and nested functions, classes can actually be handled like functions ?!
+    // Profit!!
+    // TODO: This as major project
+
+    // class expr(constructor) { \n
     ast_t* node = ast_class_create(AST_CLASS, loc);
 
     token_t* key = accept_token_string(parser, KEYWORD_CLASS);
     token_t* ident = accept_token_type(parser, TOKEN_WORD);
-    token_t* lbrace = accept_token_type(parser, TOKEN_LBRACE);
 
+    // token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
+    // node->classstmt.formals = parse_formals(parser);
+    // token_t* rparen = accept_token_type(parser, TOKEN_RPAREN);
+
+    token_t* lbrace = accept_token_type(parser, TOKEN_LBRACE);
     if(key && ident && lbrace)
     {
         node->classstmt.name = ident->value;
@@ -1064,6 +1167,10 @@ ast_t* parse_class_declaration(parser_t* parser, location_t loc)
     return node;
 }
 
+// Parser.parseReturnDeclaration()
+// Parses the return statement.
+// EBNF:
+// return = "return", [expr];
 ast_t* parse_return_declaration(parser_t* parser, location_t loc)
 {
     ast_t* node = ast_class_create(AST_RETURN, loc);

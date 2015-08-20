@@ -84,6 +84,7 @@ void gc(vm_t* vm)
 #ifndef NO_TRACE
 	console("Collecting garbage...\n");
 #endif
+
 	markAll(vm);
 	sweep(vm);
 	vm->maxObjects = vm->numObjects * 2;
@@ -711,15 +712,20 @@ void vm_execute(vm_t* vm, vector_t* buffer)
 
 	// Run
 #ifndef NO_EXEC
+#ifndef NO_TIME
 	clock_t begin = clock();
+#endif
+
 	while(vm->pc < vector_size(buffer))
 	{
 		vm_process(vm, buffer);
 	}
 
+#ifndef NO_TIME
 	clock_t end = clock();
 	double elapsed = (double)(end - begin) / CLOCKS_PER_SEC;
 	console("Elapsed time: %.5f (sec)\n", elapsed);
+#endif
 #endif
 
 	// Move stack pointer to zero, -> clears all elements by gc
@@ -728,7 +734,6 @@ void vm_execute(vm_t* vm, vector_t* buffer)
 	gc(vm);
 
 	// Clear
-	console("\n");
 	for(int i = 0; i < LOCALS_SIZE; i++)
 	{
 		value_free(vm->locals[i]);
