@@ -8,6 +8,7 @@
 #include <adt/list.h>
 #include <core/mem.h>
 #include <core/api.h>
+#include <adt/hashmap.h>
 
 // types: void, bool, str, int, float, custom classes
 
@@ -18,20 +19,23 @@ typedef enum
     DATA_INT = 1 << 3, //0x4,
     DATA_FLOAT = 1 << 4, //0x8,
     DATA_CHAR = 1 << 5, //0x10,
-    DATA_OBJECT = 1 << 6, //0x20,
+    DATA_CLASS = 1 << 6, //0x20,
     DATA_VOID = 1 << 7, //0x40,
     DATA_ARRAY = 1 << 8, // 0x80
     DATA_GENERIC = 1 << 9,
     DATA_LAMBDA = 1 << 10
-} datatype_t;
-
-// typedef struct datatype_t
-// {
-//     type_t type;
-//     void* data;
-// } datatype_t;
+} type_t;
 
 #define DATA_STRING (DATA_ARRAY | DATA_CHAR)
+
+typedef struct datatype_t
+{
+    type_t type;
+    unsigned long id;
+} datatype_t;
+
+#define datatype_new(t) (datatype_t) {t, 0}
+#define datatype_match(t1, t2) (t1.type == t2.type && t1.id == t2.id)
 
 typedef struct ast_s ast_t;
 
@@ -48,7 +52,6 @@ typedef enum
     AST_BINARY,
     AST_UNARY,
     AST_SUBSCRIPT,
-    AST_SUBSCRIPT_SUGAR,
     AST_CALL,
     AST_DECLVAR,
     AST_DECLFUNC,
@@ -99,6 +102,8 @@ typedef struct
 {
     char* name;
     list_t* body;
+    list_t* formals;
+    hashmap_t* fields;
 } ast_struct_t;
 
 struct ast_s

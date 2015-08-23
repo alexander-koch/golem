@@ -26,6 +26,7 @@ A programming language written in C.
 #### Other (Sorted by importance)
 
 - [ ] Classes / Objects parsing + compilation => (Working on it.)
+- [ ] Update Bytecode documentation
 - [ ] Lambdas, Closures, Anonymous functions => (Working on it.)
 - [ ] Bytecode optimizations => (Working on it)
 - [x] When trying to replace an **Upvalue**, wrong storage address is used => (Done.)

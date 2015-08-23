@@ -173,6 +173,9 @@ int parse_precedence(token_type_t type)
     }
 }
 
+ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node);
+ast_t* parse_subscript(parser_t* parser, ast_t* node);
+
 // Parser.parseCall()
 // Parses a call structure
 // Example: func(), foo(baz, bar)
@@ -185,7 +188,7 @@ ast_t* parse_call(parser_t* parser, ast_t* node)
     class->call.callee = node;
     ast_t* expr = 0;
 
-    if(node->class != AST_IDENT)
+    if(node->class != AST_IDENT && node->class != AST_SUBSCRIPT)
     {
         parser_throw(parser, "Function callee has to be an identifier");
         return class;
@@ -213,6 +216,17 @@ ast_t* parse_call(parser_t* parser, ast_t* node)
     else
     {
         accept_token(parser);
+    }
+
+    if(match_type(parser, TOKEN_DOT))
+    {
+        accept_token(parser);
+        return parse_subscript_sugar(parser, class);
+    }
+    else if(match_type(parser, TOKEN_LBRACKET))
+    {
+        accept_token(parser);
+        return parse_subscript(parser, class);
     }
 
     return class;
@@ -253,7 +267,7 @@ ast_t* parse_subscript(parser_t* parser, ast_t* node)
 // subscript_sugar = expr, ".", ident, [call | subscript | subscript_sugar];
 ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node)
 {
-    ast_t* ast = ast_class_create(AST_SUBSCRIPT_SUGAR, node->location);
+    ast_t* ast = ast_class_create(AST_SUBSCRIPT, node->location);
     ast->subscript.expr = node;
     if(!match_type(parser, TOKEN_WORD))
     {
@@ -568,45 +582,45 @@ datatype_t parse_datatype(parser_t* parser)
     if(!typestr)
     {
         parser_throw(parser, "Type must be an identifier, invalid");
-        return DATA_NULL;
+        return datatype_new(DATA_NULL);
     }
 
-    datatype_t type = DATA_NULL;
+    datatype_t type = datatype_new(DATA_NULL);
     char* v = typestr->value;
 
     if(!strcmp(v, "int"))
     {
-        type = DATA_INT;
+        type = datatype_new(DATA_INT);
     }
     else if(!strcmp(v, "float"))
     {
-        type = DATA_FLOAT;
+        type = datatype_new(DATA_FLOAT);
     }
     else if(!strcmp(v, "char"))
     {
-        type = DATA_CHAR;
+        type = datatype_new(DATA_CHAR);
     }
     else if(!strcmp(v, "bool"))
     {
-        type = DATA_BOOL;
+        type = datatype_new(DATA_BOOL);
     }
     else if(!strcmp(v, "void"))
     {
-        type = DATA_VOID;
+        type = datatype_new(DATA_VOID);
     }
     // DEV
     // else if(!strcmp(v, "lambda"))
     // {
-    //     type = DATA_LAMBDA;
+    //     type = datatype_new(DATA_LAMBDA;
     // }
     else
     {
         // unknown identifier, treat as object for now
-        //type = DATA_OBJECT;
+        //type = datatype_new(DATA_OBJECT);
 
         // Objects aren't supported
         parser_throw(parser, "Invalid type");
-        return DATA_NULL;
+        return datatype_new(DATA_NULL);
     }
 
     if(match_type(parser, TOKEN_LBRACKET))
@@ -616,16 +630,16 @@ datatype_t parse_datatype(parser_t* parser)
         if(!rbrac)
         {
             parser_throw(parser, "Expected closing bracket");
-            return DATA_NULL;
+            return datatype_new(DATA_NULL);
         }
 
-        if(type == DATA_VOID)
+        if(type.type == DATA_VOID)
         {
             parser_throw(parser, "Invalid: array of type void");
-            return DATA_NULL;
+            return datatype_new(DATA_NULL);
         }
 
-        type = DATA_ARRAY | type;
+        type = datatype_new(DATA_ARRAY | type.type);
     }
 
     return type;
@@ -922,7 +936,7 @@ ast_t* parse_lambda_declaration(parser_t* parser, location_t loc)
     {
         node->funcdecl.name = 0;
         node->funcdecl.impl.formals = parse_formals(parser);
-        node->funcdecl.rettype = DATA_NULL;
+        node->funcdecl.rettype = datatype_new(DATA_NULL);
         node->funcdecl.external = false;
 
         if(!match_type(parser, TOKEN_ARROW))
@@ -974,7 +988,7 @@ ast_t* parse_fn_declaration(parser_t* parser, location_t loc)
     {
         node->funcdecl.name = ident->value;
         node->funcdecl.impl.formals = parse_formals(parser);
-        node->funcdecl.rettype = DATA_NULL;
+        node->funcdecl.rettype = datatype_new(DATA_NULL);
         node->funcdecl.external = false;
 
         if(!match_type(parser, TOKEN_ARROW))
@@ -1139,25 +1153,21 @@ ast_t* parse_while_declaration(parser_t* parser, location_t loc)
 // class = "class", ident, formal_list, "{", newline, block
 ast_t* parse_class_declaration(parser_t* parser, location_t loc)
 {
-    // Due to constructor and nested functions, classes can actually be handled like functions ?!
-    // Profit!!
-    // TODO: This as major project
-
     // class expr(constructor) { \n
     ast_t* node = ast_class_create(AST_CLASS, loc);
 
     token_t* key = accept_token_string(parser, KEYWORD_CLASS);
     token_t* ident = accept_token_type(parser, TOKEN_WORD);
 
-    // token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
-    // node->classstmt.formals = parse_formals(parser);
-    // token_t* rparen = accept_token_type(parser, TOKEN_RPAREN);
-
+    token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
+    node->classstmt.formals = parse_formals(parser);
     token_t* lbrace = accept_token_type(parser, TOKEN_LBRACE);
-    if(key && ident && lbrace)
+
+    if(key && ident && lparen && lbrace)
     {
         node->classstmt.name = ident->value;
         node->classstmt.body = parse_block(parser);
+        node->classstmt.fields = hashmap_new();
     }
     else
     {

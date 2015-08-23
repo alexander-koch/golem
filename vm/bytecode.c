@@ -55,6 +55,9 @@ const char* op2str(opcode_t code)
 		case OP_SETSUB: return "setsub";
 		case OP_UPVAL: return "upval";
 		case OP_UPSTORE: return "upstore";
+		case OP_CLASS: return "class";
+		case OP_SETFIELD: return "setfield";
+		case OP_GETFIELD: return "getfield";
 		default: return "unknown";
 	}
 }
@@ -135,8 +138,9 @@ void emit_op(vector_t* buffer, opcode_t op)
 	insert(buffer, op);
 }
 
-opcode_t getOp(token_type_t tok, datatype_t type)
+opcode_t getOp(token_type_t tok, datatype_t dt)
 {
+	type_t type = dt.type;
 	switch(tok)
 	{
 		case TOKEN_ADD:
@@ -266,4 +270,14 @@ value_t* emit_jmpt(vector_t* buffer, int address)
 	value_t* val = value_new_int(address);
 	insert_v1(buffer, OP_JMPT, val);
 	return val;
+}
+
+void emit_class_setfield(vector_t* buffer)
+{
+	emit_op(buffer, OP_SETFIELD);
+}
+
+void emit_class_getfield(vector_t* buffer, int address)
+{
+	insert_v1(buffer, OP_GETFIELD, value_new_int(address));
 }

@@ -2,26 +2,26 @@
 
 const char* datatype2str(datatype_t type)
 {
-	switch(type)
+	switch(type.type)
 	{
 		case DATA_NULL: return "null";
 		case DATA_BOOL: return "bool";
 		case DATA_INT: return "int";
 		case DATA_FLOAT: return "float";
 		case DATA_CHAR: return "char";
-		case DATA_OBJECT: return "object";
+		case DATA_CLASS: return "class";
 		case DATA_VOID: return "void";
 		case DATA_ARRAY: return "array";
 		case DATA_GENERIC: return "generic";
 		case DATA_LAMBDA: return "lambda";
 		default:
 		{
-			if(type == DATA_STRING)
+			if(type.type == DATA_STRING)
 			{
 				return "string";
 			}
 
-			if((type & DATA_ARRAY) == DATA_ARRAY)
+			if((type.type & DATA_ARRAY) == DATA_ARRAY)
 			{
 				return "array";
 			}
@@ -190,6 +190,16 @@ void ast_free(ast_t* ast)
 			}
 			list_iterator_free(iter);
 			list_free(ast->classstmt.body);
+
+			iter = list_iterator_create(ast->classstmt.formals);
+			while(!list_iterator_end(iter))
+			{
+				ast_free(list_iterator_next(iter));
+			}
+			list_iterator_free(iter);
+			list_free(ast->classstmt.formals);
+
+			hashmap_free(ast->classstmt.fields);
 			break;
 		}
 		case AST_RETURN:

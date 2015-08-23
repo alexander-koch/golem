@@ -78,11 +78,14 @@ value_t* value_new_array(value_t** data, size_t length)
 	return val;
 }
 
-value_t* value_new_object(void* obj)
+value_t* value_new_class()
 {
 	value_t* val = value_new_null();
-	val->type = VALUE_OBJECT;
-	val->v.o = obj;
+	val->type = VALUE_CLASS;
+
+	class_t* clazz = malloc(sizeof(*clazz));
+	clazz->fields = vector_new();
+	val->v.o = clazz;
 	return val;
 }
 
@@ -96,15 +99,37 @@ value_t* value_copy(value_t* value)
 	}
 	else if(val->type == VALUE_ARRAY)
 	{
-		array_t* arr = value_array(value);
+		// Create new array
+		array_t* arr 	= value_array(value);
 		array_t* newArr = malloc(sizeof(*newArr));
-		newArr->data = malloc(sizeof(value_t*) * arr->size);
-		newArr->size = arr->size;
+		newArr->data	= malloc(sizeof(value_t*) * arr->size);
+		newArr->size 	= arr->size;
+
+		// Fill array
 		for(int i = 0; i < arr->size; i++)
 		{
 			newArr->data[i] = value_copy(arr->data[i]);
 		}
+
+		// Save in void*
 		val->v.o = newArr;
+	}
+	else if(val->type == VALUE_CLASS)
+	{
+		// Create a copy
+		class_t* original = value_class(value);
+		class_t* instance = malloc(sizeof(*instance));
+		instance->fields = vector_new();
+
+		// Fill new vector
+		for(int i = 0; i < vector_size(original->fields); i++)
+		{
+			value_t* idx = vector_get(original->fields, i);
+			vector_push(instance->fields, value_copy(idx));
+		}
+
+		// Set to instance
+		val->v.o = instance;
 	}
 	else
 	{
@@ -118,7 +143,6 @@ void value_reset(value_t* value)
 	if(value->type == VALUE_STRING)
 	{
 		free(value->v.o);
-		value->v.o = 0;
 	}
 	else if(value->type == VALUE_ARRAY)
 	{
@@ -129,8 +153,18 @@ void value_reset(value_t* value)
 		}
 		free(arr->data);
 		free(arr);
-		value->v.o = 0;
 	}
+	else if(value->type == VALUE_CLASS)
+	{
+		class_t* clazz = value_class(value);
+		for(int i = 0; i < vector_size(clazz->fields); i++)
+		{
+			value_free(vector_get(clazz->fields, i));
+		}
+		vector_free(clazz->fields);
+		free(clazz);
+	}
+	value->v.o = 0;
 }
 
 void value_free(value_t* value)
@@ -184,18 +218,19 @@ void value_print(value_t* value)
 					if(i < arr->size-1) console(", ");
 				}
 				console("]");
-
-				// console("[");
-				// list_t* list = (list_t*)value->v.o;
-				// list_iterator_t* iter = list_iterator_create(list);
-				// while(!list_iterator_end(iter))
-				// {
-				// 	value_t* val = list_iterator_next(iter);
-				// 	value_print(val);
-				// 	if(!list_iterator_end(iter)) console(", ");
-				// }
-				// list_iterator_free(iter);
-				// console("]");
+				break;
+			}
+			case VALUE_CLASS:
+			{
+				class_t* cls = value_class(value);
+				console("class: <");
+				for(int i = 0; i < vector_size(cls->fields); i++)
+				{
+					value_t* v = vector_get(cls->fields, i);
+					value_print(v);
+					if(i < vector_size(cls->fields)-1) console(", ");
+				}
+				console(">");
 				break;
 			}
 			case VALUE_NULL:

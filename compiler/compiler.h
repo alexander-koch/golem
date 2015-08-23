@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <core/mem.h>
+#include <core/util.h>
 #include <parser/parser.h>
 #include <vm/bytecode.h>
 #include <compiler/scope.h>

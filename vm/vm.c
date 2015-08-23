@@ -151,7 +151,7 @@ void vm_process(vm_t* vm, vector_t* buffer)
 	instruction_t* instr = vector_get(buffer, vm->pc);
 
 #ifndef NO_TRACE
-	console("  %.2d: %s", vm->pc, op2str(instr->op));
+	console("  %.2d (SP:%d, FP:%d): %s", vm->pc, vm->sp, vm->fp, op2str(instr->op));
 	if(instr->v1)
 	{
 		console(", ");
@@ -200,9 +200,9 @@ void vm_process(vm_t* vm, vector_t* buffer)
 			}
 			else
 			{
+				if(vm->fp+offset > vm->sp) vm->sp = vm->fp+offset;
 				value_free(vm->locals[vm->fp+offset]);
 				vm->locals[vm->fp+offset] = value_copy(pop(vm));
-				if(vm->fp + offset > vm->sp) vm->sp = vm->fp + offset;
 			}
 			break;
 		}
@@ -222,10 +222,9 @@ void vm_process(vm_t* vm, vector_t* buffer)
 		case OP_GSTORE:
 		{
 			int offset = value_int(instr->v1);
+			if(vm->fp+offset > vm->sp) vm->sp = vm->fp+offset;
 			value_free(vm->locals[offset]);
 			vm->locals[offset] = value_copy(pop(vm));
-			//vm->sp++;
-			if(vm->fp + offset > vm->sp) vm->sp = vm->fp + offset;
 			break;
 		}
 		case OP_GLOAD:
@@ -262,7 +261,7 @@ void vm_process(vm_t* vm, vector_t* buffer)
 		}
 		case OP_UPSTORE:
 		{
-			value_t* newVal = pop(vm);
+			value_t* newVal = value_copy(pop(vm));
 
 			int scopes = value_int(instr->v1);
 			int offset = value_int(instr->v2);
@@ -362,7 +361,7 @@ void vm_process(vm_t* vm, vector_t* buffer)
 		case OP_ARR:
 		{
 			// Reverse list sorting
-			size_t elsz = value_int(pop(vm));
+			size_t elsz = value_int(instr->v1);
 			value_t** arr = malloc(sizeof(value_t*) * elsz);
 
 			for(int i = elsz; i > 0; i--)
@@ -686,6 +685,35 @@ void vm_process(vm_t* vm, vector_t* buffer)
 				value_t* v = value_new_string(data);
 				push(vm, v);
 			}
+			break;
+		}
+		case OP_CLASS:
+		{
+			value_t* v = value_new_class();
+			push(vm, v);
+			break;
+		}
+		case OP_SETFIELD:
+		{
+			value_t* val = value_copy(pop(vm));
+			value_t* class = value_copy(pop(vm));
+
+			class_t* cls = value_class(class);
+			vector_push(cls->fields, val);
+
+			push(vm, class);
+			break;
+		}
+		case OP_GETFIELD:
+		{
+			int index = value_int(instr->v1);
+			value_t* class = value_copy(pop(vm));
+
+			class_t* cls = value_class(class);
+			value_t* val = value_copy(vector_get(cls->fields, index));
+
+			push(vm, class);
+			push(vm, val);
 			break;
 		}
 		default: break;

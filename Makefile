@@ -2,7 +2,7 @@ CC = gcc
 MODULE = golem
 INC = -I.
 
-CFLAGS = -std=c99 -Wall -Wno-unused-function -Wno-unused-parameter -DNO_TRACE -DNO_AST
+CFLAGS = -std=c99 -Wall -Wno-unused-function -Wno-unused-parameter -DNO_EXPERIMENTAL #-DNO_TRACE #-DNO_AST
 
 # Options:
 # Disable:
@@ -41,6 +41,9 @@ debug:
 
 release:
 	$(CC) -O3 $(CFLAGS) -DNO_IR -DNO_TIME -DNO_MEMINFO $(INC) $(FILES) $(LDFLAGS) -o $(MODULE)
+
+run:
+	gdb golem
 
 old:
 	$(CC) $(CFLAGS) $(INC) -c $(FILES)

@@ -6,6 +6,7 @@
 #include <core/api.h>
 #include <core/util.h>
 #include <adt/list.h>
+#include <adt/vector.h>
 
 #define value_set_bool(val, b) val->v.i = b
 #define value_set_int(val, in) val->v.i = in
@@ -19,6 +20,7 @@
 #define value_char(val) val->v.c
 #define value_string(val) (char*)val->v.o
 #define value_array(val) (array_t*)val->v.o
+#define value_class(val) (class_t*)val->v.o
 
 typedef enum
 {
@@ -29,7 +31,7 @@ typedef enum
 	VALUE_CHAR,
 	VALUE_STRING,
 	VALUE_ARRAY,
-	VALUE_OBJECT,
+	VALUE_CLASS,
 } value_type_t;
 
 typedef struct value_t
@@ -53,13 +55,13 @@ typedef struct array_t
 	size_t size;
 } array_t;
 
-typedef struct object_t
+typedef struct class_t
 {
-	value_t** fields;
-	int (*copy)(void*);
-	int (*compare)(void*);
-	int (*destruct)(void*);
-} object_t;
+	vector_t* fields;
+	// int (*copy)(void*);
+	// int (*compare)(void*);
+	// int (*destruct)(void*);
+} class_t;
 
 // Standard values
 value_t* value_new_null();
@@ -71,7 +73,7 @@ value_t* value_new_string_const(const char* string);
 value_t* value_new_string(char* string);
 value_t* value_new_string_nocopy(char* string);
 value_t* value_new_array(value_t** data, size_t length);
-value_t* value_new_object(void* obj);
+value_t* value_new_class();
 
 // Value copy
 value_t* value_copy(value_t* value);
