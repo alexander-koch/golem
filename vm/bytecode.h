@@ -112,7 +112,7 @@ void emit_store(vector_t* buffer, int address, bool global);
 void emit_load(vector_t* buffer, int address, bool global);
 void emit_load_upval(vector_t* buffer, int depth, int address);
 void emit_store_upval(vector_t* buffer, int depth, int address);
-void emit_class_setfield(vector_t* buffer);
+void emit_class_setfield(vector_t* buffer, int address);
 void emit_class_getfield(vector_t* buffer, int address);
 
 value_t* emit_jmp(vector_t* buffer, int address);

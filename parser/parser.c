@@ -250,7 +250,12 @@ ast_t* parse_subscript(parser_t* parser, ast_t* node)
     }
 
     accept_token(parser);
-    if(match_type(parser, TOKEN_LBRACKET))
+    if(match_type(parser, TOKEN_LPAREN))
+    {
+        accept_token(parser);
+        return parse_call(parser, ast);
+    }
+    else if(match_type(parser, TOKEN_LBRACKET))
     {
         accept_token(parser);
         return parse_subscript(parser, ast);

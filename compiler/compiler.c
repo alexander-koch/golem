@@ -569,6 +569,11 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 						return datatype_new(DATA_NULL);
 					}
 
+					if(symbol->ref)
+					{
+						emit_op(compiler->buffer, OP_LDARG0);
+					}
+
 					datatype_t dt = compiler_eval(compiler, rhs);
 					if(!datatype_match(dt, symbol->node->vardecl.type))
 					{
@@ -576,27 +581,22 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 						return datatype_new(DATA_NULL);
 					}
 
-					// Now do lambda testing
-					// If it is a lambda it has to be handled differently than
-					// a regular ast.
-					// A regular ast just emits a store opcode and is handled externally in the vm.
-					// A lambda just works like a reference.
-					if(dt.type == DATA_LAMBDA)
+					if(symbol->ref)
 					{
-						if(rhs->class == AST_IDENT)
+						symbol_t* classRef = symbol->ref;
+						ast_t* classNode = classRef->node;
+						void* val = 0;
+						if(hashmap_get(classNode->classstmt.fields, lhs->ident, &val) == HMAP_MISSING)
 						{
-							symbol->ref = symbol_get(compiler->scope, rhs->ident);
-						}
-						else
-						{
-							compiler_throw(compiler, node, "Direct lambda assignment is currently not supported");
+							compiler_throw(compiler, node, "No such class field");
 							return datatype_new(DATA_NULL);
 						}
+
+						symbol = (symbol_t*)val;
+						emit_class_setfield(compiler->buffer, symbol->address);
 					}
-					else
-					{
-						symbol_replace(compiler, symbol);
-					}
+
+					symbol_replace(compiler, symbol);
 				}
 				else
 				{
@@ -878,6 +878,7 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 
 			if(symbol->node->class == AST_DECLFUNC)
 			{
+				// Normal function call
 				if(eval_compare_and_call(compiler, symbol->node, node, symbol->address))
 				{
 					return symbol->node->funcdecl.rettype;
@@ -885,6 +886,7 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 			}
 			else if(symbol->node->class == AST_CLASS)
 			{
+				// Class constructor call
 				if(eval_compare_and_call(compiler, symbol->node, node, symbol->address))
 				{
 					return symbol->type;
@@ -902,9 +904,13 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 	}
 	else if(call->class == AST_SUBSCRIPT)
 	{
+		// Calling a class function
+
+		// Get the contents
 		ast_t* expr = call->subscript.expr;
 		ast_t* key = call->subscript.key;
 
+		// Evaluate the lhs
 		datatype_t dt = compiler_eval(compiler, expr);
 		if(dt.type != DATA_CLASS)
 		{
@@ -921,6 +927,7 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 			return datatype_new(DATA_NULL);
 		}
 
+		// Test if the field of the class is valid
 		ast_t* cls = class->node;
 		void* val = 0;
 		if(hashmap_get(cls->classstmt.fields, key->ident, &val) == HMAP_MISSING)
@@ -929,12 +936,16 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 			return datatype_new(DATA_NULL);
 		}
 
-		// Finally found the funcdecl
+		// Retrive the field
 		class = (symbol_t*)val;
 		if(eval_compare_and_call(compiler, class->node, node, class->address))
 		{
+			// Get the last instruction (invoke)
+			// and increase the arguments by one
 			instruction_t* ins = vector_top(compiler->buffer);
 			value_set_int(ins->v2, value_int(ins->v2)+1);
+
+			// Return the type
 			return class->node->funcdecl.rettype;
 		}
 	}
@@ -1126,12 +1137,18 @@ datatype_t eval_return(compiler_t* compiler, ast_t* node)
 
 // Eval.subscript(node)
 // Compiles a subscript node.
-// Currently only allowed for strings and arrays
+// Currently only allowed for strings and arrays.
 datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 {
 	ast_t* expr = node->subscript.expr;
 	ast_t* key = node->subscript.key;
 	datatype_t exprType = compiler_eval(compiler, expr);
+
+	if(exprType.type == DATA_CLASS)
+	{
+		compiler_throw(compiler, node, "Field access of classes is not permitted");
+		return datatype_new(DATA_NULL);
+	}
 
 	datatype_t keyType = compiler_eval(compiler, key);
 	if(keyType.type != DATA_INT)
@@ -1299,7 +1316,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 			sym->ref = symbol;
 
 			hashmap_set(node->classstmt.fields, sub->vardecl.name, sym);
-			emit_class_setfield(compiler->buffer);
+			emit_class_setfield(compiler->buffer, compiler->scope->address-1);
 		}
 		else if(sub->class == AST_DECLFUNC)
 		{

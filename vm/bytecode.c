@@ -273,9 +273,9 @@ value_t* emit_jmpt(vector_t* buffer, int address)
 	return val;
 }
 
-void emit_class_setfield(vector_t* buffer)
+void emit_class_setfield(vector_t* buffer, int address)
 {
-	emit_op(buffer, OP_SETFIELD);
+	insert_v1(buffer, OP_SETFIELD, value_new_int(address));
 }
 
 void emit_class_getfield(vector_t* buffer, int address)

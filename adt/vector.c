@@ -6,6 +6,7 @@ vector_t* vector_new()
 	vector->capacity = VECTOR_CAPACITY;
 	vector->size = 0;
 	vector->data = (void**)malloc(sizeof(void*) * vector->capacity);
+	memset(vector->data, 0, sizeof(void*) * vector->capacity);
 	return vector;
 }
 void vector_push(vector_t* vector, void* data)
@@ -43,7 +44,13 @@ void* vector_top(vector_t* vector)
 
 void vector_set(vector_t* vector, size_t index, void* data)
 {
-	assert(index < vector->capacity);
+	if(index == vector->size)
+	{
+		vector_push(vector, data);
+		return;
+	}
+
+	assert(index < vector->size);
 	vector->data[index] = data;
 }
 

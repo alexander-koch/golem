@@ -282,9 +282,14 @@ void vm_process(vm_t* vm, vector_t* buffer)
 			vm->sp = vm->fp;
 
 			if(offset < 0)
+			{
 				vm->stack[vm->fp+offset] = newVal;
+			}
 			else
+			{
+				value_free(vm->locals[vm->fp+offset]);
 				vm->locals[vm->fp+offset] = newVal;
+			}
 
 			vm->sp = sp;
 			vm->fp = fp;
@@ -701,11 +706,14 @@ void vm_process(vm_t* vm, vector_t* buffer)
 		}
 		case OP_SETFIELD:
 		{
+			int index = value_int(instr->v1);
+
 			value_t* val = value_copy(pop(vm));
 			value_t* class = value_copy(pop(vm));
 
 			class_t* cls = value_class(class);
-			vector_push(cls->fields, val);
+			value_free(vector_get(cls->fields, index));
+			vector_set(cls->fields, index, val);
 
 			push(vm, class);
 			break;

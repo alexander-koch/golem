@@ -26,8 +26,9 @@ A programming language written in C.
 #### Other (Sorted by importance)
 
 - [ ] Classes / Objects parsing + compilation => (Doing tests.)
+- [ ] Functions with Classes as parameters => (Working on it.)
+- [ ] Bytecode optimizations => (Working on it.)
 - [ ] Lambdas, Closures, Anonymous functions => (Working on it.)
-- [ ] Bytecode optimizations => (Working on it)
 - [x] When trying to replace an **Upvalue**, wrong storage address is used => (Done.)
 - [x] Nested functions => (Done.)
 - [x] Implementing all (basic) operators for associated types in the vm / bytecodes => (Done.)
@@ -146,6 +147,24 @@ For loops:
 	for(|iter| in [1,2,3,4,5]) {
 	print(iter)
 }
+```
+
+# Syntactic sugar
+
+Subscripts can either be represented by brackets after an expression or by a dot.
+Both are internally the same, so class fields can also be accessed by brackets, arrays also by a dot.
+
+Example:
+
+```ruby
+	# MyClass x was declared with function getX()
+let class = MyClass()
+
+# Normal function call
+class.getX()
+
+#Syntactic sugar
+class[getX]()
 ```
 
 # Curently supported
