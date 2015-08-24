@@ -200,9 +200,9 @@ void vm_process(vm_t* vm, vector_t* buffer)
 			}
 			else
 			{
-				if(vm->fp+offset > vm->sp) vm->sp = vm->fp+offset;
 				value_free(vm->locals[vm->fp+offset]);
 				vm->locals[vm->fp+offset] = value_copy(pop(vm));
+				if(vm->fp+offset >= vm->sp) vm->sp = vm->fp+offset;
 			}
 			break;
 		}
@@ -222,9 +222,9 @@ void vm_process(vm_t* vm, vector_t* buffer)
 		case OP_GSTORE:
 		{
 			int offset = value_int(instr->v1);
-			if(vm->fp+offset > vm->sp) vm->sp = vm->fp+offset;
 			value_free(vm->locals[offset]);
 			vm->locals[offset] = value_copy(pop(vm));
+			if(vm->fp+offset >= vm->sp) vm->sp = vm->fp+offset;
 			break;
 		}
 		case OP_GLOAD:

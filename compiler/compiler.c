@@ -280,15 +280,15 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 
 // Eval.declvar(node)
 // The function evaluates a variable declaration.
-// This registers a new symbol with the name and
-// the current available address.
-// The return value is DATA_NULL.
+// This registers a new symbol with the name
+// and the current available address.
+// The return value is NULL.
 datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 {
-	// Test if variable is already created
 	if(symbol_exists(compiler, node, node->vardecl.name)) return datatype_new(DATA_NULL);
 
 	// First eval initializer to get type
+	// Then test for non-valid types
 	datatype_t vartype = compiler_eval(compiler, node->vardecl.initializer);
 	if(vartype.type == DATA_VOID)
 	{
@@ -300,8 +300,7 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 		compiler_throw(compiler, node, "Variable initializer is NULL");
 		return datatype_new(DATA_NULL);
 	}
-
-	if(vartype.type == DATA_LAMBDA)
+	else if(vartype.type == DATA_LAMBDA)
 	{
 		compiler_throw(compiler, node, "Trying to assign a function to a value (Currently not supported)");
 		return datatype_new(DATA_NULL);
@@ -312,10 +311,8 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 	symbol->node->vardecl.type = vartype;
 	hashmap_set(compiler->scope->symbols, node->vardecl.name, symbol);
 
-	// Emit bytecode
+	// Emit bytecode and increase compiler address
 	emit_store(compiler->buffer, symbol->address, symbol->global);
-
-	// Increase compiler address
 	compiler->scope->address++;
 
 	// Debug variables if flag is set
@@ -807,16 +804,24 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
 			int i = 1;
 			while(!list_iterator_end(iter))
 			{
-				datatype_t type = compiler_eval(compiler, list_iterator_next(args_iter));
+				// Get the datatypes
 				ast_t* param = list_iterator_next(iter);
+				datatype_t argType = compiler_eval(compiler, list_iterator_next(args_iter));
+				datatype_t paramType = param->vardecl.type;
 
-				if(!datatype_match(param->vardecl.type, type) && param->vardecl.type.type != DATA_GENERIC)
+				// Do template test
+				if((paramType.type & DATA_GENERIC) == DATA_GENERIC)
 				{
-					printf("%lu != %lu\n", type.id, param->vardecl.type.id);
+					type_t tp = paramType.type & ~DATA_GENERIC;
+					if((argType.type & tp) == tp) continue;
+				}
 
+				// Test datatypes
+				if(!datatype_match(argType, paramType))
+				{
 					compiler_throw(compiler, node,
 						"Parameter %d has the wrong type.\nFound: %s, expected: %s",
-						i, datatype2str(type), datatype2str(param->vardecl.type));
+						i, datatype2str(argType), datatype2str(paramType));
 					break;
 				}
 				i++;
@@ -895,6 +900,49 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 
 		// Evaluate the lhs
 		datatype_t dt = compiler_eval(compiler, expr);
+
+		// EXPERIMENTAL
+		// if((dt.type & DATA_ARRAY) == DATA_ARRAY)
+		// {
+		// 	if(!strcmp(key->ident, "length"))
+		// 	{
+		// 		if(list_size(call->formals) != 0)
+		// 		{
+		// 			compiler_throw(compiler, node, "Expected zero arguments");
+		// 			return datatype_new(DATA_NULL);
+		// 		}
+		//
+		// 		// Length operation
+		// 		//emit_op(compiler->buffer, OP_LEN);
+		// 		return datatype_new(DATA_INT);
+		// 	}
+		// 	else if(!strcmp(key->ident, "cons"))
+		// 	{
+		// 		if(list_size(call->formals) != 1)
+		// 		{
+		// 			compiler_throw(compiler, node, "Expected one argument of type array");
+		// 			return datatype_new(DATA_NULL);
+		// 		}
+		//
+		// 		return dt;
+		// 	}
+		// 	else if(!strcmp(key->ident, "insert"))
+		// 	{
+		// 		if(list_size(call->formals) != 2)
+		// 		{
+		// 			compiler_throw(compiler, node, "Expected two arguments");
+		// 			return datatype_new(DATA_NULL);
+		// 		}
+		//
+		//
+		// 	}
+		// 	else if(!strcmp(key->ident, "tail"))
+		// 	{
+		// 		// List tail
+		// 		return dt;
+		// 	}
+		// }
+
 		if(dt.type != DATA_CLASS)
 		{
 			compiler_throw(compiler, node, "Identifier is not a class");
@@ -963,6 +1011,11 @@ datatype_t eval_array(compiler_t* compiler, ast_t* node)
 	if(dt.type == DATA_VOID || dt.type == DATA_NULL)
 	{
 		compiler_throw(compiler, node, "Invalid: Array is composed of NULL elements");
+		return datatype_new(DATA_NULL);
+	}
+	else if((dt.type & DATA_ARRAY) == DATA_ARRAY)
+	{
+		compiler_throw(compiler, node, "Multidimensional arrays are not permitted");
 		return datatype_new(DATA_NULL);
 	}
 
