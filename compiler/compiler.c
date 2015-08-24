@@ -301,38 +301,19 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 		return datatype_new(DATA_NULL);
 	}
 
-#ifdef NO_EXPERIMENTAL
 	if(vartype.type == DATA_LAMBDA)
 	{
 		compiler_throw(compiler, node, "Trying to assign a function to a value (Currently not supported)");
 		return datatype_new(DATA_NULL);
 	}
-#endif
 
 	// Store the symbol
 	symbol_t* symbol = symbol_new(compiler, node, compiler->scope->address, vartype);
 	symbol->node->vardecl.type = vartype;
 	hashmap_set(compiler->scope->symbols, node->vardecl.name, symbol);
 
-	// Lambda works as referece
-	if(vartype.type != DATA_LAMBDA)
-	{
-		// Emit last bytecode
-		emit_store(compiler->buffer, symbol->address, symbol->global);
-	}
-	else
-	{
-		if(node->vardecl.initializer->class == AST_IDENT)
-		{
-			symbol_t* funcSymbol = symbol_get(compiler->scope, node->vardecl.initializer->ident);
-			symbol->ref = funcSymbol;
-		}
-		else
-		{
-			compiler_throw(compiler, node, "Direct lambda assignment to a variable is currently not supported");
-			return datatype_new(DATA_NULL);
-		}
-	}
+	// Emit bytecode
+	emit_store(compiler->buffer, symbol->address, symbol->global);
 
 	// Increase compiler address
 	compiler->scope->address++;

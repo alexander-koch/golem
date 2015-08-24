@@ -103,15 +103,20 @@ Class keyword might change.
 
 class Class(x:int, y:int, z:int) {
 	let mut x = x
-	let mut y = y
+	let y = y
 	let z = z
 
 	func run() -> void {
-		println("Running with x:", x, "and y:", y)
+		println(x)
+		println(y)
 	}
 
 	func getX() -> int {
 		return x
+	}
+
+	func setX(newX:int) -> void {
+		x = newX
 	}
 }
 
