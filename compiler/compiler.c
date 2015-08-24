@@ -26,48 +26,6 @@ void compiler_throw(compiler_t* compiler, ast_t* node, const char* format, ...)
     fprintf(stdout, "\n");
 }
 
-// Scope.new()
-// Scopes store the local state of the compiler.
-// These are mainly used for functions and
-// store each symbol created during the compilation.
-scope_t* scope_new()
-{
-	scope_t* scope = malloc(sizeof(*scope));
-	scope->symbols = hashmap_new();
-	scope->super = 0;
-	scope->subscopes = list_new();
-	scope->address = 0;
-	return scope;
-}
-
-// Scope.free()
-void scope_free(scope_t* scope)
-{
-	// Free symbols
-	hashmap_iterator_t* iter = hashmap_iterator_create(scope->symbols);
-	while(!hashmap_iterator_end(iter))
-	{
-		symbol_t* symbol = hashmap_iterator_next(iter);
-		free(symbol);
-	}
-	hashmap_iterator_free(iter);
-	hashmap_free(scope->symbols);
-
-	// Free subscopes
-	list_iterator_t* liter = list_iterator_create(scope->subscopes);
-	while(!list_iterator_end(liter))
-	{
-		scope_t* subscope = list_iterator_next(liter);
-		scope_free(subscope);
-	}
-	list_iterator_free(liter);
-	list_free(scope->subscopes);
-
-	// Free the actual scope
-	free(scope);
-	scope = 0;
-}
-
 void push_scope(compiler_t* compiler)
 {
 	// Create scope
@@ -147,6 +105,30 @@ symbol_t* symbol_get(scope_t* scope, char* ident)
 	if(scope->super)
 	{
 		return symbol_get(scope->super, ident);
+	}
+	return 0;
+}
+
+symbol_t* class_find(scope_t* scope, unsigned long id)
+{
+	hashmap_iterator_t* iter = hashmap_iterator_create(scope->classes);
+	while(!hashmap_iterator_end(iter))
+	{
+		symbol_t* symbol = hashmap_iterator_next(iter);
+		if(symbol)
+		{
+			if(symbol->type.id == id)
+			{
+				hashmap_iterator_free(iter);
+				return symbol;
+			}
+		}
+	}
+	hashmap_iterator_free(iter);
+
+	if(scope->super)
+	{
+		return class_find(scope->super, id);
 	}
 	return 0;
 }
@@ -759,11 +741,31 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 	{
 		if(ptr->node->class == AST_DECLVAR)
 		{
-			// Otherwise
+			// If it is a field of a class
+			if(ptr->ref)
+			{
+				symbol_t* classRef = ptr->ref;
+				ast_t* classNode = classRef->node;
+				void* val = 0;
+				if(hashmap_get(classNode->classstmt.fields, node->ident, &val) == HMAP_MISSING)
+				{
+					compiler_throw(compiler, node, "No such class field");
+					return datatype_new(DATA_NULL);
+				}
+
+				ptr = (symbol_t*)val;
+
+				emit_class_getfield(compiler->buffer, ptr->address);
+				return ptr->type;
+			}
+
+
+			// If local or global
 			if(depth == 0 || ptr->global)
 			{
 				emit_load(compiler->buffer, ptr->address, ptr->global);
 			}
+			// Otherwise in upper scope
 			else
 			{
 				emit_load_upval(compiler->buffer, depth, ptr->address);
@@ -853,8 +855,6 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
 	return true;
 }
 
-extern char* gen_signature(char* name, list_t* formals);
-
 // Eval.call(node)
 // Evaluates a call:
 // Tries to find the given function,
@@ -899,63 +899,42 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 
 		compiler_throw(compiler, node, "Implicit declaration of function '%s'", call->ident);
 	}
-	// else if(call->class == AST_SUBSCRIPT_SUGAR)
-	// {
-	// 	ast_t* expr = call->subscript.expr;
-	// 	ast_t* key = call->subscript.key;
-	//
-	// 	if(key->class != AST_IDENT)
-	// 	{
-	// 		// Index of variable
-	// 		compiler_throw(compiler, node, "Unsupported index type for a call");
-	// 		return datatype_new(DATA_NULL);
-	// 	}
-	//
-	// 	// Direct class function access
-	// 	// Class().getX()
-	// 	// call(subscript(:ident, :call))
-	// 	if(expr->class == AST_CALL)
-	// 	{
-	// 		// Direct call
-	// 		compiler_eval(compiler, expr);
-	//
-	// 		// Get ident
-	// 		ast_t* call2 = expr->call.callee;
-	// 		if(call2->class != AST_IDENT)
-	// 		{
-	// 			compiler_throw(compiler, node, "Invalid call");
-	// 		}
-	//
-	// 		// Experimental
-	// 		char* index = key->ident;
-	// 		char* classname = call2->ident;
-	//
-	// 		// Get the corresponding class
-	// 		symbol_t* class = symbol_get(compiler->scope, classname);
-	// 		if(class)
-	// 		{
-	// 			// Get the function within the class
-	// 			// TODO: Wrap this into class_get_function(name), returns 0 if invalid
-	// 			void* val = 0;
-	// 			if(hashmap_get(class->node->classstmt.fields, index, &val) != HMAP_MISSING)
-	// 			{
-	// 				symbol_t* func = (symbol_t*)val;
-	// 				// TODO: test if function or value
-	//
-	// 				if(eval_compare_and_call(compiler, func->node, node, func->address))
-	// 				{
-	// 					return func->node->funcdecl.rettype;
-	// 				}
-	// 			}
-	// 		}
-	//
-	//
-	// 	}
-		// else
-	// 	// {
-	// 	// 	compiler_throw(compiler, node, "Unsupported operation");
-	// 	// }
-	// }
+	else if(call->class == AST_SUBSCRIPT)
+	{
+		ast_t* expr = call->subscript.expr;
+		ast_t* key = call->subscript.key;
+
+		datatype_t dt = compiler_eval(compiler, expr);
+		if(dt.type != DATA_CLASS)
+		{
+			compiler_throw(compiler, node, "Identifier is not a class");
+			return datatype_new(DATA_NULL);
+		}
+
+		// Retrive the id and the corresponding class
+		unsigned long id = dt.id;
+		symbol_t* class = class_find(compiler->scope, id);
+		if(!class)
+		{
+			compiler_throw(compiler, node, "Class does not exist");
+			return datatype_new(DATA_NULL);
+		}
+
+		ast_t* cls = class->node;
+		void* val = 0;
+		if(hashmap_get(cls->classstmt.fields, key->ident, &val) == HMAP_MISSING)
+		{
+			compiler_throw(compiler, node, "Class field '%s' does not exist in class '%s'", key->ident, cls->classstmt.name);
+			return datatype_new(DATA_NULL);
+		}
+
+		// Finally found the funcdecl
+		class = (symbol_t*)val;
+		if(eval_compare_and_call(compiler, class->node, node, class->address))
+		{
+			return class->node->funcdecl.rettype;
+		}
+	}
 	else
 	{
 		// lamdba(x,y,z)- > void { body} (6,2,3) will never occur due to parsing (maybe in future versions)
@@ -1151,44 +1130,6 @@ datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 	ast_t* key = node->subscript.key;
 	datatype_t exprType = compiler_eval(compiler, expr);
 
-	// Experimental class value access
-	if(exprType.type == DATA_CLASS)
-	{
-		// Found a class access
-		if(key->class != AST_IDENT) {
-			compiler_throw(compiler, node, "Wrong type: Identifier for class field access expected");
-			return datatype_new(DATA_NULL);
-		}
-
-		if(expr->class == AST_CALL)
-		{
-			void* val = 0;
-			symbol_t* symbol = symbol_get(compiler->scope, expr->call.callee->ident);
-			if(symbol->node->class != AST_CLASS)
-			{
-				compiler_throw(compiler, node, "Symbol '%s' is not a class", expr->call.callee->ident);
-				return datatype_new(DATA_NULL);
-			}
-
-			if(hashmap_get(symbol->node->classstmt.fields, key->ident, &val) == HMAP_MISSING)
-			{
-				compiler_throw(compiler, node, "Invalid class index");
-				return datatype_new(DATA_NULL);
-			}
-
-			symbol_t* index = (symbol_t*)val;
-			int idx = index->address;
-
-			emit_class_getfield(compiler->buffer, idx);
-			return index->type;
-		}
-		else
-		{
-			compiler_throw(compiler, node, "Invalid class");
-			return datatype_new(DATA_NULL);
-		}
-	}
-
 	datatype_t keyType = compiler_eval(compiler, key);
 	if(keyType.type != DATA_INT)
 	{
@@ -1287,30 +1228,7 @@ datatype_t eval_unary(compiler_t* compiler, ast_t* node)
 // Concept compilation of a class structure (WIP)
 datatype_t eval_class(compiler_t* compiler, ast_t* node)
 {
-	// Class system approach:
-	// Just save the symbol with the corresponding node and emit the functions.
-	// Each time an object is instantiated, create the local variables and
-	// assign the functions to the instance.
-	// Then, the class / object can be used as a regular value.
-	// Pros: functions can be reused, easy to implement
-	// Cons: A few bytecodes extra
-
-	// Example (deprecated):
-	// let x = new Class(5, 2, 3)
-	// x.accumulate()
-	// ------
-	// push 5
-	// push 2
-	// push 3
-	// class, 3
-	// method, <address1>, <index+0>
-	// method, <address2>, <index+1>
-	// store, 0
-	// ------
-	// load, 0
-	// invokevirtual, 0
-
-	// Approach 2:
+	// Approach:
 	// Convert the constructor to a function that returns a 'class'-object value
 	// Class declaration is the main function, instantiating the classes values and functions
 	// functions and values are saved in class value + symbol
@@ -1330,8 +1248,15 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 
 	// Register a symbol for the class, save the bytecode address
 	size_t byte_address = vector_size(compiler->buffer);
-	if(symbol_exists(compiler, node, name)) return datatype_new(DATA_NULL);
+
+	void* tmp = 0;
+	if(hashmap_get(compiler->scope->classes, name, &tmp) != HMAP_MISSING)
+	{
+		compiler_throw(compiler, node, "Class already exists");
+		return datatype_new(DATA_NULL);
+	}
 	symbol_t* symbol = symbol_new(compiler, node, byte_address, dt);
+	hashmap_set(compiler->scope->classes, name, symbol);
 	hashmap_set(compiler->scope->symbols, name, symbol);
 
 	// Emit new class operator
@@ -1368,13 +1293,14 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 
 			// Create new symbol and new addr to register in class
 			symbol_t* sym = symbol_get(compiler->scope, sub->vardecl.name);
+			sym->ref = symbol;
+
 			hashmap_set(node->classstmt.fields, sub->vardecl.name, sym);
 			emit_class_setfield(compiler->buffer);
 		}
 		else if(sub->class == AST_DECLFUNC)
 		{
 			compiler_eval(compiler, sub);
-
 			symbol_t* sym = symbol_get(compiler->scope, sub->funcdecl.name);
 			hashmap_set(node->classstmt.fields, sub->funcdecl.name, sym);
 		}

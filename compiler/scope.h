@@ -24,9 +24,13 @@ typedef struct symbol_t
 typedef struct scope_t
 {
 	hashmap_t* symbols;
+	hashmap_t* classes;
 	struct scope_t* super;
 	list_t* subscopes;
 	int address;
 } scope_t;
+
+scope_t* scope_new();
+void scope_free(scope_t* scope);
 
 #endif

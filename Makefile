@@ -13,7 +13,6 @@ CFLAGS = -std=c99 -Wall -Wno-unused-function -Wno-unused-parameter -DNO_EXPERIME
 # Enable:
 # -DDB_VARS	 <-- Debugs all variables by printing a message
 # -DDB_EVAL	 <-- Debugs every ast evaluation
-# -DCODE_OPT <-- Optimizes bytecode
 
 FILES = main.c \
 		core/api.c \
@@ -27,6 +26,7 @@ FILES = main.c \
 		parser/ast.c \
 		parser/parser.c \
 		compiler/compiler.c \
+		compiler/scope.c \
 		compiler/bytecode_writer.c \
 		vm/value.c \
 		vm/bytecode.c \

@@ -707,12 +707,24 @@ void vm_process(vm_t* vm, vector_t* buffer)
 		case OP_GETFIELD:
 		{
 			int index = value_int(instr->v1);
-			value_t* class = value_copy(pop(vm));
 
+			// Get old scope
+			int fp = vm->fp;
+			int sp = vm->sp;
+
+			vm->fp = value_int(vm->stack[vm->fp - 2]);
+			vm->sp = vm->fp;
+
+			// Found the class
+			value_t* v = vm->stack[vm->fp];
+
+			value_t* class = v;
 			class_t* cls = value_class(class);
 			value_t* val = value_copy(vector_get(cls->fields, index));
 
-			push(vm, class);
+			// Revert changes
+			vm->sp = sp;
+			vm->fp = fp;
 			push(vm, val);
 			break;
 		}
