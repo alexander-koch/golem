@@ -755,6 +755,7 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 
 				ptr = (symbol_t*)val;
 
+				emit_op(compiler->buffer, OP_LDARG0);
 				emit_class_getfield(compiler->buffer, ptr->address);
 				return ptr->type;
 			}
@@ -932,6 +933,8 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 		class = (symbol_t*)val;
 		if(eval_compare_and_call(compiler, class->node, node, class->address))
 		{
+			instruction_t* ins = vector_top(compiler->buffer);
+			value_set_int(ins->v2, value_int(ins->v2)+1);
 			return class->node->funcdecl.rettype;
 		}
 	}

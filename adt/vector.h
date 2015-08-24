@@ -22,6 +22,7 @@ typedef struct vector_t
 vector_t* vector_new();
 void vector_push(vector_t* vector, void* data);
 void* vector_pop(vector_t* vector);
+void* vector_top(vector_t* vector);
 void vector_set(vector_t* vector, size_t index, void* data);
 void* vector_get(vector_t* vector, size_t index);
 size_t vector_size(vector_t* vector);

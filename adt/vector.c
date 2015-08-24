@@ -35,6 +35,12 @@ void* vector_pop(vector_t* vector)
 	return data;
 }
 
+void* vector_top(vector_t* vector)
+{
+	assert(vector->size-1 >= 0);
+	return vector->data[vector->size-1];
+}
+
 void vector_set(vector_t* vector, size_t index, void* data)
 {
 	assert(index < vector->capacity);

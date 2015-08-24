@@ -16,6 +16,7 @@ The following instructions are currently supported.
 |load x               | pushes the value of the local field x onto the stack
 |gstore x             | global store at address x
 |gload x              | global load at address x
+|ldarg0               | load argument 0
 
 | Arithmetic          | Description
 |---                  |---
@@ -45,7 +46,8 @@ The following instructions are currently supported.
 |ret                  | returns from function to last instruction pointer
 |jmp x                | unconditional jump
 |jmpt x               | jump if true
-|jmpf X               | jump if false
+|jmpf x               | jump if false
+|arr x                | build an array with the top x elements
 
 | Comparison          | Description
 |---                  |---
@@ -69,6 +71,17 @@ The following instructions are currently supported.
 |getsub               | get the sub-element of the value, expects index (first) and value on top of the stack
 |setsub               | sets the sub-element of the value, same mechanism as above
 
+| Upval               | Description
+|---                  |---
+|upval x, y           | gets a value of the upper scope x, at the address y
+|upstore x,y          | sets the value of scope x, at the address y to value on top of the stack
+
+| Class               | Description
+|---                  |---
+|class x              | creates a class with the top x elements
+|setfield             | pop value, stores it in a field of the class, increases the internal class field pointer
+|getfield x           | get value x in of the class fields
+
 # Method calling convention
 
 All argument are first pushed on the stack, from first to last.
@@ -85,7 +98,7 @@ The frame pointer becomes the stack pointer, the pc is assigned to the new addre
 |...		   |	   -4|
 |NUM_ARGS	   |       -3|
 |FP			   |       -2|
-|PC			   |       -1| 
+|PC			   |       -1|
 |...		   |	    0|	<-- current position fp / sp
 |...		   |       +1|
 |...           |      ...|

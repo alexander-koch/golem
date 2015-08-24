@@ -234,6 +234,12 @@ void vm_process(vm_t* vm, vector_t* buffer)
 			push(vm, value_copy(v));
 			break;
 		}
+		case OP_LDARG0:
+		{
+			int args = value_int(vm->stack[vm->fp-3]);
+			push(vm, value_copy(vm->stack[vm->fp-3-args]));
+			break;
+		}
 		case OP_UPVAL:
 		{
 			int scopes = value_int(instr->v1);
@@ -707,24 +713,12 @@ void vm_process(vm_t* vm, vector_t* buffer)
 		case OP_GETFIELD:
 		{
 			int index = value_int(instr->v1);
+			value_t* class = value_copy(pop(vm));
 
-			// Get old scope
-			int fp = vm->fp;
-			int sp = vm->sp;
-
-			vm->fp = value_int(vm->stack[vm->fp - 2]);
-			vm->sp = vm->fp;
-
-			// Found the class
-			value_t* v = vm->stack[vm->fp];
-
-			value_t* class = v;
 			class_t* cls = value_class(class);
 			value_t* val = value_copy(vector_get(cls->fields, index));
 
-			// Revert changes
-			vm->sp = sp;
-			vm->fp = fp;
+			push(vm, class);
 			push(vm, val);
 			break;
 		}
