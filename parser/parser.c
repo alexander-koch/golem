@@ -236,7 +236,7 @@ ast_t* parse_call(parser_t* parser, ast_t* node)
 // Parses a subscript, bracket based.
 // Example: myarray[5] = x
 // EBNF:
-// subscript = ident, "[", expr, "]", "=", expr;
+// subscript = ident, "[", expr, "]";
 ast_t* parse_subscript(parser_t* parser, ast_t* node)
 {
     ast_t* ast = ast_class_create(AST_SUBSCRIPT, node->location);
@@ -259,6 +259,11 @@ ast_t* parse_subscript(parser_t* parser, ast_t* node)
     {
         accept_token(parser);
         return parse_subscript(parser, ast);
+    }
+    else if(match_type(parser, TOKEN_DOT))
+    {
+        accept_token(parser);
+        return parse_subscript_sugar(parser, ast);
     }
 
     return ast;
@@ -615,7 +620,6 @@ datatype_t parse_datatype(parser_t* parser)
     }
     else
     {
-        // unknown identifier, treat as object for now
         type.type = DATA_CLASS;
         type.id = djb2((unsigned char*)v);
     }

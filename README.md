@@ -21,7 +21,7 @@ A programming language written in C.
 
 #### Serious issues
 
-- Currently None.
+- [ ] Calling an interal function in a class yield an error => (Fix immediately!)
 
 #### Other (Sorted by importance)
 

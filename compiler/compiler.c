@@ -831,6 +831,9 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
 		}
 	}
 
+	// Reserve some memory
+	insert_v1(compiler->buffer, OP_RESERVE, value_new_int(compiler->scope->address));
+
 	// Emit invocation
 	if(external)
 	{
@@ -926,6 +929,10 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 		//
 		// 		return dt;
 		// 	}
+		// 	else if(!strcmp(key->ident, "head"))
+		// 	{
+		//
+		// 	}
 		// 	else if(!strcmp(key->ident, "insert"))
 		// 	{
 		// 		if(list_size(call->formals) != 2)
@@ -933,8 +940,6 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 		// 			compiler_throw(compiler, node, "Expected two arguments");
 		// 			return datatype_new(DATA_NULL);
 		// 		}
-		//
-		//
 		// 	}
 		// 	else if(!strcmp(key->ident, "tail"))
 		// 	{

@@ -27,6 +27,7 @@ typedef struct
 	int pc;
 	int fp;
 	int sp;
+	int reserve;
 
 	// Gargabe collection
 	value_t* firstVal;

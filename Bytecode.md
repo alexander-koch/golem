@@ -43,6 +43,7 @@ The following instructions are currently supported.
 |---                  |---
 |syscall x, y         | invokes an internal known method named x, with y args, push return value
 |invoke x y           | invoke method at address x with y args, push return value
+|reserve x            | reserves x memory for function calls, to keep values in VRAM
 |ret                  | returns from function to last instruction pointer
 |jmp x                | unconditional jump
 |jmpt x               | jump if true

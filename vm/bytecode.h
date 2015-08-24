@@ -48,6 +48,7 @@ typedef enum
 	// Special
 	OP_SYSCALL,
 	OP_INVOKE,
+	OP_RESERVE,
 	OP_RET,
 	OP_JMP,
 	OP_JMPF,

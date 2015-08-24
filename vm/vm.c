@@ -35,6 +35,7 @@ vm_t* vm_new()
 	vm->pc = 0;
 	vm->fp = 0;
 	vm->sp = 0;
+	vm->reserve = 0;
 	vm->firstVal = 0;
 	vm->numObjects = 0;
 	vm->maxObjects = 8;
@@ -202,7 +203,8 @@ void vm_process(vm_t* vm, vector_t* buffer)
 			{
 				value_free(vm->locals[vm->fp+offset]);
 				vm->locals[vm->fp+offset] = value_copy(pop(vm));
-				if(vm->fp+offset >= vm->sp) vm->sp = vm->fp+offset;
+
+				// if(vm->fp+offset >= vm->sp) vm->sp = vm->fp+offset;
 			}
 			break;
 		}
@@ -224,7 +226,8 @@ void vm_process(vm_t* vm, vector_t* buffer)
 			int offset = value_int(instr->v1);
 			value_free(vm->locals[offset]);
 			vm->locals[offset] = value_copy(pop(vm));
-			if(vm->fp+offset >= vm->sp) vm->sp = vm->fp+offset;
+
+			// if(vm->fp+offset >= vm->sp) vm->sp = vm->fp+offset;
 			break;
 		}
 		case OP_GLOAD:
@@ -320,6 +323,11 @@ void vm_process(vm_t* vm, vector_t* buffer)
 			int address = value_int(instr->v1);
 			size_t args = value_int(instr->v2);
 
+			for(size_t i = 0; i < args; i++)
+			{
+				vm->stack[vm->sp+vm->reserve+i] = vm->stack[vm->sp-i];
+			}
+
 			push(vm, value_new_int(args));
 			push(vm, value_new_int(vm->fp));
 			push(vm, value_new_int(vm->pc));
@@ -340,6 +348,11 @@ void vm_process(vm_t* vm, vector_t* buffer)
 			vm->fp = vm->sp;
 			vm->pc = address;
 			return;
+		}
+		case OP_RESERVE:
+		{
+			vm->reserve = value_int(instr->v1);
+			break;
 		}
 		case OP_RET:
 		{

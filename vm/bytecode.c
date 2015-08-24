@@ -33,6 +33,7 @@ const char* op2str(opcode_t code)
 		case OP_NOT: return "not";
 		case OP_SYSCALL: return "syscall";
 		case OP_INVOKE: return "invoke";
+		case OP_RESERVE: return "reserve";
 		case OP_RET: return "ret";
 		case OP_JMP: return "jmp";
 		case OP_JMPF: return "jmpf";
