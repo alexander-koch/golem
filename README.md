@@ -25,10 +25,12 @@ A programming language written in C.
 
 #### Other (Sorted by importance)
 
-- [ ] Classes / Objects parsing + compilation => (Doing tests.)
-- [ ] Functions with Classes as parameters => (Working on it.)
+- [ ] Tests with classes => (Working on it.)
+- [ ] Array operators => (Working on it.)
 - [ ] Bytecode optimizations => (Working on it.)
 - [ ] Lambdas, Closures, Anonymous functions => (Working on it.)
+- [x] Classes / Objects parsing + compilation => (Done.)
+- [x] Functions with Classes as parameters => (Done.)
 - [x] When trying to replace an **Upvalue**, wrong storage address is used => (Done.)
 - [x] Nested functions => (Done.)
 - [x] Implementing all (basic) operators for associated types in the vm / bytecodes => (Done.)

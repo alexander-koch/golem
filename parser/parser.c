@@ -613,19 +613,11 @@ datatype_t parse_datatype(parser_t* parser)
     {
         type = datatype_new(DATA_VOID);
     }
-    // DEV
-    // else if(!strcmp(v, "lambda"))
-    // {
-    //     type = datatype_new(DATA_LAMBDA;
-    // }
     else
     {
         // unknown identifier, treat as object for now
-        //type = datatype_new(DATA_OBJECT);
-
-        // Objects aren't supported
-        parser_throw(parser, "Invalid type");
-        return datatype_new(DATA_NULL);
+        type.type = DATA_CLASS;
+        type.id = djb2((unsigned char*)v);
     }
 
     if(match_type(parser, TOKEN_LBRACKET))
@@ -644,7 +636,7 @@ datatype_t parse_datatype(parser_t* parser)
             return datatype_new(DATA_NULL);
         }
 
-        type = datatype_new(DATA_ARRAY | type.type);
+        type.type |= DATA_ARRAY;
     }
 
     return type;
@@ -657,7 +649,7 @@ datatype_t parse_datatype(parser_t* parser)
 // ---------------
 // EBNF:
 // formal = ["mut"], ident, ":", datatype;
-// formal_list = "(", {formal, {",", "formal"}}, ")";
+// formal_list = "(", [formal, {",", "formal"}], ")";
 list_t* parse_formals(parser_t* parser)
 {
     list_t* formals = list_new();
@@ -923,53 +915,6 @@ ast_t* parse_var_declaration(parser_t* parser, location_t loc)
     {
         parser_throw(parser, "Malformed variable declaration");
         node->class = AST_NULL;
-    }
-
-    return node;
-}
-
-// Experimental, for now @unused
-ast_t* parse_lambda_declaration(parser_t* parser, location_t loc)
-{
-    // lambda (params) -> <returntype> { \n
-    ast_t* node = ast_class_create(AST_DECLFUNC, loc);
-
-    token_t* fn = accept_token_string(parser, KEYWORD_FUNCTION);
-    token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
-
-    if(fn && lparen)
-    {
-        node->funcdecl.name = 0;
-        node->funcdecl.impl.formals = parse_formals(parser);
-        node->funcdecl.rettype = datatype_new(DATA_NULL);
-        node->funcdecl.external = false;
-
-        if(!match_type(parser, TOKEN_ARROW))
-        {
-            parser_throw(parser, "Return type expected");
-            return node;
-        }
-        else
-        {
-            accept_token(parser);
-            datatype_t tp = parse_datatype(parser);
-            node->funcdecl.rettype = tp;
-        }
-
-        if(!match_type(parser, TOKEN_LBRACE))
-        {
-            parser_throw(parser, "Block begin expected");
-        }
-        else
-        {
-            accept_token(parser);
-            accept_token_type(parser, TOKEN_NEWLINE);
-            node->funcdecl.impl.body = parse_block(parser);
-        }
-    }
-    else
-    {
-        parser_throw(parser, "Malformed function declaration");
     }
 
     return node;

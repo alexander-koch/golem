@@ -27,7 +27,7 @@ const char* datatype2str(datatype_t type)
 			}
 			else
 			{
-				return "unknown";
+				return 0;
 			}
 		}
 	}

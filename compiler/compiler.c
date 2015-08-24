@@ -831,6 +831,8 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
 
 				if(!datatype_match(param->vardecl.type, type) && param->vardecl.type.type != DATA_GENERIC)
 				{
+					printf("%lu != %lu\n", type.id, param->vardecl.type.id);
+
 					compiler_throw(compiler, node,
 						"Parameter %d has the wrong type.\nFound: %s, expected: %s",
 						i, datatype2str(type), datatype2str(param->vardecl.type));
@@ -1014,7 +1016,9 @@ datatype_t eval_array(compiler_t* compiler, ast_t* node)
 	// | STACK_TOP
 	size_t ls = list_size(node->array.elements);
 	insert_v1(compiler->buffer, OP_ARR, value_new_int(ls));
-	return datatype_new(DATA_ARRAY | node->array.type.type);
+	datatype_t ret = datatype_new(DATA_ARRAY | node->array.type.type);
+	ret.id = node->array.type.id;
+	return ret;
 }
 
 // Eval.if(node)
@@ -1162,7 +1166,9 @@ datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 		// We got an array and want to access an element.
 		// Remove the array flag to get the return type.
 		emit_op(compiler->buffer, OP_GETSUB);
-		return datatype_new(exprType.type & ~DATA_ARRAY);
+	 	datatype_t ret = datatype_new(exprType.type & ~DATA_ARRAY);
+		ret.id = exprType.id;
+		return ret;
 	}
 	else
 	{
@@ -1404,7 +1410,7 @@ void compiler_dump(ast_t* node, int level)
 		}
 		case AST_DECLVAR:
 		{
-			fprintf(stdout, ":decl %s<", node->vardecl.name);
+			fprintf(stdout, ":decl %s->%s<", node->vardecl.name, datatype2str(node->vardecl.type));
 			compiler_dump(node->vardecl.initializer, 0);
 			fprintf(stdout, ">");
 			break;
@@ -1417,14 +1423,14 @@ void compiler_dump(ast_t* node, int level)
 			while(!list_iterator_end(iter))
 			{
 				ast_t* param = list_iterator_next(iter);
-				fprintf(stdout, "%s: %s", param->vardecl.name, datatype2str(param->vardecl.type));
+				fprintf(stdout, "%s: %s->%lu", param->vardecl.name, datatype2str(param->vardecl.type), param->vardecl.type.id);
 
 				if(!list_iterator_end(iter))
 				{
 					fprintf(stdout, ", ");
 				}
 			}
-			fprintf(stdout, ") => ret: %s>\n", datatype2str(node->funcdecl.rettype));
+			fprintf(stdout, ") => ret: %s->%lu>\n", datatype2str(node->funcdecl.rettype),node->funcdecl.rettype.id);
 
 			list_iterator_free(iter);
 			iter = list_iterator_create(node->funcdecl.impl.body);
@@ -1567,8 +1573,18 @@ void compiler_dump(ast_t* node, int level)
 		}
 		case AST_CLASS:
 		{
-			fprintf(stdout, ":class<%s>\n", node->classstmt.name);
-			list_iterator_t* iter = list_iterator_create(node->classstmt.body);
+			fprintf(stdout, ":class<%s->%lu>\n", node->classstmt.name, djb2((unsigned char*)node->classstmt.name));
+
+			list_iterator_t* iter = list_iterator_create(node->classstmt.formals);
+			while(!list_iterator_end(iter))
+			{
+				ast_t* next = list_iterator_next(iter);
+				compiler_dump(next, level+1);
+				fprintf(stdout, "\n");
+			}
+			list_iterator_free(iter);
+
+			iter = list_iterator_create(node->classstmt.body);
 			while(!list_iterator_end(iter))
 			{
 				ast_t* next = list_iterator_next(iter);
