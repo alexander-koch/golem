@@ -831,9 +831,6 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
 		}
 	}
 
-	// Reserve some memory
-	insert_v1(compiler->buffer, OP_RESERVE, value_new_int(compiler->scope->address));
-
 	// Emit invocation
 	if(external)
 	{
@@ -841,6 +838,8 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
 	}
 	else
 	{
+		// Reserve some memory
+		insert_v1(compiler->buffer, OP_RESERVE, value_new_int(compiler->scope->address));
 		emit_invoke(compiler->buffer, address, argc);
 	}
 
@@ -860,18 +859,35 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 		symbol_t* symbol = symbol_get(compiler->scope, call->ident);
 		if(symbol)
 		{
-
-			// If variable, set function to reference
-			if(symbol->node->class == AST_DECLVAR && symbol->node->vardecl.type.type == DATA_LAMBDA)
-			{
-				symbol = symbol->ref;
-			}
-
 			if(symbol->node->class == AST_DECLFUNC)
 			{
+				bool isClass = false;
+				if(symbol->ref)
+				{
+					// Suspect class function
+					symbol = symbol->ref;
+					ast_t* class = symbol->node;
+					void* val = 0;
+					if(hashmap_get(class->classstmt.fields, call->ident, &val) == HMAP_MISSING)
+					{
+						compiler_throw(compiler, node, "Function does not exists in class");
+						return datatype_new(DATA_NULL);
+					}
+
+					emit_op(compiler->buffer, OP_LDARG0);
+					symbol = (symbol_t*)val;
+					isClass = true;
+				}
+
 				// Normal function call
 				if(eval_compare_and_call(compiler, symbol->node, node, symbol->address))
 				{
+					if(isClass)
+					{
+						instruction_t* ins = vector_top(compiler->buffer);
+						value_set_int(ins->v2, value_int(ins->v2)+1);
+					}
+
 					return symbol->node->funcdecl.rettype;
 				}
 			}
@@ -903,50 +919,6 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 
 		// Evaluate the lhs
 		datatype_t dt = compiler_eval(compiler, expr);
-
-		// EXPERIMENTAL
-		// if((dt.type & DATA_ARRAY) == DATA_ARRAY)
-		// {
-		// 	if(!strcmp(key->ident, "length"))
-		// 	{
-		// 		if(list_size(call->formals) != 0)
-		// 		{
-		// 			compiler_throw(compiler, node, "Expected zero arguments");
-		// 			return datatype_new(DATA_NULL);
-		// 		}
-		//
-		// 		// Length operation
-		// 		//emit_op(compiler->buffer, OP_LEN);
-		// 		return datatype_new(DATA_INT);
-		// 	}
-		// 	else if(!strcmp(key->ident, "cons"))
-		// 	{
-		// 		if(list_size(call->formals) != 1)
-		// 		{
-		// 			compiler_throw(compiler, node, "Expected one argument of type array");
-		// 			return datatype_new(DATA_NULL);
-		// 		}
-		//
-		// 		return dt;
-		// 	}
-		// 	else if(!strcmp(key->ident, "head"))
-		// 	{
-		//
-		// 	}
-		// 	else if(!strcmp(key->ident, "insert"))
-		// 	{
-		// 		if(list_size(call->formals) != 2)
-		// 		{
-		// 			compiler_throw(compiler, node, "Expected two arguments");
-		// 			return datatype_new(DATA_NULL);
-		// 		}
-		// 	}
-		// 	else if(!strcmp(key->ident, "tail"))
-		// 	{
-		// 		// List tail
-		// 		return dt;
-		// 	}
-		// }
 
 		if(dt.type != DATA_CLASS)
 		{
@@ -1367,6 +1339,8 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 		{
 			compiler_eval(compiler, sub);
 			symbol_t* sym = symbol_get(compiler->scope, sub->funcdecl.name);
+			sym->ref = symbol;
+
 			hashmap_set(node->classstmt.fields, sub->funcdecl.name, sym);
 		}
 		else

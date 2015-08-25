@@ -82,7 +82,7 @@ void sweep(vm_t* vm)
 void gc(vm_t* vm)
 {
 // Garbage day!
-#ifndef NO_TRACE
+#ifdef STACKTRACE
 	console("Collecting garbage...\n");
 #endif
 
@@ -151,8 +151,8 @@ void vm_process(vm_t* vm, vector_t* buffer)
 {
 	instruction_t* instr = vector_get(buffer, vm->pc);
 
-#ifndef NO_TRACE
-	console("  %.2d (SP:%d, FP:%d): %s", vm->pc, vm->sp, vm->fp, op2str(instr->op));
+#ifdef STACKTRACE
+	console("  %.2d (SP:%.2d, FP:%.2d): %s", vm->pc, vm->sp, vm->fp, op2str(instr->op));
 	if(instr->v1)
 	{
 		console(", ");
