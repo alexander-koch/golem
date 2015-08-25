@@ -23,6 +23,7 @@ typedef struct symbol_t
 // Scope: contains symbols
 typedef struct scope_t
 {
+	ast_t* node;
 	hashmap_t* symbols;
 	hashmap_t* classes;
 	struct scope_t* super;

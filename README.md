@@ -21,11 +21,10 @@ A programming language written in C.
 
 #### Serious issues
 
-- Currently none.
+- [ ] Return type isn't checked => (Working on it.)
 
 #### Other (Sorted by importance)
 
-- [ ] Return type isn't checked => (Working on it.)
 - [ ] Tests with classes => (Working on it.)
 - [ ] Array operators => (Working on it.)
 - [ ] Bytecode optimizations => (Working on it.)

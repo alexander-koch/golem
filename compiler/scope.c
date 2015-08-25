@@ -12,6 +12,7 @@ scope_t* scope_new()
 	scope->super = 0;
 	scope->subscopes = list_new();
 	scope->address = 0;
+	scope->node = 0;
 	return scope;
 }
 

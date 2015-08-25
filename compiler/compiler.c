@@ -26,11 +26,12 @@ void compiler_throw(compiler_t* compiler, ast_t* node, const char* format, ...)
     fprintf(stdout, "\n");
 }
 
-void push_scope(compiler_t* compiler)
+void push_scope(compiler_t* compiler, ast_t* node)
 {
 	// Create scope
 	scope_t* scope = scope_new();
 	scope->super = compiler->scope;
+	scope->node = node;
 
 	// Register new scope in parent
 	list_push(compiler->scope->subscopes, scope);
@@ -49,6 +50,16 @@ void pop_scope(compiler_t* compiler)
 	// Set parent scope to active
 	compiler->scope = super;
 	compiler->depth--;
+}
+
+bool scope_is_class(scope_t* scope)
+{
+	return scope->node ? 0 : scope->node->class == AST_CLASS;
+}
+
+bool scope_is_function(scope_t* scope)
+{
+	return scope->node ? 0 : scope->node->class == AST_DECLFUNC;
 }
 
 // Symbol.new(node, address, type)
@@ -208,7 +219,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	hashmap_set(compiler->scope->symbols, node->funcdecl.name, fnSymbol);
 
 	// Create a new scope
-	push_scope(compiler);
+	push_scope(compiler, node);
 
 	// Treat each parameter as a local variable, with no type or value
 	list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.formals);
@@ -1077,7 +1088,9 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
 		}
 
 		// Eval execution block code
+		push_scope(compiler, node);
 		eval_block(compiler, subnode->ifclause.body);
+		pop_scope(compiler);
 
 		// Optimization
 		// If not an else statement and more ifclauses than one
@@ -1118,7 +1131,12 @@ datatype_t eval_ifclause(compiler_t* compiler, ast_t* node)
 	// helper function for if
 	compiler_eval(compiler, node->ifclause.cond);
 	value_t* instr = emit_jmpf(compiler->buffer, 0);
+
+	// Create a scope
+	push_scope(compiler, node);
 	eval_block(compiler, node->ifclause.body);
+	pop_scope(compiler);
+
 	value_set_int(instr, vector_size(compiler->buffer));
 	return datatype_new(DATA_NULL);
 }
@@ -1135,7 +1153,12 @@ datatype_t eval_while(compiler_t* compiler, ast_t* node)
 	size_t start = vector_size(compiler->buffer);
 	compiler_eval(compiler, node->whilestmt.cond);
 	value_t* instr = emit_jmpf(compiler->buffer, 0);
+
+	// Wrap into scope
+	push_scope(compiler, node);
 	eval_block(compiler, node->ifclause.body);
+	pop_scope(compiler);
+
 	emit_jmp(compiler->buffer, start);
 	value_set_int(instr, vector_size(compiler->buffer));
 	return datatype_new(DATA_NULL);
@@ -1300,7 +1323,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 	emit_op(compiler->buffer, OP_CLASS);
 
 	// Create a new scope
-	push_scope(compiler);
+	push_scope(compiler, node);
 
 	// Treat each parameter as a local variable, with no type or value
 	list_iterator_t* iter = list_iterator_create(node->classstmt.formals);
