@@ -93,6 +93,7 @@ value_t* value_copy(value_t* value)
 {
 	value_t* val = value_new_null();
 	val->type = value->type;
+
 	if(val->type == VALUE_STRING)
 	{
 		val->v.o = strdup(value->v.o);

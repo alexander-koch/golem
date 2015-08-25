@@ -82,7 +82,7 @@ void sweep(vm_t* vm)
 void gc(vm_t* vm)
 {
 // Garbage day!
-#ifdef STACKTRACE
+#ifdef TRACE
 	console("Collecting garbage...\n");
 #endif
 
@@ -151,7 +151,7 @@ void vm_process(vm_t* vm, vector_t* buffer)
 {
 	instruction_t* instr = vector_get(buffer, vm->pc);
 
-#ifdef STACKTRACE
+#ifdef TRACE
 	console("  %.2d (SP:%.2d, FP:%.2d): %s", vm->pc, vm->sp, vm->fp, op2str(instr->op));
 	if(instr->v1)
 	{
@@ -168,8 +168,9 @@ void vm_process(vm_t* vm, vector_t* buffer)
 	{
 		if(vm->stack[i]) {
 			value_print(vm->stack[i]);
-			if(i < vm->sp-1) console(", ");
+
 		}
+		if(i < vm->sp-1) console(", ");
 	}
 	console("]\n");
 #endif
@@ -203,8 +204,6 @@ void vm_process(vm_t* vm, vector_t* buffer)
 			{
 				value_free(vm->locals[vm->fp+offset]);
 				vm->locals[vm->fp+offset] = value_copy(pop(vm));
-
-				// if(vm->fp+offset >= vm->sp) vm->sp = vm->fp+offset;
 			}
 			break;
 		}
@@ -226,8 +225,6 @@ void vm_process(vm_t* vm, vector_t* buffer)
 			int offset = value_int(instr->v1);
 			value_free(vm->locals[offset]);
 			vm->locals[offset] = value_copy(pop(vm));
-
-			// if(vm->fp+offset >= vm->sp) vm->sp = vm->fp+offset;
 			break;
 		}
 		case OP_GLOAD:
@@ -257,20 +254,15 @@ void vm_process(vm_t* vm, vector_t* buffer)
 			}
 			vm->sp = vm->fp;
 
-			value_t* v = 0;
-			if(offset < 0)
-				v = vm->stack[vm->fp+offset];
-			else
-				v = vm->locals[vm->fp+offset];
-
+			value_t* val = (offset < 0) ? vm->stack[vm->fp+offset] : vm->locals[vm->fp+offset];
 			vm->sp = sp;
 			vm->fp = fp;
-			push(vm, value_copy(v));
+			push(vm, value_copy(val));
 			break;
 		}
 		case OP_UPSTORE:
 		{
-			value_t* newVal = value_copy(pop(vm));
+			value_t* newVal = pop(vm);
 
 			int scopes = value_int(instr->v1);
 			int offset = value_int(instr->v2);
@@ -323,9 +315,20 @@ void vm_process(vm_t* vm, vector_t* buffer)
 			int address = value_int(instr->v1);
 			size_t args = value_int(instr->v2);
 
-			for(size_t i = 0; i < args; i++)
+			// Arg0 -3
+			// Arg1 -2
+			// Arg2 -1
+			// sp (args=3) (reserve=2)
+			// ...  +1
+			// ...  +2
+
+			if(vm->reserve > 0)
 			{
-				vm->stack[vm->sp+vm->reserve+i] = vm->stack[vm->sp-i];
+				for(size_t i = 1; i <= args; i++)
+				{
+					vm->stack[vm->sp+vm->reserve-i] = vm->stack[vm->sp-i];
+				}
+				vm->sp += vm->reserve;
 			}
 
 			push(vm, value_new_int(args));
@@ -362,8 +365,9 @@ void vm_process(vm_t* vm, vector_t* buffer)
 
 			vm->pc = value_int(pop(vm));
 			vm->fp = value_int(pop(vm));
+			size_t args = value_int(pop(vm));
 
-			vm->sp -= value_int(pop(vm));
+			vm->sp -= args;
 			push(vm, value_copy(ret));
 			break;
 		}

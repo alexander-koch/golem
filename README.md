@@ -21,14 +21,16 @@ A programming language written in C.
 
 #### Serious issues
 
-- [ ] Calling an interal function in a class yield an error => (Fix immediately!)
+- Currently none.
 
 #### Other (Sorted by importance)
 
+- [ ] Return type isn't checked => (Working on it.)
 - [ ] Tests with classes => (Working on it.)
 - [ ] Array operators => (Working on it.)
 - [ ] Bytecode optimizations => (Working on it.)
 - [ ] Lambdas, Closures, Anonymous functions => (Working on it.)
+- [x] Calling an interal function in a class yield an error => (Done.)
 - [x] Classes / Objects parsing + compilation => (Done.)
 - [x] Functions with Classes as parameters => (Done.)
 - [x] When trying to replace an **Upvalue**, wrong storage address is used => (Done.)

@@ -5,7 +5,7 @@ INC := -I.
 
 # Golem flags
 # Add flags explained below for debugging features
-GFLAGS := #-DNO_AST
+GFLAGS := #-DTRACE #-DNO_AST
 
 # Options:
 # Disable:
@@ -15,7 +15,7 @@ GFLAGS := #-DNO_AST
 #   -DNO_TIME    <-- Disables execution time printing
 # 	-DNO_MEMINFO <-- Disables info on memory usage
 # Enable:
-#   -DSTACKTRACE <-- While bytecode is executed, stack + instructions are printed
+#   -DTRACE <-- While bytecode is executed, stack + instructions are printed
 #   -DDB_VARS    <-- Debugs all variables by printing a message
 #   -DDB_EVAL    <-- Debugs every ast evaluation
 
