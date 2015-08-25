@@ -52,14 +52,32 @@ void pop_scope(compiler_t* compiler)
 	compiler->depth--;
 }
 
-bool scope_is_class(scope_t* scope)
+void push_scope_virtual(compiler_t* compiler, ast_t* node)
 {
-	return scope->node ? 0 : scope->node->class == AST_CLASS;
+	size_t addr = compiler->scope->address;
+	push_scope(compiler, node);
+	compiler->scope->address = addr;
 }
 
-bool scope_is_function(scope_t* scope)
+void pop_scope_virtual(compiler_t* compiler)
 {
-	return scope->node ? 0 : scope->node->class == AST_DECLFUNC;
+	size_t addr = compiler->scope->address;
+	pop_scope(compiler);
+	compiler->scope->address = addr;
+}
+
+bool scope_is_class(scope_t* scope, ast_class_t class, ast_t** node)
+{
+	if(scope->node && scope)
+	{
+		if(scope->node->class == class)
+		{
+			(*node) = scope->node;
+			return true;
+		}
+		return scope_is_class(scope->super, class, node);
+	}
+	return false;
 }
 
 // Symbol.new(node, address, type)
@@ -1088,9 +1106,7 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
 		}
 
 		// Eval execution block code
-		push_scope(compiler, node);
 		eval_block(compiler, subnode->ifclause.body);
-		pop_scope(compiler);
 
 		// Optimization
 		// If not an else statement and more ifclauses than one
@@ -1123,24 +1139,6 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
 	return datatype_new(DATA_NULL);
 }
 
-// Eval.ifclause(node)
-// Helper function for ifclause-evaluation.
-// Evaluates a simple if-statement
-datatype_t eval_ifclause(compiler_t* compiler, ast_t* node)
-{
-	// helper function for if
-	compiler_eval(compiler, node->ifclause.cond);
-	value_t* instr = emit_jmpf(compiler->buffer, 0);
-
-	// Create a scope
-	push_scope(compiler, node);
-	eval_block(compiler, node->ifclause.body);
-	pop_scope(compiler);
-
-	value_set_int(instr, vector_size(compiler->buffer));
-	return datatype_new(DATA_NULL);
-}
-
 // Eval.while(node)
 // Evaluates a while statement.
 // Example:
@@ -1155,9 +1153,7 @@ datatype_t eval_while(compiler_t* compiler, ast_t* node)
 	value_t* instr = emit_jmpf(compiler->buffer, 0);
 
 	// Wrap into scope
-	push_scope(compiler, node);
 	eval_block(compiler, node->ifclause.body);
-	pop_scope(compiler);
 
 	emit_jmp(compiler->buffer, start);
 	value_set_int(instr, vector_size(compiler->buffer));
@@ -1168,7 +1164,25 @@ datatype_t eval_while(compiler_t* compiler, ast_t* node)
 // Simply compiles the return data and emits the bytecode
 datatype_t eval_return(compiler_t* compiler, ast_t* node)
 {
-	compiler_eval(compiler, node->returnstmt);
+	datatype_t dt = datatype_new(DATA_VOID);
+	if(node->returnstmt)
+	{
+		dt = compiler_eval(compiler, node->returnstmt);
+	}
+
+	ast_t* refNode = 0;
+	if(!scope_is_class(compiler->scope, AST_DECLFUNC, &refNode))
+	{
+		compiler_throw(compiler, node, "Return statement is not within a function");
+		return datatype_new(DATA_NULL);
+	}
+
+	if(!datatype_match(refNode->funcdecl.rettype, dt))
+	{
+		compiler_throw(compiler, node, "Return value doesn't match the return type");
+		return datatype_new(DATA_NULL);
+	}
+
 	emit_return(compiler->buffer);
 	return datatype_new(DATA_NULL);
 }

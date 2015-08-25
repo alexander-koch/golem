@@ -22,6 +22,7 @@ A programming language written in C.
 #### Serious issues
 
 - [ ] Return type isn't checked => (Working on it.)
+- [ ] While and if loops don't provide scopes => (Working on it.) (Idea:flag scopes as virtual)
 
 #### Other (Sorted by importance)
 
