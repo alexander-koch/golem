@@ -408,6 +408,22 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			}
 			break;
 		}
+		case OP_STR:
+		{
+			size_t elsz = value_int(instr->v1);
+			char *str = malloc(sizeof(char) * (elsz+1));
+
+			for(int i = elsz; i > 0; i--)
+			{
+				value_t* val = vm->stack[vm->sp - i];
+				str[elsz - i] = value_char(val);
+				vm->stack[vm->sp - i] = 0;
+			}
+			vm->sp -= elsz;
+			str[elsz] = '\0';
+			push(vm, value_new_string_nocopy(str));
+			break;
+		}
 		case OP_ARR:
 		{
 			// Reverse list sorting

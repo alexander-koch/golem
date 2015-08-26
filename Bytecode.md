@@ -50,6 +50,7 @@ The following instructions are currently supported.
 |jmpt x               | jump if true
 |jmpf x               | jump if false
 |arr x                | build an array with the top x elements
+|str x                | build a string with the top x elements
 
 | Comparison          | Description
 |---                  |---

@@ -26,11 +26,11 @@ A programming language written in C.
 #### Main tasks (Sorted by importance)
 
 - [ ] Tests with classes => (Working on it.)
-- [ ] String merge operator => (Working on it.)
 - [ ] Array operators / Allow zero element arrays => (Working on it.)
 - [ ] Bytecode optimizations => (Working on it.)
 - [ ] Static class functions => (Working on it.)
 - [ ] Comment at end of file is invalid => (Working on it.)
+- [x] Implement new string merge operator => (Done.)
 - [x] New operator for reassignment (<-), replace double equal by equal => (Done.)
 - [x] Return type isn't checked => (Done.)
 - [x] Calling an interal function in a class yield an error => (Done.)

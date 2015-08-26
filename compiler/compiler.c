@@ -1012,9 +1012,10 @@ datatype_t eval_char(compiler_t* compiler, ast_t* node)
 datatype_t eval_array(compiler_t* compiler, ast_t* node)
 {
 	datatype_t dt = datatype_new(DATA_NULL);
+	size_t ls = list_size(node->array.elements);
 	list_iterator_t* iter = list_iterator_create(node->array.elements);
 
-	if(list_size(node->array.elements) > 0)
+	if(ls > 0)
 	{
 		dt = compiler_eval(compiler, list_iterator_next(iter));
 		node->array.type = dt;
@@ -1056,18 +1057,18 @@ datatype_t eval_array(compiler_t* compiler, ast_t* node)
 	}
 	list_iterator_free(iter);
 
-	// TODO: Merge string
-	// if(dt.type == DATA_CHAR)
-	// {
-	// 	// Merge this to a string
-	// 	// emit_op(compiler->buffer, OP_STR);
-	// }
+	// Merge string
+	if(dt.type == DATA_CHAR)
+	{
+		// Merge this to a string
+		insert_v1(compiler->buffer, OP_STR, value_new_int(ls));
+		return datatype_new(DATA_STRING);
+	}
 
 	// | STACK_BOTTOM
 	// | ...
 	// | OP_ARR, element size
 	// | STACK_TOP
-	size_t ls = list_size(node->array.elements);
 	insert_v1(compiler->buffer, OP_ARR, value_new_int(ls));
 	datatype_t ret = datatype_new(DATA_ARRAY | node->array.type.type);
 	ret.id = node->array.type.id;

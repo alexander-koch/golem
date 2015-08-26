@@ -55,6 +55,7 @@ typedef enum
 	OP_JMPF,
 	OP_JMPT,
 	OP_ARR,
+	OP_STR,
 
 	// Compare
 	OP_BEQ,
