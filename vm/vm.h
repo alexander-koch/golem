@@ -28,7 +28,7 @@ typedef struct
 	int fp;
 	int sp;
 	int reserve;
-	bool err;
+	bool running;
 
 	// Gargabe collection
 	value_t* firstVal;
@@ -44,9 +44,7 @@ typedef struct FunctionDef
 } FunctionDef;
 
 vm_t* vm_new();
-instruction_t* vm_peek(vm_t* vm, vector_t* buffer);
-void vm_process(vm_t* vm, vector_t* buffer);
-void vm_execute(vm_t* vm, vector_t* buffer);
+void vm_run(vm_t* vm, vector_t* buffer);
 void vm_free(vm_t* vm);
 
 void push(vm_t* vm, value_t* val);

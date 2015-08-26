@@ -29,7 +29,7 @@ void run_repl(vm_t* vm, compiler_t* compiler)
         vector_t* buffer = compile_buffer(compiler, buf);
         if(buffer)
         {
-            vm_execute(vm, buffer);
+            vm_run(vm, buffer);
         }
         compiler_clear(compiler);
     }
@@ -43,6 +43,9 @@ int main(int argc, char** argv)
     // Read-eval-print-loop
     if(argc == 1)
     {
+        printf("Golem compiler - REPL\n");
+        printf("Copyright (c) Alexander Koch 2015 All Rights Reserved.\n\n");
+
         vm_t* vm = vm_new();
         run_repl(vm, &compiler);
         vm_free(vm);
@@ -54,7 +57,7 @@ int main(int argc, char** argv)
         vector_t* buffer = compile_file(&compiler, argv[1]);
         if(buffer)
         {
-            vm_execute(vm, buffer);
+            vm_run(vm, buffer);
             compiler_clear(&compiler);
         }
         else
@@ -108,7 +111,7 @@ int main(int argc, char** argv)
             compiler.buffer = buffer;
             if(ok)
             {
-                vm_execute(vm, buffer);
+                vm_run(vm, buffer);
             }
             compiler_clear(&compiler);
             vm_free(vm);

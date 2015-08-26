@@ -12,6 +12,7 @@ typedef enum
 	// Basic stack
 	OP_PUSH,
 	OP_POP,
+	OP_HLT,
 
 	// Store
 	OP_STORE,

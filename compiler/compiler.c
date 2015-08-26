@@ -1720,6 +1720,7 @@ vector_t* compile_buffer(compiler_t* compiler, const char* source)
 		// symbols_track_usage(compiler, compiler->scope);
 
 		compiler_eval(compiler, root);
+		emit_op(compiler->buffer, OP_HLT);
 		ast_free(root);
 	}
 

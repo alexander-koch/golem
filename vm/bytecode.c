@@ -8,6 +8,7 @@ const char* op2str(opcode_t code)
 	{
 		case OP_PUSH: return "push";
 		case OP_POP: return "pop";
+		case OP_HLT: return "hlt";
 		case OP_STORE: return "store";
 		case OP_LOAD: return "load";
 		case OP_GSTORE: return "gstore";

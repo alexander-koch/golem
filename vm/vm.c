@@ -36,7 +36,7 @@ vm_t* vm_new()
 	vm->fp = 0;
 	vm->sp = 0;
 	vm->reserve = 0;
-	vm->err = false;
+	vm->running = false;
 	vm->firstVal = 0;
 	vm->numObjects = 0;
 	vm->maxObjects = 8;
@@ -51,7 +51,7 @@ void vm_throw(vm_t* vm, const char* format, ...)
     vfprintf(stdout, format, argptr);
     va_end(argptr);
     printf("\nat: PC(%d), SP(%d), FP(%d)\n", vm->pc, vm->sp, vm->fp);
-	vm->err = true;
+	vm->running = false;
 }
 
 void mark(value_t* v)
@@ -134,14 +134,20 @@ value_t* pop(vm_t* vm)
 	return v;
 }
 
+// Fetches the next instruction
+instruction_t* vm_fetch(vm_t* vm, vector_t* buffer)
+{
+	return vector_get(buffer, vm->pc);
+}
+
 // Just prints out instruction codes
 void vm_print_code(vm_t* vm, vector_t* buffer)
 {
+	vm->pc = 0;
 	console("\nImmediate code:\n");
-	while(vm->pc < vector_size(buffer))
+	while(vm_fetch(vm, buffer)->op != OP_HLT)
 	{
 		instruction_t* instr = vector_get(buffer, vm->pc);
-
 		console("  %.2d: %s", vm->pc, op2str(instr->op));
 		if(instr->v1)
 		{
@@ -160,10 +166,8 @@ void vm_print_code(vm_t* vm, vector_t* buffer)
 }
 
 // Processes a buffer instruction based on instruction / program counter (pc).
-void vm_process(vm_t* vm, vector_t* buffer)
+void vm_process(vm_t* vm, instruction_t* instr)
 {
-	instruction_t* instr = vector_get(buffer, vm->pc);
-
 #ifdef TRACE
 	console("  %.2d (SP:%.2d, FP:%.2d): %s", vm->pc, vm->sp, vm->fp, op2str(instr->op));
 	if(instr->v1)
@@ -198,6 +202,11 @@ void vm_process(vm_t* vm, vector_t* buffer)
 		case OP_POP:
 		{
 			pop(vm);
+			break;
+		}
+		case OP_HLT:
+		{
+			vm->running = false;
 			break;
 		}
 		case OP_STORE:
@@ -767,12 +776,14 @@ void vm_process(vm_t* vm, vector_t* buffer)
 }
 
 // Executes a buffer / list of instructions
-void vm_execute(vm_t* vm, vector_t* buffer)
+void vm_run(vm_t* vm, vector_t* buffer)
 {
 	// Reset vm
 	vm->sp = 0;
 	vm->pc = 0;
 	vm->fp = 0;
+	vm->reserve = 0;
+	vm->running = true;
 	memset(vm->stack, 0, STACK_SIZE * sizeof(value_t*));
 	memset(vm->locals, 0, LOCALS_SIZE * sizeof(value_t*));
 
@@ -788,9 +799,9 @@ void vm_execute(vm_t* vm, vector_t* buffer)
 	clock_t begin = clock();
 #endif
 
-	while(vm->pc < vector_size(buffer) && !vm->err)
+	while(vm->running)
 	{
-		vm_process(vm, buffer);
+		vm_process(vm, vm_fetch(vm, buffer));
 	}
 
 #ifndef NO_TIME

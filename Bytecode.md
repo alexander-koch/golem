@@ -9,6 +9,7 @@ The following instructions are currently supported.
 |---                  |---
 |push                 | pushes a generic value on the stack
 |pop                  | pop value from stack, remove
+|hlt                  | halts the program
 
 | Store               | Description
 |---                  |---
