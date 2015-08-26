@@ -28,6 +28,7 @@ typedef struct
 	int fp;
 	int sp;
 	int reserve;
+	bool err;
 
 	// Gargabe collection
 	value_t* firstVal;

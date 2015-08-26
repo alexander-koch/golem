@@ -36,10 +36,22 @@ vm_t* vm_new()
 	vm->fp = 0;
 	vm->sp = 0;
 	vm->reserve = 0;
+	vm->err = false;
 	vm->firstVal = 0;
 	vm->numObjects = 0;
 	vm->maxObjects = 8;
 	return vm;
+}
+
+void vm_throw(vm_t* vm, const char* format, ...)
+{
+    printf("=> Exception thrown: ");
+    va_list argptr;
+    va_start(argptr, format);
+    vfprintf(stdout, format, argptr);
+    va_end(argptr);
+    printf("\nat: PC(%d), SP(%d), FP(%d)\n", vm->pc, vm->sp, vm->fp);
+	vm->err = true;
 }
 
 void mark(value_t* v)
@@ -98,6 +110,13 @@ void push(vm_t* vm, value_t* val)
 		gc(vm);
 	}
 
+	if(vm->sp >= STACK_SIZE)
+	{
+		vm_throw(vm, "Stack overflow");
+		value_free(val);
+		return;
+	}
+
 	vm->stack[vm->sp] = val;
 	vm->sp++;
 
@@ -113,12 +132,6 @@ value_t* pop(vm_t* vm)
 	value_t* v = vm->stack[vm->sp];
 	vm->stack[vm->sp] = 0;
 	return v;
-}
-
-instruction_t* vm_peek(vm_t* vm, vector_t* buffer)
-{
-	if(vm->pc >= vector_size(buffer)) return 0;
-	return vector_get(buffer, vm->pc);
 }
 
 // Just prints out instruction codes
@@ -775,7 +788,7 @@ void vm_execute(vm_t* vm, vector_t* buffer)
 	clock_t begin = clock();
 #endif
 
-	while(vm->pc < vector_size(buffer))
+	while(vm->pc < vector_size(buffer) && !vm->err)
 	{
 		vm_process(vm, buffer);
 	}
