@@ -9,7 +9,7 @@ A programming language written in C.
 - Explicit mutable declaration
 - Statically, strong typed
 - Type inference => automatic deduction of data types
-- Strings as arrays of characters, not a standalone type
+- Strings as arrays of characters, not a standalone type => reduces data size, easier to understand
 - Systems language
 - High-order functions, currying
 - Fully functional fast bytecode vm or translation into x86 / x86_64 assembler machine code
@@ -21,15 +21,17 @@ A programming language written in C.
 
 #### Serious issues
 
-- [ ] Return type isn't checked => (Working on it.)
 - [ ] While and if loops don't provide scopes => (Working on it.) (Idea:flag scopes as virtual)
 
-#### Other (Sorted by importance)
+#### Main tasks (Sorted by importance)
 
 - [ ] Tests with classes => (Working on it.)
-- [ ] Array operators => (Working on it.)
+- [ ] String merge operator => (Working on it.)
+- [ ] Array operators / Allow zero element arrays => (Working on it.)
 - [ ] Bytecode optimizations => (Working on it.)
-- [ ] Lambdas, Closures, Anonymous functions => (Working on it.)
+- [ ] Static class functions => (Working on it.)
+- [x] New operator for reassignment (<-), replace double equal by equal => (Done.)
+- [x] Return type isn't checked => (Done.)
 - [x] Calling an interal function in a class yield an error => (Done.)
 - [x] Classes / Objects parsing + compilation => (Done.)
 - [x] Functions with Classes as parameters => (Done.)
@@ -41,18 +43,41 @@ A programming language written in C.
 - [x] Mutable parameters => (Done.)
 - [x] Subscripts (Arrays / Strings) => (Done.)
 
+##### Random ideas:
+Create namespaces for efficient usage and more features:
+
+import Core -> Core imports for example a static class with the core features
+Core.fread("Test.md")
+
+import Env
+Env.getArg(0) -> returns commandline argument 0
+
+import YAML
+YAML.parse("out.yaml")
+
+Annotation idea for functions
+[@attribute static] <- static functions
+[@visibility private] <- explicit private function declaration
+
+
+#### Side projects
+
+- [ ] Lambdas, Closures, Anonymous functions => (Concept / Prototype.)
+- [ ] Debugger + inspector
+- [ ] JIT / ASM output
+
 #### Langugage specific
 
-- AST optimization
-- prefix operators
-- Lambdas
-- Typecasting > Done by std library
-- for loops using iterators (only usable for arrays) using pipe syntax, e.g. |x|
+- [ ] AST optimization
+- [ ] prefix operators
+- [ ] Lambdas
+- [ ] Typecasting > Done by std library
+- [ ] for loops using iterators (only usable for arrays) using pipe syntax, e.g. |x|
 
 #### Implementation specific
 
-- map / filter / curry methods
-- performance and bytecode optimization
+- [ ] map / filter / curry methods
+- [ ] performance and bytecode optimization
 
 # Concept (final concept may change)
 
@@ -91,6 +116,16 @@ Integer array:
 ```rust
 	let arr = [1,2,3,4,5]
 let str = "Hello World" // Same as ["H", "E", "L", ...]
+```
+
+One wide strings / characters
+
+```ruby
+	# Declares a character
+let c1 = "r"
+
+# Declares a string
+let c2 = ["r"]
 ```
 
 ### Classes (Not implemented, Final concept)
@@ -194,10 +229,10 @@ class[getX]()
 ### Langugage-based
 
 - variable and function declaration
-- types int, char, float, bool, (void)
+- types int, char, float, bool, (void), custom classes
 - function calls, recursion
 - arrays
-- system internal functions, println + getline
+- system internal functions, e.g. println + getline
 - fast bytecode vm
 - compiler error reports
 
@@ -223,5 +258,4 @@ class[getX]()
 
 # Licence
 Copyright (c) Alexander Koch 2015 All Rights Reserved.
-Inception at 18.05.2015
-Based on Project Ozone
+Project start: 18.05.2015

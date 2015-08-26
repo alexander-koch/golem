@@ -47,7 +47,7 @@ debug:
 	$(CC) -O2 $(CFLAGS) $(INC) $(FILES) $(LDFLAGS) -g -o $(MODULE)
 
 release:
-	$(CC) -O3 $(CFLAGS) -DNO_IR -DNO_TIME -DNO_MEMINFO $(INC) $(FILES) $(LDFLAGS) -o $(MODULE)
+	$(CC) -O3 $(CFLAGS) -DNO_IR -DNO_TIME -DNO_MEMINFO -DNO_AST $(INC) $(FILES) $(LDFLAGS) -o $(MODULE)
 
 gitUndo:
 	git reset --soft HEAD~1

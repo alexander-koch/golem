@@ -902,7 +902,7 @@ ast_t* parse_var_declaration(parser_t* parser, location_t loc)
     }
 
     token_t* ident = accept_token_type(parser, TOKEN_WORD);
-    token_t* eq = accept_token_type(parser, TOKEN_ASSIGN);
+    token_t* eq = accept_token_type(parser, TOKEN_EQUAL);
 
     if(var && ident && eq)
     {

@@ -52,6 +52,7 @@ void pop_scope(compiler_t* compiler)
 	compiler->depth--;
 }
 
+// <Experimental>
 void push_scope_virtual(compiler_t* compiler, ast_t* node)
 {
 	size_t addr = compiler->scope->address;
@@ -65,6 +66,7 @@ void pop_scope_virtual(compiler_t* compiler)
 	pop_scope(compiler);
 	compiler->scope->address = addr;
 }
+// </Experimental>
 
 bool scope_is_class(scope_t* scope, ast_class_t class, ast_t** node)
 {
@@ -1011,8 +1013,12 @@ datatype_t eval_array(compiler_t* compiler, ast_t* node)
 {
 	datatype_t dt = datatype_new(DATA_NULL);
 	list_iterator_t* iter = list_iterator_create(node->array.elements);
-	dt = compiler_eval(compiler, list_iterator_next(iter));
-	node->array.type = dt;
+
+	if(list_size(node->array.elements) > 0)
+	{
+		dt = compiler_eval(compiler, list_iterator_next(iter));
+		node->array.type = dt;
+	}
 
 	if(dt.type == DATA_VOID || dt.type == DATA_NULL)
 	{
@@ -1049,6 +1055,13 @@ datatype_t eval_array(compiler_t* compiler, ast_t* node)
 		idx++;
 	}
 	list_iterator_free(iter);
+
+	// TODO: Merge string
+	// if(dt.type == DATA_CHAR)
+	// {
+	// 	// Merge this to a string
+	// 	// emit_op(compiler->buffer, OP_STR);
+	// }
 
 	// | STACK_BOTTOM
 	// | ...
@@ -1667,7 +1680,11 @@ void symbols_track_usage(compiler_t* compiler, scope_t* scope)
 	hashmap_iterator_t* iter = hashmap_iterator_create(scope->symbols);
 	while(!hashmap_iterator_end(iter))
 	{
-		hashmap_iterator_next(iter);
+		symbol_t* symbol = hashmap_iterator_next(iter);
+		if(symbol->used == 1)
+		{
+			console("Smbol only used once");
+		}
 	}
 	hashmap_iterator_free(iter);
 
@@ -1700,7 +1717,7 @@ vector_t* compile_buffer(compiler_t* compiler, const char* source)
 		console("Abstract syntax tree:\n");
 		compiler_dump(root, 0);
 #endif
-		//symbols_track_usage(compiler, compiler->scope);
+		// symbols_track_usage(compiler, compiler->scope);
 
 		compiler_eval(compiler, root);
 		ast_free(root);

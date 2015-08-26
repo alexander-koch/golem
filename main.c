@@ -40,18 +40,17 @@ int main(int argc, char** argv)
     compiler_t compiler;
     compiler_init(&compiler);
 
+    // Read-eval-print-loop
     if(argc == 1)
     {
-        // Read-eval-print-loop
         vm_t* vm = vm_new();
         run_repl(vm, &compiler);
         vm_free(vm);
     }
+    // Generate and execute bytecode (Interpreter)
     else if(argc == 2)
     {
-        // Generate and execute bytecode
         vm_t* vm = vm_new();
-
         vector_t* buffer = compile_file(&compiler, argv[1]);
         if(buffer)
         {
@@ -67,7 +66,7 @@ int main(int argc, char** argv)
     }
     else if(argc == 3)
     {
-        // Compile to assembly
+        // Compile file to bytecode => out.app
         if(!strcmp(argv[1], "-c"))
         {
             vector_t* buffer = compile_file(&compiler, argv[2]);
@@ -75,13 +74,14 @@ int main(int argc, char** argv)
             {
                 write_bytecode("out.app", compiler.buffer);
                 compiler_clear(&compiler);
-                fprintf(stdout, "Wrote assembly code to file 'out.app'\n");
+                fprintf(stdout, "Wrote bytecode to file 'out.app'\n");
             }
             else
             {
                 fprintf(stdout, "Could not compile file '%s'\n\n", argv[2]);
             }
         }
+        // Run experimental jit
         else if(!strcmp(argv[1], "-jit"))
         {
             printf("[Experimental runtime]\n");
@@ -99,6 +99,7 @@ int main(int argc, char** argv)
                 fprintf(stdout, "Could not compile file '%s'\n\n", argv[2]);
             }
         }
+        // Run compiled bytecode file
         else if(!strcmp(argv[1], "-r"))
         {
             vm_t* vm = vm_new();
