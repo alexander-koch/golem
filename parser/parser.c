@@ -438,10 +438,6 @@ ast_t* parse_expression_primary(parser_t* parser)
     {
         ast = parse_literal(parser);
     }
-    // else if(match_string(parser, KEYWORD_FUNCTION))
-    // {
-    //     ast = parse_lambda_declaration(parser, get_location(parser));
-    // }
     else if(match_type(parser, TOKEN_WORD))
     {
         ast = ast_class_create(AST_IDENT, get_location(parser));
@@ -822,7 +818,7 @@ ast_t* parser_run(parser_t* parser, const char* content)
     if(!parser->buffer) return 0;
 
     // Use this for lexical analysis, debug if tokens are read wrong
-    // lexer_print_tokens(parser->buffer, parser->num_tokens);
+    lexer_print_tokens(parser->buffer, parser->num_tokens);
 
     // Create toplevel program scope
     ast_t* ast = ast_class_create(AST_TOPLEVEL, get_location(parser));
@@ -830,9 +826,9 @@ ast_t* parser_run(parser_t* parser, const char* content)
     parser->top = ast;
 
     // Parse each statement and abort if an error occurs
+    skip_newline(parser);
     while(!parser_end(parser))
     {
-        skip_newline(parser);
         ast_t* node = parse_stmt(parser);
         if(!node || parser_error(parser))
         {
@@ -843,6 +839,7 @@ ast_t* parser_run(parser_t* parser, const char* content)
 
         // add node to program
         list_push(ast->toplevel, node);
+        skip_newline(parser);
     }
 
     parser->top = 0;

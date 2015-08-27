@@ -382,7 +382,7 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		case OP_RET:
 		{
 			// Returns to previous instruction pointer
-			value_t* ret = pop(vm);
+			value_t* ret = value_copy(pop(vm));
 			vm->sp = vm->fp;
 
 			vm->pc = value_int(pop(vm));
@@ -390,7 +390,7 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			size_t args = value_int(pop(vm));
 
 			vm->sp -= args;
-			push(vm, value_copy(ret));
+			push(vm, ret);
 			break;
 		}
 		case OP_JMP:

@@ -25,11 +25,12 @@ A programming language written in C.
 
 #### Main tasks (Sorted by importance)
 
-- [ ] Tests with classes => (Working on it.)
 - [ ] Array operators / Allow zero element arrays => (Working on it.)
-- [ ] Bytecode optimizations => (Working on it.)
 - [ ] Static class functions => (Working on it.)
-- [ ] Comment at end of file is invalid => (Working on it.)
+- [ ] Bytecode optimizations => (Working on it.)
+- [ ] Serious tests => (Working on it.)
+- [ ] Improve the REPL => (Finish when everything above is done.)
+- [x] Comment at end of file is invalid => (Done.)
 - [x] Implement new string merge operator => (Done.)
 - [x] New operator for reassignment (<-), replace double equal by equal => (Done.)
 - [x] Return type isn't checked => (Done.)
@@ -72,7 +73,7 @@ Annotation idea for functions
 - [ ] AST optimization
 - [ ] prefix operators
 - [ ] Lambdas
-- [ ] Typecasting > Done by std library
+- [ ] Typecasting => (Done by std library)
 - [ ] for loops using iterators (only usable for arrays) using pipe syntax, e.g. |x|
 
 #### Implementation specific
@@ -91,9 +92,10 @@ Example:
 ```
 
 Variables can be mutable, if they are declared using the 'mut' keyword.
+When modifiying a variable, the reassignment operator '<-' is used.
 ```rust
 	let mut x = 5
-x = x + 1
+x <- x + 1
 ```
 
 ### Functions
@@ -154,12 +156,12 @@ class Class(x:int, y:int, z:int) {
 	}
 
 	func setX(newX:int) -> void {
-		x = newX
+		x <- newX
 	}
 }
 
 func main() -> void {
-	let cls = new Class(7,5,2)
+	let cls = Class(7,5,2)
 	cls.run()
 	println(cls.getX())
 }
@@ -170,14 +172,14 @@ main()
 ### Control Flow
 
 Control flows are created by if statements or while loops. Style is egyptian.
-Example:
+Example: (assuming variable 'number' is declared as an integer):
 ```rust
 	if(number == 5) {
 	println("Your number is odd.")
 } else if(number == 3) {
 	println("Your number is odd and it's three.")
 } else {
-	println("Your number isn't 5 or 3.")
+	println("Your number isn't 5 or 3. You should feel bad.")
 }
 ```
 While loops:
