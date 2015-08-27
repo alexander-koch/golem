@@ -78,6 +78,14 @@ value_t* value_new_array(value_t** data, size_t length)
 	return val;
 }
 
+value_t* value_new_array_nocopy(array_t* data)
+{
+	value_t* val = value_new_null();
+	val->type = VALUE_ARRAY;
+	val->v.o = data;
+	return val;
+}
+
 value_t* value_new_class()
 {
 	value_t* val = value_new_null();

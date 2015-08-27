@@ -76,6 +76,9 @@ typedef enum
 	// Subscript
 	OP_GETSUB,
 	OP_SETSUB,
+	OP_LEN,
+	OP_APPEND,
+	OP_CONS,
 
 	// Upval
 	OP_UPVAL,

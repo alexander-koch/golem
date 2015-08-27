@@ -57,6 +57,9 @@ const char* op2str(opcode_t code)
 		case OP_BOR: return "bor";
 		case OP_GETSUB: return "getsub";
 		case OP_SETSUB: return "setsub";
+		case OP_LEN: return "len";
+		case OP_CONS: return "cons";
+		case OP_APPEND: return "append";
 		case OP_UPVAL: return "upval";
 		case OP_UPSTORE: return "upstore";
 		case OP_CLASS: return "class";

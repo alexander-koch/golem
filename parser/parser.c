@@ -818,7 +818,7 @@ ast_t* parser_run(parser_t* parser, const char* content)
     if(!parser->buffer) return 0;
 
     // Use this for lexical analysis, debug if tokens are read wrong
-    lexer_print_tokens(parser->buffer, parser->num_tokens);
+    // lexer_print_tokens(parser->buffer, parser->num_tokens);
 
     // Create toplevel program scope
     ast_t* ast = ast_class_create(AST_TOPLEVEL, get_location(parser));

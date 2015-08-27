@@ -29,6 +29,7 @@ A programming language written in C.
 - [ ] Static class functions => (Working on it.)
 - [ ] Bytecode optimizations => (Working on it.)
 - [ ] Serious tests => (Working on it.)
+- [ ] UTF-8 and escape characters => (Working on it.)
 - [ ] Improve the REPL => (Finish when everything above is done.)
 - [x] Comment at end of file is invalid => (Done.)
 - [x] Implement new string merge operator => (Done.)

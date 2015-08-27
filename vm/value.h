@@ -73,6 +73,7 @@ value_t* value_new_string_const(const char* string);
 value_t* value_new_string(char* string);
 value_t* value_new_string_nocopy(char* string);
 value_t* value_new_array(value_t** data, size_t length);
+value_t* value_new_array_nocopy(array_t* data);
 value_t* value_new_class();
 
 // Value copy

@@ -134,6 +134,13 @@ value_t* pop(vm_t* vm)
 	return v;
 }
 
+value_t* pop_keep(vm_t* vm)
+{
+	value_t* val = pop(vm);
+	vm->firstVal = val->next;
+	return val;
+}
+
 // Fetches the next instruction
 instruction_t* vm_fetch(vm_t* vm, vector_t* buffer)
 {
@@ -382,9 +389,9 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		case OP_RET:
 		{
 			// Returns to previous instruction pointer
-			value_t* ret = value_copy(pop(vm));
-			vm->sp = vm->fp;
+			value_t* ret = pop_keep(vm);
 
+			vm->sp = vm->fp;
 			vm->pc = value_int(pop(vm));
 			vm->fp = value_int(pop(vm));
 			size_t args = value_int(pop(vm));
@@ -750,6 +757,88 @@ void vm_process(vm_t* vm, instruction_t* instr)
 
 				value_t* v = value_new_string(data);
 				push(vm, v);
+			}
+			break;
+		}
+		case OP_LEN:
+		{
+			value_t* object = pop(vm);
+			if(object->type == VALUE_STRING)
+			{
+				char* data = value_string(object);
+				push(vm, value_new_int(strlen(data)-1));
+			}
+			else if(object->type == VALUE_ARRAY)
+			{
+				array_t* data = value_array(object);
+				push(vm, value_new_int(data->size));
+			}
+			break;
+		}
+		case OP_CONS:
+		{
+			value_t* val = pop(vm);
+			value_t* object = pop(vm);
+			if(object->type == VALUE_STRING)
+			{
+				char* str = value_string(object);
+				size_t len = strlen(str);
+				char c = value_char(val);
+				char* nwStr = malloc(sizeof(char) * (len+1));
+				strcpy(nwStr, str);
+				nwStr[len] = c;
+				nwStr[len+1] = '\0';
+				push(vm, value_new_string_nocopy(nwStr));
+			}
+			else if(object->type == VALUE_ARRAY)
+			{
+				array_t* old = value_array(object);
+
+				array_t* arr = malloc(sizeof(*arr));
+				arr->size = old->size+1;
+				arr->data = malloc(sizeof(value_t*) * arr->size);
+				for(size_t i = 0; i < old->size; i++)
+				{
+					arr->data[i] = value_copy(old->data[i]);
+				}
+				arr->data[arr->size-1] = value_copy(val);
+				push(vm, value_new_array_nocopy(arr));
+			}
+			break;
+		}
+		case OP_APPEND:
+		{
+			value_t* val = pop(vm);
+			value_t* object = pop(vm);
+			if(object->type == VALUE_STRING)
+			{
+				char* str1 = value_string(object);
+				char* str2 = value_string(val);
+				char* data = malloc(strlen(str1) + strlen(str2) + 1);
+				data[0] = '\0';
+				strcat(data, str1);
+				strcat(data, str2);
+				push(vm, value_new_string_nocopy(data));
+			}
+			else if(object->type == VALUE_ARRAY)
+			{
+				array_t* arr1 = value_array(object);
+				array_t* arr2 = value_array(val);
+				array_t* arr3 = malloc(sizeof(*arr3));
+				arr3->size = arr1->size + arr2->size;
+				arr3->data = malloc(sizeof(value_t*) * arr3->size);
+
+				size_t i;
+				for(i = 0; i < arr1->size; i++)
+				{
+					arr3->data[i] = value_copy(arr1->data[i]);
+				}
+				for(i = 0; i < arr2->size; i++)
+				{
+					arr3->data[i+arr1->size] = value_copy(arr2->data[i]);
+				}
+
+				push(vm, value_new_array_nocopy(arr3));
 			}
 			break;
 		}

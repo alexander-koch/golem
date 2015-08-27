@@ -878,6 +878,103 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
 	return true;
 }
 
+datatype_t eval_array_func(compiler_t* compiler, datatype_t dt, ast_t* node)
+{
+	// TODO: tail, head, insert, equals and other datatypes
+
+	ast_t* call = node->call.callee;
+	ast_t* key = call->subscript.key;
+
+	list_t* formals = node->call.args;
+	size_t ls = list_size(formals);
+
+	datatype_t subtype = datatype_new(dt.type & ~DATA_ARRAY);
+	subtype.id = dt.id;
+
+	if(!strcmp(key->ident, "length"))
+	{
+		if(ls != 0)
+		{
+			compiler_throw(compiler, node, "Expected zero arguments");
+			return datatype_new(DATA_NULL);
+		}
+
+		// Length operation
+		emit_op(compiler->buffer, OP_LEN);
+		return datatype_new(DATA_INT);
+	}
+	else if(!strcmp(key->ident, "append"))
+	{
+		if(ls != 1)
+		{
+			compiler_throw(compiler, node, "Expected one argument of type array");
+			return datatype_new(DATA_NULL);
+		}
+
+		ast_t* param = list_get(formals, 0);
+		datatype_t subelem = compiler_eval(compiler, param);
+		if(!datatype_match(dt, subelem))
+		{
+			compiler_throw(compiler, node, "Argument has the wrong type");
+			return datatype_new(DATA_NULL);
+		}
+
+		emit_op(compiler->buffer, OP_APPEND);
+		return dt;
+	}
+	else if(!strcmp(key->ident, "cons"))
+	{
+		if(ls != 1)
+		{
+			compiler_throw(compiler, node, "Expected one argument");
+			return datatype_new(DATA_NULL);
+		}
+
+		ast_t* param = list_get(formals, 0);
+		datatype_t subelem = compiler_eval(compiler, param);
+		if(!datatype_match(subtype, subelem))
+		{
+			compiler_throw(compiler, node, "Argument has the wrong type");
+			return datatype_new(DATA_NULL);
+		}
+
+		emit_op(compiler->buffer, OP_CONS);
+		return dt;
+	}
+	// else if(!strcmp(key->ident, "slice"))
+	// {
+	// 	if(ls != 2)
+	// 	{
+	// 		compiler_throw(compiler, node, "Expected two arguments: (from:int, to:int)");
+	// 		return datatype_new(DATA_NULL);
+	// 	}
+	//
+	// 	ast_t* arg1 = list_get(formals, 0);
+	// 	ast_t* arg2 = list_get(formals, 1);
+	// 	datatype_t dt1 = compiler_eval(compiler, arg1);
+	// 	if(dt1.type != DATA_INT)
+	// 	{
+	// 		compiler_throw(compiler, node, "Arg1 has to be of type int");
+	// 		return datatype_new(DATA_NULL);
+	// 	}
+	//
+	// 	datatype_t dt2 = compiler_eval(compiler, arg2);
+	// 	if(dt1.type != DATA_INT || dt2.type != DATA_INT)
+	// 	{
+	// 		compiler_throw(compiler, node, "Arg2 has to be of type int");
+	// 		return datatype_new(DATA_NULL);
+	// 	}
+	//
+	// 	emit_op(compiler->buffer, OP_SLICE);
+	// 	return dt;
+	// }
+	else
+	{
+		compiler_throw(compiler, node, "Invalid array operation");
+	}
+	return datatype_new(DATA_NULL);
+}
+
 // Eval.call(node)
 // Evaluates a call:
 // Tries to find the given function,
@@ -951,6 +1048,10 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 
 		// Evaluate the lhs
 		datatype_t dt = compiler_eval(compiler, expr);
+		if((dt.type & DATA_ARRAY) == DATA_ARRAY)
+		{
+			return eval_array_func(compiler, dt, node);
+		}
 
 		if(dt.type != DATA_CLASS)
 		{
@@ -1681,28 +1782,6 @@ void compiler_dump(ast_t* node, int level)
 	}
 }
 
-void symbols_track_usage(compiler_t* compiler, scope_t* scope)
-{
-	hashmap_iterator_t* iter = hashmap_iterator_create(scope->symbols);
-	while(!hashmap_iterator_end(iter))
-	{
-		symbol_t* symbol = hashmap_iterator_next(iter);
-		if(symbol->used == 1)
-		{
-			console("Smbol only used once");
-		}
-	}
-	hashmap_iterator_free(iter);
-
-	// list_iterator_t* l_iter = list_iterator_create(scope->subscopes);
-	// while(!list_iterator_end(l_iter))
-	// {
-	// 	scope_t* subscope = list_iterator_next(l_iter);
-	// 	symbols_track_usage(compiler, subscope);
-	// }
-	// list_iterator_free(l_iter);
-}
-
 // Compiler.compileBuffer(string code)
 // Compiles code into bytecode instructions
 vector_t* compile_buffer(compiler_t* compiler, const char* source)
@@ -1723,8 +1802,6 @@ vector_t* compile_buffer(compiler_t* compiler, const char* source)
 		console("Abstract syntax tree:\n");
 		compiler_dump(root, 0);
 #endif
-		// symbols_track_usage(compiler, compiler->scope);
-
 		compiler_eval(compiler, root);
 		emit_op(compiler->buffer, OP_HLT);
 		ast_free(root);
