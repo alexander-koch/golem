@@ -604,6 +604,8 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 
 						symbol = (symbol_t*)val;
 						emit_class_setfield(compiler->buffer, symbol->address);
+						//emit_op(compiler->buffer, OP_SETARG0);
+						//return datatype_new(DATA_NULL);
 					}
 
 					symbol_replace(compiler, symbol);

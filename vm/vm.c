@@ -268,6 +268,13 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			push(vm, value_copy(vm->stack[vm->fp-3-args]));
 			break;
 		}
+		case OP_SETARG0:
+		{
+			value_t* v = pop(vm);
+			int args = value_int(vm->stack[vm->fp-3]);
+			vm->stack[vm->fp-3-args] = v;
+			break;
+		}
 		case OP_UPVAL:
 		{
 			int scopes = value_int(instr->v1);
@@ -864,12 +871,11 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		case OP_GETFIELD:
 		{
 			int index = value_int(instr->v1);
-			value_t* class = value_copy(pop(vm));
+			value_t* class = pop(vm);
 
 			class_t* cls = value_class(class);
 			value_t* val = value_copy(vector_get(cls->fields, index));
 
-			push(vm, class);
 			push(vm, val);
 			break;
 		}

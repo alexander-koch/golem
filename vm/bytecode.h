@@ -20,6 +20,7 @@ typedef enum
 	OP_GSTORE,
 	OP_GLOAD,
 	OP_LDARG0,
+	OP_SETARG0,
 
 	// Arithmetic
 	// Integer

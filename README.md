@@ -22,6 +22,8 @@ A programming language written in C.
 #### Serious issues
 
 - [ ] While and if loops don't provide scopes => (Working on it.) (Idea:flag scopes as virtual)
+- [ ] Class field modification within a class function doesn't work as expected => (Working on it.)
+	=> Replace ldarg0 with new one
 
 #### Main tasks (Sorted by importance)
 
