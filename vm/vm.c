@@ -192,9 +192,8 @@ void vm_process(vm_t* vm, instruction_t* instr)
 	{
 		if(vm->stack[i]) {
 			value_print(vm->stack[i]);
-
+			if(i < vm->sp-1) console(", ");
 		}
-		if(i < vm->sp-1) console(", ");
 	}
 	console("]\n");
 #endif
@@ -312,7 +311,7 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			else
 			{
 				value_free(vm->locals[vm->fp+offset]);
-				vm->locals[vm->fp+offset] = newVal;
+				vm->locals[vm->fp+offset] = value_copy(newVal);
 			}
 
 			vm->sp = sp;
@@ -451,82 +450,82 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		}
 		case OP_IADD:
 		{
-			value_t* v2 = pop(vm);
+			value_t* v2 = pop_keep(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_int(value_int(v1) + value_int(v2));
-			push(vm, v);
+			value_set_int(v2, value_int(v1) + value_int(v2));
+			push(vm, v2);
 			break;
 		}
 		case OP_ISUB:
 		{
-			value_t* v2 = pop(vm);
+			value_t* v2 = pop_keep(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_int(value_int(v1) - value_int(v2));
-			push(vm, v);
+			value_set_int(v2, value_int(v1) - value_int(v2));
+			push(vm, v2);
 			break;
 		}
 		case OP_IMUL:
 		{
-			value_t* v2 = pop(vm);
+			value_t* v2 = pop_keep(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_int(value_int(v1) * value_int(v2));
-			push(vm, v);
+			value_set_int(v2, value_int(v1) * value_int(v2));
+			push(vm, v2);
 			break;
 		}
 		case OP_IDIV:
 		{
-			value_t* v2 = pop(vm);
+			value_t* v2 = pop_keep(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_int(value_int(v1) / value_int(v2));
-			push(vm, v);
+			value_set_int(v2, value_int(v1) / value_int(v2));
+			push(vm, v2);
 			break;
 		}
 		case OP_MOD:
 		{
-			value_t* v2 = pop(vm);
+			value_t* v2 = pop_keep(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_int(value_int(v1) % value_int(v2));
-			push(vm, v);
+			value_set_int(v2, value_int(v1) % value_int(v2));
+			push(vm, v2);
 			break;
 		}
 		case OP_BITL:
 		{
-			value_t* v2 = pop(vm);
+			value_t* v2 = pop_keep(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_int(value_int(v1) << value_int(v2));
-			push(vm, v);
+			value_set_int(v2, value_int(v1) << value_int(v2));
+			push(vm, v2);
 			break;
 		}
 		case OP_BITR:
 		{
-			value_t* v2 = pop(vm);
+			value_t* v2 = pop_keep(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_int(value_int(v1) >> value_int(v2));
-			push(vm, v);
+			value_set_int(v2, value_int(v1) >> value_int(v2));
+			push(vm, v2);
 			break;
 		}
 		case OP_BITAND:
 		{
-			value_t* v2 = pop(vm);
+			value_t* v2 = pop_keep(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_int(value_int(v1) & value_int(v2));
-			push(vm, v);
+			value_set_int(v2, value_int(v1) & value_int(v2));
+			push(vm, v2);
 			break;
 		}
 		case OP_BITOR:
 		{
-			value_t* v2 = pop(vm);
+			value_t* v2 = pop_keep(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_int(value_int(v1) | value_int(v2));
-			push(vm, v);
+			value_set_int(v2, value_int(v1) | value_int(v2));
+			push(vm, v2);
 			break;
 		}
 		case OP_BITXOR:
 		{
-			value_t* v2 = pop(vm);
+			value_t* v2 = pop_keep(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_int(value_int(v1) ^ value_int(v2));
-			push(vm, v);
+			value_set_int(v2, value_int(v1) ^ value_int(v2));
+			push(vm, v2);
 			break;
 		}
 		case OP_BITNOT:
@@ -545,34 +544,34 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		}
 		case OP_FADD:
 		{
-			value_t* v2 = pop(vm);
+			value_t* v2 = pop_keep(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_float(value_float(v1) + value_float(v2));
-			push(vm, v);
+			value_set_float(v2, value_float(v1) + value_float(v2));
+			push(vm, v2);
 			break;
 		}
 		case OP_FSUB:
 		{
-			value_t* v2 = pop(vm);
+			value_t* v2 = pop_keep(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_float(value_float(v1) - value_float(v2));
-			push(vm, v);
+			value_set_float(v2, value_float(v1) - value_float(v2));
+			push(vm, v2);
 			break;
 		}
 		case OP_FMUL:
 		{
-			value_t* v2 = pop(vm);
+			value_t* v2 = pop_keep(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_float(value_float(v1) * value_float(v2));
-			push(vm, v);
+			value_set_float(v2, value_float(v1) * value_float(v2));
+			push(vm, v2);
 			break;
 		}
 		case OP_FDIV:
 		{
-			value_t* v2 = pop(vm);
+			value_t* v2 = pop_keep(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_float(value_float(v1) / value_float(v2));
-			push(vm, v);
+			value_set_float(v2, value_float(v1) / value_float(v2));
+			push(vm, v2);
 			break;
 		}
 		case OP_FMINUS:
@@ -591,10 +590,10 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		}
 		case OP_BEQ:
 		{
-			value_t* v2 = pop(vm);
+			value_t* v2 = pop_keep(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_bool(value_bool(v1) == value_bool(v2));
-			push(vm, v);
+			value_set_bool(v2, value_bool(v1) == value_bool(v2));
+			push(vm, v2);
 			break;
 		}
 		case OP_IEQ:
@@ -623,10 +622,10 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		}
 		case OP_BNE:
 		{
-			value_t* v2 = pop(vm);
+			value_t* v2 = pop_keep(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_bool(value_bool(v1) != value_bool(v2));
-			push(vm, v);
+			value_set_bool(v2, value_bool(v1) != value_bool(v2));
+			push(vm, v2);
 			break;
 		}
 		case OP_INE:
@@ -687,18 +686,18 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		}
 		case OP_BAND:
 		{
-			value_t* v2 = pop(vm);
+			value_t* v2 = pop_keep(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_bool(value_bool(v1) && value_bool(v2));
-			push(vm, v);
+			value_set_bool(v2, value_bool(v1) && value_bool(v2));
+			push(vm, v2);
 			break;
 		}
 		case OP_BOR:
 		{
-			value_t* v2 = pop(vm);
+			value_t* v2 = pop_keep(vm);
 			value_t* v1 = pop(vm);
-			value_t* v = value_new_bool(value_bool(v1) || value_bool(v2));
-			push(vm, v);
+			value_set_bool(v2, value_bool(v1) || value_bool(v2));
+			push(vm, v2);
 			break;
 		}
 		case OP_GETSUB:

@@ -51,6 +51,9 @@ The following instructions are currently supported.
 |jmpf x               | jump if false
 |arr x                | build an array with the top x elements
 |str x                | build a string with the top x elements
+|len                  | length of an array (or string)
+|append               | appends two arrays
+|cons                 | constructs a new value onto an array
 
 | Comparison          | Description
 |---                  |---
