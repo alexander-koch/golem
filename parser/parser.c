@@ -705,13 +705,20 @@ list_t* parse_formals(parser_t* parser)
 
 // Parser.parseBlock()
 // Parses a block until a closing brace is reached.
-// This does not include the opening brace.
 // Every statement is returned in a list.
 // EBNF:
-// block = {stmt}, "}", newline
+// block = "{", {stmt}, "}", newline
 list_t* parse_block(parser_t* parser)
 {
     list_t* statements = list_new();
+    skip_newline(parser);
+    if(!match_type(parser, TOKEN_LBRACE))
+    {
+        parser_throw(parser, "Expected opening brace");
+        return statements;
+    }
+
+    accept_token(parser);
     skip_newline(parser);
     while(!match_type(parser, TOKEN_RBRACE) && !parser_error(parser))
     {
@@ -924,7 +931,7 @@ ast_t* parse_var_declaration(parser_t* parser, location_t loc)
 // Parser.parseFnDeclaration()
 // Parses a function declaration.
 // EBNF:
-// funcdecl = "func", ident, formal_list, "{", newline, block;
+// funcdecl = "func", ident, formal_list, block;
 ast_t* parse_fn_declaration(parser_t* parser, location_t loc)
 {
     // func name(params) -> datatype { \n
@@ -954,16 +961,7 @@ ast_t* parse_fn_declaration(parser_t* parser, location_t loc)
             node->funcdecl.rettype = tp;
         }
 
-        if(!match_type(parser, TOKEN_LBRACE))
-        {
-            parser_throw(parser, "Block begin expected");
-        }
-        else
-        {
-            accept_token(parser);
-            accept_token_type(parser, TOKEN_NEWLINE);
-            node->funcdecl.impl.body = parse_block(parser);
-        }
+        node->funcdecl.impl.body = parse_block(parser);
     }
     else
     {
@@ -976,16 +974,19 @@ ast_t* parse_fn_declaration(parser_t* parser, location_t loc)
 // Parser.parseIfDelcaration()
 // Parses an if-statment-chain, consisting of if, else-if and else statements.
 // EBNF:
-// else = "else", "{", newline, block;
-// else if = "else", " ", "if", "(", expr, ")", "{", newline, block, [elseif, else];
-// if = "if", "(", expr, ")", "{", newline, block, [elseif | else];
+// else = "else", block;
+// else if = "else", " ", "if", "(", expr, ")", block, [elseif, else];
+// if = "if", "(", expr, ")", block, [elseif | else];
 // -----
 // Example:
-// if(cond1) {
+// if(cond1)
+// {
 //     do1()
-// } else if(cond2) {
+// } else if(cond2)
+// {
 //     do2()
-// } else {
+// } else
+// {
 //     do3()
 // }
 ast_t* parse_if_declaration(parser_t* parser, location_t loc)
@@ -1023,9 +1024,7 @@ ast_t* parse_if_declaration(parser_t* parser, location_t loc)
         }
 
         token_t* rparen = accept_token_type(parser, TOKEN_RPAREN);
-        token_t* lbrace = accept_token_type(parser, TOKEN_LBRACE);
-
-        if(rparen && lbrace)
+        if(rparen)
         {
             clause->ifclause.body = parse_block(parser);
         }
@@ -1043,9 +1042,7 @@ ast_t* parse_if_declaration(parser_t* parser, location_t loc)
     {
         ast_t* clause = ast_class_create(AST_IFCLAUSE, get_location(parser));
         token_t* elsetok = accept_token_string(parser, KEYWORD_ELSE);
-        token_t* lbrace = accept_token_type(parser, TOKEN_LBRACE);
-
-        if(elsetok && lbrace)
+        if(elsetok)
         {
             clause->ifclause.cond = 0;
             clause->ifclause.body = parse_block(parser);
@@ -1066,7 +1063,7 @@ ast_t* parse_if_declaration(parser_t* parser, location_t loc)
 // Parser.parseWhileDeclaration()
 // Builds an ast for a while loop
 // EBNF:
-// while_loop = "while", "(", expr, ")", "{", newline, block;
+// while_loop = "while", "(", expr, ")", block;
 ast_t* parse_while_declaration(parser_t* parser, location_t loc)
 {
     // while (expr) { \n
@@ -1080,9 +1077,7 @@ ast_t* parse_while_declaration(parser_t* parser, location_t loc)
         node->whilestmt.cond = parse_expression(parser);
 
         token_t* rparen = accept_token_type(parser, TOKEN_RPAREN);
-        token_t* lbrace = accept_token_type(parser, TOKEN_LBRACE);
-
-        if(rparen && lbrace)
+        if(rparen)
         {
             node->whilestmt.body = parse_block(parser);
         }
@@ -1101,10 +1096,10 @@ ast_t* parse_while_declaration(parser_t* parser, location_t loc)
 
 // Parses a class declaration.
 // EBNF:
-// class = "class", ident, formal_list, "{", newline, block
+// class = "class", ident, formal_list, block
 ast_t* parse_class_declaration(parser_t* parser, location_t loc)
 {
-    // class expr(constructor) { \n
+    // class expr(constructor)
     ast_t* node = ast_class_create(AST_CLASS, loc);
 
     token_t* key = accept_token_string(parser, KEYWORD_CLASS);
@@ -1112,9 +1107,8 @@ ast_t* parse_class_declaration(parser_t* parser, location_t loc)
 
     token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
     node->classstmt.formals = parse_formals(parser);
-    token_t* lbrace = accept_token_type(parser, TOKEN_LBRACE);
 
-    if(key && ident && lparen && lbrace)
+    if(key && ident && lparen)
     {
         node->classstmt.name = ident->value;
         node->classstmt.body = parse_block(parser);

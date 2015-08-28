@@ -24,6 +24,7 @@ A programming language written in C.
 - [ ] While and if loops don't provide scopes => (Working on it.) (Idea:flag scopes as virtual)
 - [ ] Class field modification within a class function doesn't work as expected => (Working on it.)
 	=> Replace ldarg0 with new one
+	=> Also class function call within class function call doesn't work
 
 #### Main tasks (Sorted by importance)
 
@@ -104,10 +105,11 @@ x <- x + 1
 ### Functions
 
 Functions are declared using the 'func' keyword.
-The body is bound by egyptian style braces. You have to declare the parameters and the return type.
+You have to declare the parameters and the return type.
 Parameters are always immutable, if the 'mut' mutability keyword is not set.
 ```ruby
-	func main(arg0:char[]) -> void {
+	func main(arg0:char[]) -> void
+{
 	# body
 }
 ```
@@ -144,26 +146,31 @@ Class keyword might change.
 ```ruby
 	import core
 
-class Class(x:int, y:int, z:int) {
+class Class(x:int, y:int, z:int)
+{
 	let mut x = x
 	let y = y
 	let z = z
 
-	func run() -> void {
+	func run() -> void
+	{
 		println(x)
 		println(y)
 	}
 
-	func getX() -> int {
+	func getX() -> int
+	{
 		return x
 	}
 
-	func setX(newX:int) -> void {
+	func setX(newX:int) -> void
+	{
 		x <- newX
 	}
 }
 
-func main() -> void {
+func main() -> void
+{
 	let cls = Class(7,5,2)
 	cls.run()
 	println(cls.getX())
@@ -174,20 +181,24 @@ main()
 
 ### Control Flow
 
-Control flows are created by if statements or while loops. Style is egyptian.
+Control flows are created by if statements or while loops.
 Example: (assuming variable 'number' is declared as an integer):
 ```rust
-	if(number == 5) {
+	if(number == 5)
+{
 	println("Your number is odd.")
-} else if(number == 3) {
+} else if(number == 3)
+{
 	println("Your number is odd and it's three.")
-} else {
+} else
+{
 	println("Your number isn't 5 or 3. You should feel bad.")
 }
 ```
 While loops:
 ```ruby
-	while(number == 5) {
+	while(number == 5)
+{
 	number = number + 1
 }
 ```

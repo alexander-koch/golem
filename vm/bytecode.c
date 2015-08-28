@@ -14,6 +14,7 @@ const char* op2str(opcode_t code)
 		case OP_GSTORE: return "gstore";
 		case OP_GLOAD: return "gload";
 		case OP_LDARG0: return "ldarg0";
+		case OP_SETARG0: return "setarg0";
 		case OP_IADD: return "iadd";
 		case OP_ISUB: return "isub";
 		case OP_IMUL: return "imul";

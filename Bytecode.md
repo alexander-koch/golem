@@ -18,6 +18,7 @@ The following instructions are currently supported.
 |gstore x             | global store at address x
 |gload x              | global load at address x
 |ldarg0               | load argument 0
+|setarg0              | sets argument 0
 
 | Arithmetic          | Description
 |---                  |---
