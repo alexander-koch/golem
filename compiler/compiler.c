@@ -289,12 +289,30 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	list_iterator_free(iter);
 	pop_scope(compiler);
 
+	// Experimental -> eval_binary remove TODO
+	// ast_t* clazz = 0;
+	// if(scope_is_class(compiler->scope, AST_CLASS, &clazz))
+	// {
+	// 	emit_op(compiler->buffer, OP_LDARG0);
+	// 	// UPStore here
+	// 	//emit_store_upval(compiler->buffer, 1, 6);
+	// }
+	// store class to arg0
+
 	// Handle void return
 	if(node->funcdecl.rettype.type == DATA_VOID)
 	{
 		// Just return 0 if void
 		emit_int(compiler->buffer, 0);
-		emit_return(compiler->buffer);
+		ast_t* refNode = 0;
+		if(scope_is_class(compiler->scope, AST_CLASS, &refNode))
+		{
+			emit_op(compiler->buffer, OP_RETVIRTUAL);
+		}
+		else
+		{
+			emit_return(compiler->buffer);
+		}
 	}
 	else
 	{
@@ -601,12 +619,10 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 							compiler_throw(compiler, node, "No such class field");
 							return datatype_new(DATA_NULL);
 						}
-
 						symbol = (symbol_t*)val;
-						emit_class_setfield(compiler->buffer, symbol->address);
 
-						// Experimental
-						emit_op(compiler->buffer, OP_SETARG0);
+						emit_class_setfield(compiler->buffer, symbol->address);
+						//emit_op(compiler->buffer, OP_SETARG0);
 						return datatype_new(DATA_NULL);
 					}
 
@@ -1007,7 +1023,6 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 						return datatype_new(DATA_NULL);
 					}
 
-					emit_op(compiler->buffer, OP_LDARG0);
 					symbol = (symbol_t*)val;
 					isClass = true;
 				}
@@ -1015,10 +1030,14 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 				// Normal function call
 				if(eval_compare_and_call(compiler, symbol->node, node, symbol->address))
 				{
+					// Convert to class-method-call
 					if(isClass)
 					{
+						// Move stack down if function call within class
 						instruction_t* ins = vector_top(compiler->buffer);
-						value_set_int(ins->v2, value_int(ins->v2)+1);
+						ins->op = OP_INVOKEVIRTUAL;
+
+						emit_op(compiler->buffer, OP_SETARG0);
 					}
 
 					return symbol->node->funcdecl.rettype;
@@ -1082,16 +1101,16 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 		}
 
 		// Retrive the field
-		class = (symbol_t*)val;
-		if(eval_compare_and_call(compiler, class->node, node, class->address))
+		symbol_t* func = (symbol_t*)val;
+		if(eval_compare_and_call(compiler, func->node, node, func->address))
 		{
 			// Get the last instruction (invoke)
 			// and increase the arguments by one
 			instruction_t* ins = vector_top(compiler->buffer);
-			value_set_int(ins->v2, value_int(ins->v2)+1);
+			ins->op = OP_INVOKEVIRTUAL;
 
 			// Return the type
-			return class->node->funcdecl.rettype;
+			return func->node->funcdecl.rettype;
 		}
 	}
 	else
@@ -1307,7 +1326,15 @@ datatype_t eval_return(compiler_t* compiler, ast_t* node)
 		return datatype_new(DATA_NULL);
 	}
 
-	emit_return(compiler->buffer);
+	if(scope_is_class(compiler->scope, AST_CLASS, &refNode))
+	{
+		emit_op(compiler->buffer, OP_RETVIRTUAL);
+	}
+	else
+	{
+		emit_return(compiler->buffer);
+	}
+
 	return datatype_new(DATA_NULL);
 }
 

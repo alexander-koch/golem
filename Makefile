@@ -5,7 +5,7 @@ INC := -I.
 
 # Golem flags
 # Add flags explained below for debugging features
-GFLAGS := #-DTRACE #-DNO_AST
+GFLAGS := -DTRACE #-DNO_AST
 
 # Options:
 # Disable:

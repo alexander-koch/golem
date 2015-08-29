@@ -172,6 +172,18 @@ void vm_print_code(vm_t* vm, vector_t* buffer)
 	vm->pc = 0;
 }
 
+void reserve(vm_t* vm, size_t args)
+{
+	if(vm->reserve > 0)
+	{
+		for(size_t i = 1; i <= args; i++)
+		{
+			vm->stack[vm->sp+vm->reserve-i] = vm->stack[vm->sp-i];
+		}
+		vm->sp += vm->reserve;
+	}
+}
+
 // Processes a buffer instruction based on instruction / program counter (pc).
 void vm_process(vm_t* vm, instruction_t* instr)
 {
@@ -188,6 +200,9 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		value_print(instr->v2);
 	}
 	console(" => STACK [");
+	// int begin = vm->sp - 5;
+	// if(begin < 0) begin = 0;
+
 	for(int i = 0; i < vm->sp; i++)
 	{
 		if(vm->stack[i]) {
@@ -264,15 +279,12 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		}
 		case OP_LDARG0:
 		{
-			int args = value_int(vm->stack[vm->fp-3]);
-			push(vm, value_copy(vm->stack[vm->fp-3-args]));
+			push(vm, value_copy(vm->stack[vm->fp-3]));
 			break;
 		}
 		case OP_SETARG0:
 		{
-			value_t* v = pop(vm);
-			int args = value_int(vm->stack[vm->fp-3]);
-			vm->stack[vm->fp-3-args] = v;
+			vm->stack[vm->fp-3] = pop(vm);
 			break;
 		}
 		case OP_UPVAL:
@@ -356,15 +368,7 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			// sp (args=3) (reserve=2)
 			// ...  +1
 			// ...  +2
-
-			if(vm->reserve > 0)
-			{
-				for(size_t i = 1; i <= args; i++)
-				{
-					vm->stack[vm->sp+vm->reserve-i] = vm->stack[vm->sp-i];
-				}
-				vm->sp += vm->reserve;
-			}
+			reserve(vm, args);
 
 			push(vm, value_new_int(args));
 			push(vm, value_new_int(vm->fp));
@@ -387,6 +391,21 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			vm->pc = address;
 			return;
 		}
+		case OP_INVOKEVIRTUAL:
+		{
+			value_t* clazz = value_copy(pop(vm));
+
+			int address = value_int(instr->v1);
+			size_t args = value_int(instr->v2);
+			reserve(vm, args);
+			push(vm, value_new_int(args));
+			push(vm, clazz);
+			push(vm, value_new_int(vm->fp));
+			push(vm, value_new_int(vm->pc));
+			vm->fp = vm->sp;
+			vm->pc = address;
+			return;
+		}
 		case OP_RESERVE:
 		{
 			vm->reserve = value_int(instr->v1);
@@ -404,6 +423,21 @@ void vm_process(vm_t* vm, instruction_t* instr)
 
 			vm->sp -= args;
 			push(vm, ret);
+			break;
+		}
+		case OP_RETVIRTUAL:
+		{
+			value_t* ret = pop_keep(vm);
+
+			vm->sp = vm->fp;
+			vm->pc = value_int(pop(vm));
+			vm->fp = value_int(pop(vm));
+			value_t* clazz = value_copy(pop(vm));
+			size_t args = value_int(pop(vm));
+
+			vm->sp -= args;
+			push(vm, ret);
+			push(vm, clazz);
 			break;
 		}
 		case OP_JMP:

@@ -7,7 +7,7 @@
 #define KEYWORD_IF "if"
 #define KEYWORD_ELSE "else"
 #define KEYWORD_WHILE "while"
-#define KEYWORD_CLASS "class"
+#define KEYWORD_CLASS "type"
 #define KEYWORD_MODULE "module"
 #define KEYWORD_RETURN "return"
 
@@ -1096,10 +1096,10 @@ ast_t* parse_while_declaration(parser_t* parser, location_t loc)
 
 // Parses a class declaration.
 // EBNF:
-// class = "class", ident, formal_list, block
+// class = "class", ident, formal_list, "{", newline, block
 ast_t* parse_class_declaration(parser_t* parser, location_t loc)
 {
-    // class expr(constructor)
+    // class expr(constructor) { \n
     ast_t* node = ast_class_create(AST_CLASS, loc);
 
     token_t* key = accept_token_string(parser, KEYWORD_CLASS);

@@ -23,8 +23,7 @@ A programming language written in C.
 
 - [ ] While and if loops don't provide scopes => (Working on it.) (Idea:flag scopes as virtual)
 - [ ] Class field modification within a class function doesn't work as expected => (Working on it.)
-	=> Replace ldarg0 with new one
-	=> Also class function call within class function call doesn't work
+	=> New Idea: Create new bytecode invokevirtual and returnvirtual
 
 #### Main tasks (Sorted by importance)
 
