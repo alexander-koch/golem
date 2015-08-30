@@ -220,10 +220,8 @@ datatype_t eval_block(compiler_t* compiler, list_t* block)
 // the function signature. Finally the body gets analysed.
 datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 {
-	// Check if existing
+	// Check if existing and non-external
 	if(symbol_exists(compiler, node, node->funcdecl.name)) return datatype_new(DATA_NULL);
-
-	// External sentinel
 	if(node->funcdecl.external)
 	{
 		symbol_t* sym = symbol_new(compiler, node, -1, node->funcdecl.rettype);
@@ -231,18 +229,15 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 		return datatype_new(DATA_NULL);
 	}
 
-	// Emit jump
-	value_t* addr = emit_jmp(compiler->buffer, 0);
-
 	// Register a symbol for the function, save the bytecode address
+	value_t* addr = emit_jmp(compiler->buffer, 0);
 	int byte_address = vector_size(compiler->buffer);
 	symbol_t* fnSymbol = symbol_new(compiler, node, byte_address, datatype_new(DATA_LAMBDA));
 	hashmap_set(compiler->scope->symbols, node->funcdecl.name, fnSymbol);
 
-	// Create a new scope
-	push_scope(compiler, node);
-
+	// Create a new scope and create the parameter-variables.
 	// Treat each parameter as a local variable, with no type or value
+	push_scope(compiler, node);
 	list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.formals);
 	int i = -(list_size(node->funcdecl.impl.formals) + 3);
 	while(!list_iterator_end(iter))
@@ -344,6 +339,23 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 	{
 		compiler_throw(compiler, node, "Trying to assign a function to a value (Currently not supported)");
 		return datatype_new(DATA_NULL);
+	}
+
+	if(compiler->scope->node->class == AST_CLASS)
+	{
+		// Attribute of class
+		symbol_t* class = symbol_get(compiler->scope, compiler->scope->node->classstmt.name);
+		if(!class)
+		{
+			compiler_throw(compiler, node, "The attributes class is not found");
+			return datatype_new(DATA_NULL);
+		}
+
+		if(vartype.id == class->type.id)
+		{
+			compiler_throw(compiler, node, "Circular reference");
+			return datatype_new(DATA_NULL);
+		}
 	}
 
 	// Store the symbol
@@ -1470,23 +1482,22 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 	dt.type = DATA_CLASS;
 	dt.id = id;
 
-	// Emit a jump
+	// Emit a jump, get the bytecode address
 	value_t* addr = emit_jmp(compiler->buffer, 0);
-
-	// Register a symbol for the class, save the bytecode address
 	size_t byte_address = vector_size(compiler->buffer);
 
+	// Test if symbol exists
 	void* tmp = 0;
 	if(hashmap_get(compiler->scope->classes, name, &tmp) != HMAP_MISSING)
 	{
 		compiler_throw(compiler, node, "Class already exists");
 		return datatype_new(DATA_NULL);
 	}
+
+	// Register the class
 	symbol_t* symbol = symbol_new(compiler, node, byte_address, dt);
 	hashmap_set(compiler->scope->classes, name, symbol);
 	hashmap_set(compiler->scope->symbols, name, symbol);
-
-	// Emit new class operator
 	emit_op(compiler->buffer, OP_CLASS);
 
 	// Create a new scope
@@ -1520,8 +1531,13 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 
 			// Create new symbol and new addr to register in class
 			symbol_t* sym = symbol_get(compiler->scope, sub->vardecl.name);
-			sym->ref = symbol;
+			if(!sym)
+			{
+				compiler_throw(compiler, sub, "Failed at creating the class field");
+				break;
+			}
 
+			sym->ref = symbol;
 			hashmap_set(node->classstmt.fields, sub->vardecl.name, sym);
 			emit_class_setfield(compiler->buffer, compiler->scope->address-1);
 		}
@@ -1529,8 +1545,13 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 		{
 			compiler_eval(compiler, sub);
 			symbol_t* sym = symbol_get(compiler->scope, sub->funcdecl.name);
-			sym->ref = symbol;
+			if(!sym)
+			{
+				compiler_throw(compiler, sub, "Failed at creating the class function");
+				break;
+			}
 
+			sym->ref = symbol;
 			hashmap_set(node->classstmt.fields, sub->funcdecl.name, sym);
 		}
 		else

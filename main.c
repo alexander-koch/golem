@@ -123,9 +123,11 @@ int main(int argc, char** argv)
     }
     else
     {
-        fprintf(stderr, "Usage:\n");
-        fprintf(stderr, " golem        (Interactive mode)\n");
-        fprintf(stderr, " golem <file> (Run a file)\n");
+        printf("Golem compiler\n");
+        printf("Copyright (c) Alexander Koch 2015 All Rights Reserved.\n\n");
+        printf("Usage:\n");
+        printf(" golem        (Interactive mode)\n");
+        printf(" golem <file> (Run a file)\n");
         return -1;
     }
 

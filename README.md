@@ -31,7 +31,6 @@ A programming language written in C.
 - [ ] Static class functions => (Working on it.)
 - [ ] Bytecode optimizations => (Working on it.)
 - [ ] Serious tests => (Working on it.)
-- [ ] UTF-8 and escape characters => (Working on it.)
 - [ ] Improve the REPL => (Finish when everything above is done.)
 - [x] Class field modification within a class function doesn't work as expected => (Done.)
 - [x] Comment at end of file is invalid => (Done.)
@@ -71,6 +70,7 @@ Annotation idea for functions
 - [ ] Lambdas, Closures, Anonymous functions => (Concept / Prototype.)
 - [ ] Debugger + inspector
 - [ ] JIT / ASM output
+- [ ] UTF-8 and escape characters
 
 #### Langugage specific
 
