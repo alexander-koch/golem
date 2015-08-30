@@ -93,6 +93,8 @@ The following instructions are currently supported.
 
 # Method calling convention
 
+### Function calls
+
 All argument are first pushed on the stack, from first to last.
 Then the number of arguments is pushed, followed by the current frame pointer and program counter.
 The frame pointer becomes the stack pointer, the pc is assigned to the new address.
@@ -101,9 +103,9 @@ The frame pointer becomes the stack pointer, the pc is assigned to the new addre
 |---           |---      |
 |Stack bottom  |   0x00  |
 |...		   |      ...|
-|Arg0		   |       -7|
-|Arg1		   |       -6|
-|Arg2		   |       -5|
+|Arg0		   |      ...|
+|Arg1		   |      ...|
+|Arg2		   |      ...|
 |...		   |	   -4|
 |NUM_ARGS	   |       -3|
 |FP			   |       -2|
@@ -114,6 +116,28 @@ The frame pointer becomes the stack pointer, the pc is assigned to the new addre
 | Stack top    |    0x200|
 
 Function arguments are accessed using a negative index.
+
+### Virtual function calls
+
+Virtual functions are methods of classes.
+The zeroth argument is the class itself and can be modified by the instructions
+ldarg0 and setarg0. On virtual return the class has to be reassigned to it's original location.
+
+| Stack        | Address |
+|---           |---      |
+|Stack bottom  |   0x00  |
+|...		   |      ...|
+|Class<>       |       -7|
+|Arg0		   |       -6|
+|Arg1		   |       -5|
+|Arg2		   |       -4|
+|NUM_ARGS	   |       -3|
+|FP			   |       -2|
+|PC			   |       -1|
+|...		   |	    0|	<-- current position fp / sp
+|...		   |       +1|
+|...           |      ...|
+| Stack top    |    0x200|
 
 # Example compilation
 

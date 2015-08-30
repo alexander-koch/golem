@@ -135,7 +135,7 @@ let c1 = "r"
 let c2 = ["r"]
 ```
 
-### Classes (Not implemented, Final concept)
+### Classes
 
 Classes are defined using the structure below.
 All attributes are private.
@@ -145,11 +145,11 @@ Class keyword might change.
 ```ruby
 	import core
 
-class Class(x:int, y:int, z:int)
+type Class(_x:int, _y:int, _z:int)
 {
-	let mut x = x
-	let y = y
-	let z = z
+	let mut x = _x
+	let y = _y
+	let z = _z
 
 	func run() -> void
 	{
