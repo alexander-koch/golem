@@ -279,12 +279,14 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		}
 		case OP_LDARG0:
 		{
-			push(vm, value_copy(vm->stack[vm->fp-3]));
+			size_t args = value_int(vm->stack[vm->fp-3]);
+			push(vm, value_copy(vm->stack[vm->fp-args-4]));
 			break;
 		}
 		case OP_SETARG0:
 		{
-			vm->stack[vm->fp-3] = pop(vm);
+			size_t args = value_int(vm->stack[vm->fp-3]);
+			vm->stack[vm->fp-args-4] = pop(vm);
 			break;
 		}
 		case OP_UPVAL:
@@ -395,11 +397,9 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		{
 			int address = value_int(instr->v1);
 			size_t args = value_int(instr->v2);
-			value_t* clazz = value_copy(vm->stack[vm->sp-args-1]);
 
-			reserve(vm, args);
+			reserve(vm, args+1);
 			push(vm, value_new_int(args));
-			push(vm, clazz);
 			push(vm, value_new_int(vm->fp));
 			push(vm, value_new_int(vm->pc));
 			vm->fp = vm->sp;
@@ -432,10 +432,10 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			vm->sp = vm->fp;
 			vm->pc = value_int(pop(vm));
 			vm->fp = value_int(pop(vm));
-			value_t* clazz = value_copy(pop(vm));
 			size_t args = value_int(pop(vm));
 
 			vm->sp -= args;
+			value_t* clazz = value_copy(pop(vm));
 			push(vm, ret);
 			push(vm, clazz);
 			break;

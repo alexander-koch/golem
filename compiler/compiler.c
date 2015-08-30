@@ -242,16 +242,9 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	// Create a new scope
 	push_scope(compiler, node);
 
-	size_t inc = 3;
-	ast_t* clazz = 0;
-	if(scope_is_class(compiler->scope, AST_CLASS, &clazz))
-	{
-		inc = 4;
-	}
-
 	// Treat each parameter as a local variable, with no type or value
 	list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.formals);
-	int i = -(list_size(node->funcdecl.impl.formals) + inc);
+	int i = -(list_size(node->funcdecl.impl.formals) + 3);
 	while(!list_iterator_end(iter))
 	{
 		// Create parameter in symbols list

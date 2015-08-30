@@ -17,8 +17,8 @@ The following instructions are currently supported.
 |load x               | pushes the value of the local field x onto the stack
 |gstore x             | global store at address x
 |gload x              | global load at address x
-|ldarg0               | load argument 0
-|setarg0              | sets argument 0
+|ldarg0               | loads current class (argument 0) from stack frame
+|setarg0              | sets current class in stack frame
 
 | Arithmetic          | Description
 |---                  |---
@@ -45,8 +45,10 @@ The following instructions are currently supported.
 |---                  |---
 |syscall x, y         | invokes an internal known method named x, with y args, push return value
 |invoke x y           | invoke method at address x with y args, push return value
+|invokevirtual x,y    | invokes a virtual class method, at address x with y args, and saves a class in the stack frame
 |reserve x            | reserves x memory for function calls, to keep values in VRAM
 |ret                  | returns from function to last instruction pointer
+|retvirtual           | returns from a virtual class function
 |jmp x                | unconditional jump
 |jmpt x               | jump if true
 |jmpf x               | jump if false
