@@ -22,17 +22,18 @@ A programming language written in C.
 #### Serious issues
 
 - [ ] While and if loops don't provide scopes => (Working on it.) (Idea:flag scopes as virtual)
-- [ ] Class field modification within a class function doesn't work as expected => (Working on it.)
-	=> New Idea: Create new bytecode invokevirtual and returnvirtual
 
 #### Main tasks (Sorted by importance)
 
+- [ ] Do type inference for function return -> void is then no longer needed => (Working on it.)
+- [ ] Use this operator in classes => (Working on it.)
 - [ ] Array operators / Allow zero element arrays => (Working on it.)
 - [ ] Static class functions => (Working on it.)
 - [ ] Bytecode optimizations => (Working on it.)
 - [ ] Serious tests => (Working on it.)
 - [ ] UTF-8 and escape characters => (Working on it.)
 - [ ] Improve the REPL => (Finish when everything above is done.)
+- [x] Class field modification within a class function doesn't work as expected => (Done.)
 - [x] Comment at end of file is invalid => (Done.)
 - [x] Implement new string merge operator => (Done.)
 - [x] New operator for reassignment (<-), replace double equal by equal => (Done.)

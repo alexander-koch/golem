@@ -242,9 +242,16 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	// Create a new scope
 	push_scope(compiler, node);
 
+	size_t inc = 3;
+	ast_t* clazz = 0;
+	if(scope_is_class(compiler->scope, AST_CLASS, &clazz))
+	{
+		inc = 4;
+	}
+
 	// Treat each parameter as a local variable, with no type or value
 	list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.formals);
-	int i = -(list_size(node->funcdecl.impl.formals) + 3);
+	int i = -(list_size(node->funcdecl.impl.formals) + inc);
 	while(!list_iterator_end(iter))
 	{
 		// Create parameter in symbols list
@@ -288,16 +295,6 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 
 	list_iterator_free(iter);
 	pop_scope(compiler);
-
-	// Experimental -> eval_binary remove TODO
-	// ast_t* clazz = 0;
-	// if(scope_is_class(compiler->scope, AST_CLASS, &clazz))
-	// {
-	// 	emit_op(compiler->buffer, OP_LDARG0);
-	// 	// UPStore here
-	// 	//emit_store_upval(compiler->buffer, 1, 6);
-	// }
-	// store class to arg0
 
 	// Handle void return
 	if(node->funcdecl.rettype.type == DATA_VOID)
@@ -622,7 +619,7 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 						symbol = (symbol_t*)val;
 
 						emit_class_setfield(compiler->buffer, symbol->address);
-						//emit_op(compiler->buffer, OP_SETARG0);
+						emit_op(compiler->buffer, OP_SETARG0);
 						return datatype_new(DATA_NULL);
 					}
 
@@ -1025,6 +1022,7 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 
 					symbol = (symbol_t*)val;
 					isClass = true;
+					emit_op(compiler->buffer, OP_LDARG0);
 				}
 
 				// Normal function call
@@ -1034,6 +1032,7 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 					if(isClass)
 					{
 						// Move stack down if function call within class
+
 						instruction_t* ins = vector_top(compiler->buffer);
 						ins->op = OP_INVOKEVIRTUAL;
 
@@ -1108,6 +1107,16 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 			// and increase the arguments by one
 			instruction_t* ins = vector_top(compiler->buffer);
 			ins->op = OP_INVOKEVIRTUAL;
+
+			symbol_t* sym = symbol_get(compiler->scope, expr->vardecl.name);
+			if(sym)
+			{
+				symbol_replace(compiler, sym);
+			}
+			else
+			{
+				emit_pop(compiler->buffer);
+			}
 
 			// Return the type
 			return func->node->funcdecl.rettype;

@@ -393,10 +393,10 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		}
 		case OP_INVOKEVIRTUAL:
 		{
-			value_t* clazz = value_copy(pop(vm));
-
 			int address = value_int(instr->v1);
 			size_t args = value_int(instr->v2);
+			value_t* clazz = value_copy(vm->stack[vm->sp-args-1]);
+
 			reserve(vm, args);
 			push(vm, value_new_int(args));
 			push(vm, clazz);
