@@ -2,7 +2,7 @@
 
 A programming language written in C.
 
-# Project aims
+# Project aims / long-term goals
 
 - Functional, object-oriented scripting / programming language
 - Immutablitiy of everything
@@ -11,10 +11,10 @@ A programming language written in C.
 - Type inference => automatic deduction of data types
 - Strings as arrays of characters, not a standalone type => reduces data size, easier to understand
 - Systems language
-- High-order functions, currying
+- Easily readable and learnable
+- NULL is not an option
 - Fully functional fast bytecode vm or translation into x86 / x86_64 assembler machine code
 - Garbage collected vm
-- Easily readable and learnable
 - FAST!!!
 
 # TODO
@@ -28,7 +28,6 @@ A programming language written in C.
 - [ ] Do type inference for function return -> void is then no longer needed => (Working on it.)
 - [ ] Use this operator in classes => (Working on it.)
 - [ ] Array operators / Allow zero element arrays => (Working on it.)
-- [ ] Static class functions => (Working on it.)
 - [ ] Bytecode optimizations => (Working on it.)
 - [ ] Serious tests => (Working on it.)
 - [ ] Improve the REPL => (Finish when everything above is done.)

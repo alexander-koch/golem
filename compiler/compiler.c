@@ -341,20 +341,24 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 		return datatype_new(DATA_NULL);
 	}
 
-	if(compiler->scope->node->class == AST_CLASS)
+	if(compiler->scope->node)
 	{
-		// Attribute of class
-		symbol_t* class = symbol_get(compiler->scope, compiler->scope->node->classstmt.name);
-		if(!class)
+		ast_t* nd = compiler->scope->node;
+		if(nd->class == AST_CLASS)
 		{
-			compiler_throw(compiler, node, "The attributes class is not found");
-			return datatype_new(DATA_NULL);
-		}
+			// Attribute of class
+			symbol_t* class = symbol_get(compiler->scope, nd->classstmt.name);
+			if(!class)
+			{
+				compiler_throw(compiler, node, "The attributes class is not found");
+				return datatype_new(DATA_NULL);
+			}
 
-		if(vartype.id == class->type.id)
-		{
-			compiler_throw(compiler, node, "Circular reference");
-			return datatype_new(DATA_NULL);
+			if(vartype.id == class->type.id)
+			{
+				compiler_throw(compiler, node, "Circular reference");
+				return datatype_new(DATA_NULL);
+			}
 		}
 	}
 
