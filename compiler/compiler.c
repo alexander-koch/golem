@@ -1154,7 +1154,7 @@ datatype_t eval_char(compiler_t* compiler, ast_t* node)
 
 datatype_t eval_array(compiler_t* compiler, ast_t* node)
 {
-	datatype_t dt = datatype_new(DATA_NULL);
+	datatype_t dt = node->array.type;
 	size_t ls = list_size(node->array.elements);
 	list_iterator_t* iter = list_iterator_create(node->array.elements);
 
@@ -1166,11 +1166,13 @@ datatype_t eval_array(compiler_t* compiler, ast_t* node)
 
 	if(dt.type == DATA_VOID || dt.type == DATA_NULL)
 	{
+		list_iterator_free(iter);
 		compiler_throw(compiler, node, "Invalid: Array is composed of NULL elements");
 		return datatype_new(DATA_NULL);
 	}
 	else if((dt.type & DATA_ARRAY) == DATA_ARRAY)
 	{
+		list_iterator_free(iter);
 		compiler_throw(compiler, node, "Multidimensional arrays are not permitted");
 		return datatype_new(DATA_NULL);
 	}

@@ -59,7 +59,7 @@ bool match_string(parser_t* parser, const char* token)
 
 bool match_type(parser_t* parser, token_type_t type)
 {
-    return parser->buffer[parser->cursor].type == type;
+    return current_token(parser)->type == type;
 }
 
 bool match_next(parser_t* parser, const char* token)
@@ -143,7 +143,7 @@ int match_simple(parser_t* parser)
 int match_literal(parser_t* parser)
 {
     return match_simple(parser) ||
-        match_string(parser, "[");
+        match_type(parser, TOKEN_LBRACKET);
 }
 
 int parse_precedence(token_type_t type)
@@ -175,6 +175,7 @@ int parse_precedence(token_type_t type)
 
 ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node);
 ast_t* parse_subscript(parser_t* parser, ast_t* node);
+datatype_t parse_datatype(parser_t* parser);
 
 // Parser.parseCall()
 // Parses a call structure
@@ -357,18 +358,38 @@ ast_t* parse_simpleliteral(parser_t* parser)
 // Array parsing function
 // Example:
 // let x = [1,2,3,4,5]
+// let y = [::int]
 // -----
 // EBNF:
-// array = "[", {expr, {",", expr}}, "]";
+// array = "[", [expr, {",", expr}], "]";
 ast_t* parse_array(parser_t* parser)
 {
     ast_t* ast = ast_class_create(AST_ARRAY, get_location(parser));
     ast->array.elements = list_new();
+    ast->array.type = datatype_new(DATA_NULL);
 
     token_t* tmp = accept_token_type(parser, TOKEN_LBRACKET);
     if(!tmp)
     {
         parser_throw(parser, "Expected array begin");
+    }
+
+    // New Feature [::int] -> initializes array with zero elements of type int
+    if(match_type(parser, TOKEN_DOUBLECOLON))
+    {
+        accept_token(parser);
+        datatype_t dt = parse_datatype(parser);
+        ast->array.type = dt;
+
+        if(!match_type(parser, TOKEN_RBRACKET))
+        {
+            parser_throw(parser, "Expected closing bracket");
+        }
+        else
+        {
+            accept_token(parser);
+        }
+        return ast;
     }
 
     if(match_type(parser, TOKEN_RBRACKET))

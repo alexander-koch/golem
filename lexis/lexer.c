@@ -41,7 +41,7 @@ const char* tok2str(token_type_t type)
         case TOKEN_BITOR: return "<bitor>";
         case TOKEN_BITXOR: return "<bitxor>";
         case TOKEN_BITNOT: return "<bitnot>";
-        case TOKEN_NAMESPACE: return "<namespace>";
+        case TOKEN_DOUBLECOLON: return "<double_colon>";
         case TOKEN_COLON: return "<colon>";
         case TOKEN_ARROW: return "<arrow>";
         default: return "<null>";
@@ -237,7 +237,7 @@ int lex_op(lexer_t* lexer, token_t* token)
         RESERVED_ENTRY("|", TOKEN_BITOR),
         RESERVED_ENTRY("^", TOKEN_BITXOR),
         RESERVED_ENTRY("~", TOKEN_BITNOT),
-        RESERVED_ENTRY("::", TOKEN_NAMESPACE),
+        RESERVED_ENTRY("::", TOKEN_DOUBLECOLON),
         RESERVED_ENTRY(":", TOKEN_COLON)
     };
 

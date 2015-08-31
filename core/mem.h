@@ -33,6 +33,7 @@ void mem_error(const char* format, ...)
 void* mem_malloc(unsigned long n, char* file, int line)
 {
     // fprintf(stdout, "Allocation at %s, line %d\n", file, line);
+    if(n == 0) return 0;
 
     void* ptr = malloc(n);
     unsigned long uln = n;
