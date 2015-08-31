@@ -134,11 +134,17 @@ value_t* pop(vm_t* vm)
 	return v;
 }
 
-value_t* pop_keep(vm_t* vm)
+void push_keep(vm_t* vm, value_t* val)
 {
-	value_t* val = pop(vm);
-	vm->firstVal = val->next;
-	return val;
+	if(vm->sp >= STACK_SIZE)
+	{
+		vm_throw(vm, "Stack overflow");
+		value_free(val);
+		return;
+	}
+
+	vm->stack[vm->sp] = val;
+	vm->sp++;
 }
 
 // Fetches the next instruction
@@ -398,7 +404,7 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			int address = value_int(instr->v1);
 			size_t args = value_int(instr->v2);
 
-			reserve(vm, args+1);
+			if(args > 0) reserve(vm, args+1); // <-- Causes memory leak but fixes problem, why?!?
 			push(vm, value_new_int(args));
 			push(vm, value_new_int(vm->fp));
 			push(vm, value_new_int(vm->pc));
@@ -414,7 +420,7 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		case OP_RET:
 		{
 			// Returns to previous instruction pointer
-			value_t* ret = pop_keep(vm);
+			value_t* ret = value_copy(pop(vm));
 
 			vm->sp = vm->fp;
 			vm->pc = value_int(pop(vm));
@@ -427,7 +433,7 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		}
 		case OP_RETVIRTUAL:
 		{
-			value_t* ret = pop_keep(vm);
+			value_t* ret = value_copy(pop(vm));
 
 			vm->sp = vm->fp;
 			vm->pc = value_int(pop(vm));
@@ -491,82 +497,84 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		}
 		case OP_IADD:
 		{
-			value_t* v2 = pop_keep(vm);
+			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_set_int(v2, value_int(v1) + value_int(v2));
-			push(vm, v2);
+			//push(vm, value_new_int(value_int(v1) + value_int(v2)));
+			push_keep(vm, v2);
 			break;
 		}
 		case OP_ISUB:
 		{
-			value_t* v2 = pop_keep(vm);
+			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_set_int(v2, value_int(v1) - value_int(v2));
-			push(vm, v2);
+			push_keep(vm, v2);
+			//push(vm, value_new_int(value_int(v1) - value_int(v2)));
 			break;
 		}
 		case OP_IMUL:
 		{
-			value_t* v2 = pop_keep(vm);
+			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_set_int(v2, value_int(v1) * value_int(v2));
-			push(vm, v2);
+			push_keep(vm, v2);
 			break;
 		}
 		case OP_IDIV:
 		{
-			value_t* v2 = pop_keep(vm);
+			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_set_int(v2, value_int(v1) / value_int(v2));
-			push(vm, v2);
+			push_keep(vm, v2);
 			break;
 		}
 		case OP_MOD:
 		{
-			value_t* v2 = pop_keep(vm);
+			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_set_int(v2, value_int(v1) % value_int(v2));
-			push(vm, v2);
+			push_keep(vm, v2);
 			break;
 		}
 		case OP_BITL:
 		{
-			value_t* v2 = pop_keep(vm);
+			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_set_int(v2, value_int(v1) << value_int(v2));
-			push(vm, v2);
+			push_keep(vm, v2);
 			break;
 		}
 		case OP_BITR:
 		{
-			value_t* v2 = pop_keep(vm);
+			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_set_int(v2, value_int(v1) >> value_int(v2));
-			push(vm, v2);
+			push_keep(vm, v2);
 			break;
 		}
 		case OP_BITAND:
 		{
-			value_t* v2 = pop_keep(vm);
+			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_set_int(v2, value_int(v1) & value_int(v2));
-			push(vm, v2);
+			push_keep(vm, v2);
 			break;
 		}
 		case OP_BITOR:
 		{
-			value_t* v2 = pop_keep(vm);
+			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_set_int(v2, value_int(v1) | value_int(v2));
-			push(vm, v2);
+			push_keep(vm, v2);
 			break;
 		}
 		case OP_BITXOR:
 		{
-			value_t* v2 = pop_keep(vm);
+			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_set_int(v2, value_int(v1) ^ value_int(v2));
-			push(vm, v2);
+			push_keep(vm, v2);
 			break;
 		}
 		case OP_BITNOT:
@@ -585,34 +593,34 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		}
 		case OP_FADD:
 		{
-			value_t* v2 = pop_keep(vm);
+			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_set_float(v2, value_float(v1) + value_float(v2));
-			push(vm, v2);
+			push_keep(vm, v2);
 			break;
 		}
 		case OP_FSUB:
 		{
-			value_t* v2 = pop_keep(vm);
+			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_set_float(v2, value_float(v1) - value_float(v2));
-			push(vm, v2);
+			push_keep(vm, v2);
 			break;
 		}
 		case OP_FMUL:
 		{
-			value_t* v2 = pop_keep(vm);
+			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_set_float(v2, value_float(v1) * value_float(v2));
-			push(vm, v2);
+			push_keep(vm, v2);
 			break;
 		}
 		case OP_FDIV:
 		{
-			value_t* v2 = pop_keep(vm);
+			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_set_float(v2, value_float(v1) / value_float(v2));
-			push(vm, v2);
+			push_keep(vm, v2);
 			break;
 		}
 		case OP_FMINUS:
@@ -631,10 +639,10 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		}
 		case OP_BEQ:
 		{
-			value_t* v2 = pop_keep(vm);
+			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_set_bool(v2, value_bool(v1) == value_bool(v2));
-			push(vm, v2);
+			push_keep(vm, v2);
 			break;
 		}
 		case OP_IEQ:
@@ -663,10 +671,10 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		}
 		case OP_BNE:
 		{
-			value_t* v2 = pop_keep(vm);
+			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_set_bool(v2, value_bool(v1) != value_bool(v2));
-			push(vm, v2);
+			push_keep(vm, v2);
 			break;
 		}
 		case OP_INE:
@@ -727,18 +735,18 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		}
 		case OP_BAND:
 		{
-			value_t* v2 = pop_keep(vm);
+			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_set_bool(v2, value_bool(v1) && value_bool(v2));
-			push(vm, v2);
+			push_keep(vm, v2);
 			break;
 		}
 		case OP_BOR:
 		{
-			value_t* v2 = pop_keep(vm);
+			value_t* v2 = pop(vm);
 			value_t* v1 = pop(vm);
 			value_set_bool(v2, value_bool(v1) || value_bool(v2));
-			push(vm, v2);
+			push_keep(vm, v2);
 			break;
 		}
 		case OP_GETSUB:
