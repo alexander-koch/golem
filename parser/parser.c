@@ -8,7 +8,6 @@
 #define KEYWORD_ELSE "else"
 #define KEYWORD_WHILE "while"
 #define KEYWORD_CLASS "type"
-#define KEYWORD_MODULE "module"
 #define KEYWORD_RETURN "return"
 
 ast_t* parse_import_declaration(parser_t* parser, location_t loc);
@@ -832,7 +831,6 @@ ast_t* parse_stmt(parser_t* parser)
     ast_t* node = parse_expression(parser);
     if(node)
     {
-        test_newline(parser);
         return node;
     }
 
