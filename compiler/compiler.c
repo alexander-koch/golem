@@ -112,7 +112,7 @@ symbol_t* symbol_get_ext(scope_t* scope, char* ident, int* depth)
 
 	if(scope->super)
 	{
-		if(!scope->super->virtual) (*depth)++;
+		(*depth)++;
 		return symbol_get_ext(scope->super, ident, depth);
 	}
 	return 0;
@@ -1265,9 +1265,9 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
 		}
 
 		// Eval execution block code
-	//	push_scope_virtual(compiler, node);
+		// push_scope_virtual(compiler, node);
 		eval_block(compiler, subnode->ifclause.body);
-	//	pop_scope_virtual(compiler);
+		// pop_scope_virtual(compiler);
 
 		// Optimization
 		// If not an else statement and more ifclauses than one

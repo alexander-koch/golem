@@ -7,7 +7,7 @@ A programming language written in C.
 - Functional, object-oriented scripting / programming language
 - Immutablitiy of everything
 - Explicit mutable declaration
-- Statically, strong typed
+- Statically, strong typed => reliable, eliminated programming errors
 - Type inference => automatic deduction of data types
 - Strings as arrays of characters, not a standalone type => reduces data size, easier to understand
 - Systems language
@@ -21,22 +21,25 @@ A programming language written in C.
 
 #### Serious issues
 
-- [ ] While and if loops don't provide scopes => (Working on it.) (Idea:flag scopes as virtual)
+- [ ] (Intermediate) While and if loops don't provide scopes => (Working on it.) (Idea:flag scopes as virtual)
+- [ ] (Intermediate) Class functions allow access to constructor parameters => (Working on it.)
 
-#### Main tasks (Sorted by importance)
+#### Main tasks (Sorted by importance / Flagged by difficulty)
 
-- [ ] Do type inference for function return -> void is then no longer needed => (Working on it.)
-- [ ] Use this operator in classes => (Working on it.)
-- [ ] Array operators / Allow zero element arrays => (Working on it.)
-- [ ] Bytecode optimizations => (Working on it.)
-- [ ] Serious tests => (Working on it.)
-- [ ] Improve the REPL => (Finish when everything above is done.)
+- [ ] (Easy) More operators for each 'class', to get productive with the code => (Working on it.)
+- [ ] (Intermediate) Do for loops with iterators => (Working on it.)
+- [ ] (Advanced) Standard libraries and external classes => (Working on it.)
+- [ ] (Easy) Import other files for bigger projects => (Working on it.)
+- [ ] (Advanced) Bytecode optimizations => (Working on it.)
+- [ ] (Easy) Serious tests => (Working on it.)
+- [ ] (Intermediate) Improve the REPL => (Finish when everything above is done.)
+- [x] Array operators / Allow zero element arrays => (Done.)
 - [x] Class field modification within a class function doesn't work as expected => (Done.)
 - [x] Comment at end of file is invalid => (Done.)
 - [x] Implement new string merge operator => (Done.)
 - [x] New operator for reassignment (<-), replace double equal by equal => (Done.)
 - [x] Return type isn't checked => (Done.)
-- [x] Calling an interal function in a class yield an error => (Done.)
+- [x] Calling an interal function in a class yields an error => (Done.)
 - [x] Classes / Objects parsing + compilation => (Done.)
 - [x] Functions with Classes as parameters => (Done.)
 - [x] When trying to replace an **Upvalue**, wrong storage address is used => (Done.)
@@ -48,9 +51,9 @@ A programming language written in C.
 - [x] Subscripts (Arrays / Strings) => (Done.)
 
 ##### Random ideas:
-Create namespaces for efficient usage and more features:
+Import 'classes'
 
-import Core -> Core imports for example a static class with the core features
+import Core -> Core imports a class instance with basic features
 Core.fread("Test.md")
 
 import Env
@@ -133,6 +136,17 @@ let c1 = "r"
 
 # Declares a string
 let c2 = ["r"]
+```
+
+Empty arrays must have a type assigned.
+The following form is used: (EBNF)
+```sh
+	array = '[', '::', type, ']'
+```
+
+Example in code:
+```ruby
+	array = [::int]
 ```
 
 ### Classes

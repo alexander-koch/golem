@@ -65,7 +65,12 @@ bool match_type(parser_t* parser, token_type_t type)
 bool match_next(parser_t* parser, const char* token)
 {
     if(parser_end(parser) || parser->cursor+1 >= parser->num_tokens) return false;
-    return !strcmp(parser->buffer[parser->cursor+1].value, token);
+    char* val = parser->buffer[parser->cursor+1].value;
+    if(val)
+    {
+        return !strcmp(val, token);
+    }
+    return false;
 }
 
 token_t* accept_token(parser_t* parser)
@@ -79,7 +84,7 @@ token_t* accept_token_string(parser_t* parser, const char* str)
 
     if(match_string(parser, str))
     {
-        return &parser->buffer[parser->cursor++];
+        return accept_token(parser);
     }
     return 0;
 }
@@ -90,7 +95,7 @@ token_t* accept_token_type(parser_t* parser, token_type_t type)
 
     if(parser->buffer[parser->cursor].type == type)
     {
-        return &parser->buffer[parser->cursor++];
+        return accept_token(parser);
     }
     else
     {
