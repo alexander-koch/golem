@@ -378,6 +378,8 @@ ast_t* parse_array(parser_t* parser)
         parser_throw(parser, "Expected array begin");
     }
 
+    skip_newline(parser);
+
     // New Feature [::int] -> initializes array with zero elements of type int
     if(match_type(parser, TOKEN_DOUBLECOLON))
     {
@@ -406,6 +408,7 @@ ast_t* parse_array(parser_t* parser)
     while(!match_type(parser, TOKEN_RBRACKET) && (expr = parse_expression(parser)))
     {
         list_push(ast->array.elements, (void*)expr);
+        skip_newline(parser);
         if(!match_type(parser, TOKEN_COMMA))
         {
             break;
@@ -414,7 +417,9 @@ ast_t* parse_array(parser_t* parser)
         {
             accept_token(parser);
         }
+        skip_newline(parser);
     }
+    skip_newline(parser);
     tmp = accept_token_type(parser, TOKEN_RBRACKET);
     if(!tmp)
     {
