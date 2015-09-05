@@ -113,8 +113,8 @@ struct ast_s
     union
     {
         char* ident;
-        char* import;
         char* string;
+        char* import;
         char ch;
         list_t* toplevel;
         list_t* ifstmt;

@@ -800,6 +800,7 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 			// If it is a class constructor parameter
 			if(ptr->isClassParam)
 			{
+				// Depth must be zero, otherwise out of scope
 				if(depth != 0)
 				{
 					compiler_throw(compiler, node, "Trying to access a constructor parameter");
@@ -1932,19 +1933,12 @@ vector_t* compile_buffer(compiler_t* compiler, const char* source)
 // Compiles a file into an instruction set
 vector_t* compile_file(compiler_t* compiler, const char* filename)
 {
-	FILE* file = fopen(filename, "rb");
-	if(!file) return 0;
-	fseek(file, 0, SEEK_END);
-	long size = ftell(file);
-	rewind(file);
-	char* source = (char*)malloc(size+1);
-	fread(source, sizeof(char), size, file);
- 	source[size] = '\0';
-	fclose(file);
-
+	size_t len = 0;
+	char* source = readFile(filename, &len);
+	if(!source && len == 0) return 0;
 	compiler->filename = strdup(filename);
 
-	// Run vm with compiler
+	// Compile into instructions
 	vector_t* buffer = compile_buffer(compiler, source);
 	free(source);
 	return buffer;

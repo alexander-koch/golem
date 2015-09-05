@@ -897,10 +897,11 @@ ast_t* parse_import_declaration(parser_t* parser, location_t loc)
     // <KEYWORD_IMPORT> io \n
     ast_t* node = ast_class_create(AST_IMPORT, loc);
     token_t* inc = accept_token_string(parser, KEYWORD_IMPORT);
-    token_t* val = accept_token_type(parser, TOKEN_WORD);
 
-    if(inc && val)
+    // Built-in library handling
+    if(inc && match_type(parser, TOKEN_WORD))
     {
+        token_t* val = accept_token(parser);
         node->import = val->value;
 
         // Built-in core library
@@ -908,6 +909,35 @@ ast_t* parse_import_declaration(parser_t* parser, location_t loc)
         {
             core_gen_signatures(parser->top->toplevel);
         }
+    }
+    else if(inc && match_type(parser, TOKEN_STRING))
+    {
+        token_t* val = accept_token(parser);
+        node->import = val->value;
+
+        parser_t subparser;
+        parser_init(&subparser);
+
+        size_t len = 0;
+        char* source = readFile(node->import, &len);
+        if(source)
+        {
+            ast_t* root = parser_run(&subparser, source);
+            ast_t* top = parser->top;
+            list_iterator_t* iter = list_iterator_create(root->toplevel);
+            while(!list_iterator_end(iter))
+            {
+                ast_t* entry = list_iterator_next(iter);
+                list_push(top->toplevel, entry);
+            }
+            list_iterator_free(iter);
+
+            list_free(root->toplevel);
+            root->toplevel = 0;
+            ast_free(root);
+        }
+        free(source);
+        parser_free(&subparser);
     }
     else
     {

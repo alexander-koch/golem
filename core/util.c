@@ -46,3 +46,19 @@ unsigned long djb2(unsigned char *str)
     }
     return hash;
 }
+
+char* readFile(const char* filename, size_t* len)
+{
+    *len = 0;
+    FILE* file = fopen(filename, "rb");
+    if(!file) return 0;
+    fseek(file, 0, SEEK_END);
+    size_t size = ftell(file);
+    rewind(file);
+    char* source = (char*)malloc(size+1);
+    fread(source, sizeof(char), size, file);
+    source[size] = '\0';
+    fclose(file);
+    *len = size;
+    return source;
+}
