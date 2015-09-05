@@ -22,7 +22,6 @@ A programming language written in C.
 #### Serious issues
 
 - [ ] (Intermediate) While and if loops don't provide scopes => (Working on it.) (Idea:flag scopes as virtual)
-- [ ] (Intermediate) Class functions allow access to constructor parameters => (Working on it.)
 
 #### Main tasks (Sorted by importance / Flagged by difficulty)
 
@@ -33,6 +32,7 @@ A programming language written in C.
 - [ ] (Advanced) Bytecode optimizations => (Working on it.)
 - [ ] (Easy) Serious tests => (Working on it.)
 - [ ] (Intermediate) Improve the REPL => (Finish when everything above is done.)
+- [x] (Intermediate) Class functions allow access to constructor parameters => (Done.)
 - [x] Array operators / Allow zero element arrays => (Done.)
 - [x] Class field modification within a class function doesn't work as expected => (Done.)
 - [x] Comment at end of file is invalid => (Done.)

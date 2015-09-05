@@ -78,6 +78,7 @@ value_t* value_new_class();
 
 // Value copy
 value_t* value_copy(value_t* value);
+bool value_equals(value_t* v1, value_t* v2);
 
 // Value operations
 void value_reset(value_t* value);

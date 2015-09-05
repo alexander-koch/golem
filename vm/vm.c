@@ -669,6 +669,14 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			push(vm, v);
 			break;
 		}
+		case OP_ARREQ:
+		{
+			value_t* v2 = pop(vm);
+			value_t* v1 = pop(vm);
+			value_t* v = value_new_bool(value_equals(v1, v2));
+			push(vm, v);
+			break;
+		}
 		case OP_BNE:
 		{
 			value_t* v2 = pop(vm);

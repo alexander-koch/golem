@@ -147,6 +147,39 @@ value_t* value_copy(value_t* value)
 	return val;
 }
 
+bool value_equals(value_t* v1, value_t* v2)
+{
+	if(v1->type != v2->type) return false;
+
+	switch(v1->type)
+	{
+		case VALUE_NULL: return true;
+		case VALUE_BOOL: return value_bool(v1) == value_bool(v2);
+		case VALUE_INT: return value_int(v1) == value_int(v2);
+		case VALUE_FLOAT: return value_float(v1) == value_float(v2);
+		case VALUE_CHAR: return value_char(v1) == value_char(v2);
+		case VALUE_STRING: return !strcmp(value_string(v1), value_string(v2));
+		case VALUE_ARRAY:
+		{
+			array_t* arr1 = value_array(v1);
+			array_t* arr2 = value_array(v2);
+			if(arr1->size != arr2->size) return false;
+
+			bool eq = true;
+			for(size_t i = 0; i < arr1->size; i++)
+			{
+				eq &= value_equals(arr1->data[i], arr2->data[i]);
+			}
+			return eq;
+		}
+		case VALUE_CLASS:
+		{
+			return false;
+		}
+		default: return false;
+	}
+}
+
 void value_reset(value_t* value)
 {
 	if(value->type == VALUE_STRING)

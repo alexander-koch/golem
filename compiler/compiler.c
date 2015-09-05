@@ -93,6 +93,7 @@ symbol_t* symbol_new(compiler_t* compiler, ast_t* node, int address, datatype_t 
 	symbol->address = address;
 	symbol->type = type;
 	symbol->global = compiler->depth == 0 ? true : false;
+	symbol->isClassParam = false;
 	symbol->used = 1;
 	symbol->ref = 0;
 	return symbol;
@@ -796,6 +797,15 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 				return ptr->type;
 			}
 
+			// If it is a class constructor parameter
+			if(ptr->isClassParam)
+			{
+				if(depth != 0)
+				{
+					compiler_throw(compiler, node, "Trying to access a constructor parameter");
+					return datatype_new(DATA_NULL);
+				}
+			}
 
 			// If local or global
 			if(depth == 0 || ptr->global)
@@ -929,6 +939,20 @@ datatype_t eval_array_func(compiler_t* compiler, datatype_t dt, ast_t* node)
 		emit_op(compiler->buffer, OP_LEN);
 		return datatype_new(DATA_INT);
 	}
+	else if(!strcmp(key->ident, "empty"))
+	{
+		if(ls != 0)
+		{
+			compiler_throw(compiler, node, "Expected zero arguments");
+			return datatype_new(DATA_NULL);
+		}
+
+		// Length operation
+		emit_op(compiler->buffer, OP_LEN);
+		emit_int(compiler->buffer, 0);
+		emit_op(compiler->buffer, OP_IEQ);
+		return datatype_new(DATA_BOOL);
+	}
 	else if(!strcmp(key->ident, "append"))
 	{
 		if(ls != 1)
@@ -966,6 +990,25 @@ datatype_t eval_array_func(compiler_t* compiler, datatype_t dt, ast_t* node)
 
 		emit_op(compiler->buffer, OP_CONS);
 		return dt;
+	}
+	else if(!strcmp(key->ident, "equals"))
+	{
+		if(ls != 1)
+		{
+			compiler_throw(compiler, node, "Expected one argument");
+			return datatype_new(DATA_NULL);
+		}
+
+		ast_t* param = list_get(formals, 0);
+		datatype_t subelem = compiler_eval(compiler, param);
+		if(!datatype_match(dt, subelem))
+		{
+			compiler_throw(compiler, node, "Argument has the wrong type");
+			return datatype_new(DATA_NULL);
+		}
+
+		emit_op(compiler->buffer, OP_ARREQ);
+		return datatype_new(DATA_BOOL);
 	}
 	// else if(!strcmp(key->ident, "slice"))
 	// {
@@ -1518,8 +1561,9 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 		ast_t* param = list_iterator_next(iter);
 
 		if(symbol_exists(compiler, param, param->vardecl.name)) return datatype_new(DATA_NULL);
-		symbol_t* symbol = symbol_new(compiler, param, i, param->vardecl.type);
-		hashmap_set(compiler->scope->symbols, param->vardecl.name, symbol);
+		symbol_t* paramSym = symbol_new(compiler, param, i, param->vardecl.type);
+		paramSym->isClassParam = true;
+		hashmap_set(compiler->scope->symbols, param->vardecl.name, paramSym);
 		i++;
 	}
 	list_iterator_free(iter);
