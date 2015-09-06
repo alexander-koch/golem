@@ -405,8 +405,7 @@ token_t* lexer_lex(lexer_t* lexer, const char* src, size_t* numTokens)
 
 void lexer_print_tokens(token_t* tokens, size_t n)
 {
-    size_t i;
-    for(i = 0; i < n; i++)
+    for(size_t i = 0; i < n; i++)
     {
         token_t* token = &tokens[i];
         if(token->type == TOKEN_NEWLINE)
@@ -423,8 +422,7 @@ void lexer_print_tokens(token_t* tokens, size_t n)
 
 void lexer_free_buffer(token_t* buffer, size_t n)
 {
-    size_t i;
-    for(i = 0; i < n; i++)
+    for(size_t i = 0; i < n; i++)
     {
         free(buffer[i].value);
     }

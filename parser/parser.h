@@ -11,6 +11,7 @@
 #include <core/api.h>
 #include <lexis/lexer.h>
 #include <parser/ast.h>
+#include <adt/vector.h>
 
 typedef struct
 {
@@ -20,6 +21,7 @@ typedef struct
     size_t cursor;
     bool error;
     ast_t* top;
+    vector_t* docs;
 } parser_t;
 
 void parser_init(parser_t* parser);

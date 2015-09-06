@@ -27,12 +27,12 @@ A programming language written in C.
 
 - [ ] (Easy) More operators for each 'class', to get productive with the code => (Working on it.)
 - [ ] (Intermediate) Do for loops with iterators => (Working on it.)
-- [ ] (Advanced) Standard libraries and external classes => (Working on it.)
+- [ ] (Advanced) Standard libraries and external classes, DLL loading => (Working on it.)
 - [ ] (Advanced) Bytecode optimizations => (Working on it.)
 - [ ] (Easy) Serious tests => (Working on it.)
 - [ ] (Intermediate) Improve the REPL => (Finish when everything above is done.)
-- [x] (Easy) Import other files for bigger projects => (Done.)
-- [x] (Intermediate) Class functions allow access to constructor parameters => (Done.)
+- [x] Import other files for bigger projects => (Done.)
+- [x] Class functions allow access to constructor parameters => (Done.)
 - [x] Array operators / Allow zero element arrays => (Done.)
 - [x] Class field modification within a class function doesn't work as expected => (Done.)
 - [x] Comment at end of file is invalid => (Done.)
@@ -65,7 +65,6 @@ YAML.parse("out.yaml")
 Annotation idea for functions
 [@attribute static] <- static functions
 [@visibility private] <- explicit private function declaration
-
 
 #### Side projects
 

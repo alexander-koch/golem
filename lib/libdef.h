@@ -2,6 +2,11 @@
 #define libdef_h
 
 // Macros for library creation
+#ifdef DLL_EXPORT
+#define USE_MEM_IMPLEMENTATION
+#include <core/api.h>
+#endif
+
 #include <parser/ast.h>
 
 #define SIGNATURE_BEGIN() \
@@ -25,5 +30,7 @@
 	param->vardecl.name = 0; \
 	param->vardecl.type = datatype_new(dtype); \
 	list_push(fn->funcdecl.impl.formals, param);
+
+//#define GOLEM_API __declspec(dllexport)
 
 #endif

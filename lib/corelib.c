@@ -100,7 +100,7 @@ static const FunctionDef core[] = {
 // 	return 0;
 // }
 
-void core_gen_signatures(list_t* toplevel)
+int core_gen_signatures(list_t* toplevel)
 {
 	SIGNATURE_BEGIN()
 
@@ -130,4 +130,6 @@ void core_gen_signatures(list_t* toplevel)
 	FUNCTION_NEW("parseFloat", DATA_FLOAT)
 	ADD_PARAM(DATA_STRING)
 	FUNCTION_PUSH(toplevel)
+
+	return 7;
 }

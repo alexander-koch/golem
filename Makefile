@@ -40,8 +40,7 @@ FILES := main.c \
 		vm/bytecode.c \
 		vm/vm.c \
 		vm/jit.c \
-		lib/corelib.c \
-		lib/mathlib.c
+		lib/corelib.c
 
 debug:
 	$(CC) -O2 $(CFLAGS) $(INC) $(FILES) $(LDFLAGS) -g -o $(MODULE)

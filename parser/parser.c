@@ -29,7 +29,9 @@ void parser_init(parser_t* parser)
     parser->buffer = 0;
     parser->num_tokens = 0;
     parser->cursor = 0;
-    parser->error = 0;
+    parser->error = false;
+    parser->top = 0;
+    parser->docs = vector_new();
 }
 
 // helper functions begin
@@ -115,6 +117,15 @@ void skip_newline(parser_t* parser)
 void parser_free(parser_t* parser)
 {
     lexer_free_buffer(parser->buffer, parser->num_tokens);
+
+    for(size_t i = 0; i < vector_size(parser->docs); i++)
+    {
+        parser_t* subparser = vector_get(parser->docs, i);
+        parser_free(subparser);
+        free(subparser);
+    }
+
+    vector_free(parser->docs);
 }
 
 int parser_error(parser_t* parser)
@@ -854,7 +865,7 @@ ast_t* parser_run(parser_t* parser, const char* content)
     if(!parser->buffer) return 0;
 
     // Use this for lexical analysis, debug if tokens are read wrong
-    // lexer_print_tokens(parser->buffer, parser->num_tokens);
+    lexer_print_tokens(parser->buffer, parser->num_tokens);
 
     // Create toplevel program scope
     ast_t* ast = ast_class_create(AST_TOPLEVEL, get_location(parser));
@@ -909,20 +920,24 @@ ast_t* parse_import_declaration(parser_t* parser, location_t loc)
         {
             core_gen_signatures(parser->top->toplevel);
         }
+        else
+        {
+            parser_throw(parser, "System library '%s' doesn't exist", node->import);
+        }
     }
     else if(inc && match_type(parser, TOKEN_STRING))
     {
         token_t* val = accept_token(parser);
         node->import = val->value;
 
-        parser_t subparser;
-        parser_init(&subparser);
+        parser_t* subparser = malloc(sizeof(*subparser));
+        parser_init(subparser);
 
         size_t len = 0;
         char* source = readFile(node->import, &len);
         if(source)
         {
-            ast_t* root = parser_run(&subparser, source);
+            ast_t* root = parser_run(subparser, source);
             ast_t* top = parser->top;
             list_iterator_t* iter = list_iterator_create(root->toplevel);
             while(!list_iterator_end(iter))
@@ -936,8 +951,14 @@ ast_t* parse_import_declaration(parser_t* parser, location_t loc)
             root->toplevel = 0;
             ast_free(root);
         }
+        else
+        {
+            parser_throw(parser, "Could not read file named '%s'", node->import);
+        }
         free(source);
-        parser_free(&subparser);
+
+        vector_push(parser->docs, subparser);
+        //parser_free(&subparser);
     }
     else
     {

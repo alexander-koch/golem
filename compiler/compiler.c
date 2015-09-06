@@ -92,7 +92,7 @@ symbol_t* symbol_new(compiler_t* compiler, ast_t* node, int address, datatype_t 
 	symbol->node = node;
 	symbol->address = address;
 	symbol->type = type;
-	symbol->global = compiler->depth == 0 ? true : false;
+	symbol->global = (compiler->depth == 0) ? true : false;
 	symbol->isClassParam = false;
 	symbol->used = 1;
 	symbol->ref = 0;
