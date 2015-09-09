@@ -60,10 +60,6 @@ int main(int argc, char** argv)
             vm_run(vm, buffer);
             compiler_clear(&compiler);
         }
-        else
-        {
-            fprintf(stdout, "Could not compile file '%s'\n\n", argv[1]);
-        }
 
         vm_free(vm);
     }
@@ -79,10 +75,6 @@ int main(int argc, char** argv)
                 compiler_clear(&compiler);
                 fprintf(stdout, "Wrote bytecode to file 'out.app'\n");
             }
-            else
-            {
-                fprintf(stdout, "Could not compile file '%s'\n\n", argv[2]);
-            }
         }
         // Run experimental jit
         else if(!strcmp(argv[1], "-jit"))
@@ -96,10 +88,6 @@ int main(int argc, char** argv)
                 printf("> %d\n", value);
 
                 compiler_clear(&compiler);
-            }
-            else
-            {
-                fprintf(stdout, "Could not compile file '%s'\n\n", argv[2]);
             }
         }
         // Run compiled bytecode file

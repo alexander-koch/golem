@@ -25,12 +25,14 @@ A programming language written in C.
 
 #### Main tasks (Sorted by importance / Flagged by difficulty)
 
-- [ ] (Easy) More operators for each 'class', to get productive with the code => (Working on it.)
-- [ ] (Intermediate) Do for loops with iterators => (Working on it.)
 - [ ] (Advanced) Standard libraries and external classes, DLL loading => (Working on it.)
+- [ ] (Easy) More operators for each 'class', to get productive with the code => (Working on it.)
+- [ ] (Intermediate) Do namespaces => (Working on it.)
+- [ ] (Intermediate) Do for loops with iterators => (Working on it.)
 - [ ] (Advanced) Bytecode optimizations => (Working on it.)
 - [ ] (Easy) Serious tests => (Working on it.)
 - [ ] (Intermediate) Improve the REPL => (Finish when everything above is done.)
+- [x] Move import to compiler side for individual errors => (Done.)
 - [x] Import other files for bigger projects => (Done.)
 - [x] Class functions allow access to constructor parameters => (Done.)
 - [x] Array operators / Allow zero element arrays => (Done.)

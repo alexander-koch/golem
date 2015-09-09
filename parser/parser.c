@@ -32,7 +32,6 @@ void parser_init(parser_t* parser, const char* name)
     parser->cursor = 0;
     parser->error = false;
     parser->top = 0;
-    parser->docs = vector_new();
 }
 
 // helper functions begin
@@ -118,15 +117,6 @@ void skip_newline(parser_t* parser)
 void parser_free(parser_t* parser)
 {
     lexer_free_buffer(parser->buffer, parser->num_tokens);
-
-    for(size_t i = 0; i < vector_size(parser->docs); i++)
-    {
-        parser_t* subparser = vector_get(parser->docs, i);
-        parser_free(subparser);
-        free(subparser);
-    }
-
-    vector_free(parser->docs);
 }
 
 int parser_error(parser_t* parser)
@@ -890,7 +880,7 @@ ast_t* parser_run(parser_t* parser, const char* content)
         skip_newline(parser);
     }
 
-    parser->top = 0;
+//    parser->top = 0;
     return ast;
 }
 
@@ -926,50 +916,11 @@ ast_t* parse_import_declaration(parser_t* parser, location_t loc)
             parser_throw(parser, "System library '%s' doesn't exist", node->import);
         }
     }
+    // External file handling
     else if(inc && match_type(parser, TOKEN_STRING))
     {
         token_t* val = accept_token(parser);
         node->import = val->value;
-
-        parser_t* subparser = malloc(sizeof(*subparser));
-        parser_init(subparser, (const char*)node->import);
-
-        size_t len = 0;
-        char* source = readFile(node->import, &len);
-        if(source)
-        {
-            ast_t* root = parser_run(subparser, source);
-            if(!root || parser_error(subparser))
-            {
-                free(source);
-                ast_free(root);
-                parser_free(subparser);
-                free(subparser);
-                parser_throw(parser, "Could not compile file '%s'", node->import);
-                return node;
-            }
-
-            ast_t* top = parser->top;
-            list_iterator_t* iter = list_iterator_create(root->toplevel);
-            while(!list_iterator_end(iter))
-            {
-                ast_t* entry = list_iterator_next(iter);
-                list_push(top->toplevel, entry);
-            }
-            list_iterator_free(iter);
-
-            list_free(root->toplevel);
-            root->toplevel = 0;
-            ast_free(root);
-        }
-        else
-        {
-            parser_throw(parser, "Could not read file named '%s'", node->import);
-        }
-        free(source);
-
-        vector_push(parser->docs, subparser);
-        //parser_free(&subparser);
     }
     else
     {

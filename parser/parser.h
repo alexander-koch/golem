@@ -22,7 +22,6 @@ typedef struct
     size_t cursor;
     bool error;
     ast_t* top;
-    vector_t* docs;
 } parser_t;
 
 void parser_init(parser_t* parser, const char* name);

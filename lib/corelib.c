@@ -102,34 +102,35 @@ static const FunctionDef core[] = {
 
 int core_gen_signatures(list_t* toplevel)
 {
-	SIGNATURE_BEGIN()
+	signature_new();
+	require_func();
 
-	FUNCTION_NEW("getline", DATA_STRING)
-	FUNCTION_PUSH(toplevel)
+	function_new("getline", DATA_STRING);
+	function_upload(toplevel);
 
-	FUNCTION_NEW("print", DATA_VOID)
-	ADD_PARAM(DATA_GENERIC)
-	FUNCTION_PUSH(toplevel)
+	function_new("print", DATA_VOID);
+	function_add_param(DATA_GENERIC);
+	function_upload(toplevel);
 
-	FUNCTION_NEW("println", DATA_VOID)
-	ADD_PARAM(DATA_GENERIC)
-	FUNCTION_PUSH(toplevel)
+	function_new("println", DATA_VOID);
+	function_add_param(DATA_GENERIC);
+	function_upload(toplevel);
 
-	FUNCTION_NEW("f2i", DATA_INT)
-	ADD_PARAM(DATA_FLOAT)
-	FUNCTION_PUSH(toplevel)
+	function_new("f2i", DATA_INT);
+	function_add_param(DATA_FLOAT);
+	function_upload(toplevel);
 
-	FUNCTION_NEW("i2f", DATA_FLOAT)
-	ADD_PARAM(DATA_INT)
-	FUNCTION_PUSH(toplevel)
+	function_new("i2f", DATA_INT);
+	function_add_param(DATA_FLOAT);
+	function_upload(toplevel);
 
-	FUNCTION_NEW("c2i", DATA_INT)
-	ADD_PARAM(DATA_CHAR)
-	FUNCTION_PUSH(toplevel)
+	function_new("c2i", DATA_INT);
+	function_add_param(DATA_CHAR);
+	function_upload(toplevel);
 
-	FUNCTION_NEW("parseFloat", DATA_FLOAT)
-	ADD_PARAM(DATA_STRING)
-	FUNCTION_PUSH(toplevel)
+	function_new("parseFloat", DATA_FLOAT);
+	function_add_param(DATA_STRING);
+	function_upload(toplevel);
 
-	return 7;
+	return 0;
 }

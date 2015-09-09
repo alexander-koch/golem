@@ -28,6 +28,14 @@ GOLEM_API int math_cos(vm_t* vm)
 	return 0;
 }
 
+GOLEM_API int math_tan(vm_t* vm)
+{
+	pop(vm);
+	value_t* v = value_new_float(tan(value_number(pop(vm))));
+	push(vm, v);
+	return 0;
+}
+
 GOLEM_API int math_sqrt(vm_t* vm)
 {
 	pop(vm);
@@ -40,28 +48,35 @@ static const FunctionDef mathlib[] = {
 	{"abs", math_abs},
 	{"sin", math_sin},
 	{"cos", math_cos},
+	{"tan", math_tan},
 	{"sqrt", math_sqrt},
 	{0, 0}
 };
 
-GOLEM_API int math_gen_signatures(list_t* toplevel)
+GOLEM_API int golem_init(list_t* toplevel)
 {
-	SIGNATURE_BEGIN()
+	signature_new();
+	require_func();
 
-	FUNCTION_NEW("abs", DATA_FLOAT)
-	ADD_PARAM(DATA_FLOAT)
-	FUNCTION_PUSH(toplevel)
+	function_new("abs", DATA_FLOAT);
+	function_add_param(DATA_FLOAT);
+	function_upload(toplevel);
 
-	FUNCTION_NEW("sin", DATA_FLOAT)
-	ADD_PARAM(DATA_FLOAT)
-	FUNCTION_PUSH(toplevel)
+	function_new("sin", DATA_FLOAT);
+	function_add_param(DATA_FLOAT);
+	function_upload(toplevel);
 
-	FUNCTION_NEW("cos", DATA_FLOAT)
-	ADD_PARAM(DATA_FLOAT)
-	FUNCTION_PUSH(toplevel)
+	function_new("cos", DATA_FLOAT);
+	function_add_param(DATA_FLOAT);
+	function_upload(toplevel);
 
-	FUNCTION_NEW("sqrt", DATA_FLOAT)
-	ADD_PARAM(DATA_FLOAT)
-	FUNCTION_PUSH(toplevel)
-	return 4;
+	function_new("tan", DATA_FLOAT);
+	function_add_param(DATA_FLOAT);
+	function_upload(toplevel);
+
+	function_new("sqrt", DATA_FLOAT);
+	function_add_param(DATA_FLOAT);
+	function_upload(toplevel);
+
+	return 0;
 }

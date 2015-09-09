@@ -18,8 +18,9 @@
 // Also optimizes ASTs
 typedef struct compiler_t
 {
-	parser_t parser;
+	parser_t* parser;
 	vector_t* buffer;
+	list_t* parsers;
 	bool error;
 	scope_t* scope;
 	int depth;

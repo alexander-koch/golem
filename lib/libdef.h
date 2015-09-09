@@ -3,34 +3,59 @@
 
 // Macros for library creation
 #ifdef DLL_EXPORT
+
 #define USE_MEM_IMPLEMENTATION
+#define GOLEM_API __declspec(dllexport)
 #include <core/api.h>
+
 #endif
 
 #include <parser/ast.h>
 
-#define SIGNATURE_BEGIN() \
-    location_t loc = {0, 0};
-    ast_t* param = 0;
-    ast_t* fn = 0;
+#define signature_new() \
+    location_t loc = {0, 0}
 
-#define FUNCTION_NEW(nm, rtype) \
-    fn = ast_class_create(AST_DECLFUNC, loc); \
-    fn->funcdecl.name = strdup(nm); \
-    fn->funcdecl.impl.formals = list_new(); \
-    fn->funcdecl.impl.body = 0; \
-    fn->funcdecl.rettype = datatype_new(rtype); \
-    fn->funcdecl.external = true;
+#define require_class() \
+    ast_t* clazz = 0
 
-#define FUNCTION_PUSH(node) \
-    list_push(toplevel, fn);
+#define require_func() \
+    ast_t* param = 0; \
+    ast_t* func = 0
 
-#define ADD_PARAM(dtype) \
+#define class_new(nm) \
+    clazz = ast_class_create(AST_CLASS, loc); \
+    clazz->classstmt.name = nm; \
+    clazz->classstmt.body = list_new(); \
+    clazz->classstmt.formals = list_new(); \
+    clazz->classstmt.fields = hashmap_new()
+
+#define class_add_param(dtype) \
     param = ast_class_create(AST_DECLVAR, loc); \
-	param->vardecl.name = 0; \
-	param->vardecl.type = datatype_new(dtype); \
-	list_push(fn->funcdecl.impl.formals, param);
+    param->vardecl.name = 0; \
+    param->vardecl.type = datatype_new(dtype); \
+    list_push(clazz->classstmt.formals, param)
 
-//#define GOLEM_API __declspec(dllexport)
+#define class_add_function() \
+    list_push(clazz->classstmt.body, func);
+
+#define class_upload(ref) \
+    list_push(ref, clazz)
+
+#define function_new(nm, rtype) \
+    func = ast_class_create(AST_DECLFUNC, loc); \
+    func->funcdecl.name = strdup(nm); \
+    func->funcdecl.impl.formals = list_new(); \
+    func->funcdecl.impl.body = 0; \
+    func->funcdecl.rettype = datatype_new(rtype); \
+    func->funcdecl.external = true
+
+#define function_add_param(dtype) \
+    param = ast_class_create(AST_DECLVAR, loc); \
+    param->vardecl.name = 0; \
+    param->vardecl.type = datatype_new(dtype); \
+    list_push(func->funcdecl.impl.formals, param)
+
+#define function_upload(ref) \
+    list_push(ref, func)
 
 #endif
