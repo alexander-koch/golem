@@ -17,6 +17,7 @@ typedef struct
 typedef struct
 {
     location_t location;
+    const char* name;
     const char* source;
     const char* cursor;
     const char* lastline;
@@ -78,7 +79,7 @@ typedef struct
 const char* tok2str(token_type_t type);
 
 void lexer_init(lexer_t* lexer);
-token_t* lexer_lex(lexer_t* lexer, const char* src, size_t* numTokens);
+token_t* lexer_lex(lexer_t* lexer, const char* name, const char* src, size_t* numTokens);
 void lexer_print_tokens(token_t* tokens, size_t n);
 void lexer_free_buffer(token_t* buffer, size_t n);
 

@@ -62,7 +62,7 @@ void lexer_init(lexer_t* lexer)
 void lex_error(lexer_t* lexer, const char* err)
 {
     lexer->error = 1;
-    fprintf(stdout, "[line %d, column %d] (Lexis): %s\n", lexer->location.line, lexer->location.column, err);
+    fprintf(stdout, "%s:%d:%d (Lexis): %s\n", lexer->name, lexer->location.line, lexer->location.column, err);
 }
 
 #define RESERVED_ENTRY(w, t) {w, sizeof(w) - 1, t}
@@ -356,11 +356,11 @@ int next_token(lexer_t* lexer, token_t* token)
         return 0;
     }
 
-    lex_error(lexer, "Fatal error, could not interpret token");
+    lex_error(lexer, "Invalid token / symbol");
     return 0;
 }
 
-token_t* lexer_lex(lexer_t* lexer, const char* src, size_t* numTokens)
+token_t* lexer_lex(lexer_t* lexer, const char* name, const char* src, size_t* numTokens)
 {
     lexer->location.line = 1;
     lexer->location.column = 1;
@@ -369,6 +369,7 @@ token_t* lexer_lex(lexer_t* lexer, const char* src, size_t* numTokens)
     lexer->eof = 0;
     lexer->error = 0;
     lexer->cursor = src;
+    lexer->name = name;
 
     size_t alloc_size = 8;
     size_t n = 0;

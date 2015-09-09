@@ -23,9 +23,10 @@ ast_t* parse_expression(parser_t* parser);
 ast_t* parse_stmt(parser_t* parser);
 ast_t* parse_expression(parser_t* parser);
 
-void parser_init(parser_t* parser)
+void parser_init(parser_t* parser, const char* name)
 {
     lexer_init(&parser->lexer);
+    parser->name = name;
     parser->buffer = 0;
     parser->num_tokens = 0;
     parser->cursor = 0;
@@ -138,7 +139,7 @@ void parser_throw(parser_t* parser, const char* format, ...)
     parser->error = 1;
     location_t loc = get_location(parser);
 
-    fprintf(stdout, "[line %d, column %d] (Syntax): ", loc.line, loc.column);
+    fprintf(stdout, "%s:%d:%d (Syntax): ", parser->name, loc.line, loc.column);
     va_list argptr;
     va_start(argptr, format);
     vfprintf(stdout, format, argptr);
@@ -861,11 +862,11 @@ ast_t* parse_stmt(parser_t* parser)
 
 ast_t* parser_run(parser_t* parser, const char* content)
 {
-    parser->buffer = lexer_lex(&parser->lexer, content, &parser->num_tokens);
+    parser->buffer = lexer_lex(&parser->lexer, parser->name, content, &parser->num_tokens);
     if(!parser->buffer) return 0;
 
     // Use this for lexical analysis, debug if tokens are read wrong
-    lexer_print_tokens(parser->buffer, parser->num_tokens);
+    // lexer_print_tokens(parser->buffer, parser->num_tokens);
 
     // Create toplevel program scope
     ast_t* ast = ast_class_create(AST_TOPLEVEL, get_location(parser));
@@ -931,7 +932,7 @@ ast_t* parse_import_declaration(parser_t* parser, location_t loc)
         node->import = val->value;
 
         parser_t* subparser = malloc(sizeof(*subparser));
-        parser_init(subparser);
+        parser_init(subparser, (const char*)node->import);
 
         size_t len = 0;
         char* source = readFile(node->import, &len);

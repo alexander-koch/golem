@@ -26,7 +26,7 @@ void run_repl(vm_t* vm, compiler_t* compiler)
         {
             return;
         }
-        vector_t* buffer = compile_buffer(compiler, buf);
+        vector_t* buffer = compile_buffer(compiler, buf, "Unnamed");
         if(buffer)
         {
             vm_run(vm, buffer);

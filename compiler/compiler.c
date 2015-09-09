@@ -5,7 +5,6 @@ datatype_t compiler_eval(compiler_t* compiler, ast_t* node);
 void compiler_init(compiler_t* compiler)
 {
 	compiler->buffer = 0;
-	compiler->filename = 0;
 	compiler->error = false;
 	compiler->scope = 0;
 }
@@ -1889,7 +1888,7 @@ void compiler_dump(ast_t* node, int level)
 
 // Compiler.compileBuffer(string code)
 // Compiles code into bytecode instructions
-vector_t* compile_buffer(compiler_t* compiler, const char* source)
+vector_t* compile_buffer(compiler_t* compiler, const char* source, const char* name)
 {
 	// Reset compiler
 	compiler_clear(compiler);
@@ -1899,7 +1898,7 @@ vector_t* compile_buffer(compiler_t* compiler, const char* source)
 	compiler->scope = scope_new();
 
 	// Run the parser
-	parser_init(&compiler->parser);
+	parser_init(&compiler->parser, name);
 	ast_t* root = parser_run(&compiler->parser, source);
 	if(root)
 	{
@@ -1913,7 +1912,6 @@ vector_t* compile_buffer(compiler_t* compiler, const char* source)
 	}
 
 	// Free filename and scope and parser
-	if(compiler->filename) free(compiler->filename);
 	parser_free(&compiler->parser);
 	scope_free(compiler->scope);
 
@@ -1936,10 +1934,9 @@ vector_t* compile_file(compiler_t* compiler, const char* filename)
 	size_t len = 0;
 	char* source = readFile(filename, &len);
 	if(!source && len == 0) return 0;
-	compiler->filename = strdup(filename);
 
 	// Compile into instructions
-	vector_t* buffer = compile_buffer(compiler, source);
+	vector_t* buffer = compile_buffer(compiler, source, filename);
 	free(source);
 	return buffer;
 }
