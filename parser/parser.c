@@ -196,7 +196,7 @@ datatype_t parse_datatype(parser_t* parser);
 // Parses a call structure
 // Example: func(), foo(baz, bar)
 // EBNF:
-// call = expr, "(", {expr, {",", expr}}, ")";
+// call = expr, "(", [expr, {",", expr}], ")";
 ast_t* parse_call(parser_t* parser, ast_t* node)
 {
     ast_t* class = ast_class_create(AST_CALL, node->location);
@@ -938,6 +938,16 @@ ast_t* parse_import_declaration(parser_t* parser, location_t loc)
         if(source)
         {
             ast_t* root = parser_run(subparser, source);
+            if(!root || parser_error(subparser))
+            {
+                free(source);
+                ast_free(root);
+                parser_free(subparser);
+                free(subparser);
+                parser_throw(parser, "Could not compile file '%s'", node->import);
+                return node;
+            }
+
             ast_t* top = parser->top;
             list_iterator_t* iter = list_iterator_create(root->toplevel);
             while(!list_iterator_end(iter))
