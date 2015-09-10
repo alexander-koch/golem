@@ -21,7 +21,7 @@ A programming language written in C.
 
 #### Serious issues
 
-- [ ] (Intermediate) While and if loops don't provide scopes => (Working on it.) (Idea:flag scopes as virtual)
+- [ ] (Intermediate) While and if loops don't provide scopes => (Working on it.)
 
 #### Main tasks (Sorted by importance / Flagged by difficulty)
 
@@ -78,7 +78,6 @@ Annotation idea for functions
 #### Langugage specific
 
 - [ ] AST optimization
-- [ ] prefix operators
 - [ ] Lambdas
 - [ ] Typecasting => (Done by std library)
 - [ ] for loops using iterators (only usable for arrays) using pipe syntax, e.g. |x|

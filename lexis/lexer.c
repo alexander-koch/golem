@@ -261,7 +261,7 @@ int lex_num(lexer_t* lexer, token_t* token)
     const char* end = lexer->cursor;
     while(isdigit(end[0])) end++;
 
-    if(end[0] == '.')
+    if(end[0] == '.' && isdigit(end[1]))
     {
         is_float = 1;
         end++;

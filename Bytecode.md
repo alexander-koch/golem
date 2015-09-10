@@ -145,7 +145,7 @@ ldarg0 and setarg0. On virtual return the class has to be reassigned to it's ori
     import core
 
 let mut x = 5
-x = x + 5
+x <- x + 5
 println(x)
 ```
 

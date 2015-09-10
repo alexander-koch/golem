@@ -1142,9 +1142,42 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
 	return true;
 }
 
-datatype_t eval_array_func(compiler_t* compiler, datatype_t dt, ast_t* node)
+datatype_t eval_int_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 {
-	// TODO: tail, head, insert, equals and other datatypes
+	ast_t* call = node->call.callee;
+	ast_t* key = call->subscript.key;
+
+	list_t* formals = node->call.args;
+	size_t ls = list_size(formals);
+
+	if(ls != 0)
+	{
+		compiler_throw(compiler, node, "Expected zero arguments");
+	}
+
+	if(!strcmp(key->ident, "float"))
+	{
+		//emit_op(compiler->buffer, OP_I2F);
+	}
+	else if(!strcmp(key->ident, "char"))
+	{
+		//emit_op(compiler->buffer, OP_I2C);
+	}
+	else if(!strcmp(key->ident, "str"))
+	{
+		//emit_op(compiler->buffer, OP_I2S);
+	}
+	else
+	{
+		compiler_throw(compiler, node, "No such function");
+	}
+
+	return datatype_new(DATA_INT);
+}
+
+datatype_t eval_array_func(compiler_t* compiler, ast_t* node, datatype_t dt)
+{
+	// TODO: tail, head, insert, slice, pop and other datatypes
 
 	ast_t* call = node->call.callee;
 	ast_t* key = call->subscript.key;
@@ -1238,36 +1271,85 @@ datatype_t eval_array_func(compiler_t* compiler, datatype_t dt, ast_t* node)
 		emit_op(compiler->buffer, OP_ARREQ);
 		return datatype_new(DATA_BOOL);
 	}
-	// else if(!strcmp(key->ident, "slice"))
-	// {
-	// 	if(ls != 2)
-	// 	{
-	// 		compiler_throw(compiler, node, "Expected two arguments: (from:int, to:int)");
-	// 		return datatype_new(DATA_NULL);
-	// 	}
-	//
-	// 	ast_t* arg1 = list_get(formals, 0);
-	// 	ast_t* arg2 = list_get(formals, 1);
-	// 	datatype_t dt1 = compiler_eval(compiler, arg1);
-	// 	if(dt1.type != DATA_INT)
-	// 	{
-	// 		compiler_throw(compiler, node, "Arg1 has to be of type int");
-	// 		return datatype_new(DATA_NULL);
-	// 	}
-	//
-	// 	datatype_t dt2 = compiler_eval(compiler, arg2);
-	// 	if(dt1.type != DATA_INT || dt2.type != DATA_INT)
-	// 	{
-	// 		compiler_throw(compiler, node, "Arg2 has to be of type int");
-	// 		return datatype_new(DATA_NULL);
-	// 	}
-	//
-	// 	emit_op(compiler->buffer, OP_SLICE);
-	// 	return dt;
-	// }
 	else
 	{
 		compiler_throw(compiler, node, "Invalid array operation");
+	}
+	return datatype_new(DATA_NULL);
+}
+
+datatype_t eval_class_call(compiler_t* compiler, ast_t* node, datatype_t dt)
+{
+	// Extract data
+	ast_t* call = node->call.callee;
+	ast_t* key = call->subscript.key;
+	ast_t* expr = call->subscript.expr;
+
+	// Retrive the id and the corresponding class
+	unsigned long id = dt.id;
+	symbol_t* class = class_find(compiler->scope, id);
+	if(!class)
+	{
+		compiler_throw(compiler, node, "Class does not exist");
+		return datatype_new(DATA_NULL);
+	}
+
+	// Test if the field of the class is valid
+	ast_t* cls = class->node;
+	void* val = 0;
+	if(hashmap_get(cls->classstmt.fields, key->ident, &val) == HMAP_MISSING)
+	{
+		compiler_throw(compiler, node, "Class field '%s' does not exist in class '%s'", key->ident, cls->classstmt.name);
+		return datatype_new(DATA_NULL);
+	}
+
+	// Retrive the field
+	symbol_t* func = (symbol_t*)val;
+	if(eval_compare_and_call(compiler, func->node, node, func->address))
+	{
+		// Get the last instruction (invoke)
+		// and increase the arguments by one
+		instruction_t* ins = vector_top(compiler->buffer);
+		ins->op = OP_INVOKEVIRTUAL;
+
+		symbol_t* sym = symbol_get(compiler->scope, expr->vardecl.name);
+		if(sym)
+		{
+			symbol_replace(compiler, sym);
+		}
+		else
+		{
+			emit_pop(compiler->buffer);
+		}
+
+		// Return the type
+		return func->node->funcdecl.rettype;
+	}
+
+	return datatype_new(DATA_NULL);
+}
+
+datatype_t eval_datatype_call(compiler_t* compiler, ast_t* node, datatype_t dt)
+{
+	// Evaluate accordingly
+	if(dt.type == DATA_CLASS)
+	{
+		return eval_class_call(compiler, node, dt);
+	}
+	else
+	{
+		if((dt.type & DATA_ARRAY) == DATA_ARRAY)
+		{
+			return eval_array_func(compiler, node, dt);
+		}
+		else if(dt.type == DATA_INT)
+		{
+			return eval_int_func(compiler, node, dt);
+		}
+		else
+		{
+			compiler_throw(compiler, node, "Unsupported operation");
+		}
 	}
 	return datatype_new(DATA_NULL);
 }
@@ -1344,63 +1426,10 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 	{
 		// Calling a class function
 
-		// Get the contents
-		ast_t* expr = call->subscript.expr;
-		ast_t* key = call->subscript.key;
-
 		// Evaluate the lhs
+		ast_t* expr = call->subscript.expr;
 		datatype_t dt = compiler_eval(compiler, expr);
-		if((dt.type & DATA_ARRAY) == DATA_ARRAY)
-		{
-			return eval_array_func(compiler, dt, node);
-		}
-
-		if(dt.type != DATA_CLASS)
-		{
-			compiler_throw(compiler, node, "Identifier is not a class");
-			return datatype_new(DATA_NULL);
-		}
-
-		// Retrive the id and the corresponding class
-		unsigned long id = dt.id;
-		symbol_t* class = class_find(compiler->scope, id);
-		if(!class)
-		{
-			compiler_throw(compiler, node, "Class does not exist");
-			return datatype_new(DATA_NULL);
-		}
-
-		// Test if the field of the class is valid
-		ast_t* cls = class->node;
-		void* val = 0;
-		if(hashmap_get(cls->classstmt.fields, key->ident, &val) == HMAP_MISSING)
-		{
-			compiler_throw(compiler, node, "Class field '%s' does not exist in class '%s'", key->ident, cls->classstmt.name);
-			return datatype_new(DATA_NULL);
-		}
-
-		// Retrive the field
-		symbol_t* func = (symbol_t*)val;
-		if(eval_compare_and_call(compiler, func->node, node, func->address))
-		{
-			// Get the last instruction (invoke)
-			// and increase the arguments by one
-			instruction_t* ins = vector_top(compiler->buffer);
-			ins->op = OP_INVOKEVIRTUAL;
-
-			symbol_t* sym = symbol_get(compiler->scope, expr->vardecl.name);
-			if(sym)
-			{
-				symbol_replace(compiler, sym);
-			}
-			else
-			{
-				emit_pop(compiler->buffer);
-			}
-
-			// Return the type
-			return func->node->funcdecl.rettype;
-		}
+		return eval_datatype_call(compiler, node, dt);
 	}
 	else
 	{
@@ -1586,7 +1615,7 @@ datatype_t eval_while(compiler_t* compiler, ast_t* node)
 
 	// Wrap into scope
 	//push_scope_virtual(compiler, node);
-	eval_block(compiler, node->ifclause.body);
+	eval_block(compiler, node->whilestmt.body);
 	//pop_scope_virtual(compiler);
 
 	emit_jmp(compiler->buffer, start);

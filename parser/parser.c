@@ -277,7 +277,7 @@ ast_t* parse_subscript(parser_t* parser, ast_t* node)
 }
 
 // Parser.parseSubscriptSugar()
-// Parses a special type of a subscript.
+// Parses a special type of a subscript (syntactic sugar).
 // The subscript uses a dot instead of brackets.
 // Example: myclass.x = 5
 // EBNF:
@@ -468,15 +468,18 @@ ast_t* parse_expression_primary(parser_t* parser)
     ast_t* ast = 0;
     if(match_literal(parser))
     {
+        // Example literals: 1|2|3|4|5 - "Hello World"
         ast = parse_literal(parser);
     }
     else if(match_type(parser, TOKEN_WORD))
     {
+        // myscript.access = denied
         ast = ast_class_create(AST_IDENT, get_location(parser));
         ast->ident = accept_token(parser)->value;
     }
     else if(match_type(parser, TOKEN_LPAREN))
     {
+        // (2 + 3) * 5
         accept_token(parser);
         ast = parse_expression(parser);
 
@@ -552,7 +555,7 @@ ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
         // TODO: Test if next is a valid operator
 
         ast_t* rhs = parse_expression_primary(parser);
-        if(rhs == 0)
+        if(!rhs)
         {
             parser_throw(parser, "Operator with missing second operand");
             return lhs;
@@ -760,7 +763,13 @@ list_t* parse_block(parser_t* parser)
             return statements;
         }
 
-        list_push(statements, (void*)parse_stmt(parser));
+        ast_t* stmt = parse_stmt(parser);
+        if(!stmt)
+        {
+            return statements;
+        }
+
+        list_push(statements, stmt);
         skip_newline(parser);
     }
 
@@ -872,6 +881,7 @@ ast_t* parser_run(parser_t* parser, const char* content)
         {
             ast_free(node);
             ast_free(ast);
+            parser->top = 0;
             return 0;
         }
 
@@ -956,7 +966,7 @@ ast_t* parse_var_declaration(parser_t* parser, location_t loc)
         node->vardecl.mutate = mutate;
         node->vardecl.initializer = parse_expression(parser);
 
-        if(node->vardecl.initializer == 0)
+        if(!node->vardecl.initializer)
         {
             parser_throw(parser, "Invalid or missing variable initializer");
         }
