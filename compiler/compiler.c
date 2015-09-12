@@ -1155,6 +1155,7 @@ datatype_t eval_int_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 		compiler_throw(compiler, node, "Expected zero arguments");
 	}
 
+	// TODO: Implement bytecodes for this
 	if(!strcmp(key->ident, "float"))
 	{
 		//emit_op(compiler->buffer, OP_I2F);

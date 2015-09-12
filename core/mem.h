@@ -1,3 +1,4 @@
+#ifndef NO_MEMINFO
 #ifdef USE_MEM_IMPLEMENTATION
 #undef USE_MEM_IMPLEMENTATION
 
@@ -113,4 +114,7 @@ extern void mem_free(void* ptr);
 extern void mem_leak_check();
 extern void mem_error(const char* format, ...);
 
+#endif
+#else
+#include <stdlib.h>
 #endif

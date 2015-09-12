@@ -13,8 +13,6 @@
 #include <compiler/compiler.h>
 #include <compiler/bytecode_writer.h>
 
-#include <vm/jit.h>
-
 void run_repl(vm_t* vm, compiler_t* compiler)
 {
     char buf[1024];
@@ -71,23 +69,11 @@ int main(int argc, char** argv)
             vector_t* buffer = compile_file(&compiler, argv[2]);
             if(buffer)
             {
-                write_bytecode("out.app", compiler.buffer);
+                char* out = replaceExt(argv[2], ".app", 4);
+                write_bytecode(out, compiler.buffer);
                 compiler_clear(&compiler);
-                fprintf(stdout, "Wrote bytecode to file 'out.app'\n");
-            }
-        }
-        // Run experimental jit
-        else if(!strcmp(argv[1], "-jit"))
-        {
-            printf("[Experimental runtime]\n");
-            vector_t* buffer = compile_file(&compiler, argv[2]);
-            if(buffer)
-            {
-                JitFunc* func = jit_compile(buffer);
-                int value = func();
-                printf("> %d\n", value);
-
-                compiler_clear(&compiler);
+                printf("Wrote bytecode to file '%s'\n", out);
+                free(out);
             }
         }
         // Run compiled bytecode file

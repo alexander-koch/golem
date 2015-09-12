@@ -19,10 +19,10 @@
 typedef struct compiler_t
 {
 	parser_t* parser;
-	vector_t* buffer;
 	list_t* parsers;
-	bool error;
+	vector_t* buffer;
 	scope_t* scope;
+	bool error;
 	int depth;
 } compiler_t;
 

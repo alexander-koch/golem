@@ -39,7 +39,6 @@ FILES := main.c \
 		vm/value.c \
 		vm/bytecode.c \
 		vm/vm.c \
-		vm/jit.c \
 		lib/corelib.c
 
 debug:
