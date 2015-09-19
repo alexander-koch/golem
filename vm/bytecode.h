@@ -59,6 +59,7 @@ typedef enum
 	OP_JMPT,
 	OP_ARR,
 	OP_STR,
+	OP_LDLIB,
 
 	// Compare
 	OP_BEQ,
@@ -124,6 +125,7 @@ void emit_load_upval(vector_t* buffer, int depth, int address);
 void emit_store_upval(vector_t* buffer, int depth, int address);
 void emit_class_setfield(vector_t* buffer, int address);
 void emit_class_getfield(vector_t* buffer, int address);
+void emit_lib_load(vector_t* buffer, char* name);
 
 value_t* emit_jmp(vector_t* buffer, int address);
 value_t* emit_jmpf(vector_t* buffer, int address);

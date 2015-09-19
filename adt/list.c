@@ -73,6 +73,16 @@ void* list_pop_back(list_t* list)
 	return val;
 }
 
+void list_append(list_t* l1, list_t* l2)
+{
+	while(list_size(l2) > 0)
+	{
+		void* val = list_pop(l2);
+		list_push(l1, val);
+	}
+	list_free(l2);
+}
+
 void* list_get(list_t* list, size_t index)
 {
 	list_node_t* node = list->head;

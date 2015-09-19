@@ -7,9 +7,11 @@
 #define USE_MEM_IMPLEMENTATION
 #define GOLEM_API __declspec(dllexport)
 #include <core/api.h>
-
+#else
+#define GOLEM_API
 #endif
 
+// Main stuff
 #include <parser/ast.h>
 
 #define signature_new() \

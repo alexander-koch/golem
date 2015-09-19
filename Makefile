@@ -15,7 +15,7 @@ GFLAGS := #-DTRACE #-DNO_AST
 #   -DNO_TIME    <-- Disables execution time printing
 # 	-DNO_MEMINFO <-- Disables info on memory usage
 # Enable:
-#   -DTRACE <-- While bytecode is executed, stack + instructions are printed
+#   -DTRACE 	 <-- While bytecode is executed, stack + instructions are printed
 #   -DDB_VARS    <-- Debugs all variables by printing a message
 #   -DDB_EVAL    <-- Debugs every ast evaluation
 
@@ -39,10 +39,14 @@ FILES := main.c \
 		vm/value.c \
 		vm/bytecode.c \
 		vm/vm.c \
-		lib/corelib.c
+		lib/corelib.c \
+		lib/loadlib.c
 
 debug:
 	$(CC) -O2 $(CFLAGS) $(INC) $(FILES) $(LDFLAGS) -g -o $(MODULE)
+
+libs:
+	make -C ./lib MAKEFLAGS=
 
 release:
 	$(CC) -O3 $(CFLAGS) -DNO_IR -DNO_TIME -DNO_MEMINFO -DNO_AST $(INC) $(FILES) $(LDFLAGS) -o $(MODULE)

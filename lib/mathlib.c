@@ -1,5 +1,4 @@
 
-#define mathlib_c
 #include "libdef.h"
 #include <math.h>
 #include <vm/vm.h>
@@ -44,17 +43,19 @@ GOLEM_API int math_sqrt(vm_t* vm)
 	return 0;
 }
 
-static const FunctionDef mathlib[] = {
-	{"abs", math_abs},
-	{"sin", math_sin},
-	{"cos", math_cos},
-	{"tan", math_tan},
-	{"sqrt", math_sqrt},
-	{0, 0}
-};
-
-GOLEM_API int golem_init(list_t* toplevel)
+GOLEM_API int lib_generate(void* hashptr)
 {
+	hashmap_t* hash = (hashmap_t*)hashptr;
+	hashmap_set(hash, "abs", math_abs);
+	hashmap_set(hash, "sin", math_sin);
+	hashmap_set(hash, "cos", math_cos);
+	hashmap_set(hash, "tan", math_tan);
+	return 0;
+}
+
+GOLEM_API void* lib_signatures()
+{
+	list_t* toplevel = list_new();
 	signature_new();
 	require_func();
 

@@ -7,6 +7,7 @@ void compiler_init(compiler_t* compiler)
 	compiler->buffer = 0;
 	compiler->error = false;
 	compiler->scope = 0;
+	compiler->dlls = 0;
 }
 
 // Compiler.throw(node, message)
@@ -1156,17 +1157,20 @@ datatype_t eval_int_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 	}
 
 	// TODO: Implement bytecodes for this
-	if(!strcmp(key->ident, "float"))
+	if(!strcmp(key->ident, "to_f"))
 	{
-		//emit_op(compiler->buffer, OP_I2F);
+		// can only convert integers or characters to floats
+		// emit_op(compiler->buffer, OP_NUM2F);
 	}
-	else if(!strcmp(key->ident, "char"))
+	else if(!strcmp(key->ident, "to_c"))
 	{
-		//emit_op(compiler->buffer, OP_I2C);
+		// only integers can be converted to a character
+		// emit_op(compiler->buffer, OP_I2C);
 	}
-	else if(!strcmp(key->ident, "str"))
+	else if(!strcmp(key->ident, "to_str"))
 	{
-		//emit_op(compiler->buffer, OP_I2S);
+		// basically everything can be converted to a string
+		// emit_op(compiler->buffer, OP_NUM2);
 	}
 	else
 	{
@@ -1271,6 +1275,29 @@ datatype_t eval_array_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 
 		emit_op(compiler->buffer, OP_ARREQ);
 		return datatype_new(DATA_BOOL);
+	}
+	else if(!strcmp(key->ident, "at"))
+	{
+		// TODO: Wrap these Typechecks into functions
+		// like: raiseOneArg(compiler, node, DATA_INT);
+		// ==> compiler_throw("Expected one argument of type %d", datatype2str(DATA_INT));
+		if(ls != 1)
+		{
+			compiler_throw(compiler, node, "Expected one argument of type int");
+			return datatype_new(DATA_NULL);
+		}
+
+		// get at index
+		ast_t* param = list_get(formals, 0);
+		datatype_t paramT = compiler_eval(compiler, param);
+		if(!datatype_match(paramT, datatype_new(DATA_INT)))
+		{
+			compiler_throw(compiler, node, "Argument has the wrong type");
+			return datatype_new(DATA_NULL);
+		}
+
+		emit_op(compiler->buffer, OP_GETSUB);
+		return subtype;
 	}
 	else
 	{
@@ -1923,6 +1950,33 @@ datatype_t eval_import(compiler_t* compiler, ast_t* node)
 		}
 		free(source);
 	}
+	else
+	{
+		// External
+		/*if(!strcmp(node->import, "core"))
+		{
+			void *lib = dl_load("lib/libcore.dll");
+			if(lib)
+			{
+				SymbolFunc func = dl_func(lib, (char*)"lib_signatures");
+
+				list_t* toplevel = func();
+				eval_block(compiler, toplevel);
+				emit_lib_load(compiler->buffer, (char*)"lib/libcore.dll");
+
+				vector_push(compiler->dlls, toplevel);
+				dl_unload(lib);
+			}
+			else
+			{
+				compiler_throw(compiler, node, "Failed to load library");
+			}
+		}
+		else
+		{
+			compiler_throw(compiler, node, "Unknown library");
+		}*/
+	}
 
 	return datatype_new(DATA_NULL);
 }
@@ -1974,9 +2028,11 @@ vector_t* compile_buffer(compiler_t* compiler, const char* source, const char* n
 	compiler->error = false;
 	compiler->depth = 0;
 	compiler->scope = scope_new();
+	compiler->dlls = vector_new();
 	compiler->parsers = list_new();
 	compiler->parser = malloc(sizeof(*compiler->parser));
 	list_push(compiler->parsers, compiler->parser);
+	list_iterator_t* iter = 0;
 
 	// Run the parser
 	parser_init(compiler->parser, name);
@@ -1993,7 +2049,7 @@ vector_t* compile_buffer(compiler_t* compiler, const char* source, const char* n
 	}
 
 	// Free Scope and parsers
-	list_iterator_t* iter = list_iterator_create(compiler->parsers);
+	iter = list_iterator_create(compiler->parsers);
 	while(!list_iterator_end(iter))
 	{
 		parser_t* parser = list_iterator_next(iter);
@@ -2004,6 +2060,22 @@ vector_t* compile_buffer(compiler_t* compiler, const char* source, const char* n
 	list_iterator_free(iter);
 	list_free(compiler->parsers);
 	scope_free(compiler->scope);
+
+	// Free the loaded dlls content
+	for(size_t i = 0; i < vector_size(compiler->dlls); i++)
+	{
+		list_t* ls = vector_get(compiler->dlls, i);
+		iter = list_iterator_create(ls);
+		while(!list_iterator_end(iter))
+		{
+			ast_t* nd = list_iterator_next(iter);
+			ast_free(nd);
+		}
+		list_iterator_free(iter);
+		list_free(ls);
+	}
+
+	vector_free(compiler->dlls);
 
 	// Return bytecode if valid
 	if(root && !compiler->error)

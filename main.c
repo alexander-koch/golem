@@ -38,9 +38,9 @@ int main(int argc, char** argv)
     compiler_t compiler;
     compiler_init(&compiler);
 
-    // Read-eval-print-loop
     if(argc == 1)
     {
+        // Read-eval-print-loop
         printf("Golem compiler - REPL\n");
         printf("Copyright (c) Alexander Koch 2015 All Rights Reserved.\n\n");
 
@@ -48,9 +48,9 @@ int main(int argc, char** argv)
         run_repl(vm, &compiler);
         vm_free(vm);
     }
-    // Generate and execute bytecode (Interpreter)
     else if(argc == 2)
     {
+        // Generate and execute bytecode (Interpreter)
         vm_t* vm = vm_new();
         vector_t* buffer = compile_file(&compiler, argv[1]);
         if(buffer)
@@ -63,9 +63,9 @@ int main(int argc, char** argv)
     }
     else if(argc == 3)
     {
-        // Compile file to bytecode => out.app
         if(!strcmp(argv[1], "-c"))
         {
+            // Compile file to bytecode => out.app
             vector_t* buffer = compile_file(&compiler, argv[2]);
             if(buffer)
             {
@@ -76,9 +76,9 @@ int main(int argc, char** argv)
                 free(out);
             }
         }
-        // Run compiled bytecode file
         else if(!strcmp(argv[1], "-r"))
         {
+            // Run compiled bytecode file
             vm_t* vm = vm_new();
             vector_t* buffer = vector_new();
             bool ok = read_bytecode(argv[2], &buffer);

@@ -44,6 +44,7 @@ const char* op2str(opcode_t code)
 		case OP_JMPT: return "jmpt";
 		case OP_ARR: return "arr";
 		case OP_STR: return "str";
+		case OP_LDLIB: return "ldlib";
 		case OP_BEQ: return "beq";
 		case OP_IEQ: return "ieq";
 		case OP_FEQ: return "feq";
@@ -291,4 +292,9 @@ void emit_class_setfield(vector_t* buffer, int address)
 void emit_class_getfield(vector_t* buffer, int address)
 {
 	insert_v1(buffer, OP_GETFIELD, value_new_int(address));
+}
+
+void emit_lib_load(vector_t* buffer, char* name)
+{
+	insert_v1(buffer, OP_LDLIB, value_new_string(name));
 }

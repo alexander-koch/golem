@@ -13,18 +13,12 @@
 extern int core_print(vm_t* vm);
 extern int core_println(vm_t* vm);
 extern int core_getline(vm_t* vm);
-extern int core_f2i(vm_t* vm);
-extern int core_i2f(vm_t* vm);
-extern int core_c2i(vm_t* vm);
 extern int core_parseFloat(vm_t* vm);
 
 static FunctionDef system_methods[] = {
 	{"print", core_print},
 	{"println", core_println},
 	{"getline", core_getline},
-	{"f2i", core_f2i},
-	{"i2f", core_i2f},
-	{"c2i", core_c2i},
 	{"parseFloat", core_parseFloat},
 	{0, 0}	/* sentinel */
 };
@@ -40,6 +34,8 @@ vm_t* vm_new()
 	vm->firstVal = 0;
 	vm->numObjects = 0;
 	vm->maxObjects = 8;
+	vm->table = hashmap_new();
+	vm->symbols = hashmap_new();
 	return vm;
 }
 
@@ -236,6 +232,21 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			vm->running = false;
 			break;
 		}
+		case OP_LDLIB:
+		{
+			char *name = value_string(instr->v1);
+			void *lib = dl_load(name);
+			if(lib)
+			{
+				hashmap_set(vm->table, name, lib);
+
+				InitFunc func = dl_func(lib, (char*)"lib_generate");
+				assert(func);
+				func(vm->symbols);
+			}
+
+			break;
+		}
 		case OP_STORE:
 		{
 			// Local variable storage
@@ -348,8 +359,13 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		case OP_SYSCALL:
 		{
 			char* name = value_string(instr->v1);
-			value_t* v = value_copy(instr->v2);
-			push(vm, v);
+
+			// void* val = 0;
+			// if(hashmap_get(vm->symbols, name, &val) != HMAP_MISSING)
+			// {
+			// 	ExternalFunc func = (ExternalFunc)val;
+			// 	func(vm);
+			// }
 
 			int i = 0;
 			while(system_methods[i].name)
@@ -987,5 +1003,15 @@ void vm_run(vm_t* vm, vector_t* buffer)
 // Frees the memory used by the vm
 void vm_free(vm_t* vm)
 {
+	hashmap_free(vm->symbols);
+
+	hashmap_iterator_t* iter = hashmap_iterator_create(vm->table);
+	while(!hashmap_iterator_end(iter))
+	{
+		void* lib = hashmap_iterator_next(iter);
+		dl_unload(lib);
+	}
+	hashmap_iterator_free(iter);
+	hashmap_free(vm->table);
 	free(vm);
 }

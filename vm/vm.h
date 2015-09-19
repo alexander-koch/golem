@@ -2,10 +2,13 @@
 #define vm_h
 
 #include <time.h>
+#include <assert.h>
+
 #include <core/api.h>
 #include <adt/stack.h>
 #include <adt/vector.h>
 #include <adt/hashmap.h>
+#include <lib/loadlib.h>
 
 #include <vm/bytecode.h>
 #include <vm/value.h>
@@ -34,15 +37,21 @@ typedef struct
 	value_t* firstVal;
 	int numObjects;
 	int maxObjects;
+
+	// External refs
+	hashmap_t* symbols;
+	hashmap_t* table;
 } vm_t;
 
-// External method definition
-typedef struct FunctionDef
+typedef struct
 {
 	const char* name;
 	int (*func)(vm_t*);
 } FunctionDef;
 
+typedef int (*ExternalFunc)(vm_t*);
+
+// Methods
 vm_t* vm_new();
 void vm_run(vm_t* vm, vector_t* buffer);
 void vm_free(vm_t* vm);

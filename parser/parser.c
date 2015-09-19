@@ -898,7 +898,7 @@ ast_t* parser_run(parser_t* parser, const char* content)
 // Parsing subroutines
 //////------------------
 
-extern void core_gen_signatures(list_t* list);
+extern int core_gen_signatures(list_t* list);
 
 // Parser.parseImportDeclaration()
 // Parses an import statement and handles internal libraries.

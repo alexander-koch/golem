@@ -34,6 +34,7 @@ void* list_top(list_t* list);
 void list_push(list_t* list, void* val);
 void* list_pop(list_t* list);
 void* list_pop_back(list_t* list);
+void list_append(list_t* l1, list_t* l2);
 void* list_get(list_t* list, size_t index);
 size_t list_size(list_t* list);
 void list_free(list_t* list);

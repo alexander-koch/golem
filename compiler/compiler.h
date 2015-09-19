@@ -12,6 +12,7 @@
 #include <parser/parser.h>
 #include <vm/bytecode.h>
 #include <compiler/scope.h>
+#include <lib/loadlib.h>
 
 // Compiler: manages scopes, converts every AST to multiple instructions
 // Throws errors if wrong code is detected
@@ -22,6 +23,7 @@ typedef struct compiler_t
 	list_t* parsers;
 	vector_t* buffer;
 	scope_t* scope;
+	vector_t* dlls;
 	bool error;
 	int depth;
 } compiler_t;
