@@ -31,9 +31,12 @@ typedef struct scope_t
 	list_t* subscopes;
 	int address;
 	bool virtual;
+	int flag;
 } scope_t;
 
 scope_t* scope_new();
 void scope_free(scope_t* scope);
+bool scope_requests(scope_t* scope, annotation_t ann);
+void scope_unflag(scope_t* scope);
 
 #endif

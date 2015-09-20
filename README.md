@@ -28,6 +28,9 @@ A programming language written in C.
 - [ ] (Advanced) Standard libraries and external classes, DLL loading => (Working on it.)
 - [ ] (Easy) More operators for each 'class', to get productive with the code => (Working on it.)
 - [ ] (Easy) Array index out of bounds exceptions => (Working on it.)
+- [ ] (Intermediate) Create a annotation system => (Working on it.)
+- [ ] (Intermediate) Create an try-catch exception system => (Working on it.)
+- [ ] (Advanced) Implement tuples => (Working on it.)
 - [ ] (Intermediate) Do namespaces => (Working on it.)
 - [ ] (Intermediate) Do for loops with iterators => (Working on it.)
 - [ ] (Advanced) Bytecode optimizations => (Working on it.)
@@ -64,10 +67,6 @@ Env.getArg(0) -> returns commandline argument 0
 
 import YAML
 YAML.parse("out.yaml")
-
-Annotation idea for functions
-[@attribute static] <- static functions
-[@visibility private] <- explicit private function declaration
 
 #### Side projects
 
@@ -223,6 +222,27 @@ For loops:
 	print(iter)
 }
 ```
+
+### Annotations
+
+Until now, there are three different types of annotations: @Getter, @Setter and @Unused.
+Getter and Setter can only be used within classes and are used to create getter- or setter-methods.
+For example we create an attribute named myVar with the value x.
+
+	let myVar = x
+
+If we now want to access myVar outside of the class, the getter annotation is used like this:
+
+	@Getter
+	let myVar = x
+
+And the variable is accessed like this:
+
+	let myClass = MyClass(5)
+	let res = myClass.getmyVar()
+
+Getter will automatically generate a method returning the value with the name of the variable as prefix.
+In the case above get-myVar-() is used. The same rule applies for the @Setter-annotation.
 
 # Syntactic sugar
 

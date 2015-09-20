@@ -50,6 +50,11 @@ void compiler_dump(ast_t* node, int level)
 			list_iterator_free(iter);
 			break;
 		}
+		case AST_ANNOTATION:
+		{
+			fprintf(stdout, ":annotation<%d>", (int)node->annotation);
+			break;
+		}
 		case AST_DECLVAR:
 		{
 			fprintf(stdout, ":decl %s->%s<", node->vardecl.name, datatype2str(node->vardecl.type));
@@ -551,6 +556,24 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 {
 	if(symbol_exists(compiler, node, node->vardecl.name)) return datatype_new(DATA_NULL);
 
+	// First check the annotations
+	if(scope_requests(compiler->scope, ANN_GETTER))
+	{
+		// TODO:
+		printf("Getter for variable '%s' requested\n", node->vardecl.name);
+	}
+	else if(scope_requests(compiler->scope, ANN_SETTER))
+	{
+		printf("Setter requrested\n");
+	}
+	else if(scope_requests(compiler->scope, ANN_UNUSED))
+	{
+		// Do not create this variable
+		scope_unflag(compiler->scope);
+		return datatype_new(DATA_NULL);
+	}
+	scope_unflag(compiler->scope);
+
 	// First eval initializer to get type
 	// Then test for non-valid types
 	datatype_t vartype = compiler_eval(compiler, node->vardecl.initializer);
@@ -570,6 +593,7 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 		return datatype_new(DATA_NULL);
 	}
 
+	// Verify if within a class
 	if(compiler->scope->node)
 	{
 		ast_t* nd = compiler->scope->node;
@@ -1797,6 +1821,8 @@ datatype_t eval_unary(compiler_t* compiler, ast_t* node)
 	return type;
 }
 
+datatype_t eval_annotation(compiler_t* compiler, ast_t* node);
+
 // Eval.class(node)
 // Concept compilation of a class structure (WIP)
 datatype_t eval_class(compiler_t* compiler, ast_t* node)
@@ -1858,7 +1884,11 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 	while(!list_iterator_end(iter))
 	{
 		ast_t* sub = list_iterator_next(iter);
-		if(sub->class == AST_DECLVAR)
+		if(sub->class == AST_ANNOTATION)
+		{
+			eval_annotation(compiler, sub);
+		}
+		else if(sub->class == AST_DECLVAR)
 		{
 			size_t addr = compiler->scope->address;
 			compiler_eval(compiler, sub);
@@ -1866,28 +1896,34 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 
 			// Create new symbol and new addr to register in class
 			symbol_t* sym = symbol_get(compiler->scope, sub->vardecl.name);
-			if(!sym)
-			{
-				compiler_throw(compiler, sub, "Failed at creating the class field");
-				break;
-			}
+			// if(!sym)
+			// {
+			// 	compiler_throw(compiler, sub, "Failed at creating the class field");
+			// 	break;
+			// }
 
-			sym->ref = symbol;
-			hashmap_set(node->classstmt.fields, sub->vardecl.name, sym);
-			emit_class_setfield(compiler->buffer, compiler->scope->address-1);
+			if(sym)
+			{
+				sym->ref = symbol;
+				hashmap_set(node->classstmt.fields, sub->vardecl.name, sym);
+				emit_class_setfield(compiler->buffer, compiler->scope->address-1);
+			}
 		}
 		else if(sub->class == AST_DECLFUNC)
 		{
 			compiler_eval(compiler, sub);
 			symbol_t* sym = symbol_get(compiler->scope, sub->funcdecl.name);
-			if(!sym)
-			{
-				compiler_throw(compiler, sub, "Failed at creating the class function");
-				break;
-			}
+			// if(!sym)
+			// {
+			// 	compiler_throw(compiler, sub, "Failed at creating the class function");
+			// 	break;
+			// }
 
-			sym->ref = symbol;
-			hashmap_set(node->classstmt.fields, sub->funcdecl.name, sym);
+			if(sym)
+			{
+				sym->ref = symbol;
+				hashmap_set(node->classstmt.fields, sub->funcdecl.name, sym);
+			}
 		}
 		else
 		{
@@ -1981,6 +2017,26 @@ datatype_t eval_import(compiler_t* compiler, ast_t* node)
 	return datatype_new(DATA_NULL);
 }
 
+datatype_t eval_annotation(compiler_t* compiler, ast_t* node)
+{
+	if(compiler->scope->node->class != AST_CLASS && node->annotation != ANN_UNUSED)
+	{
+		compiler_throw(compiler, node, "Annotations can only be used within classes");
+		return datatype_new(DATA_NULL);
+	}
+
+	// Set if flag is already set
+	if((compiler->scope->flag & node->annotation) == node->annotation)
+	{
+		compiler_throw(compiler, node, "Annotation flag is already set");
+		return datatype_new(DATA_NULL);
+	}
+
+	// Set the flag
+	compiler->scope->flag |= node->annotation;
+	return datatype_new(DATA_NULL);
+}
+
 // Compiler.eval(node)
 // Evaluates a node according to its class.
 datatype_t compiler_eval(compiler_t* compiler, ast_t* node)
@@ -2012,6 +2068,7 @@ datatype_t compiler_eval(compiler_t* compiler, ast_t* node)
 		case AST_SUBSCRIPT: return eval_subscript(compiler, node);
 		case AST_CLASS: return eval_class(compiler, node);
 		case AST_IMPORT: return eval_import(compiler, node);
+		case AST_ANNOTATION: return eval_annotation(compiler, node);
 		default: break;
 	}
 

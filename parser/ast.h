@@ -41,6 +41,13 @@ typedef struct ast_s ast_t;
 
 typedef enum
 {
+    ANN_GETTER = 1 << 1,
+    ANN_SETTER = 1 << 2,
+    ANN_UNUSED = 1 << 3
+} annotation_t;
+
+typedef enum
+{
     AST_NULL,
     AST_IDENT,
     AST_FLOAT,
@@ -62,6 +69,7 @@ typedef enum
     AST_CLASS,
     AST_RETURN,
     AST_TOPLEVEL,
+    AST_ANNOTATION
 } ast_class_t;
 
 typedef struct
@@ -128,6 +136,7 @@ struct ast_s
         ast_cond_t ifclause;
         ast_cond_t whilestmt;
         ast_struct_t classstmt;
+        annotation_t annotation;
 
         struct
         {

@@ -14,6 +14,7 @@ scope_t* scope_new()
 	scope->address = 0;
 	scope->node = 0;
 	scope->virtual = false;
+	scope->flag = 0;
 	return scope;
 }
 
@@ -44,4 +45,14 @@ void scope_free(scope_t* scope)
 	// Free the actual scope
 	free(scope);
 	scope = 0;
+}
+
+bool scope_requests(scope_t* scope, annotation_t ann)
+{
+	return (scope->flag & ann) == ann;
+}
+
+void scope_unflag(scope_t* scope)
+{
+	scope->flag = 0;
 }

@@ -78,6 +78,7 @@ int is_special(char c)
 {
     switch(c)
     {
+        case '@':
         case '+':
         case '-':
         case '*':
@@ -238,7 +239,8 @@ int lex_op(lexer_t* lexer, token_t* token)
         RESERVED_ENTRY("^", TOKEN_BITXOR),
         RESERVED_ENTRY("~", TOKEN_BITNOT),
         RESERVED_ENTRY("::", TOKEN_DOUBLECOLON),
-        RESERVED_ENTRY(":", TOKEN_COLON)
+        RESERVED_ENTRY(":", TOKEN_COLON),
+        RESERVED_ENTRY("@", TOKEN_AT)
     };
 
     size_t i;

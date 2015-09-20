@@ -66,7 +66,8 @@ typedef enum
     TOKEN_BITNOT,    // '~' OP
     TOKEN_DOUBLECOLON, // '::'
     TOKEN_COLON,     // ':'
-    TOKEN_ARROW      // '->'
+    TOKEN_ARROW,     // '->'
+    TOKEN_AT         // '@'
 } token_type_t;
 
 typedef struct

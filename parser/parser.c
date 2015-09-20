@@ -18,6 +18,7 @@ ast_t* parse_if_declaration(parser_t* parser, location_t loc);
 ast_t* parse_while_declaration(parser_t* parser, location_t loc);
 ast_t* parse_class_declaration(parser_t* parser, location_t loc);
 ast_t* parse_return_declaration(parser_t* parser, location_t loc);
+ast_t* parse_annotation_declaration(parser_t* parser, location_t loc);
 ast_t* parse_expression(parser_t* parser);
 
 ast_t* parse_stmt(parser_t* parser);
@@ -837,6 +838,14 @@ ast_t* parse_stmt(parser_t* parser)
         }
     }
 
+    // Annotation testing
+    if(match_type(parser, TOKEN_AT))
+    {
+        ast_t* node = parse_annotation_declaration(parser, pos);
+        test_newline(parser);
+        return node;
+    }
+
     // Error testing
     if(match_string(parser, KEYWORD_ELSE))
     {
@@ -1197,6 +1206,40 @@ ast_t* parse_return_declaration(parser_t* parser, location_t loc)
     else
     {
         parser_throw(parser, "Invalid return statement");
+    }
+
+    return node;
+}
+
+ast_t* parse_annotation_declaration(parser_t* parser, location_t loc)
+{
+    ast_t* node = ast_class_create(AST_ANNOTATION, loc);
+    token_t* keyword = accept_token_type(parser, TOKEN_AT);
+    token_t* content = accept_token_type(parser, TOKEN_WORD);
+
+    if(keyword && content)
+    {
+        char* str = content->value;
+        if(!strcmp(str, "Getter"))
+        {
+            node->annotation = ANN_GETTER;
+        }
+        else if(!strcmp(str, "Setter"))
+        {
+            node->annotation = ANN_SETTER;
+        }
+        else if(!strcmp(str, "Unused"))
+        {
+            node->annotation = ANN_UNUSED;
+        }
+        else
+        {
+            parser_throw(parser, "Unknown annotation type");
+        }
+    }
+    else
+    {
+        parser_throw(parser, "Malformed annotation");
     }
 
     return node;
