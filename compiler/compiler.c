@@ -554,25 +554,30 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 // The return value is NULL.
 datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 {
-	if(symbol_exists(compiler, node, node->vardecl.name)) return datatype_new(DATA_NULL);
-
 	// First check the annotations
 	if(scope_requests(compiler->scope, ANN_GETTER))
 	{
 		// TODO:
 		printf("Getter for variable '%s' requested\n", node->vardecl.name);
+
+		// Inject an AST?
 	}
 	else if(scope_requests(compiler->scope, ANN_SETTER))
 	{
+		// TODO:
 		printf("Setter requrested\n");
+
+		// Check if variable is mutable
 	}
 	else if(scope_requests(compiler->scope, ANN_UNUSED))
 	{
-		// Do not create this variable
 		scope_unflag(compiler->scope);
 		return datatype_new(DATA_NULL);
 	}
 	scope_unflag(compiler->scope);
+
+	// Check if already in existance
+	if(symbol_exists(compiler, node, node->vardecl.name)) return datatype_new(DATA_NULL);
 
 	// First eval initializer to get type
 	// Then test for non-valid types
@@ -1892,7 +1897,6 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 		{
 			size_t addr = compiler->scope->address;
 			compiler_eval(compiler, sub);
-			emit_load(compiler->buffer, addr, false);
 
 			// Create new symbol and new addr to register in class
 			symbol_t* sym = symbol_get(compiler->scope, sub->vardecl.name);
@@ -1904,6 +1908,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 
 			if(sym)
 			{
+				emit_load(compiler->buffer, addr, false);
 				sym->ref = symbol;
 				hashmap_set(node->classstmt.fields, sub->vardecl.name, sym);
 				emit_class_setfield(compiler->buffer, compiler->scope->address-1);
@@ -2019,17 +2024,26 @@ datatype_t eval_import(compiler_t* compiler, ast_t* node)
 
 datatype_t eval_annotation(compiler_t* compiler, ast_t* node)
 {
-	if(compiler->scope->node->class != AST_CLASS && node->annotation != ANN_UNUSED)
-	{
-		compiler_throw(compiler, node, "Annotations can only be used within classes");
-		return datatype_new(DATA_NULL);
-	}
-
-	// Set if flag is already set
+	// Test if flag is already set
 	if((compiler->scope->flag & node->annotation) == node->annotation)
 	{
 		compiler_throw(compiler, node, "Annotation flag is already set");
 		return datatype_new(DATA_NULL);
+	}
+
+	if(node->annotation != ANN_UNUSED)
+	{
+		if(!compiler->scope->node)
+		{
+			compiler_throw(compiler, node, "Annotations can only be used within classes");
+			return datatype_new(DATA_NULL);
+		}
+
+		if(compiler->scope->node->class != AST_CLASS)
+		{
+			compiler_throw(compiler, node, "Annotations can only be used within classes");
+			return datatype_new(DATA_NULL);
+		}
 	}
 
 	// Set the flag

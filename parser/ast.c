@@ -66,6 +66,7 @@ const char* ast_classname(ast_class_t class)
 		case AST_CLASS: return "class";
 		case AST_RETURN: return "return";
 		case AST_TOPLEVEL: return "toplevel";
+		case AST_ANNOTATION: return "annotation";
 		default: return "null";
 	}
 }
