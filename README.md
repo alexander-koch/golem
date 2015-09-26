@@ -178,7 +178,7 @@ type Class(_x:int, _y:int, _z:int)
 
 	func setX(newX:int) -> void
 	{
-		x <- newX
+		x := newX
 	}
 }
 
@@ -197,10 +197,10 @@ main()
 Control flows are created by if statements or while loops.
 Example: (assuming variable 'number' is declared as an integer):
 ```rust
-	if(number == 5)
+	if(number = 5)
 {
 	println("Your number is odd.")
-} else if(number == 3)
+} else if(number = 3)
 {
 	println("Your number is odd and it's three.")
 } else
@@ -210,9 +210,9 @@ Example: (assuming variable 'number' is declared as an integer):
 ```
 While loops:
 ```ruby
-	while(number == 5)
+	while(number = 5)
 {
-	number = number + 1
+	number := number + 1
 }
 ```
 
@@ -239,10 +239,11 @@ If we now want to access myVar outside of the class, the getter annotation is us
 And the variable is accessed like this:
 
 	let myClass = MyClass(5)
-	let res = myClass.getmyVar()
+	let res = myClass.getMyVar()
 
 Getter will automatically generate a method returning the value with the name of the variable as prefix.
-In the case above get-myVar-() is used. The same rule applies for the @Setter-annotation.
+In the case above get-MyVar-() is used. The same rule applies for the @Setter-annotation.
+The first character of the variable name is converted to upper case.
 
 # Syntactic sugar
 
