@@ -7,34 +7,42 @@ A programming language written in C.
 - Functional, object-oriented scripting / programming language
 - Immutablitiy of everything
 - Explicit mutable declaration
-- Statically, strong typed => reliable, eliminated programming errors
+- Statically, strong typed => reliable, eliminates programming errors
 - Type inference => automatic deduction of data types
 - Strings as arrays of characters, not a standalone type => reduces data size, easier to understand
 - Systems language
 - Easily readable and learnable
 - NULL is not an option
-- Fully functional fast bytecode vm or translation into x86 / x86_64 assembler machine code
+- Fully functional fast bytecode vm, comptetitive with lua's or python's speed
 - Garbage collected vm
-- FAST!!!
 
 # TODO
 
-#### Serious issues
+#### Main tasks (Sorted by importance / Flagged by difficulty)
+
+##### Serious issues
 
 - [ ] (Intermediate) While and if loops don't provide scopes => (Working on it.)
 
-#### Main tasks (Sorted by importance / Flagged by difficulty)
+##### Tasks
 
-- [ ] (Advanced) Standard libraries and external classes, DLL loading => (Working on it.)
-- [ ] (Easy) More operators for each 'class', to get productive with the code => (Working on it.)
-- [ ] (Easy) Array index out of bounds exceptions => (Working on it.)
-- [ ] (Intermediate) Create an try-catch exception system => (Working on it.)
-- [ ] (Advanced) Implement tuples => (Working on it.)
-- [ ] (Intermediate) Do namespaces => (Working on it.)
-- [ ] (Intermediate) Do for loops with iterators => (Working on it.)
+- [ ] (Advanced) Use NaN-Tagging and increase vm performance (Needs four seconds for fib.golem) => (Working on it.)
 - [ ] (Advanced) Bytecode optimizations => (Working on it.)
-- [ ] (Easy) Serious tests => (Working on it.)
-- [ ] (Intermediate) Improve the REPL => (Finish when everything above is done.)
+- [ ] (Intermediate) More operators for each 'class', to get productive with the code => (Working on it.)
+- [ ] (Advanced) Standard libraries and external classes, DLL loading => (Task)
+- [ ] (Easy) Array index out of bounds exceptions => (Task)
+- [ ] (Intermediate) Create an try-catch exception system => (Task)
+- [ ] (Advanced) Implement tuples => (Task)
+- [ ] (Intermediate) Do namespaces => (Task)
+- [ ] (Intermediate) Do for loops with iterators => (Task)
+
+##### Final fixes
+
+- [ ] (Easy) Serious tests => (Task)
+- [ ] (Intermediate) Improve the REPL => (Long-term-task)
+
+##### Done
+
 - [x] (Intermediate) Create a annotation system => (Done.)
 - [x] Move import to compiler side for individual errors => (Done.)
 - [x] Import other files for bigger projects => (Done.)
@@ -56,18 +64,6 @@ A programming language written in C.
 - [x] Mutable parameters => (Done.)
 - [x] Subscripts (Arrays / Strings) => (Done.)
 
-##### Random ideas:
-Import 'classes'
-
-import Core -> Core imports a class instance with basic features
-Core.fread("Test.md")
-
-import Env
-Env.getArg(0) -> returns commandline argument 0
-
-import YAML
-YAML.parse("out.yaml")
-
 #### Side projects
 
 - [ ] Lambdas, Closures, Anonymous functions => (Concept / Prototype.)
@@ -79,13 +75,7 @@ YAML.parse("out.yaml")
 
 - [ ] AST optimization
 - [ ] Lambdas
-- [ ] Typecasting => (Done by std library)
 - [ ] for loops using iterators (only usable for arrays) using pipe syntax, e.g. |x|
-
-#### Implementation specific
-
-- [ ] map / filter / curry methods
-- [ ] performance and bytecode optimization
 
 # Concept (final concept may change)
 
@@ -285,7 +275,8 @@ class[getX]()
 - function calls, recursion
 - arrays
 - system internal functions, e.g. println + getline
-- fast bytecode vm
+- annotations
+- relatively fast bytecode vm
 - compiler error reports
 
 # Stuff / Internet sources
