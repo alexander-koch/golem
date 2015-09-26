@@ -43,7 +43,7 @@ A programming language written in C.
 - [x] Class field modification within a class function doesn't work as expected => (Done.)
 - [x] Comment at end of file is invalid => (Done.)
 - [x] Implement new string merge operator => (Done.)
-- [x] New operator for reassignment (<-), replace double equal by equal => (Done.)
+- [x] New operator for reassignment (:=), replace double equal by equal => (Done.)
 - [x] Return type isn't checked => (Done.)
 - [x] Calling an interal function in a class yields an error => (Done.)
 - [x] Classes / Objects parsing + compilation => (Done.)
@@ -98,10 +98,10 @@ Example:
 ```
 
 Variables can be mutable, if they are declared using the 'mut' keyword.
-When modifiying a variable, the reassignment operator '<-' is used.
+When modifiying a variable, the reassignment operator ':=' is used.
 ```rust
 	let mut x = 5
-x <- x + 1
+x := x + 1
 ```
 
 ### Functions

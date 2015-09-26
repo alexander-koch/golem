@@ -1436,10 +1436,8 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 					if(isClass)
 					{
 						// Move stack down if function call within class
-
 						instruction_t* ins = vector_top(compiler->buffer);
 						ins->op = OP_INVOKEVIRTUAL;
-
 						emit_op(compiler->buffer, OP_SETARG0);
 					}
 

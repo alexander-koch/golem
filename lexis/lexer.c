@@ -222,7 +222,7 @@ int lex_op(lexer_t* lexer, token_t* token)
         RESERVED_ENTRY("/", TOKEN_DIV),
         RESERVED_ENTRY("%", TOKEN_MOD),
         RESERVED_ENTRY("=", TOKEN_EQUAL),
-        RESERVED_ENTRY("<-", TOKEN_ASSIGN),
+        RESERVED_ENTRY(":=", TOKEN_ASSIGN),
         RESERVED_ENTRY("!=", TOKEN_NEQUAL),
         RESERVED_ENTRY("!", TOKEN_NOT),
         RESERVED_ENTRY(".", TOKEN_DOT),
