@@ -25,7 +25,6 @@ typedef struct list_t
 
 typedef struct list_iterator_t
 {
-	list_t* list;
 	list_node_t* ptr;
 } list_iterator_t;
 

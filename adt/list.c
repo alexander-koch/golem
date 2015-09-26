@@ -125,12 +125,10 @@ list_iterator_t* list_iterator_create(list_t* list)
 	if(list)
 	{
 		iter->ptr = list->head;
-		iter->list = list;
 	}
 	else
 	{
 		iter->ptr = 0;
-		iter->list = 0;
 	}
 	return iter;
 }

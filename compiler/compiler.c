@@ -554,27 +554,12 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 // The return value is NULL.
 datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 {
-	// First check the annotations
-	if(scope_requests(compiler->scope, ANN_GETTER))
-	{
-		// TODO:
-		printf("Getter for variable '%s' requested\n", node->vardecl.name);
-
-		// Inject an AST?
-	}
-	else if(scope_requests(compiler->scope, ANN_SETTER))
-	{
-		// TODO:
-		printf("Setter requrested\n");
-
-		// Check if variable is mutable
-	}
-	else if(scope_requests(compiler->scope, ANN_UNUSED))
+	// First check the unused annotation
+	if(scope_requests(compiler->scope, ANN_UNUSED))
 	{
 		scope_unflag(compiler->scope);
 		return datatype_new(DATA_NULL);
 	}
-	scope_unflag(compiler->scope);
 
 	// Check if already in existance
 	if(symbol_exists(compiler, node, node->vardecl.name)) return datatype_new(DATA_NULL);
@@ -1898,32 +1883,89 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 			size_t addr = compiler->scope->address;
 			compiler_eval(compiler, sub);
 
-			// Create new symbol and new addr to register in class
+			// Get the symbol, check if valid
 			symbol_t* sym = symbol_get(compiler->scope, sub->vardecl.name);
-			// if(!sym)
-			// {
-			// 	compiler_throw(compiler, sub, "Failed at creating the class field");
-			// 	break;
-			// }
-
 			if(sym)
 			{
 				emit_load(compiler->buffer, addr, false);
 				sym->ref = symbol;
 				hashmap_set(node->classstmt.fields, sub->vardecl.name, sym);
 				emit_class_setfield(compiler->buffer, compiler->scope->address-1);
+
+				// Check annotations at last, TODO: Warp to a function
+				if(scope_requests(compiler->scope, ANN_GETTER))
+				{
+					char* name = sub->vardecl.name;
+					datatype_t vartype = sub->vardecl.type;
+
+					// Create a new parser and buffer to store data
+					token_t* buffer = malloc(sizeof(token_t));
+					buffer[0].value = concat("get", name);
+					buffer[0].type = TOKEN_WORD;
+
+					if(isalpha(buffer[0].value[3]))
+					{
+						buffer[0].value[3] = toupper(buffer[0].value[3]);
+					}
+
+					parser_t* subparser = malloc(sizeof(*subparser));
+					parser_init(subparser, (const char*)buffer[0].value);
+					list_push(compiler->parsers, subparser);
+					subparser->buffer = buffer;
+					subparser->num_tokens = 1;
+
+					// Generate the ASTs
+					ast_t *fn = ast_class_create(AST_DECLFUNC, node->location);
+					fn->funcdecl.name = buffer[0].value;
+					fn->funcdecl.impl.formals = list_new();
+					fn->funcdecl.impl.body = list_new();
+					fn->funcdecl.rettype = vartype;
+					fn->funcdecl.external = false;
+
+					ast_t* ret = ast_class_create(AST_RETURN, node->location);
+					ret->returnstmt = ast_class_create(AST_IDENT, node->location);
+					ret->returnstmt->ident = name;
+					list_push(fn->funcdecl.impl.body, ret);
+
+					// Upload to parser
+					subparser->top = fn;
+
+					// Dump the syntax tree
+					printf("Abstract syntax tree GET '%s'\n", name);
+					compiler_dump(fn, 1);
+					printf("\n");
+
+					// Evaluate, returns lambda
+					compiler_eval(compiler, fn);
+
+					// 1. Retrive the class symbol
+					// 2. Get the function symbol
+					// 3. Register a new classfield -> the function
+					// 4. Set the reference of the function symbol to the class
+
+					// Get all the data!
+					ast_t* clazz = compiler->scope->node;
+					symbol_t* clazzSymbol = symbol_get(compiler->scope, clazz->classstmt.name);
+					symbol_t* funcSymbol = symbol_get(compiler->scope, fn->funcdecl.name);
+
+					// Assign it
+					hashmap_set(clazz->classstmt.fields, fn->funcdecl.name, funcSymbol);
+					funcSymbol->ref = clazzSymbol;
+				}
+				else if(scope_requests(compiler->scope, ANN_SETTER))
+				{
+					// TODO:
+					printf("Setter requrested\n");
+
+					// Check if variable is mutable
+				}
+				scope_unflag(compiler->scope);
 			}
 		}
 		else if(sub->class == AST_DECLFUNC)
 		{
 			compiler_eval(compiler, sub);
 			symbol_t* sym = symbol_get(compiler->scope, sub->funcdecl.name);
-			// if(!sym)
-			// {
-			// 	compiler_throw(compiler, sub, "Failed at creating the class function");
-			// 	break;
-			// }
-
 			if(sym)
 			{
 				sym->ref = symbol;

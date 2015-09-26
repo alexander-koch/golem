@@ -9,16 +9,24 @@ const char* datatype2str(datatype_t type)
 		case DATA_INT: return "int";
 		case DATA_FLOAT: return "float";
 		case DATA_CHAR: return "char";
-		case DATA_CLASS: return "class";
+		case DATA_CLASS: return "type";
 		case DATA_VOID: return "void";
-		case DATA_ARRAY: return "array";
+		case DATA_ARRAY: return "null-array";
 		case DATA_GENERIC: return "generic";
 		case DATA_LAMBDA: return "lambda";
 		default:
 		{
 			if(type.type == DATA_STRING)
 			{
-				return "string";
+				return "char[]";
+			}
+			else if(type.type == DATA_INT)
+			{
+				return "int[]";
+			}
+			else if(type.type == DATA_FLOAT)
+			{
+				return "float[]";
 			}
 
 			if((type.type & DATA_ARRAY) == DATA_ARRAY)

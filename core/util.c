@@ -36,6 +36,48 @@ char* concat(char* s1, char* s2)
     return result;
 }
 
+char* strf(const char* format, ...)
+{
+    va_list argList;
+    va_start(argList, format);
+    size_t totalLength = 0;
+    for (const char* c = format; *c != '\0'; c++)
+    {
+        switch (*c)
+        {
+            case '$':
+            totalLength += strlen(va_arg(argList, const char*));
+            break;
+            default:
+            totalLength++;
+        }
+    }
+    va_end(argList);
+
+    char* buffer = malloc(sizeof(char)*totalLength);
+    va_start(argList, format);
+    char* start = buffer;
+    for(const char* c = format; *c != '\0'; c++)
+    {
+        switch (*c)
+        {
+            case '$':
+            {
+                const char* string = va_arg(argList, const char*);
+                size_t length = strlen(string);
+                memcpy(start, string, length);
+                start += length;
+                break;
+            }
+            default:
+            *start++ = *c;
+        }
+    }
+    va_end(argList);
+
+    return buffer;
+}
+
 unsigned long djb2(unsigned char *str)
 {
     unsigned long hash = 5381;
