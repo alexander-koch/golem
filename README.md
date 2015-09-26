@@ -28,7 +28,6 @@ A programming language written in C.
 - [ ] (Advanced) Standard libraries and external classes, DLL loading => (Working on it.)
 - [ ] (Easy) More operators for each 'class', to get productive with the code => (Working on it.)
 - [ ] (Easy) Array index out of bounds exceptions => (Working on it.)
-
 - [ ] (Intermediate) Create an try-catch exception system => (Working on it.)
 - [ ] (Advanced) Implement tuples => (Working on it.)
 - [ ] (Intermediate) Do namespaces => (Working on it.)

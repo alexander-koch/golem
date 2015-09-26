@@ -1293,7 +1293,7 @@ datatype_t eval_array_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 	else if(!strcmp(key->ident, "at"))
 	{
 		// TODO: Wrap these Typechecks into functions
-		// like: raiseOneArg(compiler, node, DATA_INT);
+		// like: raiseOneArgErr(compiler, node, DATA_INT);
 		// ==> compiler_throw("Expected one argument of type %d", datatype2str(DATA_INT));
 		if(ls != 1)
 		{

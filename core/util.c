@@ -110,6 +110,7 @@ char* replaceExt(char* filename, const char* ext, size_t len)
     char* x = strrchr(filename, '.');
     size_t idx = x - filename;
     char* mem = malloc(sizeof(char) * (idx+len+1));
+    memset(mem, 0, idx+len+1);
     memcpy(mem, x-idx, idx);
     memcpy(mem+idx, ext, len);
     idx += len+1;
