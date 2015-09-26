@@ -1898,16 +1898,16 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 					char* name = sub->vardecl.name;
 					datatype_t vartype = sub->vardecl.type;
 
-					// Create a new parser and buffer to store data
+					// Create the function name
 					token_t* buffer = malloc(sizeof(token_t));
 					buffer[0].value = concat("get", name);
 					buffer[0].type = TOKEN_WORD;
-
 					if(isalpha(buffer[0].value[3]))
 					{
 						buffer[0].value[3] = toupper(buffer[0].value[3]);
 					}
 
+					// Create a subparser
 					parser_t* subparser = malloc(sizeof(*subparser));
 					parser_init(subparser, (const char*)buffer[0].value);
 					list_push(compiler->parsers, subparser);
@@ -1931,9 +1931,11 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 					subparser->top = fn;
 
 					// Dump the syntax tree
+#ifndef NO_AST
 					printf("Abstract syntax tree GET '%s'\n", name);
 					compiler_dump(fn, 1);
 					printf("\n");
+#endif
 
 					// Evaluate, returns lambda
 					compiler_eval(compiler, fn);
@@ -1943,21 +1945,90 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 					// 3. Register a new classfield -> the function
 					// 4. Set the reference of the function symbol to the class
 
-					// Get all the data!
+					// Get the symbols
 					ast_t* clazz = compiler->scope->node;
 					symbol_t* clazzSymbol = symbol_get(compiler->scope, clazz->classstmt.name);
 					symbol_t* funcSymbol = symbol_get(compiler->scope, fn->funcdecl.name);
 
-					// Assign it
+					// Assign as a class field
 					hashmap_set(clazz->classstmt.fields, fn->funcdecl.name, funcSymbol);
 					funcSymbol->ref = clazzSymbol;
 				}
-				else if(scope_requests(compiler->scope, ANN_SETTER))
+				if(scope_requests(compiler->scope, ANN_SETTER))
 				{
-					// TODO:
-					printf("Setter requrested\n");
+					if(!sub->vardecl.mutate)
+					{
+						compiler_throw(compiler, sub, "Setters are only valid for mutable variables");
+						break;
+					}
 
-					// Check if variable is mutable
+					char* name = sub->vardecl.name;
+					datatype_t vartype = sub->vardecl.type;
+
+					// Reserve two tokens
+					token_t* buffer = malloc(sizeof(token_t)*2);
+					buffer[0].value = concat("set", name);
+					buffer[0].type = TOKEN_WORD;
+					if(isalpha(buffer[0].value[3]))
+					{
+						buffer[0].value[3] = toupper(buffer[0].value[3]);
+					}
+					buffer[1].value = strdup("p0");
+					buffer[1].type = TOKEN_WORD;
+
+					// Create a subparser
+					parser_t* subparser = malloc(sizeof(*subparser));
+					parser_init(subparser, (const char*)buffer[0].value);
+					list_push(compiler->parsers, subparser);
+					subparser->buffer = buffer;
+					subparser->num_tokens = 2;
+
+					// Generate the ASTs
+					ast_t *fn = ast_class_create(AST_DECLFUNC, node->location);
+					fn->funcdecl.name = buffer[0].value;
+					fn->funcdecl.impl.formals = list_new();
+					fn->funcdecl.impl.body = list_new();
+					fn->funcdecl.rettype = datatype_new(DATA_VOID);
+					fn->funcdecl.external = false;
+
+					// Create parameter p0
+					ast_t* p0 = ast_class_create(AST_DECLVAR, node->location);
+					p0->vardecl.name = buffer[1].value;
+					p0->vardecl.type = vartype;
+					p0->vardecl.mutate = false;
+					list_push(fn->funcdecl.impl.formals, p0);
+
+					// Create the assignment
+					ast_t* bin = ast_class_create(AST_BINARY, node->location);
+					ast_t* lhs = ast_class_create(AST_IDENT, node->location);
+					ast_t* rhs = ast_class_create(AST_IDENT, node->location);
+					lhs->ident = name;
+					rhs->ident = buffer[1].value;
+					bin->binary.left = lhs;
+					bin->binary.right = rhs;
+					bin->binary.op = TOKEN_ASSIGN;
+					list_push(fn->funcdecl.impl.body, bin);
+
+					// Upload to parser
+					subparser->top = fn;
+
+#ifndef NO_AST
+					printf("Abstract syntax tree SET '%s'\n", name);
+					compiler_dump(fn, 1);
+					printf("\n");
+#endif
+
+					// Evaluate, returns lambda
+					compiler_eval(compiler, fn);
+
+					// Get the symbols
+					ast_t* clazz = compiler->scope->node;
+					symbol_t* clazzSymbol = symbol_get(compiler->scope, clazz->classstmt.name);
+					symbol_t* funcSymbol = symbol_get(compiler->scope, fn->funcdecl.name);
+
+					// Assign as a class field
+					hashmap_set(clazz->classstmt.fields, fn->funcdecl.name, funcSymbol);
+					funcSymbol->ref = clazzSymbol;
 				}
 				scope_unflag(compiler->scope);
 			}
