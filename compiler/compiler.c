@@ -2062,7 +2062,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 datatype_t eval_import(compiler_t* compiler, ast_t* node)
 {
 	// TODO: Better checking
-	if(strstr(node->import, ".golem"))
+	if(strstr(node->import, ".gs"))
 	{
 		// Create a new subparser for new file
 		parser_t* subparser = malloc(sizeof(*subparser));

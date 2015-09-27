@@ -15,6 +15,7 @@ A programming language written in C.
 - NULL is not an option
 - Fully functional fast bytecode vm, comptetitive with lua's or python's speed
 - Garbage collected vm
+- Golem script (.gs) file extension
 
 # TODO
 
