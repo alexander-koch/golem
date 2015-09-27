@@ -1,6 +1,6 @@
 #include "parser.h"
 
-#define KEYWORD_IMPORT "import"
+#define KEYWORD_IMPORT "using"
 #define KEYWORD_DECLARATION "let"
 #define KEYWORD_MUTATE "mut"
 #define KEYWORD_FUNCTION "func"

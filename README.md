@@ -147,7 +147,7 @@ To get a field, getters are used to maintain encapsulation.
 Class declaration is also the constructor to maintain immutability.
 Class keyword might change.
 ```ruby
-	import core
+	using core
 
 type Class(_x:int, _y:int, _z:int)
 {
