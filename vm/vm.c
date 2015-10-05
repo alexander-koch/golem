@@ -1,15 +1,5 @@
 #include "vm.h"
 
-// Standard Library
-// TODO:
-// something like binary find function in dll
-// =>
-// int golem_println(VARARGS) {
-//		pop();
-//
-//}
-// Return -1 if fail
-
 extern int core_print(vm_t* vm);
 extern int core_println(vm_t* vm);
 extern int core_getline(vm_t* vm);
@@ -154,9 +144,10 @@ void vm_print_code(vm_t* vm, vector_t* buffer)
 {
 	vm->pc = 0;
 	console("\nImmediate code:\n");
-	while(vm_fetch(vm, buffer)->op != OP_HLT)
+
+	instruction_t* instr = vm_fetch(vm, buffer);
+	while(instr->op != OP_HLT)
 	{
-		instruction_t* instr = vector_get(buffer, vm->pc);
 		console("  %.2d: %s", vm->pc, op2str(instr->op));
 		if(instr->v1)
 		{
@@ -169,7 +160,9 @@ void vm_print_code(vm_t* vm, vector_t* buffer)
 			value_print(instr->v2);
 		}
 		console("\n");
+
 		vm->pc++;
+		instr = vm_fetch(vm, buffer);
 	}
 	vm->pc = 0;
 }
@@ -250,11 +243,6 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		case OP_STORE:
 		{
 			// Local variable storage
-			// HACK: increasing stack pointer
-			// Otherwise:
-			// If too many locals in last scope e.g. from 1 - 11
-			// Then new scope overwrites old values e.g. fp at 5, overwrites 5- 11
-
 			int offset = value_int(instr->v1);
 			if(offset < 0)
 			{
@@ -430,12 +418,19 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		}
 		case OP_RESERVE:
 		{
+			// Reserves some memory.
+			// Uses this before any function call to maintain stored values.
+			// Otherwise, if too many locals are saved in the last scope e.g. from 1 - 11,
+			// the new scope overwrites the old values for instance: fp at 5, overwrites 5 - 11.
+
 			vm->reserve = value_int(instr->v1);
 			break;
 		}
 		case OP_RET:
 		{
-			// Returns to previous instruction pointer
+			// Returns to previous instruction pointer,
+			// and pushes the return value back on the stack.
+			// If you call this function make sure there is a return value on the stack.
 			value_t* ret = value_copy(pop(vm));
 
 			vm->sp = vm->fp;
@@ -449,6 +444,7 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		}
 		case OP_RETVIRTUAL:
 		{
+			// Returns from a virtual class function
 			value_t* ret = value_copy(pop(vm));
 
 			vm->sp = vm->fp;

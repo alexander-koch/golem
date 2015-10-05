@@ -150,26 +150,16 @@ Class keyword might change.
 ```ruby
 	using core
 
-type Class(_x:int, _y:int, _z:int)
-{
+type Class(_x:int, _y:int, _z:int) {
+	@Getter
+	@Setter
 	let mut x = _x
 	let y = _y
 	let z = _z
 
-	func run() -> void
-	{
+	func run() -> void {
 		println(x)
 		println(y)
-	}
-
-	func getX() -> int
-	{
-		return x
-	}
-
-	func setX(newX:int) -> void
-	{
-		x := newX
 	}
 }
 

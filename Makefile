@@ -48,6 +48,9 @@ debug:
 libs:
 	make -C ./lib MAKEFLAGS=
 
+branch:
+	$(CC) -O3 $(CFLAGS) $(INC) test.c vm/gvm.c core/api.c core/util.c adt/vector.c vm/val.c vm/gbytecode.c $(LDFLAGS) -g -o gvm
+
 release:
 	$(CC) -O3 $(CFLAGS) -DNO_IR -DNO_TIME -DNO_MEMINFO -DNO_AST $(INC) $(FILES) $(LDFLAGS) -o $(MODULE)
 

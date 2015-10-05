@@ -2277,7 +2277,11 @@ vector_t* compile_file(compiler_t* compiler, const char* filename)
 {
 	size_t len = 0;
 	char* source = readFile(filename, &len);
-	if(!source && len == 0) return 0;
+	if(!source || len == 0)
+	{
+		printf("File '%s' does not exist\n", filename);
+		return 0;
+	}
 
 	// Compile into instructions
 	vector_t* buffer = compile_buffer(compiler, source, filename);
