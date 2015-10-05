@@ -3,6 +3,17 @@
 Golem runs on an internal stack-based bytecode virtual machine (gvm).
 The following instructions are currently supported.
 
+# VM Benchmark / Speed
+
+Currently there are two implementations for the bytecode vm.
+One is optimized and uses NaN-Tagging (GVM).
+The following table demonstrates the speed.
+For comparison python is also used.
+
+| Program | Native VM | GVM    | Python |
+|---      |---        |---     |---     |
+| fib.gs  | ~4.95s    | ~1.08s | ~0.75s |
+
 # Bytecode Instruction Set
 
 | Basic stack ops     | Description

@@ -29,6 +29,7 @@ A programming language written in C.
 
 - [ ] (Advanced) Use NaN-Tagging and increase vm performance (Needs four seconds for fib.golem) => (Working on it.)
 - [ ] (Advanced) Bytecode optimizations => (Working on it.)
+- [ ] (Intermediate) Implement computed gotos to gain 15%-20% more speed => (Working on it.)
 - [ ] (Intermediate) More operators for each 'class', to get productive with the code => (Working on it.)
 - [ ] (Advanced) Standard libraries and external classes, DLL loading => (Task)
 - [ ] (Easy) Array index out of bounds exceptions => (Task)
@@ -39,7 +40,7 @@ A programming language written in C.
 
 ##### Final fixes
 
-- [ ] (Easy) Serious tests => (Task)
+- [ ] (Easy) Serious tests / Benchmarks => (Side task)
 - [ ] (Intermediate) Improve the REPL => (Long-term-task)
 
 ##### Done

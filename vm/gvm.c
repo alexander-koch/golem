@@ -321,6 +321,23 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			vm->fp = fp;
 			break;
 		}
+		case OP_SYSCALL:
+		{
+			// TODO: Improve
+			char* name = AS_STRING(AS_OBJ(instr->v1));
+
+			if(!strcmp(name, "print"))
+			{
+				val_print(pop(vm));
+			}
+			else if(!strcmp(name, "println"))
+			{
+				val_print(pop(vm));
+				printf("\n");
+			}
+
+			break;
+		}
 		case OP_INVOKE:
 		{
 			// Arguments already on the stack
@@ -426,6 +443,12 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			}
 			break;
 		}
+
+
+		// Missing
+		// TODO: Convert IADD and FADD to ADD
+		// There is no need for different operators for one internal type
+
 		case OP_IADD:
 		{
 			double v2 = AS_NUM(pop(vm));
@@ -440,29 +463,82 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			push(vm, NUM_VAL(v1 - v2));
 			break;
 		}
+		case OP_IMUL:
+		{
+			double v2 = AS_NUM(pop(vm));
+			double v1 = AS_NUM(pop(vm));
+			push(vm, NUM_VAL(v1 * v2));
+			break;
+		}
+		case OP_IDIV:
+		{
+			double v2 = AS_NUM(pop(vm));
+			double v1 = AS_NUM(pop(vm));
+			push(vm, NUM_VAL(v1 / v2));
+			break;
+		}
+		case OP_MOD:
+		{
+			int v2 = AS_NUM(pop(vm));
+			int v1 = AS_NUM(pop(vm));
+			push(vm, NUM_VAL(v1 % v2));
+			break;
+		}
+		case OP_BITL:
+		{
+			int v2 = AS_NUM(pop(vm));
+			int v1 = AS_NUM(pop(vm));
+			push(vm, NUM_VAL(v1 << v2));
+			break;
+		}
+		case OP_BITR:
+		{
+			int v2 = AS_NUM(pop(vm));
+			int v1 = AS_NUM(pop(vm));
+			push(vm, NUM_VAL(v1 >> v2));
+			break;
+		}
+		case OP_BITAND:
+		{
+			int v2 = AS_NUM(pop(vm));
+			int v1 = AS_NUM(pop(vm));
+			push(vm, NUM_VAL(v1 & v2));
+			break;
+		}
+		case OP_BITOR:
+		{
+			int v2 = AS_NUM(pop(vm));
+			int v1 = AS_NUM(pop(vm));
+			push(vm, NUM_VAL(v1 | v2));
+			break;
+		}
+		case OP_BITXOR:
+		{
+			int v2 = AS_NUM(pop(vm));
+			int v1 = AS_NUM(pop(vm));
+			push(vm, NUM_VAL(v1 ^ v2));
+			break;
+		}
+		case OP_BITNOT:
+		{
+			int v1 = AS_NUM(pop(vm));
+			push(vm, NUM_VAL(~v1));
+			break;
+		}
+		case OP_IMINUS:
+		{
+			int v1 = AS_NUM(pop(vm));
+			push(vm, NUM_VAL(-v1));
+			break;
+		}
+
+		// Missing
 
 		case OP_LT:
 		{
 			double v2 = AS_NUM(pop(vm));
 			double v1 = AS_NUM(pop(vm));
 			push(vm, BOOL_VAL(v1 < v2));
-			break;
-		}
-
-		case OP_SYSCALL:
-		{
-			char* name = AS_STRING(AS_OBJ(instr->v1));
-
-			if(!strcmp(name, "print"))
-			{
-				val_print(pop(vm));
-			}
-			else if(!strcmp(name, "println"))
-			{
-				val_print(pop(vm));
-				printf("\n");
-			}
-
 			break;
 		}
 		default:
