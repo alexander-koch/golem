@@ -10,7 +10,7 @@ One is optimized and uses NaN-Tagging (GVM).
 The following table demonstrates the speed.
 For comparison python is also used.
 
-| Program | Native VM | GVM    | Python |
+| Program | Basic VM  | GVM    | Python |
 |---      |---        |---     |---     |
 | fib.gs  | ~4.95s    | ~1.08s | ~0.75s |
 

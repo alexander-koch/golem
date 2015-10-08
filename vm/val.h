@@ -47,6 +47,18 @@ typedef enum obj_type_t
 	OBJ_CLASS
 } obj_type_t;
 
+typedef struct obj_class_t
+{
+	val_t fields[128];
+	size_t fp;
+} obj_class_t;
+
+typedef struct obj_array_t
+{
+	void** data;
+	size_t sz;
+} obj_array_t;
+
 typedef struct obj_t
 {
 	obj_type_t type;

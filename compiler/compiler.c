@@ -252,6 +252,14 @@ void compiler_dump(ast_t* node, int level)
 		{
 			fprintf(stdout, ":call<");
 			compiler_dump(node->call.callee, 0);
+
+			/*list_iterator_t* iter = list_iterator_create(node->call.args);
+			while(!list_iterator_end(iter))
+			{
+				ast_t* next = list_iterator_next(iter);
+				compiler_dump(next, level);
+			}
+			list_iterator_free(iter);*/
 			fprintf(stdout, ">");
 			break;
 		}

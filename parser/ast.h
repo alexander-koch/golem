@@ -1,6 +1,12 @@
 #ifndef ast_h
 #define ast_h
 
+// Abstract syntax tree
+// Used for storing expressions in a tree-like structure,
+// and converting them to final bytecode by the compiler.
+
+// Also the datatypes and the annotation types are defined here.
+
 #include <stddef.h>
 #include <stdbool.h>
 
@@ -10,8 +16,8 @@
 #include <core/api.h>
 #include <adt/hashmap.h>
 
-// types: void, bool, str, int, float, custom classes
-
+// All valid datatypes: void, bool, char, int, float, custom types.
+// Using byte-flags.
 typedef enum
 {
     DATA_NULL = 1 << 1,// 0x1,
@@ -39,12 +45,41 @@ typedef struct datatype_t
 
 typedef struct ast_s ast_t;
 
+// Annotation types
+// @Getter
+// @Setter
+// @Unused
 typedef enum
 {
     ANN_GETTER = 1 << 1,
     ANN_SETTER = 1 << 2,
     ANN_UNUSED = 1 << 3
 } annotation_t;
+
+// Actual AST-types
+// ------------------
+// AST_NULL       -> stores literally nothing, means it is invalid
+// AST_IDENT      -> stores an identifier
+// AST_FLOAT      -> stores a floating point value
+// AST_INT        -> stores an integer value
+// AST_BOOL       -> stores a boolean value
+// AST_STRING     -> stores a string of characters
+// AST_CHAR       -> stores a single character
+// AST_ARRAY      -> stores an array structure
+// AST_BINARY     -> stores a binary tree structure / operation
+// AST_UNARY      -> stores a unary operation
+// AST_SUBSCRIPT  -> stores a subscript access
+// AST_CALL       -> stores a function call
+// AST_DECLVAR    -> stores a variable declaration
+// AST_DECLFUNC   -> stores a function definition
+// AST_IF         -> stores a ifclauses / an if-statement
+// AST_IFCLAUSE   -> stores a sub-if-clause, can also be else if there is no condition
+// AST_WHILE      -> stores a while loop
+// AST_IMPORT     -> stores an import / using statement
+// AST_CLASS      -> stores a class
+// AST_RETURN     -> stores a return statement
+// AST_TOPLEVEL   -> stores a list of ASTs
+// AST_ANNOTATION -> stores an annotation
 
 typedef enum
 {
@@ -72,24 +107,28 @@ typedef enum
     AST_ANNOTATION
 } ast_class_t;
 
+// Condition struct
 typedef struct
 {
     ast_t* cond;
     list_t* body;
 } ast_cond_t;
 
+// Field index struct
 typedef struct
 {
     ast_t* key;
     ast_t* expr;
 } ast_field_t;
 
+// Anonymous function struct (lambda)
 typedef struct
 {
     list_t* formals;
     list_t* body;
 } ast_lambda_t;
 
+// Function struct (inherits lambda)
 typedef struct
 {
     char* name;
@@ -98,6 +137,7 @@ typedef struct
     bool external;
 } ast_func_t;
 
+// Declaration struct
 typedef struct
 {
     char* name;
@@ -106,6 +146,7 @@ typedef struct
     datatype_t type;
 } ast_decl_t;
 
+// Class struct
 typedef struct
 {
     char* name;
@@ -114,6 +155,7 @@ typedef struct
     hashmap_t* fields;
 } ast_struct_t;
 
+// Structure of an AST-node
 struct ast_s
 {
     ast_class_t class;
@@ -166,9 +208,9 @@ struct ast_s
 };
 
 const char* datatype2str(datatype_t type);
-
 #define ast_is_number(x) (x->class == AST_FLOAT || x->class == AST_INT)
 
+// Main functions for AST-creation
 ast_t* ast_class_create(ast_class_t class, location_t location);
 const char* ast_classname(ast_class_t class);
 void ast_free(ast_t* ast);
