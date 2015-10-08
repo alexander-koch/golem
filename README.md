@@ -4,15 +4,15 @@ A programming language written in C.
 
 # Project aims / long-term goals
 
-- Functional, object-oriented scripting / programming language
-- Immutablitiy of everything
+- Functional, object-oriented programming language
+- Immutablitiy of everything by default
 - Explicit mutable declaration
 - Statically, strong typed => reliable, eliminates programming errors
 - Type inference => automatic deduction of data types
 - Strings as arrays of characters, not a standalone type => reduces data size, easier to understand
 - Systems language
-- Easily readable and learnable
-- NULL is not an option
+- Easily readable and learnable, because of familiar syntax
+- **NULL** is not an option
 - Fully functional fast bytecode vm, comptetitive with lua's or python's speed
 - Garbage collected vm
 - Golem script (.gs) file extension
@@ -68,6 +68,7 @@ A programming language written in C.
 
 #### Side projects
 
+- [ ] Rename bytecode_writer to serializer
 - [ ] Lambdas, Closures, Anonymous functions => (Concept / Prototype.)
 - [ ] Debugger + inspector
 - [ ] JIT / ASM output
@@ -148,7 +149,7 @@ All attributes are private.
 To get a field, getters are used to maintain encapsulation.
 Class declaration is also the constructor to maintain immutability.
 Class keyword might change.
-```ruby
+```objective-c
 	using core
 
 type Class(_x:int, _y:int, _z:int) {

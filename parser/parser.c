@@ -10,6 +10,7 @@
 #define KEYWORD_CLASS "type"
 #define KEYWORD_RETURN "return"
 
+// Forward declaration of main parsing methods
 ast_t* parse_import_declaration(parser_t* parser, location_t loc);
 ast_t* parse_var_declaration(parser_t* parser, location_t loc);
 ast_t* parse_lambda_declaration(parser_t* parser, location_t loc);
@@ -20,7 +21,6 @@ ast_t* parse_class_declaration(parser_t* parser, location_t loc);
 ast_t* parse_return_declaration(parser_t* parser, location_t loc);
 ast_t* parse_annotation_declaration(parser_t* parser, location_t loc);
 ast_t* parse_expression(parser_t* parser);
-
 ast_t* parse_stmt(parser_t* parser);
 ast_t* parse_expression(parser_t* parser);
 
@@ -37,21 +37,25 @@ void parser_init(parser_t* parser, const char* name)
 
 // helper functions begin
 
+// Check if we reached the end
 int parser_end(parser_t* parser)
 {
     return parser->cursor >= parser->num_tokens;
 }
 
+// Get the token under the cursor
 token_t* current_token(parser_t* parser)
 {
     return &parser->buffer[parser->cursor];
 }
 
+// Get the location in code of the current cursor
 location_t get_location(parser_t* parser)
 {
     return current_token(parser)->location;
 }
 
+// Test if the current token matches a given string
 bool match_string(parser_t* parser, const char* token)
 {
     if(parser_end(parser) || !token) return false;
@@ -59,6 +63,7 @@ bool match_string(parser_t* parser, const char* token)
     return !strcmp(parser->buffer[parser->cursor].value, token);
 }
 
+// Test if the current token matches a given type
 bool match_type(parser_t* parser, token_type_t type)
 {
     return current_token(parser)->type == type;

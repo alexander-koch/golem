@@ -1,6 +1,11 @@
 #ifndef lexer_h
 #define lexer_h
 
+// Lexer - reads a string and converts its content
+// into text fragments: Tokens.
+// Each tokens has a certain type with a string value.
+// The string value may be NULL.
+
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -8,13 +13,15 @@
 #include <core/mem.h>
 #include <core/util.h>
 
+// Location in file / code location
 typedef struct
 {
     unsigned line;
     unsigned column;
 } location_t;
 
-typedef struct
+// Lexer structure
+typedef struct lexer_t
 {
     location_t location;
     const char* name;
