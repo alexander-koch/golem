@@ -56,7 +56,6 @@ typedef enum
 	OP_RETVIRTUAL,
 	OP_JMP,
 	OP_JMPF,
-	OP_JMPT,
 	OP_ARR,
 	OP_STR,
 	OP_LDLIB,
@@ -129,7 +128,6 @@ void emit_lib_load(vector_t* buffer, char* name);
 
 value_t* emit_jmp(vector_t* buffer, int address);
 value_t* emit_jmpf(vector_t* buffer, int address);
-value_t* emit_jmpt(vector_t* buffer, int address);
 
 
 #endif

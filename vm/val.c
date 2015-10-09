@@ -52,12 +52,26 @@ obj_t* obj_string_new(char* str)
 	return obj;
 }
 
+obj_t* obj_array_new(void** data, size_t length)
+{
+    // TODO: implement
+    obj_t* obj = obj_new();
+    obj->type = OBJ_ARRAY;
+    obj->data = 0; // handle array here
+    return obj;
+}
+
 void obj_free(obj_t* obj)
 {
 	if(obj->type == OBJ_STRING)
 	{
 		free(obj->data);
 	}
+    else if(obj->type == OBJ_ARRAY)
+    {
+        // TODO
+        free(obj->data);
+    }
 	else
 	{
 		// TODO
@@ -92,6 +106,11 @@ void val_print(val_t v1)
             case OBJ_STRING:
             {
                 printf("%s", (char*)obj->data);
+                break;
+            }
+            case OBJ_ARRAY:
+            {
+                printf("array");
                 break;
             }
             default: break;

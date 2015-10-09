@@ -18,7 +18,7 @@ void run_repl(vm_t* vm, compiler_t* compiler)
     char buf[1024];
     while(1)
     {
-        fprintf(stdout, ">> ");
+        printf(">> ");
         fgets(buf, sizeof(buf), stdin);
         if(!strncmp(buf, "quit", 4))
         {
@@ -92,7 +92,7 @@ int main(int argc, char** argv)
         }
         else
         {
-            fprintf(stderr, "Flag: '%s' is invalid\n\n", argv[1]);
+            printf("Flag: '%s' is invalid\n\n", argv[1]);
         }
     }
     else

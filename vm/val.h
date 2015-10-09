@@ -40,12 +40,12 @@
 
 typedef uint64_t val_t;
 
-typedef enum obj_type_t
+// Special subtypes
+typedef struct obj_array_t
 {
-	OBJ_NULL,
-	OBJ_STRING,
-	OBJ_CLASS
-} obj_type_t;
+	void** data;
+	size_t sz;
+} obj_array_t;
 
 typedef struct obj_class_t
 {
@@ -53,12 +53,16 @@ typedef struct obj_class_t
 	size_t fp;
 } obj_class_t;
 
-typedef struct obj_array_t
+// Object types
+typedef enum obj_type_t
 {
-	void** data;
-	size_t sz;
-} obj_array_t;
+	OBJ_NULL,
+	OBJ_STRING,
+	OBJ_ARRAY,
+	OBJ_CLASS
+} obj_type_t;
 
+// Object definition
 typedef struct obj_t
 {
 	obj_type_t type;
@@ -70,6 +74,7 @@ typedef struct obj_t
 obj_t* obj_new();
 obj_t* obj_string_const_new(const char* str);
 obj_t* obj_string_new(char* str);
+obj_t* obj_array_new(void** data, size_t length);
 void obj_free(obj_t* obj);
 
 #define AS_STRING(obj) (char*)(obj->data)

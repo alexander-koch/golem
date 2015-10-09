@@ -41,7 +41,6 @@ const char* op2str(opcode_t code)
 		case OP_RETVIRTUAL: return "retvirtual";
 		case OP_JMP: return "jmp";
 		case OP_JMPF: return "jmpf";
-		case OP_JMPT: return "jmpt";
 		case OP_ARR: return "arr";
 		case OP_STR: return "str";
 		case OP_LDLIB: return "ldlib";
@@ -274,13 +273,6 @@ value_t* emit_jmpf(vector_t* buffer, int address)
 {
 	value_t* val = value_new_int(address);
 	insert_v1(buffer, OP_JMPF, val);
-	return val;
-}
-
-value_t* emit_jmpt(vector_t* buffer, int address)
-{
-	value_t* val = value_new_int(address);
-	insert_v1(buffer, OP_JMPT, val);
 	return val;
 }
 

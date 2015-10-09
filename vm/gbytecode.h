@@ -56,7 +56,6 @@ typedef enum
 	OP_RETVIRTUAL,
 	OP_JMP,
 	OP_JMPF,
-	OP_JMPT,
 	OP_ARR,
 	OP_STR,
 	OP_LDLIB,
@@ -108,7 +107,6 @@ void insert(vector_t* buffer, opcode_t op);
 void insert_v1(vector_t* buffer, opcode_t op, val_t v1);
 void insert_v2(vector_t* buffer, opcode_t op, val_t v1, val_t v2);
 
-/*
 void emit_bool(vector_t* buffer, bool b);
 void emit_int(vector_t* buffer, I64 v);
 void emit_float(vector_t* buffer, F64 f);
@@ -128,8 +126,7 @@ void emit_class_setfield(vector_t* buffer, int address);
 void emit_class_getfield(vector_t* buffer, int address);
 void emit_lib_load(vector_t* buffer, char* name);
 
-value_t* emit_jmp(vector_t* buffer, int address);
-value_t* emit_jmpf(vector_t* buffer, int address);
-value_t* emit_jmpt(vector_t* buffer, int address);*/
+val_t* emit_jmp(vector_t* buffer, int address);
+val_t* emit_jmpf(vector_t* buffer, int address);
 
 #endif

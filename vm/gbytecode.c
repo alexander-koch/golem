@@ -41,7 +41,6 @@ const char* op2str(opcode_t code)
 		case OP_RETVIRTUAL: return "retvirtual";
 		case OP_JMP: return "jmp";
 		case OP_JMPF: return "jmpf";
-		case OP_JMPT: return "jmpt";
 		case OP_ARR: return "arr";
 		case OP_STR: return "str";
 		case OP_LDLIB: return "ldlib";
@@ -128,16 +127,15 @@ void emit_float(vector_t* buffer, F64 f)
 	insert_v1(buffer, OP_PUSH, val);
 }
 
-void emit_char(vector_t* buffer, char c)
+void emit_string(vector_t* buffer, char* str)
 {
-	val_t val = NUM_VAL(c);
+	val_t val = OBJ_VAL(obj_string_new(str));
 	insert_v1(buffer, OP_PUSH, val);
 }
 
-void emit_string(vector_t* buffer, char* str)
+void emit_char(vector_t* buffer, char c)
 {
-	obj_t* obj = obj_string_new(str);
-	val_t val = OBJ_VAL(obj);
+	val_t val = NUM_VAL(c);
 	insert_v1(buffer, OP_PUSH, val);
 }
 
@@ -264,27 +262,6 @@ void emit_store_upval(vector_t* buffer, int depth, int address)
 	insert_v2(buffer, OP_UPSTORE, NUM_VAL(depth), NUM_VAL(address));
 }
 
-val_t* emit_jmp(vector_t* buffer, int address)
-{
-	val_t val = NUM_VAL(address);
-	insert_v1(buffer, OP_JMP, val);
-	return vector_top(buffer);
-}
-
-val_t* emit_jmpf(vector_t* buffer, int address)
-{
-	val_t val = NUM_VAL(address);
-	insert_v1(buffer, OP_JMPF, val);
-	return vector_top(buffer);
-}
-
-val_t* emit_jmpt(vector_t* buffer, int address)
-{
-	val_t val = NUM_VAL(address);
-	insert_v1(buffer, OP_JMPT, val);
-	return vector_top(buffer);
-}
-
 void emit_class_setfield(vector_t* buffer, int address)
 {
 	insert_v1(buffer, OP_SETFIELD, NUM_VAL(address));
@@ -298,4 +275,20 @@ void emit_class_getfield(vector_t* buffer, int address)
 void emit_lib_load(vector_t* buffer, char* name)
 {
 	insert_v1(buffer, OP_LDLIB, OBJ_VAL(obj_string_new(name)));
+}
+
+#define GEN_JMP_REF() (val_t*)&((instruction_t*)vector_top(buffer))->v1
+
+val_t* emit_jmp(vector_t* buffer, int address)
+{
+	val_t val = NUM_VAL(address);
+	insert_v1(buffer, OP_JMP, val);
+	return GEN_JMP_REF();
+}
+
+val_t* emit_jmpf(vector_t* buffer, int address)
+{
+	val_t val = NUM_VAL(address);
+	insert_v1(buffer, OP_JMPF, val);
+	return GEN_JMP_REF();
 }

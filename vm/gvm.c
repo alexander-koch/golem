@@ -275,7 +275,6 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		{
 			int scopes = AS_NUM(instr->v1);
 			int offset = AS_NUM(instr->v2);
-
 			int fp = vm->fp;
 			int sp = vm->sp;
 
