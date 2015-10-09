@@ -56,7 +56,7 @@ libs:
 
 # Experimental branch (gvm)
 branch:
-	$(CC) -O3 $(CFLAGS) $(INC) test.c vm/gvm.c core/api.c core/util.c adt/vector.c vm/val.c vm/gbytecode.c $(LDFLAGS) -g -o gvm
+	$(CC) -O3 $(CFLAGS) $(INC) test.c vm/gvm.c core/util.c adt/vector.c vm/val.c vm/gbytecode.c $(LDFLAGS) -g -o gvm
 
 # git undo (in case of emergency)
 gitUndo:
