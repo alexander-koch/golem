@@ -98,7 +98,7 @@ For comparison python is also used.
 | Class               | Description
 |---                  |---
 |class x              | creates a class with the top x elements
-|setfield             | pop value, stores it in a field of the class, increases the internal class field pointer
+|setfield x           | pop value, stores it in a field of the class
 |getfield x           | get value x in of the class fields
 
 # Method calling convention

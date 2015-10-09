@@ -7,7 +7,7 @@ INC := -I.
 # Add flags explained below for debugging features
 GFLAGS := #-DTRACE #-DNO_AST
 
-# Options:
+# GFLAGS / Options:
 # Disable:
 #   -DNO_AST     <-- Prints out the abstract syntax tree
 #   -DNO_IR	     <-- Prints out immediate representation (bytecode)
@@ -19,11 +19,11 @@ GFLAGS := #-DTRACE #-DNO_AST
 #   -DDB_VARS    <-- Debugs all variables by printing a message
 #   -DDB_EVAL    <-- Debugs every ast evaluation
 
+# C - compiler flags :: use c99
 CFLAGS := -std=c99 -Wall -Wno-unused-function -Wno-unused-parameter $(GFLAGS)
 
 # All files for the compiler
 FILES := main.c \
-		core/api.c \
 		core/util.c \
 		adt/queue.c \
 		adt/stack.c \
@@ -42,26 +42,33 @@ FILES := main.c \
 		lib/corelib.c \
 		lib/loadlib.c
 
+# Debugging version (default)
 debug:
 	$(CC) -O2 $(CFLAGS) $(INC) $(FILES) $(LDFLAGS) -g -o $(MODULE)
 
-libs:
-	make -C ./lib MAKEFLAGS=
-
-branch:
-	$(CC) -O3 $(CFLAGS) $(INC) test.c vm/gvm.c core/api.c core/util.c adt/vector.c vm/val.c vm/gbytecode.c $(LDFLAGS) -g -o gvm
-
+# Final release version
 release:
 	$(CC) -O3 $(CFLAGS) -DNO_IR -DNO_TIME -DNO_MEMINFO -DNO_AST $(INC) $(FILES) $(LDFLAGS) -o $(MODULE)
 
+# Experimental dll-library feature
+libs:
+	make -C ./lib MAKEFLAGS=
+
+# Experimental branch (gvm)
+branch:
+	$(CC) -O3 $(CFLAGS) $(INC) test.c vm/gvm.c core/api.c core/util.c adt/vector.c vm/val.c vm/gbytecode.c $(LDFLAGS) -g -o gvm
+
+# git undo (in case of emergency)
 gitUndo:
 	git reset --soft HEAD~1
 
+# Deprecated
 old:
 	$(CC) $(CFLAGS) $(INC) -c $(FILES)
 	$(CC) *.o $(LDFLAGS) -o $(MODULE)
 	rm *.o
 
+# Deprecated
 asm:
 	nasm -fwin64 out.asm
 	gcc out.obj

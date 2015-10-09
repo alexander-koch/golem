@@ -17,6 +17,4 @@ typedef uint64_t U64;
 typedef float F32;
 typedef double F64;
 
-void console(const char* format, ...);
-
 #endif

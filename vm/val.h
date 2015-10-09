@@ -40,17 +40,13 @@
 
 typedef uint64_t val_t;
 
-// Special subtypes
-typedef struct obj_array_t
-{
-	void** data;
-	size_t sz;
-} obj_array_t;
+// TODO: Make this dynamic
+#define CLASS_FIELDS_SIZE 128
 
+// Class subtype
 typedef struct obj_class_t
 {
-	val_t fields[128];
-	size_t fp;
+	val_t fields[CLASS_FIELDS_SIZE];
 } obj_class_t;
 
 // Object types
@@ -74,7 +70,9 @@ typedef struct obj_t
 obj_t* obj_new();
 obj_t* obj_string_const_new(const char* str);
 obj_t* obj_string_new(char* str);
-obj_t* obj_array_new(void** data, size_t length);
+obj_t* obj_string_nocopy_new(char* str);
+obj_t* obj_array_new(val_t* data, size_t length);
+obj_t* obj_class_new();
 void obj_free(obj_t* obj);
 
 #define AS_STRING(obj) (char*)(obj->data)
@@ -120,6 +118,7 @@ void obj_free(obj_t* obj);
 #define BOOL_VAL(b) (val_t)(b ? TRUE_VAL : FALSE_VAL)
 #define NUM_VAL(num) (val_t)(val_of_double(num))
 #define OBJ_VAL(obj) (val_t)(SIGN_BIT | QNAN | (uint64_t)(uintptr_t)(obj))
+#define STR_VAL(p) (val_t)(OBJ_VAL(obj_string_const_new(p)))
 
 double val_to_double(val_t value);
 val_t val_of_double(double num);

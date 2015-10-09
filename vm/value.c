@@ -226,58 +226,58 @@ void value_print(value_t* value)
 		{
 			case VALUE_BOOL:
 			{
-				console("%s", value->v.i ? "true" : "false");
+				printf("%s", value->v.i ? "true" : "false");
 				break;
 			}
 			case VALUE_INT:
 			{
-				console("%d", value->v.i);
+				printf("%d", value->v.i);
 				break;
 			}
 			case VALUE_FLOAT:
 			{
-				console("%f", value->v.f);
+				printf("%f", value->v.f);
 				break;
 			}
 			case VALUE_STRING:
 			{
-				console("%s", (char*)value->v.o);
+				printf("%s", (char*)value->v.o);
 				break;
 			}
 			case VALUE_CHAR:
 			{
-				console("%c", value->v.c);
+				printf("%c", value->v.c);
 				break;
 			}
 			case VALUE_ARRAY:
 			{
 				array_t* arr = value_array(value);
-				console("[");
+				putchar('[');
 				for(int i = 0; i < arr->size; i++)
 				{
 					value_t* idx = arr->data[i];
 					value_print(idx);
-					if(i < arr->size-1) console(", ");
+					if(i < arr->size-1) printf(", ");
 				}
-				console("]");
+				putchar(']');
 				break;
 			}
 			case VALUE_CLASS:
 			{
 				class_t* cls = value_class(value);
-				console("class: <");
+				printf("class: <");
 				for(int i = 0; i < vector_size(cls->fields); i++)
 				{
 					value_t* v = vector_get(cls->fields, i);
 					value_print(v);
-					if(i < vector_size(cls->fields)-1) console(", ");
+					if(i < vector_size(cls->fields)-1) printf(", ");
 				}
-				console(">");
+				putchar('>');
 				break;
 			}
 			case VALUE_NULL:
 			{
-				console("null");
+				printf("null");
 				break;
 			}
 			default: break;

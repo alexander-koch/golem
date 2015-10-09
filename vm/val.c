@@ -52,31 +52,49 @@ obj_t* obj_string_new(char* str)
 	return obj;
 }
 
-obj_t* obj_array_new(void** data, size_t length)
+obj_t* obj_string_nocopy_new(char* str)
 {
-    // TODO: implement
+    obj_t* obj = obj_new();
+    obj->type = OBJ_STRING;
+    obj->data = str;
+    return obj;
+}
+
+obj_t* obj_array_new(val_t* data, size_t length)
+{
     obj_t* obj = obj_new();
     obj->type = OBJ_ARRAY;
-    obj->data = 0; // handle array here
+    obj->data = data;
+    return obj;
+}
+
+obj_t* obj_class_new()
+{
+    obj_t* obj = obj_new();
+    obj->type = OBJ_CLASS;
+
+    obj_class_t* cls = malloc(sizeof(*cls));
+    val_t nil = NULL_VAL;
+    memset(cls->fields, nil, sizeof(val_t) * CLASS_FIELDS_SIZE);
+
+    obj->data = cls;
     return obj;
 }
 
 void obj_free(obj_t* obj)
 {
-	if(obj->type == OBJ_STRING)
-	{
-		free(obj->data);
-	}
-    else if(obj->type == OBJ_ARRAY)
+    switch(obj->type)
     {
-        // TODO
-        free(obj->data);
+        case OBJ_STRING:
+        case OBJ_ARRAY:
+        case OBJ_CLASS:
+        {
+            free(obj->data);
+            break;
+        }
+        default: break;
     }
-	else
-	{
-		// TODO
-	}
-	free(obj);
+    free(obj);
 }
 
 void val_free(val_t v1)
@@ -110,7 +128,12 @@ void val_print(val_t v1)
             }
             case OBJ_ARRAY:
             {
-                printf("array");
+                printf("array<%x>", (unsigned int)v1);
+                break;
+            }
+            case OBJ_CLASS:
+            {
+                printf("class<%x>", (unsigned int)v1);
                 break;
             }
             default: break;

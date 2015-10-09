@@ -81,7 +81,7 @@ void gc(vm_t* vm)
 {
 // Garbage day!
 #ifdef TRACE
-	console("Collecting garbage...\n");
+	printf("Collecting garbage...\n");
 #endif
 
 	markAll(vm);
@@ -143,23 +143,23 @@ instruction_t* vm_fetch(vm_t* vm, vector_t* buffer)
 void vm_print_code(vm_t* vm, vector_t* buffer)
 {
 	vm->pc = 0;
-	console("\nImmediate code:\n");
+	printf("\nImmediate code:\n");
 
 	instruction_t* instr = vm_fetch(vm, buffer);
 	while(instr->op != OP_HLT)
 	{
-		console("  %.2d: %s", vm->pc, op2str(instr->op));
+		printf("  %.2d: %s", vm->pc, op2str(instr->op));
 		if(instr->v1)
 		{
-			console(", ");
+			printf(", ");
 			value_print(instr->v1);
 		}
 		if(instr->v2)
 		{
-			console(", ");
+			printf(", ");
 			value_print(instr->v2);
 		}
-		console("\n");
+		putchar('\n');
 
 		vm->pc++;
 		instr = vm_fetch(vm, buffer);
@@ -183,18 +183,18 @@ void reserve(vm_t* vm, size_t args)
 void vm_process(vm_t* vm, instruction_t* instr)
 {
 #ifdef TRACE
-	console("  %.2d (SP:%.2d, FP:%.2d): %s", vm->pc, vm->sp, vm->fp, op2str(instr->op));
+	printf("  %.2d (SP:%.2d, FP:%.2d): %s", vm->pc, vm->sp, vm->fp, op2str(instr->op));
 	if(instr->v1)
 	{
-		console(", ");
+		printf(", ");
 		value_print(instr->v1);
 	}
 	if(instr->v2)
 	{
-		console(", ");
+		printf(", ");
 		value_print(instr->v2);
 	}
-	console(" => STACK [");
+	printf(" => STACK [");
 	// int begin = vm->sp - 5;
 	// if(begin < 0) begin = 0;
 
@@ -202,10 +202,10 @@ void vm_process(vm_t* vm, instruction_t* instr)
 	{
 		if(vm->stack[i]) {
 			value_print(vm->stack[i]);
-			if(i < vm->sp-1) console(", ");
+			if(i < vm->sp-1) printf(", ");
 		}
 	}
-	console("]\n");
+	printf("]\n");
 #endif
 
 	switch(instr->op)
@@ -962,7 +962,7 @@ void vm_run(vm_t* vm, vector_t* buffer)
 #ifndef NO_IR
 	// Print out bytecodes
 	vm_print_code(vm, buffer);
-	console("\nExecution:\n");
+	printf("\nExecution:\n");
 #endif
 
 	// Run
@@ -979,7 +979,7 @@ void vm_run(vm_t* vm, vector_t* buffer)
 #ifndef NO_TIME
 	clock_t end = clock();
 	double elapsed = (double)(end - begin) / CLOCKS_PER_SEC;
-	console("Elapsed time: %.5f (sec)\n", elapsed);
+	printf("Elapsed time: %.5f (sec)\n", elapsed);
 #endif
 #endif
 

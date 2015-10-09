@@ -18,12 +18,12 @@ void compiler_throw(compiler_t* compiler, ast_t* node, const char* format, ...)
 {
 	compiler->error = true;
     location_t loc = node->location;
-    fprintf(stdout, "%s:%d:%d (Semantic): ", compiler->parser->name, loc.line, loc.column);
+    printf("%s:%d:%d (Semantic): ", compiler->parser->name, loc.line, loc.column);
     va_list argptr;
     va_start(argptr, format);
     vfprintf(stdout, format, argptr);
     va_end(argptr);
-    fprintf(stdout, "\n");
+    putchar('\n');
 }
 
 // Compiler.dump(node)
@@ -33,8 +33,8 @@ void compiler_dump(ast_t* node, int level)
 {
 	if(!node) return;
 
-	if(level > 0) console("  ");
-	for(int i = 0; i < level; i++) console("#");
+	if(level > 0) printf("  ");
+	for(int i = 0; i < level; i++) putchar('#');
 
 	switch(node->class)
 	{
@@ -45,39 +45,39 @@ void compiler_dump(ast_t* node, int level)
 			{
 				ast_t* next = list_iterator_next(iter);
 				compiler_dump(next, level+1);
-				fprintf(stdout, "\n");
+				putchar('\n');
 			}
 			list_iterator_free(iter);
 			break;
 		}
 		case AST_ANNOTATION:
 		{
-			fprintf(stdout, ":annotation<%d>", (int)node->annotation);
+			printf(":annotation<%d>", (int)node->annotation);
 			break;
 		}
 		case AST_DECLVAR:
 		{
-			fprintf(stdout, ":decl %s->%s<", node->vardecl.name, datatype2str(node->vardecl.type));
+			printf(":decl %s->%s<", node->vardecl.name, datatype2str(node->vardecl.type));
 			compiler_dump(node->vardecl.initializer, 0);
-			fprintf(stdout, ">");
+			putchar('>');
 			break;
 		}
 		case AST_DECLFUNC:
 		{
-			fprintf(stdout, ":func<%s::(", node->funcdecl.name);
+			printf(":func<%s::(", node->funcdecl.name);
 
 			list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.formals);
 			while(!list_iterator_end(iter))
 			{
 				ast_t* param = list_iterator_next(iter);
-				fprintf(stdout, "%s: %s->%lu", param->vardecl.name, datatype2str(param->vardecl.type), param->vardecl.type.id);
+				printf("%s: %s->%lu", param->vardecl.name, datatype2str(param->vardecl.type), param->vardecl.type.id);
 
 				if(!list_iterator_end(iter))
 				{
-					fprintf(stdout, ", ");
+					printf(", ");
 				}
 			}
-			fprintf(stdout, ") => ret: %s->%lu>\n", datatype2str(node->funcdecl.rettype),node->funcdecl.rettype.id);
+			printf(") => ret: %s->%lu>\n", datatype2str(node->funcdecl.rettype),node->funcdecl.rettype.id);
 
 			list_iterator_free(iter);
 			iter = list_iterator_create(node->funcdecl.impl.body);
@@ -85,74 +85,74 @@ void compiler_dump(ast_t* node, int level)
 			{
 				ast_t* next = list_iterator_next(iter);
 				compiler_dump(next, level+1);
-				fprintf(stdout, "\n");
+				putchar('\n');
 			}
 			list_iterator_free(iter);
 			break;
 		}
 		case AST_IDENT:
 		{
-			fprintf(stdout, ":ident = %s", node->ident);
+			printf(":ident = %s", node->ident);
 			break;
 		}
 		case AST_FLOAT:
 		{
-			fprintf(stdout, ":num = %f", node->f);
+			printf(":num = %f", node->f);
 			break;
 		}
 		case AST_INT:
 		{
-			fprintf(stdout, ":num = %li", (long int)node->i);
+			printf(":num = %li", (long int)node->i);
 			break;
 		}
 		case AST_STRING:
 		{
-			fprintf(stdout, ":str = '%s'", node->string);
+			printf(":str = '%s'", node->string);
 			break;
 		}
 		case AST_CHAR:
 		{
-			fprintf(stdout, ":char = '%c'", node->ch);
+			printf(":char = '%c'", node->ch);
 			break;
 		}
 		case AST_BOOL:
 		{
-			fprintf(stdout, ":bool = '%s'", node->b == true ? "true" : "false");
+			printf(":bool = '%s'", node->b == true ? "true" : "false");
 			break;
 		}
 		case AST_BINARY:
 		{
-			fprintf(stdout, ":bin<");
+			printf(":bin<");
 			compiler_dump(node->binary.left, 0);
 			compiler_dump(node->binary.right, 0);
-			fprintf(stdout, ":op = %s>", tok2str(node->binary.op));
+			printf(":op = %s>", tok2str(node->binary.op));
 			break;
 		}
 		case AST_UNARY:
 		{
-			fprintf(stdout, ":unary<%s, ", tok2str(node->unary.op));
+			printf(":unary<%s, ", tok2str(node->unary.op));
 			compiler_dump(node->unary.expr, 0);
-			fprintf(stdout, ">");
+			putchar('>');
 			break;
 		}
 		case AST_SUBSCRIPT:
 		{
-			fprintf(stdout, ":subscript<(key)");
+			printf(":subscript<(key)");
 			compiler_dump(node->subscript.key, 0);
-			fprintf(stdout, "; (expr)");
+			printf("; (expr)");
 			compiler_dump(node->subscript.expr, 0);
-			fprintf(stdout, ">");
+			putchar('>');
 			break;
 		}
 		case AST_IF:
 		{
-			fprintf(stdout, ":if<>\n");
+			printf(":if<>\n");
 			list_iterator_t* iter = list_iterator_create(node->ifstmt);
 			while(!list_iterator_end(iter))
 			{
 				ast_t* next = list_iterator_next(iter);
 				compiler_dump(next, level+1);
-				fprintf(stdout, "\n");
+				putchar('\n');
 			}
 			list_iterator_free(iter);
 			break;
@@ -161,24 +161,24 @@ void compiler_dump(ast_t* node, int level)
 		{
 			if(node->ifclause.cond != 0)
 			{
-				fprintf(stdout, ":ifclause<");
+				printf(":ifclause<");
 				compiler_dump(node->ifclause.cond, 0);
-				fprintf(stdout, ">");
+				putchar('>');
 			}
 			else
 			{
-				fprintf(stdout, ":else<>");
+				printf(":else<>");
 			}
 
 			if(list_size(node->ifclause.body) > 0)
 			{
-				fprintf(stdout, "\n");
+				putchar('\n');
 				list_iterator_t* iter = list_iterator_create(node->ifclause.body);
 				while(!list_iterator_end(iter))
 				{
 					ast_t* next = list_iterator_next(iter);
 					compiler_dump(next, level+1);
-					fprintf(stdout, "\n");
+					putchar('\n');
 				}
 				list_iterator_free(iter);
 			}
@@ -186,28 +186,28 @@ void compiler_dump(ast_t* node, int level)
 		}
 		case AST_WHILE:
 		{
-			fprintf(stdout, ":while<");
+			printf(":while<");
 			compiler_dump(node->whilestmt.cond, 0);
-			fprintf(stdout, ">\n");
+			printf(">\n");
 
 			list_iterator_t* iter = list_iterator_create(node->whilestmt.body);
 			while(!list_iterator_end(iter))
 			{
 				ast_t* next = list_iterator_next(iter);
 				compiler_dump(next, level+1);
-				fprintf(stdout, "\n");
+				putchar('\n');
 			}
 			list_iterator_free(iter);
 			break;
 		}
 		case AST_IMPORT:
 		{
-			fprintf(stdout, ":import<%s>", node->import);
+			printf(":import<%s>", node->import);
 			break;
 		}
 		case AST_ARRAY:
 		{
-			fprintf(stdout, ":array<");
+			printf(":array<");
 
 			list_iterator_t* iter = list_iterator_create(node->array.elements);
 			while(!list_iterator_end(iter))
@@ -215,19 +215,19 @@ void compiler_dump(ast_t* node, int level)
 				compiler_dump(list_iterator_next(iter), 0);
 			}
 			list_iterator_free(iter);
-			fprintf(stdout, ">");
+			putchar('>');
 			break;
 		}
 		case AST_CLASS:
 		{
-			fprintf(stdout, ":class<%s->%lu>\n", node->classstmt.name, djb2((unsigned char*)node->classstmt.name));
+			printf(":class<%s->%lu>\n", node->classstmt.name, djb2((unsigned char*)node->classstmt.name));
 
 			list_iterator_t* iter = list_iterator_create(node->classstmt.formals);
 			while(!list_iterator_end(iter))
 			{
 				ast_t* next = list_iterator_next(iter);
 				compiler_dump(next, level+1);
-				fprintf(stdout, "\n");
+				putchar('\n');
 			}
 			list_iterator_free(iter);
 
@@ -236,21 +236,21 @@ void compiler_dump(ast_t* node, int level)
 			{
 				ast_t* next = list_iterator_next(iter);
 				compiler_dump(next, level+1);
-				fprintf(stdout, "\n");
+				putchar('\n');
 			}
 			list_iterator_free(iter);
 			break;
 		}
 		case AST_RETURN:
 		{
-			fprintf(stdout, ":return<");
+			printf(":return<");
 			compiler_dump(node->returnstmt, 0);
-			fprintf(stdout, ">");
+			putchar('>');
 			break;
 		}
 		case AST_CALL:
 		{
-			fprintf(stdout, ":call<");
+			printf(":call<");
 			compiler_dump(node->call.callee, 0);
 
 			/*list_iterator_t* iter = list_iterator_create(node->call.args);
@@ -260,7 +260,7 @@ void compiler_dump(ast_t* node, int level)
 				compiler_dump(next, level);
 			}
 			list_iterator_free(iter);*/
-			fprintf(stdout, ">");
+			putchar('>');
 			break;
 		}
 		default: break;
@@ -624,7 +624,7 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 
 	// Debug variables if flag is set
 #ifdef DB_VARS
-	console("Created %s variable '%s' of data type <%s>\n", node->vardecl.mutate ? "mutable" : "immutable", node->vardecl.name, datatype2str(vartype));
+	printf("Created %s variable '%s' of data type <%s>\n", node->vardecl.mutate ? "mutable" : "immutable", node->vardecl.name, datatype2str(vartype));
 #endif
 	return datatype_new(DATA_NULL);
 }
@@ -2095,9 +2095,9 @@ datatype_t eval_import(compiler_t* compiler, ast_t* node)
 			compiler->parser = subparser;
 
 #ifndef NO_AST
-			console("Abstract syntax tree '%s':\n", compiler->parser->name);
+			printf("Abstract syntax tree '%s':\n", compiler->parser->name);
 			compiler_dump(root, 0);
-			console("\n");
+			putchar('\n');
 #endif
 
 			// Evaluate and swap back
@@ -2177,7 +2177,7 @@ datatype_t compiler_eval(compiler_t* compiler, ast_t* node)
 	if(compiler->error) return datatype_new(DATA_NULL);
 
 #ifdef DB_EVAL
-	console("Evaluating: %s\n", ast_classname(node->class));
+	printf("Evaluating: %s\n", ast_classname(node->class));
 #endif
 
 	switch(node->class)
@@ -2230,9 +2230,9 @@ vector_t* compile_buffer(compiler_t* compiler, const char* source, const char* n
 	if(root)
 	{
 #ifndef NO_AST
-		console("Abstract syntax tree '%s':\n", compiler->parser->name);
+		printf("Abstract syntax tree '%s':\n", compiler->parser->name);
 		compiler_dump(root, 0);
-		console("\n");
+		putchar('\n');
 #endif
 		compiler_eval(compiler, root);
 		emit_op(compiler->buffer, OP_HLT);

@@ -32,7 +32,8 @@ void mark(val_t v)
 	if(IS_OBJ(v))
 	{
 		obj_t* obj = AS_OBJ(v);
-		if(!obj->marked) {
+		if(!obj->marked)
+		{
 			obj->marked = 1;
 		}
 	}
@@ -75,7 +76,7 @@ void gc(vm_t* vm)
 {
 // Garbage day!
 #ifdef TRACE
-	console("Collecting garbage...\n");
+	printf("Collecting garbage...\n");
 #endif
 
 	markAll(vm);
@@ -443,6 +444,43 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			break;
 		}
 
+		// Array operators
+		case OP_STR:
+		{
+			size_t elsz = AS_NUM(instr->v1);
+			char *str = malloc(sizeof(char) * (elsz+1));
+
+			for(int i = elsz; i > 0; i--)
+			{
+				val_t val = vm->stack[vm->sp - i];
+				str[elsz - i] = (char)AS_NUM(val);
+				vm->stack[vm->sp - i] = 0;
+			}
+			vm->sp -= elsz;
+			str[elsz] = '\0';
+			obj_t* obj = obj_string_nocopy_new(str);
+			push(vm, OBJ_VAL(obj));
+			break;
+		}
+
+		// Array is still testificate
+		case OP_ARR:
+		{
+			// Reverse list sorting
+			size_t elsz = AS_NUM(instr->v1);
+			val_t* arr = malloc(sizeof(val_t) * elsz);
+			for(int i = elsz; i > 0; i--)
+			{
+				val_t val = vm->stack[vm->sp - i];
+				arr[elsz - i] = val;
+				vm->stack[vm->sp - i] = 0;
+			}
+			vm->sp -= elsz;
+			obj_t* obj = obj_array_new(arr, elsz);
+			push(vm, OBJ_VAL(obj));
+			break;
+		}
+
 
 		// Missing
 		// TODO: Convert IADD and FADD to ADD
@@ -540,6 +578,38 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			push(vm, BOOL_VAL(v1 < v2));
 			break;
 		}
+
+		// Class
+		case OP_CLASS:
+		{
+			obj_t* obj = obj_class_new();
+			push(vm, OBJ_VAL(obj));
+			break;
+		}
+		case OP_SETFIELD:
+		{
+			int index = AS_NUM(instr->v1);
+			val_t val = pop(vm);
+			val_t class = pop(vm);
+
+			obj_class_t* cls = (obj_class_t*)((obj_t*)AS_OBJ(class))->data;
+			cls->fields[index] = val;
+
+			push(vm, class);
+			break;
+		}
+		case OP_GETFIELD:
+		{
+			int index = AS_NUM(instr->v1);
+			val_t class = pop(vm);
+
+			obj_class_t* cls = (obj_class_t*)((obj_t*)AS_OBJ(class))->data;
+			val_t val = cls->fields[index];
+
+			push(vm, val);
+			break;
+		}
+
 		default:
 		{
 			printf("Uknown operator encountered\n");
