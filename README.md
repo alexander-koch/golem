@@ -27,7 +27,6 @@ A programming language written in C.
 
 ##### Tasks
 
-- [ ] (Advanced) Use NaN-Tagging and increase vm performance (Needs four seconds for fib.golem) => (Working on it.)
 - [ ] (Advanced) Bytecode optimizations => (Working on it.)
 - [ ] (Intermediate) Implement computed gotos to gain 15%-20% more speed => (Working on it.)
 - [ ] (Intermediate) More operators for each 'class', to get productive with the code => (Working on it.)
@@ -45,6 +44,8 @@ A programming language written in C.
 
 ##### Done
 
+- [x] (Intermediate) Final fixes for arrays (NaN-Tagging) => (Done.)
+- [x] (Advanced) Use NaN-Tagging and increase vm performance => (Done.)
 - [x] (Intermediate) Create a annotation system => (Done.)
 - [x] Move import to compiler side for individual errors => (Done.)
 - [x] Import other files for bigger projects => (Done.)

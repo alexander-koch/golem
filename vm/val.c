@@ -34,7 +34,21 @@ val_t val_copy(val_t val)
         switch(obj->type)
         {
             case OBJ_STRING: return STRING_VAL(obj->data);
-            // TODO: more options
+            case OBJ_ARRAY:
+            {
+                obj_array_t* old = obj->data;
+
+                // Create a new array
+                val_t* arr = malloc(sizeof(val_t) * old->len);
+                for(size_t i = 0; i < old->len; i++)
+                {
+                    arr[i] = val_copy(old->data[i]);
+                }
+
+                // Create the corresponding object
+                obj_t* newArr = obj_array_new(arr, old->len);
+                return OBJ_VAL(newArr);
+            }
             default: return val;
         }
     }
@@ -162,7 +176,14 @@ void val_print(val_t v1)
             }
             case OBJ_ARRAY:
             {
-                printf("array<%x>", (unsigned int)v1);
+                obj_array_t* arr = obj->data;
+                putchar('[');
+                for(size_t i = 0; i < arr->len; i++)
+                {
+                    val_print(arr->data[i]);
+                    if(i < arr->len-1) printf(", ");
+                }
+                putchar(']');
                 break;
             }
             case OBJ_CLASS:

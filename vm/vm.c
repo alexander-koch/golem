@@ -691,7 +691,8 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			{
 				obj_array_t* arr = AS_ARRAY(obj);
 				int idx = AS_NUM(key);
-				push(vm, arr->data[idx]);
+				val_t element = COPY_VAL(arr->data[idx]);
+				vm_register(vm, element);
 			}
 			break;
 		}
@@ -708,27 +709,20 @@ void vm_process(vm_t* vm, instruction_t* instr)
 
 			if(IS_STRING(obj))
 			{
+				obj = COPY_VAL(obj);
 				char* data = AS_STRING(obj);
 				int idx = AS_NUM(key);
 				data[idx] = (char)AS_NUM(val);
-
-				vm_register(vm, STRING_VAL(data));
+				vm_register(vm, obj);
 			}
 			else
 			{
-				/*obj_array_t* arr = AS_ARRAY(obj);
-				int idex = AS_NUM(key);
-
-				value_t* newArr = value_copy(object);
-				array_t* newArrData = value_array(newArr);
-
-				int idx = value_int(key);
-				value_free(newArrData->data[idx]);
-				newArrData->data[idx] = value_copy(val);
-
-				push(vm, newArr);*/
-
-				// TODO: array handling
+				obj = COPY_VAL(obj);
+				obj_array_t* arr = AS_ARRAY(obj);
+				int idx = AS_NUM(key);
+				val_free(arr->data[idx]);
+				arr->data[idx] = val;
+				vm_register(vm, obj);
 			}
 			break;
 		}
@@ -768,7 +762,58 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			}
 			else
 			{
+				obj = COPY_VAL(obj);
+
+				obj_array_t* arr = AS_ARRAY(obj);
+				arr->len += 1;
+				size_t allocSz = sizeof(val_t) * arr->len;
+
+				arr->data = arr->len == 1 ? malloc(allocSz) : realloc(arr->data, allocSz);
+				arr->data[arr->len-1] = val;
+				vm_register(vm, obj);
+			}
+			break;
+		}
+		case OP_APPEND:
+		{
+			val_t val = pop(vm);
+			val_t obj = pop(vm);
+
+			if(IS_STRING(obj))
+			{
+				char* str1 = AS_STRING(obj);
+				char* str2 = AS_STRING(val);
+				size_t len = strlen(str1) + strlen(str2) + 1;
+				char* data = malloc(sizeof(char) * len);
+				data[0] = '\0';
+				strcat(data, str1);
+				strcat(data, str2);
+
+				obj_t* obj_ptr = obj_string_nocopy_new(data);
+				vm_register(vm, OBJ_VAL(obj_ptr));
+			}
+			else
+			{
 				// TODO: array handling
+
+				obj_array_t* arr1 = AS_ARRAY(obj);
+				obj_array_t* arr2 = AS_ARRAY(val);
+
+				size_t len = arr1->len + arr2->len;
+				val_t* arr3 = malloc(sizeof(val_t) * len);
+
+				size_t i;
+				for(i = 0; i < arr1->len; i++)
+				{
+					arr3[i] = val_copy(arr1->data[i]);
+				}
+				for(i = 0; i < arr2->len; i++)
+				{
+					arr3[i+arr1->len] = val_copy(arr2->data[i]);
+				}
+
+				obj_t* newObj = obj_array_new(arr3, len);
+				vm_register(vm, OBJ_VAL(newObj));
 			}
 			break;
 		}
@@ -804,8 +849,9 @@ void vm_process(vm_t* vm, instruction_t* instr)
 
 			obj_class_t* cls = AS_CLASS(class);
 			val_t val = cls->fields[index];
+			val = COPY_VAL(val);
 
-			push(vm, val);
+			vm_register(vm, val);
 			break;
 		}
 

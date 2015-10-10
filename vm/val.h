@@ -131,7 +131,7 @@ void obj_free(obj_t* obj);
 #define OBJ_VAL(obj) (val_t)(SIGN_BIT | QNAN | (uint64_t)(uintptr_t)(obj))
 #define STRING_CONST_VAL(p) (val_t)(OBJ_VAL(obj_string_const_new(p)))
 #define STRING_VAL(p) (val_t)(OBJ_VAL(obj_string_new(p)))
-
+#define STRING_NOCOPY_VAL(p) (val_t)(OBJ_VAL(obj_string_nocopy_new(p)))
 
 #define COPY_VAL(p) (val_copy(p))
 
