@@ -41,7 +41,7 @@
 typedef uint64_t val_t;
 
 // TODO: Make this dynamic
-#define CLASS_FIELDS_SIZE 128
+#define CLASS_FIELDS_SIZE 64
 
 // Class subtype
 typedef struct obj_class_t
@@ -113,6 +113,7 @@ void obj_free(obj_t* obj);
 
 #define IS_STRING(value) (IS_OBJ(value) && ((obj_t*)AS_OBJ(value))->type == OBJ_STRING)
 #define IS_ARRAY(value) (IS_OBJ(value) && ((obj_t*)AS_OBJ(value))->type == OBJ_ARRAY)
+#define IS_CLASS(value) (IS_OBJ(value) && ((obj_t*)AS_OBJ(value))->type == OBJ_CLASS)
 
 // Interpreting
 
@@ -120,7 +121,8 @@ void obj_free(obj_t* obj);
 #define AS_NUM(value) (val_to_double(value))
 #define AS_OBJ(value) ((obj_t*)(uintptr_t)((value) & ~(SIGN_BIT | QNAN)))
 #define AS_STRING(value) ((char*)(((obj_t*)AS_OBJ(value))->data))
-#define AS_ARRAY(value)  ((obj_array_t*)((obj_t*)AS_OBJ(value)))
+#define AS_ARRAY(value) ((obj_array_t*)(((obj_t*)AS_OBJ(value))->data))
+#define AS_CLASS(value) ((obj_class_t*)(((obj_t*)AS_OBJ(value))->data))
 
 // Converting
 
@@ -130,9 +132,13 @@ void obj_free(obj_t* obj);
 #define STRING_CONST_VAL(p) (val_t)(OBJ_VAL(obj_string_const_new(p)))
 #define STRING_VAL(p) (val_t)(OBJ_VAL(obj_string_new(p)))
 
+
+#define COPY_VAL(p) (val_copy(p))
+
 double val_to_double(val_t value);
 val_t val_of_double(double num);
 bool val_equal(val_t v1, val_t v2);
+val_t val_copy(val_t val);
 void val_free(val_t v1);
 void val_print(val_t v1);
 

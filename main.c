@@ -11,7 +11,7 @@
 #include <parser/parser.h>
 #include <vm/vm.h>
 #include <compiler/compiler.h>
-#include <compiler/bytecode_writer.h>
+//#include <compiler/bytecode_writer.h>
 
 void run_repl(vm_t* vm, compiler_t* compiler)
 {
@@ -58,10 +58,9 @@ int main(int argc, char** argv)
             vm_run(vm, buffer);
             compiler_clear(&compiler);
         }
-
         vm_free(vm);
     }
-    else if(argc == 3)
+    /*else if(argc == 3)
     {
         if(!strcmp(argv[1], "-c"))
         {
@@ -94,7 +93,7 @@ int main(int argc, char** argv)
         {
             printf("Flag: '%s' is invalid\n\n", argv[1]);
         }
-    }
+    }*/
     else
     {
         printf("Golem compiler\n");

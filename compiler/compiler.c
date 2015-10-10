@@ -472,7 +472,12 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	}
 
 	// Register a symbol for the function, save the bytecode address
+#ifdef FALLBACK
 	value_t* addr = emit_jmp(compiler->buffer, 0);
+#else
+	val_t* addr = emit_jmp(compiler->buffer, 0);
+#endif
+
 	int byte_address = vector_size(compiler->buffer);
 	symbol_t* fnSymbol = symbol_new(compiler, node, byte_address, datatype_new(DATA_LAMBDA));
 	hashmap_set(compiler->scope->symbols, node->funcdecl.name, fnSymbol);
@@ -551,7 +556,13 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 
 	// Set beginning jump address to end
 	byte_address = vector_size(compiler->buffer);
+
+#ifdef FALLBACK
 	value_set_int(addr, byte_address);
+#else
+	*addr = NUM_VAL(byte_address);
+#endif
+
 	return datatype_new(DATA_LAMBDA);
 }
 
@@ -1158,7 +1169,7 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
 	else
 	{
 		// Reserve some memory
-		insert_v1(compiler->buffer, OP_RESERVE, value_new_int(compiler->scope->address));
+		emit_reserve(compiler->buffer, compiler->scope->address);
 		emit_invoke(compiler->buffer, address, argc);
 	}
 
@@ -1554,7 +1565,7 @@ datatype_t eval_array(compiler_t* compiler, ast_t* node)
 	if(dt.type == DATA_CHAR)
 	{
 		// Merge this to a string
-		insert_v1(compiler->buffer, OP_STR, value_new_int(ls));
+		emit_string_merge(compiler->buffer, ls);
 		return datatype_new(DATA_STRING);
 	}
 
@@ -1562,7 +1573,7 @@ datatype_t eval_array(compiler_t* compiler, ast_t* node)
 	// | ...
 	// | OP_ARR, element size
 	// | STACK_TOP
-	insert_v1(compiler->buffer, OP_ARR, value_new_int(ls));
+	emit_array_merge(compiler->buffer, ls);
 	datatype_t ret = datatype_new(DATA_ARRAY | node->array.type.type);
 	ret.id = node->array.type.id;
 	return ret;
@@ -1604,7 +1615,12 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
 		ast_t* subnode = list_iterator_next(iter);
 
 		// Test if not an else-statement
+#ifdef FALLBACK
 		value_t* instr = 0;
+#else
+		val_t* instr = 0;
+#endif
+
 		if(subnode->ifclause.cond)
 		{
 			// Eval the condition and generate an if-false jump
@@ -1622,15 +1638,24 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
 		// Generate a jump to end
 		if(list_size(node->ifstmt) > 1 && subnode->ifclause.cond)
 		{
+#ifdef FALLBACK
 			value_t* pos = emit_jmp(compiler->buffer, 0);
 			list_push(jmps, pos);
+#else
+			val_t* pos = emit_jmp(compiler->buffer, 0);
+			list_push(jmps, pos);
+#endif
 		}
 
 		// If not an else statement
 		// Generate jump to next clause
 		if(subnode->ifclause.cond)
 		{
+#ifdef FALLBACK
 			instr->v.i = vector_size(compiler->buffer);
+#else
+			*instr = NUM_VAL(vector_size(compiler->buffer));
+#endif
 		}
 	}
 
@@ -1640,8 +1665,13 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
 	iter = list_iterator_create(jmps);
 	while(!list_iterator_end(iter))
 	{
+#ifdef FALLBACK
 		value_t* pos = list_iterator_next(iter);
 		pos->v.i = vector_size(compiler->buffer);
+#else
+		val_t* pos = list_iterator_next(iter);
+		*pos = NUM_VAL(vector_size(compiler->buffer));
+#endif
 	}
 	list_iterator_free(iter);
 	list_free(jmps);
@@ -1659,7 +1689,11 @@ datatype_t eval_while(compiler_t* compiler, ast_t* node)
 {
 	size_t start = vector_size(compiler->buffer);
 	compiler_eval(compiler, node->whilestmt.cond);
+#ifdef FALLBACK
 	value_t* instr = emit_jmpf(compiler->buffer, 0);
+#else
+	val_t* instr = emit_jmpf(compiler->buffer, 0);
+#endif
 
 	// Wrap into scope
 	//push_scope_virtual(compiler, node);
@@ -1667,7 +1701,13 @@ datatype_t eval_while(compiler_t* compiler, ast_t* node)
 	//pop_scope_virtual(compiler);
 
 	emit_jmp(compiler->buffer, start);
+
+#ifdef FALLBACK
 	value_set_int(instr, vector_size(compiler->buffer));
+#else
+	*instr = NUM_VAL(vector_size(compiler->buffer));
+#endif
+
 	return datatype_new(DATA_NULL);
 }
 
@@ -1839,7 +1879,12 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 	dt.id = id;
 
 	// Emit a jump, get the bytecode address
+#ifdef FALLBACK
 	value_t* addr = emit_jmp(compiler->buffer, 0);
+#else
+	val_t* addr = emit_jmp(compiler->buffer, 0);
+#endif
+
 	size_t byte_address = vector_size(compiler->buffer);
 
 	// Test if symbol exists
@@ -2063,7 +2108,13 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 
 	// Set the beggining byte address; end
 	byte_address = vector_size(compiler->buffer);
+
+#ifdef FALLBACK
 	value_set_int(addr, byte_address);
+#else
+	*addr = NUM_VAL(byte_address);
+#endif
+
 	return datatype_new(DATA_NULL);
 }
 
@@ -2306,8 +2357,8 @@ void compiler_clear(compiler_t* compiler)
 		for(size_t i = 0; i < vector_size(compiler->buffer); i++)
 		{
 			instruction_t* instr = vector_get(compiler->buffer, i);
-			if(instr->v1) value_free(instr->v1);
-			if(instr->v2) value_free(instr->v2);
+			if(instr->v1 != NULL_VAL) val_free(instr->v1);
+			if(instr->v2 != NULL_VAL) val_free(instr->v2);
 			free(instr);
 		}
 

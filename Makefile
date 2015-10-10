@@ -16,6 +16,7 @@ GFLAGS := #-DTRACE #-DNO_AST
 # 	-DNO_MEMINFO <-- Disables info on memory usage
 # Enable:
 #   -DTRACE 	 <-- While bytecode is executed, stack + instructions are printed
+#   -DTRACE_STEP <-- When TRACE is set, step through every instruction
 #   -DDB_VARS    <-- Debugs all variables by printing a message
 #   -DDB_EVAL    <-- Debugs every ast evaluation
 
@@ -35,8 +36,7 @@ FILES := main.c \
 		parser/parser.c \
 		compiler/compiler.c \
 		compiler/scope.c \
-		compiler/bytecode_writer.c \
-		vm/value.c \
+		vm/val.c \
 		vm/bytecode.c \
 		vm/vm.c \
 		lib/corelib.c \
@@ -55,8 +55,8 @@ libs:
 	make -C ./lib MAKEFLAGS=
 
 # Experimental branch (gvm)
-branch:
-	$(CC) -O3 $(CFLAGS) $(INC) test.c vm/gvm.c core/util.c adt/vector.c vm/val.c vm/gbytecode.c $(LDFLAGS) -g -o gvm
+#branch:
+#	$(CC) -O3 $(CFLAGS) $(INC) test.c vm/gvm.c core/util.c adt/vector.c vm/val.c vm/gbytecode.c $(LDFLAGS) -g -o gvm
 
 # git undo (in case of emergency)
 gitUndo:

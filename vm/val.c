@@ -26,6 +26,24 @@ bool val_equal(val_t v1, val_t v2)
 	return v1 == v2;
 }
 
+val_t val_copy(val_t val)
+{
+    if(IS_OBJ(val))
+    {
+        obj_t* obj = AS_OBJ(val);
+        switch(obj->type)
+        {
+            case OBJ_STRING: return STRING_VAL(obj->data);
+            // TODO: more options
+            default: return val;
+        }
+    }
+    else
+    {
+        return val;
+    }
+}
+
 obj_t* obj_new()
 {
 	obj_t* obj = malloc(sizeof(*obj));
@@ -79,8 +97,9 @@ obj_t* obj_class_new()
     obj->type = OBJ_CLASS;
 
     obj_class_t* cls = malloc(sizeof(*cls));
-    val_t nil = NULL_VAL;
-    memset(cls->fields, nil, sizeof(val_t) * CLASS_FIELDS_SIZE);
+    for(size_t i = 0; i < CLASS_FIELDS_SIZE; i++) {
+        cls->fields[i] = NULL_VAL;
+    }
 
     obj->data = cls;
     return obj;
@@ -98,6 +117,10 @@ void obj_free(obj_t* obj)
             break;
         }
         case OBJ_STRING:
+        {
+            free(obj->data);
+            break;
+        }
         case OBJ_CLASS:
         {
             free(obj->data);
@@ -113,7 +136,7 @@ void val_free(val_t v1)
 	if(IS_OBJ(v1))
 	{
 		obj_t* obj = AS_OBJ(v1);
-		obj_free(obj);
+		if(obj) obj_free(obj);
 	}
 }
 

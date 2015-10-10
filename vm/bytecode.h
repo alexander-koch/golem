@@ -5,7 +5,7 @@
 #include <lexis/lexer.h>
 #include <adt/vector.h>
 #include <parser/ast.h>
-#include <vm/value.h>
+#include <vm/val.h>
 
 typedef enum
 {
@@ -97,15 +97,15 @@ typedef enum
 typedef struct
 {
 	opcode_t op;
-	value_t* v1;
-	value_t* v2;
+	val_t v1;
+	val_t v2;
 } instruction_t;
 
 const char* op2str(opcode_t code);
 
 void insert(vector_t* buffer, opcode_t op);
-void insert_v1(vector_t* buffer, opcode_t op, value_t* v1);
-void insert_v2(vector_t* buffer, opcode_t op, value_t* v1, value_t* v2);
+void insert_v1(vector_t* buffer, opcode_t op, val_t v1);
+void insert_v2(vector_t* buffer, opcode_t op, val_t v1, val_t v2);
 
 void emit_bool(vector_t* buffer, bool b);
 void emit_int(vector_t* buffer, I64 v);
@@ -125,9 +125,11 @@ void emit_store_upval(vector_t* buffer, int depth, int address);
 void emit_class_setfield(vector_t* buffer, int address);
 void emit_class_getfield(vector_t* buffer, int address);
 void emit_lib_load(vector_t* buffer, char* name);
+void emit_reserve(vector_t* buffer, size_t sz);
+void emit_string_merge(vector_t* buffer, size_t sz);
+void emit_array_merge(vector_t* buffer, size_t sz);
 
-value_t* emit_jmp(vector_t* buffer, int address);
-value_t* emit_jmpf(vector_t* buffer, int address);
-
+val_t* emit_jmp(vector_t* buffer, int address);
+val_t* emit_jmpf(vector_t* buffer, int address);
 
 #endif

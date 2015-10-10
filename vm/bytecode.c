@@ -77,8 +77,8 @@ instruction_t* instruction_new(opcode_t op)
 {
 	instruction_t* ins = malloc(sizeof(*ins));
 	ins->op = op;
-	ins->v1 = 0;
-	ins->v2 = 0;
+	ins->v1 = NULL_VAL;
+	ins->v2 = NULL_VAL;
 	return ins;
 }
 
@@ -92,14 +92,14 @@ void insert(vector_t* buffer, opcode_t op)
 	push_ins(buffer, instruction_new(op));
 }
 
-void insert_v1(vector_t* buffer, opcode_t op, value_t* v1)
+void insert_v1(vector_t* buffer, opcode_t op, val_t v1)
 {
 	instruction_t* ins = instruction_new(op);
 	ins->v1 = v1;
 	push_ins(buffer, ins);
 }
 
-void insert_v2(vector_t* buffer, opcode_t op, value_t* v1, value_t* v2)
+void insert_v2(vector_t* buffer, opcode_t op, val_t v1, val_t v2)
 {
 	instruction_t* ins = instruction_new(op);
 	ins->v1 = v1;
@@ -111,31 +111,31 @@ void insert_v2(vector_t* buffer, opcode_t op, value_t* v1, value_t* v2)
 
 void emit_bool(vector_t* buffer, bool b)
 {
-	value_t* val = value_new_bool(b);
+	val_t val = BOOL_VAL(b);
 	insert_v1(buffer, OP_PUSH, val);
 }
 
 void emit_int(vector_t* buffer, I64 v)
 {
-	value_t* val = value_new_int(v);
+	val_t val = NUM_VAL(v);
 	insert_v1(buffer, OP_PUSH, val);
 }
 
 void emit_float(vector_t* buffer, F64 f)
 {
-	value_t* val = value_new_float(f);
-	insert_v1(buffer, OP_PUSH, val);
-}
-
-void emit_char(vector_t* buffer, char c)
-{
-	value_t* val = value_new_char(c);
+	val_t val = NUM_VAL(f);
 	insert_v1(buffer, OP_PUSH, val);
 }
 
 void emit_string(vector_t* buffer, char* str)
 {
-	value_t* val = value_new_string(str);
+	val_t val = STRING_VAL(str);
+	insert_v1(buffer, OP_PUSH, val);
+}
+
+void emit_char(vector_t* buffer, char c)
+{
+	val_t val = NUM_VAL(c);
 	insert_v1(buffer, OP_PUSH, val);
 }
 
@@ -223,15 +223,15 @@ bool emit_tok2op(vector_t* buffer, token_type_t tok, datatype_t type)
 
 void emit_syscall(vector_t* buffer, char* name, size_t args)
 {
-	value_t* v1 = value_new_string(name);
-	value_t* v2 = value_new_int(args);
+	val_t v1 = OBJ_VAL(obj_string_new(name));
+	val_t v2 = NUM_VAL(args);
 	insert_v2(buffer, OP_SYSCALL, v1, v2);
 }
 
 void emit_invoke(vector_t* buffer, size_t address, size_t args)
 {
-	value_t* v1 = value_new_int(address);
-	value_t* v2 = value_new_int(args);
+	val_t v1 = NUM_VAL(address);
+	val_t v2 = NUM_VAL(args);
 	insert_v2(buffer, OP_INVOKE, v1, v2);
 }
 
@@ -242,51 +242,68 @@ void emit_return(vector_t* buffer)
 
 void emit_store(vector_t* buffer, int address, bool global)
 {
-	value_t* val = value_new_int(address);
+	val_t val = NUM_VAL(address);
 	insert_v1(buffer, global? OP_GSTORE : OP_STORE, val);
 }
 
 void emit_load(vector_t* buffer, int address, bool global)
 {
-	value_t* val = value_new_int(address);
+	val_t val = NUM_VAL(address);
 	insert_v1(buffer, global? OP_GLOAD : OP_LOAD, val);
 }
 
 void emit_load_upval(vector_t* buffer, int depth, int address)
 {
-	insert_v2(buffer, OP_UPVAL, value_new_int(depth), value_new_int(address));
+	insert_v2(buffer, OP_UPVAL, NUM_VAL(depth), NUM_VAL(address));
 }
 
 void emit_store_upval(vector_t* buffer, int depth, int address)
 {
-	insert_v2(buffer, OP_UPSTORE, value_new_int(depth), value_new_int(address));
-}
-
-value_t* emit_jmp(vector_t* buffer, int address)
-{
-	value_t* val = value_new_int(address);
-	insert_v1(buffer, OP_JMP, val);
-	return val;
-}
-
-value_t* emit_jmpf(vector_t* buffer, int address)
-{
-	value_t* val = value_new_int(address);
-	insert_v1(buffer, OP_JMPF, val);
-	return val;
+	insert_v2(buffer, OP_UPSTORE, NUM_VAL(depth), NUM_VAL(address));
 }
 
 void emit_class_setfield(vector_t* buffer, int address)
 {
-	insert_v1(buffer, OP_SETFIELD, value_new_int(address));
+	insert_v1(buffer, OP_SETFIELD, NUM_VAL(address));
 }
 
 void emit_class_getfield(vector_t* buffer, int address)
 {
-	insert_v1(buffer, OP_GETFIELD, value_new_int(address));
+	insert_v1(buffer, OP_GETFIELD, NUM_VAL(address));
 }
 
 void emit_lib_load(vector_t* buffer, char* name)
 {
-	insert_v1(buffer, OP_LDLIB, value_new_string(name));
+	insert_v1(buffer, OP_LDLIB, OBJ_VAL(obj_string_new(name)));
+}
+
+void emit_reserve(vector_t* buffer, size_t sz)
+{
+	insert_v1(buffer, OP_RESERVE, NUM_VAL(sz));
+}
+
+void emit_string_merge(vector_t* buffer, size_t sz)
+{
+	insert_v1(buffer, OP_STR, NUM_VAL(sz));
+}
+
+void emit_array_merge(vector_t* buffer, size_t sz)
+{
+	insert_v1(buffer, OP_ARR, NUM_VAL(sz));
+}
+
+#define GEN_JMP_REF() (val_t*)&((instruction_t*)vector_top(buffer))->v1
+
+val_t* emit_jmp(vector_t* buffer, int address)
+{
+	val_t val = NUM_VAL(address);
+	insert_v1(buffer, OP_JMP, val);
+	return GEN_JMP_REF();
+}
+
+val_t* emit_jmpf(vector_t* buffer, int address)
+{
+	val_t val = NUM_VAL(address);
+	insert_v1(buffer, OP_JMPF, val);
+	return GEN_JMP_REF();
 }
