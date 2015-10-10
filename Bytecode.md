@@ -5,14 +5,17 @@ The following instructions are currently supported.
 
 # VM Benchmark / Speed
 
-Currently there are two implementations for the bytecode vm.
-One is optimized and uses NaN-Tagging (GVM).
-The following table demonstrates the speed.
-For comparison python is also used.
+The current vm uses a technique called NaN-Tagging or NaN-Boxing.
+It stores all values in a IEEE-754 64-bit float.
+Integers, double-floats, booleans, characters, etc. and pointers are mapped onto it.
+This greatly improves the speed and the memory usage.
 
-| Program | Basic VM  | GVM    | Python |
+The following table demonstrates the speed.
+For comparison the old vm implementation and python is used.
+
+| Program |  Old VM   | GVM    | Python |
 |---      |---        |---     |---     |
-| fib.gs  | ~4.95s    | ~1.08s | ~0.75s |
+| fib.gs  | ~4.95s    | ~1.08s | ~0.73s |
 
 # Bytecode Instruction Set
 

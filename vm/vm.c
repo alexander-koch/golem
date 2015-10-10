@@ -717,6 +717,9 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			}
 			else
 			{
+				// Copy the whole array
+				// Free the copied object at index
+				// Upload to vm
 				obj = COPY_VAL(obj);
 				obj_array_t* arr = AS_ARRAY(obj);
 				int idx = AS_NUM(key);
@@ -744,6 +747,7 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		}
 		case OP_CONS:
 		{
+			// Construct a new value on top
 			val_t val = pop(vm);
 			val_t obj = pop(vm);
 
@@ -762,12 +766,15 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			}
 			else
 			{
+				// Copy the whole array
 				obj = COPY_VAL(obj);
 
+				// Get the information
 				obj_array_t* arr = AS_ARRAY(obj);
 				arr->len += 1;
 				size_t allocSz = sizeof(val_t) * arr->len;
 
+				// Reallocate and assign its content
 				arr->data = arr->len == 1 ? malloc(allocSz) : realloc(arr->data, allocSz);
 				arr->data[arr->len-1] = val;
 				vm_register(vm, obj);
@@ -781,6 +788,7 @@ void vm_process(vm_t* vm, instruction_t* instr)
 
 			if(IS_STRING(obj))
 			{
+				// Simple string concatenation
 				char* str1 = AS_STRING(obj);
 				char* str2 = AS_STRING(val);
 				size_t len = strlen(str1) + strlen(str2) + 1;
@@ -794,7 +802,10 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			}
 			else
 			{
-				// TODO: array handling
+				// Get the two array
+				// Allocate a new val_t array
+				// Upload it into a obj_t form
+				// register it / push it to the stack
 
 				obj_array_t* arr1 = AS_ARRAY(obj);
 				obj_array_t* arr2 = AS_ARRAY(val);
@@ -844,12 +855,14 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		}
 		case OP_GETFIELD:
 		{
+			// Copy val to keep class internal value alive
+
 			int index = AS_NUM(instr->v1);
 			val_t class = pop(vm);
 
 			obj_class_t* cls = AS_CLASS(class);
 			val_t val = cls->fields[index];
-			val = COPY_VAL(val);
+			val = COPY_VAL(val); // <--
 
 			vm_register(vm, val);
 			break;
