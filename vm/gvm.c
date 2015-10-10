@@ -324,7 +324,7 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		case OP_SYSCALL:
 		{
 			// TODO: Improve
-			char* name = AS_STRING(AS_OBJ(instr->v1));
+			char* name = AS_STRING(instr->v1);
 
 			if(!strcmp(name, "print"))
 			{
@@ -486,6 +486,7 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		// TODO: Convert IADD and FADD to ADD
 		// There is no need for different operators for one internal type
 
+		case OP_FADD:
 		case OP_IADD:
 		{
 			double v2 = AS_NUM(pop(vm));
@@ -493,6 +494,7 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			push(vm, NUM_VAL(v1 + v2));
 			break;
 		}
+		case OP_FSUB:
 		case OP_ISUB:
 		{
 			double v2 = AS_NUM(pop(vm));
@@ -500,6 +502,7 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			push(vm, NUM_VAL(v1 - v2));
 			break;
 		}
+		case OP_FMUL:
 		case OP_IMUL:
 		{
 			double v2 = AS_NUM(pop(vm));
@@ -507,6 +510,7 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			push(vm, NUM_VAL(v1 * v2));
 			break;
 		}
+		case OP_FDIV:
 		case OP_IDIV:
 		{
 			double v2 = AS_NUM(pop(vm));
@@ -562,10 +566,45 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			push(vm, NUM_VAL(~v1));
 			break;
 		}
+		case OP_FMINUS:
 		case OP_IMINUS:
 		{
 			int v1 = AS_NUM(pop(vm));
 			push(vm, NUM_VAL(-v1));
+			break;
+		}
+
+		case OP_NOT:
+		{
+			bool b = AS_BOOL(pop(vm));
+			push(vm, BOOL_VAL(!b));
+			break;
+		}
+		case OP_BEQ:
+		{
+			bool b2 = AS_BOOL(pop(vm));
+			bool b1 = AS_BOOL(pop(vm));
+			push(vm, AS_BOOL(b1 == b2));
+			break;
+		}
+
+		case OP_CEQ:
+		case OP_FEQ:
+		case OP_IEQ:
+		{
+			double v2 = AS_NUM(pop(vm));
+			double v1 = AS_NUM(pop(vm));
+			push(vm, AS_BOOL(v1 == v2));
+			break;
+		}
+
+		case OP_CNE:
+		case OP_FNE:
+		case OP_INE:
+		{
+			double v2 = AS_NUM(pop(vm));
+			double v1 = AS_NUM(pop(vm));
+			push(vm, AS_BOOL(v1 != v2));
 			break;
 		}
 
@@ -578,8 +617,146 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			push(vm, BOOL_VAL(v1 < v2));
 			break;
 		}
+		case OP_GT:
+		{
+			double v2 = AS_NUM(pop(vm));
+			double v1 = AS_NUM(pop(vm));
+			push(vm, BOOL_VAL(v1 > v2));
+			break;
+		}
+		case OP_LE:
+		{
+			double v2 = AS_NUM(pop(vm));
+			double v1 = AS_NUM(pop(vm));
+			push(vm, BOOL_VAL(v1 <= v2));
+			break;
+		}
+		case OP_GE:
+		{
+			double v2 = AS_NUM(pop(vm));
+			double v1 = AS_NUM(pop(vm));
+			push(vm, BOOL_VAL(v1 >= v2));
+			break;
+		}
 
-		// Class
+		// Bool
+		case OP_BAND:
+		{
+			bool b2 = AS_BOOL(pop(vm));
+			bool b1 = AS_BOOL(pop(vm));
+			push(vm, AS_BOOL(b1 && b2));
+			break;
+		}
+		case OP_BOR:
+		{
+			bool b2 = AS_BOOL(pop(vm));
+			bool b1 = AS_BOOL(pop(vm));
+			push(vm, AS_BOOL(b1 || b2));
+			break;
+		}
+
+		// Array operators
+		case OP_GETSUB:
+		{
+			// Stack:
+			// | object |
+			// | key 	|
+			// | getsub |
+			val_t key = pop(vm);
+			val_t obj = pop(vm);
+
+			if(IS_STRING(obj))
+			{
+				char* str = AS_STRING(obj);
+				int idx = AS_NUM(key);
+				push(vm, AS_NUM(str[idx]));
+			}
+			else
+			{
+				obj_array_t* arr = AS_ARRAY(obj);
+				int idx = AS_NUM(key);
+				push(vm, arr->data[idx]);
+			}
+			break;
+		}
+		case OP_SETSUB:
+		{
+			// Stack:
+			// | value	|
+			// | object |
+			// | key 	|
+			// | setsub |
+			val_t key = pop(vm);
+			val_t obj = pop(vm);
+			val_t val = pop(vm);
+
+			if(IS_STRING(obj))
+			{
+				char* data = AS_STRING(obj);
+				int idx = AS_NUM(key);
+				data[idx] = (char)AS_NUM(val);
+				push(vm, STRING_VAL(data));
+			}
+			else
+			{
+				/*obj_array_t* arr = AS_ARRAY(obj);
+				int idex = AS_NUM(key);
+
+				value_t* newArr = value_copy(object);
+				array_t* newArrData = value_array(newArr);
+
+				int idx = value_int(key);
+				value_free(newArrData->data[idx]);
+				newArrData->data[idx] = value_copy(val);
+
+				push(vm, newArr);*/
+
+				// TODO: array handling
+			}
+			break;
+		}
+		case OP_LEN:
+		{
+			val_t obj = pop(vm);
+
+			if(IS_STRING(obj))
+			{
+				char* data = AS_STRING(obj);
+				push(vm, AS_NUM(strlen(data)-1));
+			}
+			else
+			{
+				obj_array_t* arr = AS_ARRAY(obj);
+				push(vm, NUM_VAL(arr->len));
+			}
+			break;
+		}
+		case OP_CONS:
+		{
+			val_t val = pop(vm);
+			val_t obj = pop(vm);
+
+			if(IS_STRING(obj))
+			{
+				char* str = AS_STRING(obj);
+				size_t len = strlen(str);
+				char c = AS_NUM(val);
+				char* newStr = malloc(sizeof(char) * (len+1));
+				strcpy(newStr, str);
+				newStr[len] = c;
+				newStr[len+1] = '\0';
+
+				obj_t* obj_ptr = obj_string_nocopy_new(newStr);
+				push(vm, OBJ_VAL(obj_ptr));
+			}
+			else
+			{
+				// TODO: array handling
+			}
+			break;
+		}
+
+		// Class operations
 		case OP_CLASS:
 		{
 			obj_t* obj = obj_class_new();
@@ -629,8 +806,10 @@ void vm_run(vm_t* vm, vector_t* buffer)
 	vm->fp = 0;
 	vm->reserve = 0;
 	vm->running = true;
-	//memset(vm->stack, NULL_VAL, sizeof(val_t) * STACK_SIZE);
-	//memset(vm->locals, NULL_VAL, sizeof(val_t) * LOCALS_SIZE);
+
+	//val_t nil = NULL_VAL;
+	//memset(vm->stack, nil, sizeof(val_t) * STACK_SIZE);
+	//memset(vm->locals, nil, sizeof(val_t) * LOCALS_SIZE);
 
 #ifndef NO_IR
 	// Print out bytecodes

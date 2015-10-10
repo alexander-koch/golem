@@ -64,7 +64,12 @@ obj_t* obj_array_new(val_t* data, size_t length)
 {
     obj_t* obj = obj_new();
     obj->type = OBJ_ARRAY;
-    obj->data = data;
+
+    obj_array_t* arr = malloc(sizeof(*arr));
+    arr->data = data;
+    arr->len = length;
+
+    obj->data = arr;
     return obj;
 }
 
@@ -85,8 +90,14 @@ void obj_free(obj_t* obj)
 {
     switch(obj->type)
     {
-        case OBJ_STRING:
         case OBJ_ARRAY:
+        {
+            obj_array_t* arr = obj->data;
+            free(arr->data);
+            free(obj->data);
+            break;
+        }
+        case OBJ_STRING:
         case OBJ_CLASS:
         {
             free(obj->data);

@@ -49,6 +49,12 @@ typedef struct obj_class_t
 	val_t fields[CLASS_FIELDS_SIZE];
 } obj_class_t;
 
+typedef struct obj_array_t
+{
+	val_t* data;
+	size_t len;
+} obj_array_t;
+
 // Object types
 typedef enum obj_type_t
 {
@@ -74,8 +80,6 @@ obj_t* obj_string_nocopy_new(char* str);
 obj_t* obj_array_new(val_t* data, size_t length);
 obj_t* obj_class_new();
 void obj_free(obj_t* obj);
-
-#define AS_STRING(obj) (char*)(obj->data)
 
 // Util
 
@@ -104,21 +108,27 @@ void obj_free(obj_t* obj);
 // If quiet nan is not set, it is a number
 #define IS_NUM(value) (((value) & QNAN) != QNAN)
 #define IS_BOOL(value) ((value) == TRUE_VAL || (value) == FALSE_VAL)
-// If the value is a pointer the nan and the sign is set
+// If the value is a pointer, the nan and the sign is set
 #define IS_OBJ(value) (((value) & (QNAN | SIGN_BIT)) == (QNAN | SIGN_BIT))
+
+#define IS_STRING(value) (IS_OBJ(value) && ((obj_t*)AS_OBJ(value))->type == OBJ_STRING)
+#define IS_ARRAY(value) (IS_OBJ(value) && ((obj_t*)AS_OBJ(value))->type == OBJ_ARRAY)
 
 // Interpreting
 
 #define AS_BOOL(value) ((value) == TRUE_VAL)
 #define AS_NUM(value) (val_to_double(value))
 #define AS_OBJ(value) ((obj_t*)(uintptr_t)((value) & ~(SIGN_BIT | QNAN)))
+#define AS_STRING(value) ((char*)(((obj_t*)AS_OBJ(value))->data))
+#define AS_ARRAY(value)  ((obj_array_t*)((obj_t*)AS_OBJ(value)))
 
 // Converting
 
 #define BOOL_VAL(b) (val_t)(b ? TRUE_VAL : FALSE_VAL)
 #define NUM_VAL(num) (val_t)(val_of_double(num))
 #define OBJ_VAL(obj) (val_t)(SIGN_BIT | QNAN | (uint64_t)(uintptr_t)(obj))
-#define STR_VAL(p) (val_t)(OBJ_VAL(obj_string_const_new(p)))
+#define STRING_CONST_VAL(p) (val_t)(OBJ_VAL(obj_string_const_new(p)))
+#define STRING_VAL(p) (val_t)(OBJ_VAL(obj_string_new(p)))
 
 double val_to_double(val_t value);
 val_t val_of_double(double num);
