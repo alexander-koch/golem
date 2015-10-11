@@ -36,13 +36,26 @@ void mark(val_t v)
 		{
 			obj->marked = 1;
 
-			if(obj->type == OBJ_CLASS)
+			switch(obj->type)
 			{
-				obj_class_t* cls = obj->data;
-				for(size_t i = 0; i < CLASS_FIELDS_SIZE; i++)
+				case OBJ_CLASS:
 				{
-					mark(cls->fields[i]);
+					obj_class_t* cls = obj->data;
+					for(size_t i = 0; i < CLASS_FIELDS_SIZE; i++)
+					{
+						mark(cls->fields[i]);
+					}
+					break;
 				}
+				case OBJ_ARRAY:
+				{
+					obj_array_t* arr = obj->data;
+					for(size_t i = 0; i < arr->len; i++) {
+						mark(arr->data[i]);
+					}
+					break;
+				}
+				default: break;
 			}
 		}
 	}
@@ -88,9 +101,17 @@ void gc(vm_t* vm)
 	printf("Collecting garbage...\n");
 #endif
 
+#ifdef TRACE_STEP
+	printf("Beginning objects:%d\n", vm->numObjects);
+#endif
+
 	markAll(vm);
 	sweep(vm);
 	vm->maxObjects = vm->numObjects * 2;
+
+#ifdef TRACE_STEP
+	printf("New objects:%d\n", vm->numObjects);
+#endif
 }
 
 void push(vm_t* vm, val_t val)
@@ -113,6 +134,8 @@ val_t pop(vm_t* vm)
 	return v;
 }
 
+void val_append(vm_t* vm, val_t v1);
+
 void obj_append(vm_t* vm, obj_t* obj)
 {
 	if(vm->numObjects >= vm->maxObjects)
@@ -124,15 +147,43 @@ void obj_append(vm_t* vm, obj_t* obj)
 	obj->next = vm->firstVal;
 	vm->firstVal = obj;
 	vm->numObjects++;
+
+	// Is the objects are containers, check their content
+	switch(obj->type)
+	{
+		case OBJ_ARRAY:
+		{
+			obj_array_t* arr = obj->data;
+			for(size_t i = 0; i < arr->len; i++) {
+				val_append(vm, arr->data[i]);
+			}
+			break;
+		}
+		case OBJ_CLASS:
+		{
+			obj_class_t* cls = obj->data;
+			for(size_t i = 0; i < CLASS_FIELDS_SIZE; i++)
+			{
+				val_append(vm, cls->fields[i]);
+			}
+			break;
+		}
+		default: break;
+	}
+}
+
+void val_append(vm_t* vm, val_t v1)
+{
+	if(IS_OBJ(v1))
+	{
+		obj_append(vm, AS_OBJ(v1));
+	}
 }
 
 void vm_register(vm_t* vm, val_t v1)
 {
 	push(vm, v1);
-	if(IS_OBJ(v1))
-	{
-		obj_append(vm, AS_OBJ(v1));
-	}
+	val_append(vm, v1);
 }
 
 // Fetches the next instruction
@@ -210,8 +261,17 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		}
 	}
 	printf("]\n");
+
+
+
 #ifdef TRACE_STEP
-	getchar();
+	printf("OBJECTS: %d\n", vm->numObjects);
+
+	char c = getchar();
+	if(c == 'c')
+	{
+		gc(vm);
+	}
 #endif
 
 #endif
@@ -251,11 +311,15 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			int offset = AS_NUM(instr->v1);
 			if(offset < 0)
 			{
-				push(vm, vm->stack[vm->fp+offset]);
+				val_t v = vm->stack[vm->fp+offset];
+				vm_register(vm, COPY_VAL(v));
+				//push(vm, v);
 			}
 			else
 			{
-				push(vm, vm->locals[vm->fp+offset]);
+				val_t v = vm->locals[vm->fp+offset];
+				vm_register(vm, COPY_VAL(v));
+				//push(vm, v);
 			}
 			break;
 		}
@@ -270,13 +334,15 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		{
 			int offset = AS_NUM(instr->v1);
 			val_t v = vm->locals[offset];
-			push(vm, v);
+			vm_register(vm, COPY_VAL(v));
+			//push(vm, v);
 			break;
 		}
 		case OP_LDARG0:
 		{
 			size_t args = AS_NUM(vm->stack[vm->fp-3]);
-			push(vm, vm->stack[vm->fp-args-4]);
+			//push(vm, vm->stack[vm->fp-args-4]);
+			vm_register(vm, COPY_VAL(vm->stack[vm->fp-args-4]));
 			break;
 		}
 		case OP_SETARG0:
@@ -301,7 +367,9 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			val_t val = (offset < 0) ? vm->stack[vm->fp+offset] : vm->locals[vm->fp+offset];
 			vm->sp = sp;
 			vm->fp = fp;
-			push(vm, val);
+			//push(vm, val);
+
+			vm_register(vm, COPY_VAL(val));
 			break;
 		}
 		case OP_UPSTORE:
@@ -326,7 +394,7 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			}
 			else
 			{
-				val_free(vm->locals[vm->fp+offset]);
+				//val_free(vm->locals[vm->fp+offset]);
 				vm->locals[vm->fp+offset] = newVal;
 			}
 
@@ -483,16 +551,20 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		// Array is still testificate
 		case OP_ARR:
 		{
-			// Reverse list sorting
+			// Reverse list fetching and inserting.
+			// Copying is not needed, because array consumes all the objects.
+			// The objects already have to be a copy.
 			size_t elsz = AS_NUM(instr->v1);
 			val_t* arr = malloc(sizeof(val_t) * elsz);
 			for(int i = elsz; i > 0; i--)
 			{
+				// Get index object
 				val_t val = vm->stack[vm->sp - i];
-				arr[elsz - i] = val;
-				vm->stack[vm->sp - i] = 0;
+				arr[elsz - i] = COPY_VAL(val);		// <-- vm_register causes all sub objects also to be appended, therefore error
+				vm->stack[vm->sp - i] = NULL_VAL;
 			}
 			vm->sp -= elsz;
+
 			obj_t* obj = obj_array_new(arr, elsz);
 			vm_register(vm, OBJ_VAL(obj));
 			break;
@@ -624,8 +696,6 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			break;
 		}
 
-		// Missing
-
 		case OP_LT:
 		{
 			double v2 = AS_NUM(pop(vm));
@@ -719,7 +789,7 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			{
 				// Copy the whole array
 				// Free the copied object at index
-				// Upload to vm
+				// Upload the new array
 				obj = COPY_VAL(obj);
 				obj_array_t* arr = AS_ARRAY(obj);
 				int idx = AS_NUM(key);
@@ -856,15 +926,14 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		case OP_GETFIELD:
 		{
 			// Copy val to keep class internal value alive
-
 			int index = AS_NUM(instr->v1);
 			val_t class = pop(vm);
 
 			obj_class_t* cls = AS_CLASS(class);
 			val_t val = cls->fields[index];
 			val = COPY_VAL(val); // <--
-
 			vm_register(vm, val);
+			//push(vm, val);
 			break;
 		}
 

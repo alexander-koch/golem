@@ -34,9 +34,10 @@ A programming language written in C.
 - [ ] (Intermediate) Implement computed gotos to gain 15%-20% more speed => (Working on it.)
 - [ ] (Easy) Array index out of bounds exceptions => (Task)
 - [ ] (Intermediate) Create an try-catch exception system => (Task)
-- [ ] (Advanced) Implement tuples => (Task)
-- [ ] (Intermediate) Do namespaces => (Task)
+- [ ] (Intermediate) Implement switch statements => (Task)
 - [ ] (Intermediate) Do for loops with iterators => (Task)
+- [ ] (Intermediate) Do namespaces => (Task)
+- [ ] (Advanced) Implement tuples => (Task)
 
 ##### Final fixes
 

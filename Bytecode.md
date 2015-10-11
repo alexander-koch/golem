@@ -13,7 +13,7 @@ This greatly improves the speed and the memory usage.
 The following table demonstrates the speed.
 For comparison the old vm implementation and python is used.
 
-| Program |  Old VM   | GVM    | Python |
+| Program | Old VM    | VM     | Python |
 |---      |---        |---     |---     |
 | fib.gs  | ~4.95s    | ~1.08s | ~0.73s |
 

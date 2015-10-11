@@ -5,7 +5,7 @@ INC := -I.
 
 # Golem flags
 # Add flags explained below for debugging features
-GFLAGS := #-DTRACE #-DNO_AST
+GFLAGS := #-DTRACE -DTRACE_STEP #-DNO_AST
 
 # GFLAGS / Options:
 # Disable:
@@ -53,10 +53,6 @@ release:
 # Experimental dll-library feature
 libs:
 	make -C ./lib MAKEFLAGS=
-
-# Experimental branch (gvm)
-#branch:
-#	$(CC) -O3 $(CFLAGS) $(INC) test.c vm/gvm.c core/util.c adt/vector.c vm/val.c vm/gbytecode.c $(LDFLAGS) -g -o gvm
 
 # git undo (in case of emergency)
 gitUndo:

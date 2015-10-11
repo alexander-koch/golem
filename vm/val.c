@@ -49,6 +49,22 @@ val_t val_copy(val_t val)
                 obj_t* newArr = obj_array_new(arr, old->len);
                 return OBJ_VAL(newArr);
             }
+            case OBJ_CLASS:
+            {
+                // Copy a class
+                obj_class_t* cls = obj->data;
+
+                // Create a new class, and get the internal struct
+                obj_t* clsObj = obj_class_new();
+                obj_class_t* newCls = clsObj->data;
+
+                // Copy all the fields
+                for(size_t i = 0; i < CLASS_FIELDS_SIZE; i++) {
+                    newCls->fields[i] = val_copy(cls->fields[i]);
+                }
+
+                return OBJ_VAL(clsObj);
+            }
             default: return val;
         }
     }
@@ -143,6 +159,7 @@ void obj_free(obj_t* obj)
         default: break;
     }
     free(obj);
+    obj = 0;
 }
 
 void val_free(val_t v1)
@@ -150,7 +167,10 @@ void val_free(val_t v1)
 	if(IS_OBJ(v1))
 	{
 		obj_t* obj = AS_OBJ(v1);
-		if(obj) obj_free(obj);
+		if(obj)
+        {
+            obj_free(obj);
+        }
 	}
 }
 
