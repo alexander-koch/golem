@@ -30,6 +30,7 @@ A programming language written in C.
 - [ ] (Easy) Remove unnecessary bytecode operators (FADD, IADD => ADD) => (Working on it.)
 - [ ] (Intermediate) More operators for each 'class', to get productive with the code => (Working on it.)
 - [ ] (Advanced) Standard libraries and external classes, DLL loading => (Task)
+- [ ] (Intermediate) Serializer for bytecodes => (Task)
 - [ ] (Advanced) Bytecode optimizations => (Working on it.)
 - [ ] (Intermediate) Implement computed gotos to gain 15%-20% more speed => (Working on it.)
 - [ ] (Easy) Array index out of bounds exceptions => (Task)
@@ -71,7 +72,6 @@ A programming language written in C.
 
 #### Side projects
 
-- [ ] Rename bytecode_writer to serializer
 - [ ] Lambdas, Closures, Anonymous functions => (Concept / Prototype.)
 - [ ] Debugger + inspector
 - [ ] JIT / ASM output

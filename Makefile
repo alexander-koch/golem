@@ -34,6 +34,7 @@ FILES := main.c \
 		lexis/lexer.c \
 		parser/ast.c \
 		parser/parser.c \
+		compiler/serializer.c \
 		compiler/compiler.c \
 		compiler/scope.c \
 		vm/val.c \

@@ -407,6 +407,9 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			// TODO: Improve
 			char* name = AS_STRING(instr->v1);
 
+			// for each lib in registered
+			// lib_lookup(name);
+
 			if(!strcmp(name, "print"))
 			{
 				val_print(pop(vm));

@@ -13,6 +13,7 @@
 
 // Main stuff
 #include <parser/ast.h>
+#include <vm/val.h>
 
 #define signature_new() \
     location_t loc = {0, 0}

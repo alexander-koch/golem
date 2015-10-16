@@ -5,42 +5,38 @@
 
 extern float strtof(const char* str, char** endptr);
 
-GOLEM_API int core_print(vm_t* vm)
+GOLEM_API val_t core_print(vm_t* vm)
 {
 	//value_print(pop(vm));
 	val_print(pop(vm));
-	return 0;
+	return NULL_VAL;
 }
 
-GOLEM_API int core_println(vm_t* vm)
+GOLEM_API val_t core_println(vm_t* vm)
 {
-	int ret = core_print(vm);
+	core_print(vm);
 	putchar('\n');
-	return ret;
+	return NULL_VAL;
 }
 
-GOLEM_API int core_getline(vm_t* vm)
+GOLEM_API val_t core_getline(vm_t* vm)
 {
 	// Get input to buffer
 	char buf[512];
 	fgets(buf, sizeof(buf), stdin);
-	val_t val = STRING_VAL(buf);
-	//value_t* val = value_new_string(buf);
-	push(vm, val);
-	return 0;
+	return STRING_VAL(buf);
 }
 
-GOLEM_API int core_parseFloat(vm_t* vm)
+GOLEM_API val_t core_parseFloat(vm_t* vm)
 {
-	//char* str = value_string(pop(vm));
-	//push(vm, value_new_float(strtof(str, 0)));
-	return 0;
+	char* str = AS_STRING(pop(vm));
+	return NUM_VAL(strtof(str, 0));
 }
 
-GOLEM_API int core_break(vm_t* vm)
+GOLEM_API val_t core_break(vm_t* vm)
 {
 	getchar();
-	return 0;
+	return NULL_VAL;
 }
 
 GOLEM_API int lib_generate(void* hashptr)

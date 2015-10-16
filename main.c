@@ -11,7 +11,7 @@
 #include <parser/parser.h>
 #include <vm/vm.h>
 #include <compiler/compiler.h>
-//#include <compiler/bytecode_writer.h>
+#include <compiler/serializer.h>
 
 void run_repl(vm_t* vm, compiler_t* compiler)
 {
@@ -60,16 +60,18 @@ int main(int argc, char** argv)
         }
         vm_free(vm);
     }
-    /*else if(argc == 3)
+    else if(argc == 3)
     {
         if(!strcmp(argv[1], "-c"))
         {
-            // Compile file to bytecode => out.app
             vector_t* buffer = compile_file(&compiler, argv[2]);
             if(buffer)
             {
-                char* out = replaceExt(argv[2], ".app", 4);
-                write_bytecode(out, compiler.buffer);
+                // Write to file
+                char* out = replaceExt(argv[2], ".gvm", 4);
+                serialize(out, compiler.buffer);
+
+                // Clear the compiler
                 compiler_clear(&compiler);
                 printf("Wrote bytecode to file '%s'\n", out);
                 free(out);
@@ -80,7 +82,7 @@ int main(int argc, char** argv)
             // Run compiled bytecode file
             vm_t* vm = vm_new();
             vector_t* buffer = vector_new();
-            bool ok = read_bytecode(argv[2], &buffer);
+            bool ok = deserialize(argv[2], &buffer);
             compiler.buffer = buffer;
             if(ok)
             {
@@ -93,7 +95,7 @@ int main(int argc, char** argv)
         {
             printf("Flag: '%s' is invalid\n\n", argv[1]);
         }
-    }*/
+    }
     else
     {
         printf("Golem compiler\n");
