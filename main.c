@@ -12,6 +12,7 @@
 #include <vm/vm.h>
 #include <compiler/compiler.h>
 #include <compiler/serializer.h>
+#include <compiler/graphviz.h>
 
 void run_repl(vm_t* vm, compiler_t* compiler)
 {
@@ -90,6 +91,23 @@ int main(int argc, char** argv)
             }
             compiler_clear(&compiler);
             vm_free(vm);
+        }
+        else if(!strcmp(argv[1], "--ast"))
+        {
+            char* filename = argv[2];
+            size_t len = 0;
+        	char* source = readFile(filename, &len);
+
+            parser_t parser;
+            parser_init(&parser, filename);
+            ast_t* root = parser_run(&parser, source);
+            if(root)
+            {
+                graphviz_build(root);
+            }
+            ast_free(parser.top);
+            parser_free(&parser);
+            free(source);
         }
         else
         {

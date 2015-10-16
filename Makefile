@@ -37,6 +37,7 @@ FILES := main.c \
 		compiler/serializer.c \
 		compiler/compiler.c \
 		compiler/scope.c \
+		compiler/graphviz.c \
 		vm/val.c \
 		vm/bytecode.c \
 		vm/vm.c \
@@ -54,6 +55,9 @@ release:
 # Experimental dll-library feature
 libs:
 	make -C ./lib MAKEFLAGS=
+
+dot:
+	dot -Tpng -o ast.png ast.dot
 
 # git undo (in case of emergency)
 gitUndo:

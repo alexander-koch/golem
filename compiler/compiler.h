@@ -33,5 +33,6 @@ vector_t* compile_buffer(compiler_t* compiler, const char* source, const char* n
 vector_t* compile_file(compiler_t* compiler, const char* filename);
 void compiler_clear(compiler_t* compiler);
 void compiler_free_symbols(compiler_t* compiler);
+void compiler_dump(ast_t* node, int level);
 
 #endif
