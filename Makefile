@@ -5,7 +5,7 @@ INC := -I.
 
 # Golem flags
 # Add flags explained below for debugging features
-GFLAGS := #-DTRACE -DTRACE_STEP #-DNO_AST
+GFLAGS := #-DTRACE #-DTRACE_STEP #-DNO_AST
 
 # GFLAGS / Options:
 # Disable:
@@ -58,6 +58,7 @@ libs:
 
 dot:
 	dot -Tpng -o ast.png ast.dot
+	rm ast.dot
 
 # git undo (in case of emergency)
 gitUndo:

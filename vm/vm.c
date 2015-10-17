@@ -262,8 +262,6 @@ void vm_process(vm_t* vm, instruction_t* instr)
 	}
 	printf("]\n");
 
-
-
 #ifdef TRACE_STEP
 	printf("OBJECTS: %d\n", vm->numObjects);
 

@@ -16,27 +16,23 @@ const char* datatype2str(datatype_t type)
 		case DATA_LAMBDA: return "lambda";
 		default:
 		{
-			if(type.type == DATA_STRING)
-			{
-				return "char[]";
-			}
-			else if(type.type == DATA_INT)
-			{
-				return "int[]";
-			}
-			else if(type.type == DATA_FLOAT)
-			{
-				return "float[]";
-			}
-
 			if((type.type & DATA_ARRAY) == DATA_ARRAY)
 			{
-				return "array";
+				int subtype = type.type & ~DATA_ARRAY;
+				switch(subtype)
+				{
+					case DATA_CHAR: return "char[]";
+					case DATA_INT: return "int[]";
+					case DATA_BOOL: return "bool[]";
+					case DATA_FLOAT: return "float[]";
+					case DATA_CLASS: return "class[]";
+					case DATA_VOID: return "void[]";
+					case DATA_GENERIC: return "generic[]";
+					default: return "null[]";
+				}
 			}
-			else
-			{
-				return 0;
-			}
+
+			return "null";
 		}
 	}
 }
@@ -60,7 +56,9 @@ const char* ast_classname(ast_class_t class)
 		case AST_IDENT: return "identifier";
 		case AST_FLOAT: return "float";
 		case AST_INT: return "integer";
+		case AST_BOOL: return "bool";
 		case AST_STRING: return "string";
+		case AST_CHAR: return "char";
 		case AST_ARRAY: return "array";
 		case AST_BINARY: return "binary";
 		case AST_UNARY: return "unary";
@@ -69,6 +67,7 @@ const char* ast_classname(ast_class_t class)
 		case AST_DECLVAR: return "variable declaration";
 		case AST_DECLFUNC: return "function declaration";
 		case AST_IF: return "if condition";
+		case AST_IFCLAUSE: return "if clause";
 		case AST_WHILE: return "while loop";
 		case AST_IMPORT: return "import";
 		case AST_CLASS: return "class";
