@@ -14,6 +14,8 @@
 #include <compiler/serializer.h>
 #include <compiler/graphviz.h>
 
+#include <vm/val.h>
+
 void run_repl(vm_t* vm, compiler_t* compiler)
 {
     char buf[1024];
@@ -34,12 +36,23 @@ void run_repl(vm_t* vm, compiler_t* compiler)
     }
 }
 
+void print_info()
+{
+    printf("Golem compiler\n");
+    printf("Copyright (c) Alexander Koch 2015\nAll Rights Reserved.\n\n");
+    printf("Usage:\n");
+    printf("  golem <file>       (Run a file)\n");
+    printf("  golem -r <file>    (Run a *.gvm file)\n");
+    printf("  golem -c <file>    (Convert to bytecode file (*.gvm))\n");
+    printf("  golem --ast <file> (Convert generated AST to graph)\n");
+}
+
 int main(int argc, char** argv)
 {
     compiler_t compiler;
     compiler_init(&compiler);
 
-    if(argc == 1)
+    /*if(argc == 1)
     {
         // Read-eval-print-loop
         printf("Golem compiler - REPL\n");
@@ -48,8 +61,8 @@ int main(int argc, char** argv)
         vm_t* vm = vm_new();
         run_repl(vm, &compiler);
         vm_free(vm);
-    }
-    else if(argc == 2)
+    }*/
+    if(argc == 2)
     {
         // Generate and execute bytecode (Interpreter)
         vm_t* vm = vm_new();
@@ -112,16 +125,13 @@ int main(int argc, char** argv)
         else
         {
             printf("Flag: '%s' is invalid\n\n", argv[1]);
+            return 1;
         }
     }
     else
     {
-        printf("Golem compiler\n");
-        printf("Copyright (c) Alexander Koch 2015 All Rights Reserved.\n\n");
-        printf("Usage:\n");
-        printf(" golem        (Interactive mode)\n");
-        printf(" golem <file> (Run a file)\n");
-        return -1;
+        print_info();
+        return 0;
     }
 
 #ifndef NO_MEMINFO

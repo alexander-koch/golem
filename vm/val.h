@@ -108,6 +108,7 @@ void obj_free(obj_t* obj);
 // If quiet nan is not set, it is a number
 #define IS_NUM(value) (((value) & QNAN) != QNAN)
 #define IS_BOOL(value) ((value) == TRUE_VAL || (value) == FALSE_VAL)
+#define IS_INT32(value) (val_is_int32(value))
 // If the value is a pointer, the nan and the sign is set
 #define IS_OBJ(value) (((value) & (QNAN | SIGN_BIT)) == (QNAN | SIGN_BIT))
 
@@ -119,6 +120,7 @@ void obj_free(obj_t* obj);
 
 #define AS_BOOL(value) ((value) == TRUE_VAL)
 #define AS_NUM(value) (val_to_double(value))
+#define AS_INT32(value) ((int32_t)value)
 #define AS_OBJ(value) ((obj_t*)(uintptr_t)((value) & ~(SIGN_BIT | QNAN)))
 #define AS_STRING(value) ((char*)(((obj_t*)AS_OBJ(value))->data))
 #define AS_ARRAY(value) ((obj_array_t*)(((obj_t*)AS_OBJ(value))->data))
@@ -127,13 +129,17 @@ void obj_free(obj_t* obj);
 // Converting
 
 #define BOOL_VAL(b) (val_t)(b ? TRUE_VAL : FALSE_VAL)
-#define NUM_VAL(num) (val_t)(val_of_double(num))
+#define NUM_VAL(num) (val_of_double(num))
+#define INT32_VAL(num) (val_of_int32(num))
 #define OBJ_VAL(obj) (val_t)(SIGN_BIT | QNAN | (uint64_t)(uintptr_t)(obj))
 #define STRING_CONST_VAL(p) (val_t)(OBJ_VAL(obj_string_const_new(p)))
 #define STRING_VAL(p) (val_t)(OBJ_VAL(obj_string_new(p)))
 #define STRING_NOCOPY_VAL(p) (val_t)(OBJ_VAL(obj_string_nocopy_new(p)))
 
 #define COPY_VAL(p) (val_copy(p))
+
+bool val_is_int32(val_t val);
+val_t val_of_int32(int32_t i);
 
 double val_to_double(val_t value);
 val_t val_of_double(double num);

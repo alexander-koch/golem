@@ -27,9 +27,9 @@ A programming language written in C.
 
 ##### Tasks
 
-- [ ] (Easy) Remove unnecessary bytecode operators (FADD, IADD => ADD) => (Working on it.)
 - [ ] (Intermediate) More operators for each 'class', to get productive with the code => (Working on it.)
-- [ ] (Advanced) Standard libraries and external classes, DLL loading => (Task)
+- [ ] (Advanced) Standard libraries and external classes, DLL loading => (Working on it.)
+- [ ] (Easy) Remove unnecessary bytecode operators (FADD, IADD => ADD) => (Working on it.)
 - [ ] (Advanced) Bytecode optimizations => (Working on it.)
 - [ ] (Intermediate) Implement computed gotos to gain 15%-20% more speed => (Working on it.)
 - [ ] (Easy) Array index out of bounds exceptions => (Task)

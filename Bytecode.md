@@ -81,10 +81,14 @@ For comparison the old vm implementation and python is used.
 |ine                  | integer not equal
 |fne                  | float not equal
 |cne                  | character not equal
-|lt                   | number less than
-|gt                   | number greater than
-|le                   | number less equal
-|ge                   | number greater equal
+|ilt                  | integer less than
+|igt                  | integer greater than
+|ile                  | integer less equal
+|ige                  | integer greater equal
+|flt                  | float less than
+|fgt                  | float greater than
+|fle                  | float less equal
+|fge                  | float greater equal
 |band                 | boolean and
 |bor                  | boolean or
 

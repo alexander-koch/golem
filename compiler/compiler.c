@@ -560,7 +560,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 #ifdef FALLBACK
 	value_set_int(addr, byte_address);
 #else
-	*addr = NUM_VAL(byte_address);
+	*addr = INT32_VAL(byte_address);
 #endif
 
 	return datatype_new(DATA_LAMBDA);
@@ -1654,7 +1654,7 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
 #ifdef FALLBACK
 			instr->v.i = vector_size(compiler->buffer);
 #else
-			*instr = NUM_VAL(vector_size(compiler->buffer));
+			*instr = INT32_VAL(vector_size(compiler->buffer));
 #endif
 		}
 	}
@@ -1670,7 +1670,7 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
 		pos->v.i = vector_size(compiler->buffer);
 #else
 		val_t* pos = list_iterator_next(iter);
-		*pos = NUM_VAL(vector_size(compiler->buffer));
+		*pos = INT32_VAL(vector_size(compiler->buffer));
 #endif
 	}
 	list_iterator_free(iter);
@@ -1705,7 +1705,7 @@ datatype_t eval_while(compiler_t* compiler, ast_t* node)
 #ifdef FALLBACK
 	value_set_int(instr, vector_size(compiler->buffer));
 #else
-	*instr = NUM_VAL(vector_size(compiler->buffer));
+	*instr = INT32_VAL(vector_size(compiler->buffer));
 #endif
 
 	return datatype_new(DATA_NULL);
@@ -2112,7 +2112,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 #ifdef FALLBACK
 	value_set_int(addr, byte_address);
 #else
-	*addr = NUM_VAL(byte_address);
+	*addr = INT32_VAL(byte_address);
 #endif
 
 	return datatype_new(DATA_NULL);

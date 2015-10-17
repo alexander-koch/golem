@@ -70,10 +70,17 @@ typedef enum
 	OP_INE,
 	OP_FNE,
 	OP_CNE,
-	OP_LT,
-	OP_GT,
-	OP_LE,
-	OP_GE,
+
+	OP_ILT,
+	OP_IGT,
+	OP_ILE,
+	OP_IGE,
+
+	OP_FLT,
+	OP_FGT,
+	OP_FLE,
+	OP_FGE,
+
 	OP_BAND,
 	OP_BOR,
 

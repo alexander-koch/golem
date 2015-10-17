@@ -7,6 +7,25 @@ typedef union
   double num;
 } doublebits_t;
 
+bool val_is_int32(val_t val)
+{
+    // If the truncated 32-bit value
+    // is the same as the 64-bit value
+    // the value might be an 32-bit integer.
+    // Also the QNAN must NOT be set.
+
+    int32_t truncated = (int32_t)val;
+    return (truncated == val && IS_NUM(val));
+}
+
+val_t val_of_int32(int32_t i)
+{
+    doublebits_t data;
+    data.bits32[0] = i;
+    data.bits32[1] = 0;
+    return data.bits64;
+}
+
 double val_to_double(val_t value)
 {
 	doublebits_t data;
@@ -176,7 +195,11 @@ void val_free(val_t v1)
 
 void val_print(val_t v1)
 {
-    if(IS_NUM(v1))
+    if(IS_INT32(v1))
+    {
+        printf("%d", AS_INT32(v1));
+    }
+    else if(IS_NUM(v1))
     {
         printf("%f", AS_NUM(v1));
     }
