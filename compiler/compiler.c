@@ -335,7 +335,6 @@ symbol_t* symbol_new(compiler_t* compiler, ast_t* node, int address, datatype_t 
 	symbol->type = type;
 	symbol->global = (compiler->depth == 0) ? true : false;
 	symbol->isClassParam = false;
-	symbol->used = 1;
 	symbol->ref = 0;
 	return symbol;
 }
@@ -347,9 +346,7 @@ symbol_t* symbol_get_ext(scope_t* scope, char* ident, int* depth)
 	void* val;
 	if(hashmap_get(scope->symbols, ident, &val) != HMAP_MISSING)
 	{
-		symbol_t* sym = (symbol_t*)val;
-		sym->used++;
-		return sym;
+		return (symbol_t*)val;
 	}
 
 	if(scope->super)
@@ -371,9 +368,7 @@ symbol_t* symbol_get(scope_t* scope, char* ident)
 	void* val;
 	if(hashmap_get(scope->symbols, ident, &val) != HMAP_MISSING)
 	{
-		symbol_t* sym = (symbol_t*)val;
-		sym->used++;
-		return sym;
+		return (symbol_t*)val;
 	}
 
 	if(scope->super)

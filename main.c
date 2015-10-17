@@ -14,8 +14,6 @@
 #include <compiler/serializer.h>
 #include <compiler/graphviz.h>
 
-#include <vm/val.h>
-
 void run_repl(vm_t* vm, compiler_t* compiler)
 {
     char buf[1024];

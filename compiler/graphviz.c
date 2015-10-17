@@ -392,6 +392,8 @@ int graphviz_eval(graphviz_t* state, ast_t* node)
 void graphviz_build(ast_t* root)
 {
 	FILE* fp = fopen("ast.dot", "wb");
+	fprintf(fp, "// Generated using golem.\n");
+	fprintf(fp, "// AST representation\n");
 	fprintf(fp, "digraph astgraph {\n");
 	//fprintf(fp, "    graph [rankdir=\"LR\"];\n"); // <-- Left / right or top / down
 	fprintf(fp, "    node [shape=ellipse, fontsize=14, fontname=\"Courier\", height=.1];\n");

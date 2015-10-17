@@ -18,7 +18,6 @@ typedef struct symbol_t
 	datatype_t type;
 	bool global;
 	bool isClassParam;
-	int used;
 	struct symbol_t* ref;
 } symbol_t;
 
