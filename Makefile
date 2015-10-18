@@ -56,6 +56,7 @@ release:
 libs:
 	make -C ./lib MAKEFLAGS=
 
+# Graphviz *.dot to *.png
 dot:
 	dot -Tpng -o ast.png ast.dot
 	rm ast.dot

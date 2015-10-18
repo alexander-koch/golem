@@ -65,7 +65,6 @@ typedef enum
 	OP_IEQ,
 	OP_FEQ,
 	OP_CEQ,
-	OP_ARREQ,
 	OP_BNE,
 	OP_INE,
 	OP_FNE,

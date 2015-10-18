@@ -48,7 +48,6 @@ const char* op2str(opcode_t code)
 		case OP_IEQ: return "ieq";
 		case OP_FEQ: return "feq";
 		case OP_CEQ: return "ceq";
-		case OP_ARREQ: return "arreq";
 		case OP_BNE: return "bne";
 		case OP_INE: return "ine";
 		case OP_FNE: return "fne";

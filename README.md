@@ -276,23 +276,20 @@ class[getX]()
 
 # Stuff / Internet sources
 
-* [LLVM-C Tutorial](http://markmail.org/download.xqy?id=vhdi5dbzkrdbchxq&number=1)
-* [LLVM LangRef](http://llvm.org/docs/LangRef.html)
-* [LLVMCCoreValueGeneral](http://llvm.org/docs/doxygen/html/group__LLVMCCoreValueGeneral.html)
-* [LLVM Mutable](https://github.com/TheThirdOne/llvm-tutorial-gitbook/blob/master/mutable.md)
 * [Ducklang programming language design](http://ducklang.org/designing-a-programming-language-i)
 * [A Walk in x86_64 Assembly Land](http://www.codejury.com/a-walk-in-x64-land/)
 * [Stack machine](http://www.d.umn.edu/~rmaclin/cs5641/Notes/L19_CodeGenerationI.pdf)
 * [Simple scripting language part 5](http://www.incubatorgames.com/20110621/simple-scripting-language-part-5/)
 * [Fastest bytecode interpreter (Contest)](http://byteworm.com/2010/11/21/the-fastest-vm-bytecode-interpreter/)
-* [Virtual machine (Youtube video)](https://www.youtube.com/watch?v=OjaAToVkoTw)
-* [Bob Nystrom's Garbage Collector Explanation](http://journal.stuffwithstuff.com/2013/12/08/babys-first-garbage-collector/) @munificent
+* [Virtual machine by Terence Parr](https://www.youtube.com/watch?v=OjaAToVkoTw)
+* [Robert Nystrom's Garbage Collector Explanation](http://journal.stuffwithstuff.com/2013/12/08/babys-first-garbage-collector/) @munificent
 * [Simple virtual machine](http://bartoszsypytkowski.com/simple-virtual-machine/)
 * [Functions and stack frames](https://en.wikibooks.org/wiki/X86_Disassembly/Functions_and_Stack_Frames)
 * [Lambda lifting](https://en.wikipedia.org/wiki/Lambda_lifting)
 * [Call stack](https://en.wikipedia.org/wiki/Call_stack#Structure)
 * [Nested function - implementation](https://en.wikipedia.org/wiki/Nested_function#Implementation)
 * [Immutable stack](http://amitdev.github.io/coding/2013/12/31/Functional-Stack/)
+* [Computed gotos](http://eli.thegreenplace.net/2012/07/12/computed-goto-for-efficient-dispatch-tables)
 
 # Licence
 Copyright (c) Alexander Koch 2015 All Rights Reserved.

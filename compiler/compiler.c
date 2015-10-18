@@ -378,6 +378,8 @@ symbol_t* symbol_get(scope_t* scope, char* ident)
 	return 0;
 }
 
+// Look in the scopes class hashmap for the given id.
+// If it fails, look in super.
 symbol_t* class_find(scope_t* scope, unsigned long id)
 {
 	hashmap_iterator_t* iter = hashmap_iterator_create(scope->classes);
@@ -419,6 +421,7 @@ bool symbol_exists(compiler_t* compiler, ast_t* node, char* ident)
 	return false;
 }
 
+// Tries to get the symbol, and emits a store operation based on the depth
 void symbol_replace(compiler_t* compiler, symbol_t* symbol)
 {
 	int depth = 0;
@@ -467,12 +470,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	}
 
 	// Register a symbol for the function, save the bytecode address
-#ifdef FALLBACK
-	value_t* addr = emit_jmp(compiler->buffer, 0);
-#else
 	val_t* addr = emit_jmp(compiler->buffer, 0);
-#endif
-
 	int byte_address = vector_size(compiler->buffer);
 	symbol_t* fnSymbol = symbol_new(compiler, node, byte_address, datatype_new(DATA_LAMBDA));
 	hashmap_set(compiler->scope->symbols, node->funcdecl.name, fnSymbol);
@@ -551,12 +549,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 
 	// Set beginning jump address to end
 	byte_address = vector_size(compiler->buffer);
-
-#ifdef FALLBACK
-	value_set_int(addr, byte_address);
-#else
 	*addr = INT32_VAL(byte_address);
-#endif
 
 	return datatype_new(DATA_LAMBDA);
 }
@@ -1285,7 +1278,7 @@ datatype_t eval_array_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 		emit_op(compiler->buffer, OP_CONS);
 		return dt;
 	}
-	else if(!strcmp(key->ident, "equals"))
+	/*else if(!strcmp(key->ident, "equals"))
 	{
 		if(ls != 1)
 		{
@@ -1301,9 +1294,9 @@ datatype_t eval_array_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 			return datatype_new(DATA_NULL);
 		}
 
-		emit_op(compiler->buffer, OP_ARREQ);
+		//emit_op(compiler->buffer, OP_ARREQ);
 		return datatype_new(DATA_BOOL);
-	}
+	}*/
 	else if(!strcmp(key->ident, "at"))
 	{
 		// TODO: Wrap these Typechecks into functions
@@ -1590,13 +1583,13 @@ datatype_t eval_array(compiler_t* compiler, ast_t* node)
 // Bytecode compilation:
 // 01: load x
 // 02: push 5
-// 03: ieq			<-- condition 1
-// 04: jmpf 8		<-- jump to condition 2
+// 03: ieq			<-- condition 1 (x = 5)
+// 04: jmpf 8		<-- jump if false to condition 2
 // 05: push 5
 // 06: syscall, println, 1
 // 07: jmp 12		<-- end block, jump to end
-// 08: load x 		<-- condition 2
-// 09: push 5
+// 08: load x 		<-- condition 2 (x = 3)
+// 09: push 3
 // 10: ieq
 // 11: jmpf ..		<-- jump to condition 3 and so on
 datatype_t eval_if(compiler_t* compiler, ast_t* node)
@@ -1610,12 +1603,7 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
 		ast_t* subnode = list_iterator_next(iter);
 
 		// Test if not an else-statement
-#ifdef FALLBACK
-		value_t* instr = 0;
-#else
 		val_t* instr = 0;
-#endif
-
 		if(subnode->ifclause.cond)
 		{
 			// Eval the condition and generate an if-false jump
@@ -1633,24 +1621,15 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
 		// Generate a jump to end
 		if(list_size(node->ifstmt) > 1 && subnode->ifclause.cond)
 		{
-#ifdef FALLBACK
-			value_t* pos = emit_jmp(compiler->buffer, 0);
-			list_push(jmps, pos);
-#else
 			val_t* pos = emit_jmp(compiler->buffer, 0);
 			list_push(jmps, pos);
-#endif
 		}
 
 		// If not an else statement
 		// Generate jump to next clause
 		if(subnode->ifclause.cond)
 		{
-#ifdef FALLBACK
-			instr->v.i = vector_size(compiler->buffer);
-#else
 			*instr = INT32_VAL(vector_size(compiler->buffer));
-#endif
 		}
 	}
 
@@ -1660,13 +1639,8 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
 	iter = list_iterator_create(jmps);
 	while(!list_iterator_end(iter))
 	{
-#ifdef FALLBACK
-		value_t* pos = list_iterator_next(iter);
-		pos->v.i = vector_size(compiler->buffer);
-#else
 		val_t* pos = list_iterator_next(iter);
 		*pos = INT32_VAL(vector_size(compiler->buffer));
-#endif
 	}
 	list_iterator_free(iter);
 	list_free(jmps);
@@ -1679,30 +1653,22 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
 // 01: push condition
 // 02: jmpf 5
 // 03: <instruction block>
-// 04: jmp 2
+// 04: jmp 1
 datatype_t eval_while(compiler_t* compiler, ast_t* node)
 {
 	size_t start = vector_size(compiler->buffer);
 	compiler_eval(compiler, node->whilestmt.cond);
-#ifdef FALLBACK
-	value_t* instr = emit_jmpf(compiler->buffer, 0);
-#else
 	val_t* instr = emit_jmpf(compiler->buffer, 0);
-#endif
 
-	// Wrap into scope
+	// upval, 1, 0 ?
+
+	// TODO: Wrap into scope
 	//push_scope_virtual(compiler, node);
 	eval_block(compiler, node->whilestmt.body);
 	//pop_scope_virtual(compiler);
 
 	emit_jmp(compiler->buffer, start);
-
-#ifdef FALLBACK
-	value_set_int(instr, vector_size(compiler->buffer));
-#else
 	*instr = INT32_VAL(vector_size(compiler->buffer));
-#endif
-
 	return datatype_new(DATA_NULL);
 }
 
@@ -1874,12 +1840,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 	dt.id = id;
 
 	// Emit a jump, get the bytecode address
-#ifdef FALLBACK
-	value_t* addr = emit_jmp(compiler->buffer, 0);
-#else
 	val_t* addr = emit_jmp(compiler->buffer, 0);
-#endif
-
 	size_t byte_address = vector_size(compiler->buffer);
 
 	// Test if symbol exists
@@ -2103,12 +2064,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 
 	// Set the beggining byte address; end
 	byte_address = vector_size(compiler->buffer);
-
-#ifdef FALLBACK
-	value_set_int(addr, byte_address);
-#else
 	*addr = INT32_VAL(byte_address);
-#endif
 
 	return datatype_new(DATA_NULL);
 }

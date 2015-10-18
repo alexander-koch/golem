@@ -50,7 +50,8 @@ void mark(val_t v)
 				case OBJ_ARRAY:
 				{
 					obj_array_t* arr = obj->data;
-					for(size_t i = 0; i < arr->len; i++) {
+					for(size_t i = 0; i < arr->len; i++)
+					{
 						mark(arr->data[i]);
 					}
 					break;
@@ -180,6 +181,7 @@ void val_append(vm_t* vm, val_t v1)
 	}
 }
 
+// Push and register in GC, if v1 is a ptr
 void vm_register(vm_t* vm, val_t v1)
 {
 	push(vm, v1);
@@ -1022,10 +1024,6 @@ void vm_run(vm_t* vm, vector_t* buffer)
 	vm->reserve = 0;
 	vm->running = true;
 
-	// val_t nil = NULL_VAL;
-	// memset(vm->stack, nil, sizeof(val_t) * STACK_SIZE);
-	// memset(vm->locals, nil, sizeof(val_t) * LOCALS_SIZE);
-
 #ifndef NO_IR
 	// Print out bytecodes
 	vm_print_code(vm, buffer);
@@ -1060,13 +1058,6 @@ void vm_run(vm_t* vm, vector_t* buffer)
 
 	vm->sp = 0;
 	gc(vm);
-
-	// Clear
-	// for(int i = 0; i < LOCALS_SIZE; i++)
-	// {
-	// 	val_free(vm->locals[i]);
-	// 	vm->locals[i] = NULL_VAL;
-	// }
 }
 
 // Frees the memory used by the vm
