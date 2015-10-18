@@ -1177,21 +1177,24 @@ datatype_t eval_int_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 		compiler_throw(compiler, node, "Expected zero arguments");
 	}
 
-	// TODO: Implement bytecodes for this
 	if(!strcmp(key->ident, "to_f"))
 	{
-		// can only convert integers or characters to floats
-		// emit_op(compiler->buffer, OP_NUM2F);
+		// only int32 can be turned into a float
+		emit_op(compiler->buffer, OP_I2F);
+		return datatype_new(DATA_FLOAT);
 	}
 	else if(!strcmp(key->ident, "to_c"))
 	{
-		// only integers can be converted to a character
-		// emit_op(compiler->buffer, OP_I2C);
+		// no conversion needed, internally it is the same type
+		// so just trick the compiler and return char
+		return datatype_new(DATA_CHAR);
 	}
 	else if(!strcmp(key->ident, "to_str"))
 	{
 		// basically everything can be converted to a string
-		// emit_op(compiler->buffer, OP_NUM2);
+		//emit_op(compiler->buffer, OP_TOSTR);
+		compiler_throw(compiler, node, "Function is not yet supported");
+		return datatype_new(DATA_NULL);
 	}
 	else
 	{

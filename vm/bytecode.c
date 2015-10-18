@@ -15,6 +15,7 @@ const char* op2str(opcode_t code)
 		case OP_GLOAD: return "gload";
 		case OP_LDARG0: return "ldarg0";
 		case OP_SETARG0: return "setarg0";
+
 		case OP_IADD: return "iadd";
 		case OP_ISUB: return "isub";
 		case OP_IMUL: return "imul";
@@ -27,11 +28,14 @@ const char* op2str(opcode_t code)
 		case OP_BITXOR: return "bit_xor";
 		case OP_BITNOT: return "bit_not";
 		case OP_IMINUS: return "iminus";
+		case OP_I2F: return "i2f";
+
 		case OP_FADD: return "fadd";
 		case OP_FSUB: return "fsub";
 		case OP_FMUL: return "fmul";
 		case OP_FDIV: return "fdiv";
 		case OP_FMINUS: return "fminus";
+
 		case OP_NOT: return "not";
 		case OP_SYSCALL: return "syscall";
 		case OP_INVOKE: return "invoke";

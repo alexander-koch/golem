@@ -32,7 +32,6 @@ A programming language written in C.
 - [ ] (Advanced) Bytecode optimizations (class optimizer) => (Working on it.)
 - [ ] (Intermediate) Implement computed gotos to gain 15%-20% more speed => (Working on it.)
 - [ ] (Easy) Array index out of bounds exceptions => (Task)
-- [ ] (Intermediate) Create an try-catch exception system => (Task)
 - [ ] (Intermediate) Implement switch statements => (Task)
 - [ ] (Intermediate) Do for loops with iterators => (Task)
 - [ ] (Intermediate) Do namespaces => (Task)

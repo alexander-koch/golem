@@ -580,25 +580,11 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			push(vm, INT32_VAL(v1 + v2));
 			break;
 		}
-		case OP_FADD:
-		{
-			double v2 = AS_NUM(pop(vm));
-			double v1 = AS_NUM(pop(vm));
-			push(vm, NUM_VAL(v1 + v2));
-			break;
-		}
 		case OP_ISUB:
 		{
 			int v2 = AS_INT32(pop(vm));
 			int v1 = AS_INT32(pop(vm));
 			push(vm, INT32_VAL(v1 - v2));
-			break;
-		}
-		case OP_FSUB:
-		{
-			double v2 = AS_NUM(pop(vm));
-			double v1 = AS_NUM(pop(vm));
-			push(vm, NUM_VAL(v1 - v2));
 			break;
 		}
 		case OP_IMUL:
@@ -608,25 +594,11 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			push(vm, INT32_VAL(v1 * v2));
 			break;
 		}
-		case OP_FMUL:
-		{
-			double v2 = AS_NUM(pop(vm));
-			double v1 = AS_NUM(pop(vm));
-			push(vm, NUM_VAL(v1 * v2));
-			break;
-		}
 		case OP_IDIV:
 		{
 			int v2 = AS_INT32(pop(vm));
 			int v1 = AS_INT32(pop(vm));
 			push(vm, INT32_VAL(v1 / v2));
-			break;
-		}
-		case OP_FDIV:
-		{
-			double v2 = AS_NUM(pop(vm));
-			double v1 = AS_NUM(pop(vm));
-			push(vm, NUM_VAL(v1 / v2));
 			break;
 		}
 		case OP_MOD:
@@ -681,6 +653,40 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		{
 			int v1 = AS_INT32(pop(vm));
 			push(vm, INT32_VAL(-v1));
+			break;
+		}
+		case OP_I2F:
+		{
+			int v1 = AS_INT32(pop(vm));
+			push(vm, NUM_VAL(v1));
+			break;
+		}
+		case OP_FADD:
+		{
+			double v2 = AS_NUM(pop(vm));
+			double v1 = AS_NUM(pop(vm));
+			push(vm, NUM_VAL(v1 + v2));
+			break;
+		}
+		case OP_FSUB:
+		{
+			double v2 = AS_NUM(pop(vm));
+			double v1 = AS_NUM(pop(vm));
+			push(vm, NUM_VAL(v1 - v2));
+			break;
+		}
+		case OP_FMUL:
+		{
+			double v2 = AS_NUM(pop(vm));
+			double v1 = AS_NUM(pop(vm));
+			push(vm, NUM_VAL(v1 * v2));
+			break;
+		}
+		case OP_FDIV:
+		{
+			double v2 = AS_NUM(pop(vm));
+			double v1 = AS_NUM(pop(vm));
+			push(vm, NUM_VAL(v1 / v2));
 			break;
 		}
 		case OP_FMINUS:
@@ -1003,7 +1009,6 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			//push(vm, val);
 			break;
 		}
-
 		default:
 		{
 			printf("Uknown operator encountered\n");
@@ -1050,7 +1055,6 @@ void vm_run(vm_t* vm, vector_t* buffer)
 
 	// Move stack pointer to zero, -> clears all elements by gc
 	// Discard the rest
-
 	for(int i = 0; i < LOCALS_SIZE; i++)
 	{
 		vm->locals[i] = NULL_VAL;

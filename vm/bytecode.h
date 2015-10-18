@@ -36,6 +36,7 @@ typedef enum
 	OP_BITXOR,
 	OP_BITNOT,
 	OP_IMINUS,
+	OP_I2F,
 
 	// Float
 	OP_FADD,
@@ -70,11 +71,13 @@ typedef enum
 	OP_FNE,
 	OP_CNE,
 
+	// Integer
 	OP_ILT,
 	OP_IGT,
 	OP_ILE,
 	OP_IGE,
 
+	// Float
 	OP_FLT,
 	OP_FGT,
 	OP_FLE,
