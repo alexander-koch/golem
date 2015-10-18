@@ -474,7 +474,7 @@ ast_t* parse_expression_primary(parser_t* parser)
     ast_t* ast = 0;
     if(match_literal(parser))
     {
-        // Example literals: 1|2|3|4|5 - "Hello World"
+        // Example literals: 1|2|3|4|5 - "Hello World", true, false
         ast = parse_literal(parser);
     }
     else if(match_type(parser, TOKEN_WORD))
@@ -521,6 +521,7 @@ ast_t* parse_expression_primary(parser_t* parser)
     else
     {
         parser_throw(parser, "Expected expression, found '%s'", current_token(parser)->value);
+        return ast;
     }
 
     if(match_type(parser, TOKEN_LPAREN))
