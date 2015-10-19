@@ -8,12 +8,30 @@ extern val_t core_getline(vm_t* vm);
 extern val_t core_parseFloat(vm_t* vm);
 extern val_t core_break(vm_t* vm);
 
+extern val_t math_abs(vm_t* vm);
+extern val_t math_sin(vm_t* vm);
+extern val_t math_cos(vm_t* vm);
+extern val_t math_tan(vm_t* vm);
+extern val_t math_sqrt(vm_t* vm);
+extern val_t math_floor(vm_t* vm);
+extern val_t math_ceil(vm_t* vm);
+extern val_t math_pow(vm_t* vm);
+
 static gvm_c_function system_methods[] = {
 	{"print", core_print},
 	{"println", core_println},
 	{"getline", core_getline},
 	{"parseFloat", core_parseFloat},
 	{"break", core_break},
+
+	{"abs", math_abs},
+	{"sin", math_sin},
+	{"cos", math_cos},
+	{"tan", math_tan},
+	{"sqrt", math_sqrt},
+	{"floor", math_floor},
+	{"ceil", math_ceil},
+	{"pow", math_pow},
 	{0, 0}	// sentinel
 };
 

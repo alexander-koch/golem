@@ -42,6 +42,7 @@ FILES := main.c \
 		vm/bytecode.c \
 		vm/vm.c \
 		lib/corelib.c \
+		lib/mathlib.c \
 		lib/loadlib.c
 
 # Debugging version (default)

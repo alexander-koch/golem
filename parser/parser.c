@@ -914,6 +914,7 @@ ast_t* parser_run(parser_t* parser, const char* content)
 //////------------------
 
 extern int core_gen_signatures(list_t* list);
+extern int math_gen_signatures(list_t* list);
 
 // Parser.parseImportDeclaration()
 // Parses an import statement and handles internal libraries.
@@ -935,6 +936,10 @@ ast_t* parse_import_declaration(parser_t* parser, location_t loc)
         if(!strcmp(node->import, "core"))
         {
             core_gen_signatures(parser->top->toplevel);
+        }
+        else if(!strcmp(node->import, "math"))
+        {
+            math_gen_signatures(parser->top->toplevel);
         }
         else
         {

@@ -3,79 +3,90 @@
 #include <math.h>
 #include <vm/vm.h>
 
-GOLEM_API int math_abs(vm_t* vm)
+GOLEM_API val_t math_abs(vm_t* vm)
 {
-	pop(vm);
-	value_t* v = value_new_float(fabs(value_number(pop(vm))));
-	push(vm, v);
-	return 0;
+	double v1 = fabs(AS_NUM(pop(vm)));
+	return NUM_VAL(v1);
 }
 
-GOLEM_API int math_sin(vm_t* vm)
+GOLEM_API val_t math_sin(vm_t* vm)
 {
-	pop(vm);
-	value_t* v = value_new_float(sin(value_number(pop(vm))));
-	push(vm, v);
-	return 0;
+	double v1 = sin(AS_NUM(pop(vm)));
+	return NUM_VAL(v1);
 }
 
-GOLEM_API int math_cos(vm_t* vm)
+GOLEM_API val_t math_cos(vm_t* vm)
 {
-	pop(vm);
-	value_t* v = value_new_float(cos(value_number(pop(vm))));
-	push(vm, v);
-	return 0;
+	double v1 = cos(AS_NUM(pop(vm)));
+	return NUM_VAL(v1);
 }
 
-GOLEM_API int math_tan(vm_t* vm)
+GOLEM_API val_t math_tan(vm_t* vm)
 {
-	pop(vm);
-	value_t* v = value_new_float(tan(value_number(pop(vm))));
-	push(vm, v);
-	return 0;
+	double v1 = tan(AS_NUM(pop(vm)));
+	return NUM_VAL(v1);
 }
 
-GOLEM_API int math_sqrt(vm_t* vm)
+GOLEM_API val_t math_sqrt(vm_t* vm)
 {
-	pop(vm);
-	value_t* v = value_new_float(sqrt(value_number(pop(vm))));
-	push(vm, v);
-	return 0;
+	double v1 = sqrt(AS_NUM(pop(vm)));
+	return NUM_VAL(v1);
 }
 
-GOLEM_API int lib_generate(void* hashptr)
+GOLEM_API val_t math_floor(vm_t* vm)
 {
-	hashmap_t* hash = (hashmap_t*)hashptr;
-	hashmap_set(hash, "abs", math_abs);
-	hashmap_set(hash, "sin", math_sin);
-	hashmap_set(hash, "cos", math_cos);
-	hashmap_set(hash, "tan", math_tan);
-	return 0;
+	double v1 = floor(AS_NUM(pop(vm)));
+	return NUM_VAL(v1);
 }
 
-GOLEM_API void* lib_signatures()
+GOLEM_API val_t math_ceil(vm_t* vm)
 {
-	list_t* toplevel = list_new();
+	double v1 = ceil(AS_NUM(pop(vm)));
+	return NUM_VAL(v1);
+}
+
+GOLEM_API val_t math_pow(vm_t* vm)
+{
+	int v2 = AS_NUM(pop(vm));
+	int v1 = AS_NUM(pop(vm));
+	return NUM_VAL(pow(v1, v2));
+}
+
+GOLEM_API int math_gen_signatures(list_t* toplevel)
+{
 	signature_new();
 	require_func();
 
-	function_new("abs", DATA_FLOAT);
+	function_new("abs", DATA_FLOAT, 6);
 	function_add_param(DATA_FLOAT);
 	function_upload(toplevel);
 
-	function_new("sin", DATA_FLOAT);
+	function_new("sin", DATA_FLOAT, 7);
 	function_add_param(DATA_FLOAT);
 	function_upload(toplevel);
 
-	function_new("cos", DATA_FLOAT);
+	function_new("cos", DATA_FLOAT, 8);
 	function_add_param(DATA_FLOAT);
 	function_upload(toplevel);
 
-	function_new("tan", DATA_FLOAT);
+	function_new("tan", DATA_FLOAT, 9);
 	function_add_param(DATA_FLOAT);
 	function_upload(toplevel);
 
-	function_new("sqrt", DATA_FLOAT);
+	function_new("sqrt", DATA_FLOAT, 10);
+	function_add_param(DATA_FLOAT);
+	function_upload(toplevel);
+
+	function_new("floor", DATA_FLOAT, 11);
+	function_add_param(DATA_FLOAT);
+	function_upload(toplevel);
+
+	function_new("ceil", DATA_FLOAT, 12);
+	function_add_param(DATA_FLOAT);
+	function_upload(toplevel);
+
+	function_new("pow", DATA_FLOAT, 13);
+	function_add_param(DATA_FLOAT);
 	function_add_param(DATA_FLOAT);
 	function_upload(toplevel);
 

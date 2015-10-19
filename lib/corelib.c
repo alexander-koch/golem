@@ -38,19 +38,7 @@ GOLEM_API val_t core_break(vm_t* vm)
 	return NULL_VAL;
 }
 
-GOLEM_API int lib_generate(void* hashptr)
-{
-	hashmap_t* hash = (hashmap_t*)hashptr;
-	hashmap_set(hash, "print", core_print);
-	hashmap_set(hash, "println", core_println);
-	hashmap_set(hash, "getline", core_getline);
-	hashmap_set(hash, "parseFloat", core_parseFloat);
-	hashmap_set(hash, "break", core_break);
-	return 0;
-}
-
-// @deprecated
-int core_gen_signatures(list_t* toplevel)
+GOLEM_API int core_gen_signatures(list_t* toplevel)
 {
 	signature_new();
 	require_func();
@@ -80,30 +68,3 @@ int core_gen_signatures(list_t* toplevel)
 
 	return 0;
 }
-/*
-GOLEM_API void* lib_signatures()
-{
-	list_t* toplevel = list_new();
-	signature_new();
-	require_func();
-
-	function_new("getline", DATA_STRING);
-	function_upload(toplevel);
-
-	function_new("print", DATA_VOID);
-	function_add_param(DATA_GENERIC);
-	function_upload(toplevel);
-
-	function_new("println", DATA_VOID);
-	function_add_param(DATA_GENERIC);
-	function_upload(toplevel);
-
-	function_new("parseFloat", DATA_FLOAT);
-	function_add_param(DATA_STRING);
-	function_upload(toplevel);
-
-	function_new("break", DATA_VOID);
-	function_upload(toplevel);
-
-	return toplevel;
-}*/
