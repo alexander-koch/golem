@@ -36,6 +36,7 @@ const char* op2str(opcode_t code)
 		case OP_FMUL: return "fmul";
 		case OP_FDIV: return "fdiv";
 		case OP_FMINUS: return "fminus";
+		case OP_F2I: return "f2i";
 
 		case OP_NOT: return "not";
 		case OP_SYSCALL: return "syscall";

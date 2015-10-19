@@ -1175,7 +1175,7 @@ datatype_t eval_int32_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 
 	if(ls != 0)
 	{
-		compiler_throw(compiler, node, "Expected zero arguments");
+		compiler_throw(compiler, node, "No such function / Expected zero arguments");
 	}
 
 	if(!strcmp(key->ident, "to_f"))
@@ -1207,6 +1207,39 @@ datatype_t eval_int32_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 	}
 
 	return datatype_new(DATA_INT);
+}
+
+datatype_t eval_float_func(compiler_t* compiler, ast_t* node, datatype_t dt)
+{
+	ast_t* call = node->call.callee;
+	ast_t* key = call->subscript.key;
+
+	list_t* formals = node->call.args;
+	size_t ls = list_size(formals);
+
+	if(ls != 0)
+	{
+		compiler_throw(compiler, node, "No such function / Expected zero arguments");
+	}
+
+	if(!strcmp(key->ident, "to_i"))
+	{
+		// only doubles can be converted to integers
+		emit_op(compiler->buffer, OP_F2I);
+		return datatype_new(DATA_INT);
+	}
+	else if(!strcmp(key->ident, "to_c"))
+	{
+		// Same function, just different 'type'
+		emit_op(compiler->buffer, OP_F2I);
+		return datatype_new(DATA_CHAR);
+	}
+	else
+	{
+		compiler_throw(compiler, node, "No such function");
+	}
+
+	return datatype_new(DATA_NULL);
 }
 
 datatype_t eval_array_func(compiler_t* compiler, ast_t* node, datatype_t dt)
@@ -1415,6 +1448,10 @@ datatype_t eval_datatype_call(compiler_t* compiler, ast_t* node, datatype_t dt)
 		else if(dt.type == DATA_INT || dt.type == DATA_CHAR)
 		{
 			return eval_int32_func(compiler, node, dt);
+		}
+		else if(dt.type == DATA_FLOAT)
+		{
+			return eval_float_func(compiler, node, dt);
 		}
 		else
 		{

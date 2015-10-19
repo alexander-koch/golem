@@ -715,6 +715,12 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			push(vm, NUM_VAL(-v1));
 			break;
 		}
+		case OP_F2I:
+		{
+			double v1 = AS_NUM(pop(vm));
+			push(vm, INT32_VAL((int)v1));
+			break;
+		}
 
 		case OP_NOT:
 		{

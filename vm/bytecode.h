@@ -44,6 +44,7 @@ typedef enum
 	OP_FMUL,
 	OP_FDIV,
 	OP_FMINUS,
+	OP_F2I,
 
 	// Boolean
 	OP_NOT,
