@@ -57,7 +57,7 @@ For comparison the old vm implementation and python is used.
 
 | Special             | Description
 |---                  |---
-|syscall x, y         | invokes an internal known method named x, with y args, push return value
+|syscall x, y         | invokes an internal known method at internal-index x, with y args, pushes a return value
 |invoke x y           | invoke method at address x with y args, push return value
 |invokevirtual x,y    | invokes a virtual class method, at address x with y args, and saves a class in the stack frame
 |reserve x            | reserves x memory for function calls, to keep values in VRAM
@@ -176,7 +176,7 @@ This should compile to the following instructions (unoptimized):
       05: iadd
       06: gstore, 0
       07: gload, 0
-      08: syscall, println, 1
+      08: syscall, 1, 1
 
 Optimized (not done by vm or compiler):
 
@@ -184,7 +184,7 @@ Optimized (not done by vm or compiler):
       01: push, 5
       02: push, 5
       03: iadd
-      04: syscall, println, 1
+      04: syscall, 1, 1
 
 Result of execution:
 

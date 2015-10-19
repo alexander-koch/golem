@@ -7,7 +7,6 @@ extern float strtof(const char* str, char** endptr);
 
 GOLEM_API val_t core_print(vm_t* vm)
 {
-	//value_print(pop(vm));
 	val_print(pop(vm));
 	return NULL_VAL;
 }
@@ -56,27 +55,32 @@ int core_gen_signatures(list_t* toplevel)
 	signature_new();
 	require_func();
 
-	function_new("getline", DATA_STRING);
-	function_upload(toplevel);
-
-	function_new("print", DATA_VOID);
+	// print(T) -> void
+	function_new("print", DATA_VOID, 1);
 	function_add_param(DATA_GENERIC);
 	function_upload(toplevel);
 
-	function_new("println", DATA_VOID);
+	// println(T) -> void
+	function_new("println", DATA_VOID, 2);
 	function_add_param(DATA_GENERIC);
 	function_upload(toplevel);
 
-	function_new("parseFloat", DATA_FLOAT);
+	// getline() -> char[]
+	function_new("getline", DATA_STRING, 3);
+	function_upload(toplevel);
+
+	// parseFloat(str:char[]) -> float
+	function_new("parseFloat", DATA_FLOAT, 4);
 	function_add_param(DATA_STRING);
 	function_upload(toplevel);
 
-	function_new("break", DATA_VOID);
+	// break() -> void
+	function_new("break", DATA_VOID, 5);
 	function_upload(toplevel);
 
 	return 0;
 }
-
+/*
 GOLEM_API void* lib_signatures()
 {
 	list_t* toplevel = list_new();
@@ -102,4 +106,4 @@ GOLEM_API void* lib_signatures()
 	function_upload(toplevel);
 
 	return toplevel;
-}
+}*/

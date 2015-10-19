@@ -11,6 +11,7 @@
 
 #include <vm/val.h>
 #include <vm/bytecode.h>
+#include <lib/libdef.h>
 
 #define STACK_SIZE 512
 #define LOCALS_SIZE 512
@@ -31,6 +32,13 @@ typedef struct
 	int numObjects;
 	int maxObjects;
 } vm_t;
+
+// Internal function
+typedef struct
+{
+	const char* name;
+	val_t (*func)(vm_t*);
+} gvm_c_function;
 
 // Methods
 vm_t* vm_new();

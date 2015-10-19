@@ -42,7 +42,7 @@ void print_info()
     printf("  golem <file>       (Run a file)\n");
     printf("  golem -r <file>    (Run a *.gvm file)\n");
     printf("  golem -c <file>    (Convert to bytecode file (*.gvm))\n");
-    printf("  golem --ast <file> (Convert generated AST to graph)\n");
+    printf("  golem --ast <file> (Convert generated AST to graph)\n\n");
 }
 
 int main(int argc, char** argv)

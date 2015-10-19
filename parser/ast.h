@@ -134,7 +134,7 @@ typedef struct
     char* name;
     ast_lambda_t impl;
     datatype_t rettype;
-    bool external;
+    int external;   // external syscall index, true if external (index > 0)
 } ast_func_t;
 
 // Declaration struct

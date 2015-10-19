@@ -2,6 +2,24 @@
 
 void gc(vm_t* vm);
 
+extern val_t core_print(vm_t* vm);
+extern val_t core_println(vm_t* vm);
+extern val_t core_getline(vm_t* vm);
+extern val_t core_parseFloat(vm_t* vm);
+extern val_t core_break(vm_t* vm);
+
+static gvm_c_function system_methods[] = {
+	{"print", core_print},
+	{"println", core_println},
+	{"getline", core_getline},
+	{"parseFloat", core_parseFloat},
+	{"break", core_break},
+	{0, 0}	// sentinel
+};
+
+// Compile in parser to invokedynamic, <address>, <arguments>
+// where address refers to the index in the system_methods
+
 vm_t* vm_new()
 {
 	vm_t* vm = malloc(sizeof(*vm));
@@ -404,26 +422,10 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		}
 		case OP_SYSCALL:
 		{
-			// TODO: Improve
-			char* name = AS_STRING(instr->v1);
-
-			// for each lib in registered
-			// lib_lookup(name);
-
-			if(!strcmp(name, "print"))
-			{
-				val_print(pop(vm));
-			}
-			else if(!strcmp(name, "println"))
-			{
-				val_print(pop(vm));
-				printf("\n");
-			}
-			else if(!strcmp(name, "break"))
-			{
-				getchar();
-			}
-
+			size_t index = AS_INT32(instr->v1);
+			gvm_c_function fn = system_methods[index];
+			val_t ret = fn.func(vm);
+			vm_register(vm, ret);
 			break;
 		}
 		case OP_INVOKE:

@@ -44,13 +44,13 @@
 #define class_upload(ref) \
     list_push(ref, clazz)
 
-#define function_new(nm, rtype) \
+#define function_new(nm, rtype, idx) \
     func = ast_class_create(AST_DECLFUNC, loc); \
     func->funcdecl.name = strdup(nm); \
     func->funcdecl.impl.formals = list_new(); \
     func->funcdecl.impl.body = 0; \
     func->funcdecl.rettype = datatype_new(rtype); \
-    func->funcdecl.external = true
+    func->funcdecl.external = idx
 
 #define function_add_param(dtype) \
     param = ast_class_create(AST_DECLVAR, loc); \

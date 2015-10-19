@@ -6,9 +6,10 @@ const char* op2str(opcode_t code)
 {
 	switch(code)
 	{
+		case OP_HLT: return "hlt";
 		case OP_PUSH: return "push";
 		case OP_POP: return "pop";
-		case OP_HLT: return "hlt";
+
 		case OP_STORE: return "store";
 		case OP_LOAD: return "load";
 		case OP_GSTORE: return "gstore";
@@ -251,9 +252,9 @@ bool emit_tok2op(vector_t* buffer, token_type_t tok, datatype_t type)
 	return op == -1 ? false : true;
 }
 
-void emit_syscall(vector_t* buffer, char* name, size_t args)
+void emit_syscall(vector_t* buffer, size_t index, size_t args)
 {
-	val_t v1 = OBJ_VAL(obj_string_new(name));
+	val_t v1 = INT32_VAL(index);
 	val_t v2 = INT32_VAL(args);
 	insert_v2(buffer, OP_SYSCALL, v1, v2);
 }

@@ -1,4 +1,4 @@
-# Project Golem-lang
+# Golem
 
 A programming language written in C.
 
@@ -67,19 +67,6 @@ A programming language written in C.
 - [x] mark-sweep garbage collector for vm => (Done.)
 - [x] Mutable parameters => (Done.)
 - [x] Subscripts (Arrays / Strings) => (Done.)
-
-#### Side projects
-
-- [ ] Lambdas, Closures, Anonymous functions => (Concept / Prototype.)
-- [ ] Debugger + inspector
-- [ ] JIT / ASM output
-- [ ] UTF-8 and escape characters
-
-#### Langugage specific
-
-- [ ] AST optimization
-- [ ] Lambdas
-- [ ] for loops using iterators (only usable for arrays) using pipe syntax, e.g. |x|
 
 # Concept (final concept may change)
 
@@ -207,6 +194,33 @@ For loops:
 }
 ```
 
+### Internal class functions
+
+Everything is a class. Integers, characters and arrays have their own functions.
+
+#### Integer:
+```
+to_f() -> float
+to_c() -> char
+to_str() -> char[]
+```
+
+#### Character:
+```
+to_i() -> int
+to_f() -> float
+to_str() -> char[]
+```
+
+#### Array:
+```
+length() -> int
+emtpy() -> bool
+append(other:T[]) -> T[]
+cons(other:T) -> T[]
+at(index:int) -> T
+```
+
 ### Annotations
 
 Until now, there are three different types of annotations: @Getter, @Setter and @Unused.
@@ -261,6 +275,7 @@ class[getX]()
 - subscripts
 - expressions with precedence
 - classes
+- annotations
 
 ### Langugage-based
 

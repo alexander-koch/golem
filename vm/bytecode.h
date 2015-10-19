@@ -10,37 +10,37 @@
 typedef enum
 {
 	// Basic stack
-	OP_PUSH,
-	OP_POP,
-	OP_HLT,
+	OP_HLT 					= 0x00,
+	OP_PUSH					= 0x01,
+	OP_POP					= 0x02,
 
 	// Store
-	OP_STORE,
-	OP_LOAD,
-	OP_GSTORE,
-	OP_GLOAD,
-	OP_LDARG0,
-	OP_SETARG0,
+	OP_STORE				= 0x03,
+	OP_LOAD					= 0x04,
+	OP_GSTORE				= 0x05,
+	OP_GLOAD				= 0x06,
+	OP_LDARG0				= 0x07,
+	OP_SETARG0				= 0x08,
 
 	// Arithmetic
 	// Integer
-	OP_IADD,
-	OP_ISUB,
-	OP_IMUL,
-	OP_IDIV,
-	OP_MOD,
-	OP_BITL,
-	OP_BITR,
-	OP_BITAND,
-	OP_BITOR,
-	OP_BITXOR,
-	OP_BITNOT,
-	OP_IMINUS,
-	OP_I2F,
+	OP_IADD					= 0x09,
+	OP_ISUB					= 0x0a,
+	OP_IMUL					= 0x0b,
+	OP_IDIV					= 0x0c,
+	OP_MOD					= 0x0d,
+	OP_BITL					= 0x0e,
+	OP_BITR					= 0x0f,
+	OP_BITAND				= 0x10,
+	OP_BITOR				= 0x11,
+	OP_BITXOR 				= 0x12,
+	OP_BITNOT				= 0x13,
+	OP_IMINUS				= 0x14,
+	OP_I2F					= 0x15,
 
 	// Float
-	OP_FADD,
-	OP_FSUB,
+	OP_FADD					= 0x16,
+	OP_FSUB					= 0x17,
 	OP_FMUL,
 	OP_FDIV,
 	OP_FMINUS,
@@ -124,7 +124,7 @@ void emit_char(vector_t* buffer, char c);
 void emit_pop(vector_t* buffer);
 void emit_op(vector_t* buffer, opcode_t op);
 bool emit_tok2op(vector_t* buffer, token_type_t tok, datatype_t type);
-void emit_syscall(vector_t* buffer, char* name, size_t args);
+void emit_syscall(vector_t* buffer, size_t index, size_t args);
 void emit_invoke(vector_t* buffer, size_t address, size_t args);
 void emit_return(vector_t* buffer);
 void emit_store(vector_t* buffer, int address, bool global);

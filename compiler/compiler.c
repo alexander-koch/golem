@@ -1152,7 +1152,8 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
 	// Emit invocation
 	if(external)
 	{
-		emit_syscall(compiler->buffer, func->funcdecl.name, argc);
+		int idx = func->funcdecl.external-1;
+		emit_syscall(compiler->buffer, idx, argc);
 	}
 	else
 	{
@@ -1164,7 +1165,7 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
 	return true;
 }
 
-datatype_t eval_int_func(compiler_t* compiler, ast_t* node, datatype_t dt)
+datatype_t eval_int32_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 {
 	ast_t* call = node->call.callee;
 	ast_t* key = call->subscript.key;
@@ -1183,11 +1184,15 @@ datatype_t eval_int_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 		emit_op(compiler->buffer, OP_I2F);
 		return datatype_new(DATA_FLOAT);
 	}
-	else if(!strcmp(key->ident, "to_c"))
+	else if(!strcmp(key->ident, "to_c") && dt.type == DATA_INT)
 	{
 		// no conversion needed, internally it is the same type
 		// so just trick the compiler and return char
 		return datatype_new(DATA_CHAR);
+	}
+	else if(!strcmp(key->ident, "to_i") && dt.type == DATA_CHAR)
+	{
+		return datatype_new(DATA_INT);
 	}
 	else if(!strcmp(key->ident, "to_str"))
 	{
@@ -1383,6 +1388,18 @@ datatype_t eval_class_call(compiler_t* compiler, ast_t* node, datatype_t dt)
 
 datatype_t eval_datatype_call(compiler_t* compiler, ast_t* node, datatype_t dt)
 {
+	// Class based internal calls
+	// Can either be:
+	// float
+	// int32
+	// array
+	// bool
+	//
+	// Not allowed:
+	// void
+	// null
+	// lambda
+
 	// Evaluate accordingly
 	if(dt.type == DATA_CLASS)
 	{
@@ -1394,9 +1411,10 @@ datatype_t eval_datatype_call(compiler_t* compiler, ast_t* node, datatype_t dt)
 		{
 			return eval_array_func(compiler, node, dt);
 		}
-		else if(dt.type == DATA_INT)
+		// DATA_INT and DATA_CHAR are internally both int32->types
+		else if(dt.type == DATA_INT || dt.type == DATA_CHAR)
 		{
-			return eval_int_func(compiler, node, dt);
+			return eval_int32_func(compiler, node, dt);
 		}
 		else
 		{

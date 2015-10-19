@@ -54,8 +54,8 @@ typedef enum
     TOKEN_MUL,       // '*' OP
     TOKEN_DIV,       // '/' OP
     TOKEN_MOD,       // '%' OP
-    TOKEN_EQUAL,     // '==' OP
-    TOKEN_ASSIGN,    // '=' OP
+    TOKEN_EQUAL,     // '=' OP
+    TOKEN_ASSIGN,    // ':=' OP
     TOKEN_NEQUAL,    // '!=' OP
     TOKEN_NOT,       // '!' OP
     TOKEN_DOT,       // '.'
