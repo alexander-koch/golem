@@ -34,11 +34,7 @@ typedef struct
 } vm_t;
 
 // Internal function
-typedef struct
-{
-	const char* name;
-	val_t (*func)(vm_t*);
-} gvm_c_function;
+typedef val_t (*gvm_c_function)(vm_t*);
 
 // Methods
 vm_t* vm_new();

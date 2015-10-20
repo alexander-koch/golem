@@ -43,6 +43,7 @@ FILES := main.c \
 		vm/vm.c \
 		lib/corelib.c \
 		lib/mathlib.c \
+		lib/iolib.c \
 		lib/loadlib.c
 
 # Debugging version (default)

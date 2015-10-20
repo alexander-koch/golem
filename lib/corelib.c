@@ -1,7 +1,6 @@
 
 #include "libdef.h"
 #include <vm/vm.h>
-#include <adt/hashmap.h>
 
 extern float strtof(const char* str, char** endptr);
 

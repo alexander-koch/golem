@@ -17,22 +17,28 @@ extern val_t math_floor(vm_t* vm);
 extern val_t math_ceil(vm_t* vm);
 extern val_t math_pow(vm_t* vm);
 
-static gvm_c_function system_methods[] = {
-	{"print", core_print},
-	{"println", core_println},
-	{"getline", core_getline},
-	{"parseFloat", core_parseFloat},
-	{"break", core_break},
+extern val_t io_readFile(vm_t* vm);
+extern val_t io_writeFile(vm_t* vm);
 
-	{"abs", math_abs},
-	{"sin", math_sin},
-	{"cos", math_cos},
-	{"tan", math_tan},
-	{"sqrt", math_sqrt},
-	{"floor", math_floor},
-	{"ceil", math_ceil},
-	{"pow", math_pow},
-	{0, 0}	// sentinel
+static gvm_c_function system_methods[] = {
+	core_print,			// 1
+	core_println,		// 2
+	core_getline,		// 3
+	core_parseFloat,	// 4
+	core_break,			// 5
+
+	math_abs,			// 6
+	math_sin,			// 7
+	math_cos,			// 8
+	math_tan,			// 9
+	math_sqrt,			// 10
+	math_floor,			// 11
+	math_ceil,			// 12
+	math_pow,			// 13
+
+	io_readFile,		// 14
+	io_writeFile,		// 15
+	0
 };
 
 // Compile in parser to invokedynamic, <address>, <arguments>
@@ -415,8 +421,6 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			val_t val = (offset < 0) ? vm->stack[vm->fp+offset] : vm->locals[vm->fp+offset];
 			vm->sp = sp;
 			vm->fp = fp;
-			//push(vm, val);
-
 			vm_register(vm, COPY_VAL(val));
 			break;
 		}
@@ -453,8 +457,7 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		case OP_SYSCALL:
 		{
 			size_t index = AS_INT32(instr->v1);
-			gvm_c_function fn = system_methods[index];
-			val_t ret = fn.func(vm);
+			val_t ret = system_methods[index](vm);
 			vm_register(vm, ret);
 			break;
 		}

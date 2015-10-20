@@ -27,7 +27,7 @@ A programming language written in C.
 
 ##### Tasks
 
-- [ ] (Intermediate) More operators for each 'class', to get productive with the code => (Working on it.)
+- [ ] (Intermediate) Standard operators for internal classes => (Working on it.)
 - [ ] (Advanced) Standard libraries and external classes, DLL loading => (Working on it.)
 - [ ] (Advanced) Bytecode optimizations (class optimizer -> remove unused code and functions!) => (Working on it.)
 - [ ] (Intermediate) Implement computed gotos to gain 15%-20% more speed => (Working on it.)
