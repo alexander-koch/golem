@@ -260,13 +260,25 @@ void vm_print_code(vm_t* vm, vector_t* buffer)
 
 void reserve(vm_t* vm, size_t args)
 {
-	if(vm->reserve > 0)
-	{
+	//if(vm->reserve > 0)
+	//{
+		vm->reserve += 1;
 		for(size_t i = 1; i <= args; i++)
 		{
 			vm->stack[vm->sp+vm->reserve-i] = vm->stack[vm->sp-i];
 		}
+		vm->stack[vm->sp+vm->reserve-args-1] = INT32_VAL(vm->reserve-1);
+
 		vm->sp += vm->reserve;
+	//}
+}
+
+void revert_reserve(vm_t* vm)
+{
+	int undo = AS_INT32(pop(vm));
+	for(int i = 0; i < undo; i++)
+	{
+		pop(vm);
 	}
 }
 
@@ -288,10 +300,10 @@ void vm_process(vm_t* vm, instruction_t* instr)
 	}
 	printf(" => STACK [");
 
-	int begin = vm->sp - 8;
-	if(begin < 0) begin = 0;
+	//int begin = vm->sp - 8;
+	//if(begin < 0) begin = 0;
 
-	for(int i = begin; i < vm->sp; i++)
+	for(int i = 0; i < vm->sp; i++)
 	{
 		if(vm->stack[i] != NULL_VAL)
 		{
@@ -372,7 +384,6 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			int offset = AS_INT32(instr->v1);
 			val_t v = vm->locals[offset];
 			vm_register(vm, COPY_VAL(v));
-			//push(vm, v);
 			break;
 		}
 		case OP_LDARG0:
@@ -487,7 +498,8 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			int address = AS_INT32(instr->v1);
 			size_t args = AS_INT32(instr->v2);
 
-			if(args > 0) reserve(vm, args+1);
+			//if(args > 0) reserve(vm, args+1);
+			reserve(vm, args+1);
 			push(vm, INT32_VAL(args));
 			push(vm, INT32_VAL(vm->fp));
 			push(vm, INT32_VAL(vm->pc));
@@ -518,6 +530,8 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			size_t args = AS_INT32(pop(vm));
 
 			vm->sp -= args;
+			revert_reserve(vm);
+
 			push(vm, ret);
 			break;
 		}
@@ -533,6 +547,8 @@ void vm_process(vm_t* vm, instruction_t* instr)
 
 			vm->sp -= args;
 			val_t clazz = pop(vm);
+			revert_reserve(vm);
+
 			push(vm, ret);
 			push(vm, clazz);
 			break;
