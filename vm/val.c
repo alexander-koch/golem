@@ -1,5 +1,6 @@
 #include "val.h"
 
+// Conversion struct
 typedef union
 {
   uint64_t bits64;
@@ -7,18 +8,16 @@ typedef union
   double num;
 } doublebits_t;
 
+
+// Integer
 bool val_is_int32(val_t val)
 {
-    // If the truncated 32-bit value
-    // is the same as the 64-bit value
-    // the value might be an 32-bit integer.
-    // Also the QNAN must NOT be set.
-
-    int32_t truncated = (int32_t)val;
-    return (truncated == val && IS_NUM(val));
+    doublebits_t data;
+    data.bits64 = val;
+    return data.bits32[0] >= 0 && data.bits32[1] == 0;
 }
 
-val_t val_of_int32(int32_t i)
+val_t val_of_int32(int i)
 {
     doublebits_t data;
     data.bits32[0] = i;
@@ -26,6 +25,14 @@ val_t val_of_int32(int32_t i)
     return data.bits64;
 }
 
+int val_to_int32(val_t val)
+{
+    doublebits_t data;
+    data.bits64 = val;
+    return data.bits32[0];
+}
+
+// Double
 double val_to_double(val_t value)
 {
 	doublebits_t data;

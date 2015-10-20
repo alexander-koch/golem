@@ -120,7 +120,7 @@ void obj_free(obj_t* obj);
 
 #define AS_BOOL(value) ((value) == TRUE_VAL)
 #define AS_NUM(value) (val_to_double(value))
-#define AS_INT32(value) ((int32_t)value)
+#define AS_INT32(value) (val_to_int32(value))
 #define AS_OBJ(value) ((obj_t*)(uintptr_t)((value) & ~(SIGN_BIT | QNAN)))
 #define AS_STRING(value) ((char*)(((obj_t*)AS_OBJ(value))->data))
 #define AS_ARRAY(value) ((obj_array_t*)(((obj_t*)AS_OBJ(value))->data))
@@ -140,6 +140,7 @@ void obj_free(obj_t* obj);
 
 bool val_is_int32(val_t val);
 val_t val_of_int32(int32_t i);
+int val_to_int32(val_t val);
 
 double val_to_double(val_t value);
 val_t val_of_double(double num);

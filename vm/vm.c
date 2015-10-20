@@ -287,10 +287,11 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		val_print(instr->v2);
 	}
 	printf(" => STACK [");
-	// int begin = vm->sp - 5;
-	// if(begin < 0) begin = 0;
 
-	for(int i = 0; i < vm->sp; i++)
+	int begin = vm->sp - 8;
+	if(begin < 0) begin = 0;
+
+	for(int i = begin; i < vm->sp; i++)
 	{
 		if(vm->stack[i] != NULL_VAL)
 		{

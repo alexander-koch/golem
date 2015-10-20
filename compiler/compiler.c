@@ -1060,6 +1060,8 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 			// If local or global
 			if(depth == 0 || ptr->global)
 			{
+				//printf("%d\n", ptr->address);
+
 				emit_load(compiler->buffer, ptr->address, ptr->global);
 			}
 			// Otherwise in upper scope
