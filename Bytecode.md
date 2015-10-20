@@ -1,17 +1,19 @@
 # Golem Bytecode Set
 
 Golem runs on an internal stack-based bytecode virtual machine (gvm).
-The following instructions are currently supported.
+Bytecode is used because of the speed compared to simple Tree-walkers, a JIT is not
+used because of the complexity.
 
 # VM Benchmark / Speed
 
-The current vm uses a technique called NaN-Tagging or NaN-Boxing.
+The current VM uses a technique called NaN-Tagging or NaN-Boxing.
 It stores all values in a IEEE-754 64-bit float.
 Integers, double-floats, booleans, characters, etc. and pointers are mapped onto it.
 This greatly improves the speed and the memory usage.
+On 64-bit systems, you can use the whole 64-bit for a double, and 32-bits for an integer.
 
 The following table demonstrates the speed.
-For comparison the old vm implementation and python is used.
+For comparison the old VM implementation and python is used.
 
 | Program | Old VM    | VM     | Python |
 |---      |---        |---     |---     |
@@ -112,7 +114,7 @@ For comparison the old vm implementation and python is used.
 
 ### Function calls
 
-All argument are first pushed on the stack, from first to last.
+All argument are pushed on the stack, from first to last.
 Then the number of arguments is pushed, followed by the current frame pointer and program counter.
 The frame pointer becomes the stack pointer, the pc is assigned to the new address.
 
@@ -132,7 +134,7 @@ The frame pointer becomes the stack pointer, the pc is assigned to the new addre
 |...           |      ...|
 | Stack top    |    0x200|
 
-Function arguments are accessed using a negative index.
+Function arguments are accessed using a negative index (e.g. load -4 loads the first argument).
 
 ### Virtual function calls
 
@@ -178,7 +180,7 @@ This should compile to the following instructions (unoptimized):
       07: gload, 0
       08: syscall, 1, 1
 
-Optimized (not done by vm or compiler):
+Optimized (not done by vm or compiler, maybe in future versions):
 
     Code:
       01: push, 5
