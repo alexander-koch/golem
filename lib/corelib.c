@@ -1,7 +1,6 @@
 
 #include "libdef.h"
 #include <vm/vm.h>
-
 extern float strtof(const char* str, char** endptr);
 
 GOLEM_API val_t core_print(vm_t* vm)

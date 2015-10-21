@@ -296,29 +296,76 @@ int lex_word(lexer_t* lexer, token_t* token)
 
 int lex_string(lexer_t* lexer, token_t* token)
 {
-    const char* begin = lexer->cursor++ + 1;
+    lexer->cursor++;
+    bytebuffer_t buffer;
+    bytebuffer_init(&buffer);
 
     while(lexer->cursor[0] != '"')
     {
-        if(lexer->cursor[0] == 0)
+        switch(lexer->cursor[0])
         {
-            lex_error(lexer, "Never ending string");
-            return 0;
-        }
-        else if(lexer->cursor[0] == '\n' || lexer->cursor[0] == '\r')
-        {
-            lex_error(lexer, "Strings may not contain newlines");
-            return 0;
-        }
-        else
-        {
-            lexer->cursor++;
+            case 0:
+                lex_error(lexer, "Never ending string");
+                return 0;
+            case '\n':
+            case '\r':
+            {
+                lex_error(lexer, "Strings may not contain newlines");
+                return 0;
+            }
+            case '\\':
+            {
+                lexer->cursor++;
+                switch(lexer->cursor[0])
+                {
+                    case '"':
+                        bytebuffer_write(&buffer, '"');
+                        break;
+                    case '\\':
+                        bytebuffer_write(&buffer, '\\');
+                        break;
+                    case 'b':
+                        bytebuffer_write(&buffer, '\b');
+                        break;
+                    case 'n':
+                        bytebuffer_write(&buffer, '\n');
+                        break;
+                    case 'r':
+                        bytebuffer_write(&buffer, '\r');
+                        break;
+                    case 't':
+                        bytebuffer_write(&buffer, '\t');
+                        break;
+                    case 'v':
+                        bytebuffer_write(&buffer, '\v');
+                        break;
+                    case 'f':
+                        bytebuffer_write(&buffer, '\f');
+                        break;
+                    case '0':
+                    default:
+                    {
+                        lex_error(lexer, "Invalid escape character");
+                        bytebuffer_clear(&buffer);
+                        return 0;
+                    }
+                }
+                lexer->cursor++;
+                break;
+            }
+            default:
+            {
+                bytebuffer_write(&buffer, lexer->cursor[0]);
+                lexer->cursor++;
+                break;
+            }
         }
     }
 
     lexer->cursor++; // end of quotation mark
     token->type = TOKEN_STRING;
-    token->value = strndup(begin, lexer->cursor - begin - 1);
+    token->value = strndup((char*)buffer.data, buffer.count);
+    bytebuffer_clear(&buffer);
     return 1;
 }
 

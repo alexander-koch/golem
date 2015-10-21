@@ -31,6 +31,7 @@ FILES := main.c \
 		adt/list.c \
 		adt/vector.c \
 		adt/hashmap.c \
+		adt/bytebuffer.c \
 		lexis/lexer.c \
 		parser/ast.c \
 		parser/parser.c \
@@ -38,6 +39,7 @@ FILES := main.c \
 		compiler/compiler.c \
 		compiler/scope.c \
 		compiler/graphviz.c \
+		compiler/doc.c \
 		vm/val.c \
 		vm/bytecode.c \
 		vm/vm.c \
@@ -66,15 +68,3 @@ dot:
 # git undo (in case of emergency)
 gitUndo:
 	git reset --soft HEAD~1
-
-# Deprecated
-old:
-	$(CC) $(CFLAGS) $(INC) -c $(FILES)
-	$(CC) *.o $(LDFLAGS) -o $(MODULE)
-	rm *.o
-
-# Deprecated
-asm:
-	nasm -fwin64 out.asm
-	gcc out.obj
-	rm out.obj

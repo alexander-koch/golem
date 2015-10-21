@@ -13,6 +13,7 @@
 #include <compiler/compiler.h>
 #include <compiler/serializer.h>
 #include <compiler/graphviz.h>
+#include <compiler/doc.h>
 
 void run_repl(vm_t* vm, compiler_t* compiler)
 {
@@ -119,6 +120,10 @@ int main(int argc, char** argv)
             ast_free(parser.top);
             parser_free(&parser);
             free(source);
+        }
+        else if(!strcmp(argv[1], "--doc"))
+        {
+            doc_generate(argv[2]);
         }
         else
         {
