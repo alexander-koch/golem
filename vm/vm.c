@@ -571,27 +571,6 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			}
 			break;
 		}
-
-		// Array operators
-		case OP_STR:
-		{
-			size_t elsz = AS_INT32(instr->v1);
-			char *str = malloc(sizeof(char) * (elsz+1));
-
-			for(int i = elsz; i > 0; i--)
-			{
-				val_t val = vm->stack[vm->sp - i];
-				str[elsz - i] = (char)AS_INT32(val);
-				vm->stack[vm->sp - i] = 0;
-			}
-			vm->sp -= elsz;
-			str[elsz] = '\0';
-			obj_t* obj = obj_string_nocopy_new(str);
-			vm_register(vm, OBJ_VAL(obj));
-			break;
-		}
-
-		// Array is still testificate
 		case OP_ARR:
 		{
 			// Reverse list fetching and inserting.
@@ -612,7 +591,34 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			vm_register(vm, OBJ_VAL(obj));
 			break;
 		}
+		case OP_STR:
+		{
+			size_t elsz = AS_INT32(instr->v1);
+			char *str = malloc(sizeof(char) * (elsz+1));
 
+			for(int i = elsz; i > 0; i--)
+			{
+				val_t val = vm->stack[vm->sp - i];
+				str[elsz - i] = (char)AS_INT32(val);
+				vm->stack[vm->sp - i] = 0;
+			}
+			vm->sp -= elsz;
+			str[elsz] = '\0';
+			obj_t* obj = obj_string_nocopy_new(str);
+			vm_register(vm, OBJ_VAL(obj));
+			break;
+		}
+		case OP_LDLIB:
+		{
+			break;
+		}
+		case OP_TOSTR:
+		{
+			val_t val = pop(vm);
+			char* str = val_tostr(val);
+			vm_register(vm, STRING_NOCOPY_VAL(str));
+			break;
+		}
 		case OP_IADD:
 		{
 			int v2 = AS_INT32(pop(vm));

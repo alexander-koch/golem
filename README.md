@@ -39,7 +39,6 @@ More features for the debug-version can be enabled/disabled in the Makfile.
 
 ##### Tasks
 
-- [ ] (Intermediate) Standard operators for internal classes => (Working on it.)
 - [ ] (Advanced) Standard libraries and external classes, DLL loading => (Working on it.)
 - [ ] (Advanced) Bytecode optimizations (class optimizer -> remove unused code and functions!) => (Working on it.)
 - [ ] (Intermediate) Implement computed gotos to gain 15%-20% more speed => (Working on it.)
@@ -56,6 +55,7 @@ More features for the debug-version can be enabled/disabled in the Makfile.
 
 ##### Done
 
+- [x] (Intermediate) Standard operators for internal classes => (Done.)
 - [x] (Intermediate) Serializer for bytecodes => (Done.)
 - [x] (Intermediate) Final fixes for arrays (NaN-Tagging) => (Done.)
 - [x] (Advanced) Use NaN-Tagging and increase vm performance => (Done.)
@@ -250,8 +250,15 @@ to_str() -> char[]
 
 #### Character:
 ```
-to_i() -> int
 to_f() -> float
+to_i() -> int
+to_str() -> char[]
+```
+
+#### Float:
+```
+to_i() -> int
+to_c() -> float
 to_str() -> char[]
 ```
 

@@ -147,6 +147,8 @@ val_t val_of_double(double num);
 bool val_equal(val_t v1, val_t v2);
 val_t val_copy(val_t val);
 void val_free(val_t v1);
+
+char* val_tostr(val_t v1);
 void val_print(val_t v1);
 
 #endif

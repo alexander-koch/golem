@@ -20,6 +20,10 @@ void dl_unload(void* lib)
 
 #else
 
+// Not tested on linux, so there is a macro
+
+#ifdef USE_DLFCN
+// Link with -ldl
 #include <dlfcn.h>
 
 void* dl_load(char* path)
@@ -36,5 +40,6 @@ void dl_unload(void* lib)
 {
 	dlclose(lib);
 }
+#endif
 
 #endif

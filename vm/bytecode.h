@@ -61,6 +61,7 @@ typedef enum
 	OP_ARR,
 	OP_STR,
 	OP_LDLIB,
+	OP_TOSTR,
 
 	// Compare
 	OP_BEQ,

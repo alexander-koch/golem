@@ -1199,9 +1199,8 @@ datatype_t eval_int32_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 	else if(!strcmp(key->ident, "to_str"))
 	{
 		// basically everything can be converted to a string
-		//emit_op(compiler->buffer, OP_TOSTR);
-		compiler_throw(compiler, node, "Function is not yet supported");
-		return datatype_new(DATA_NULL);
+		emit_op(compiler->buffer, OP_TOSTR);
+		return datatype_new(DATA_STRING);
 	}
 	else
 	{
@@ -1235,6 +1234,11 @@ datatype_t eval_float_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 		// Same function, just different 'type'
 		emit_op(compiler->buffer, OP_F2I);
 		return datatype_new(DATA_CHAR);
+	}
+	else if(!strcmp(key->ident, "to_str"))
+	{
+		emit_op(compiler->buffer, OP_TOSTR);
+		return datatype_new(DATA_STRING);
 	}
 	else
 	{

@@ -200,6 +200,42 @@ void val_free(val_t v1)
 	}
 }
 
+char* val_tostr(val_t v1)
+{
+    if(IS_INT32(v1))
+    {
+        int v = AS_INT32(v1);
+        int len = snprintf(0, 0, "%d", v);
+        char* str = malloc(sizeof(char) * (len + 1));
+        snprintf(str, len + 1, "%d", v);
+        return str;
+    }
+    else if(IS_NUM(v1))
+    {
+        double v = AS_NUM(v1);
+        int len = snprintf(0, 0, "%f", v);
+        char* str = malloc(sizeof(char) * (len + 1));
+        snprintf(str, len + 1, "%f", v);
+        return str;
+    }
+    else if(IS_BOOL(v1))
+    {
+        bool b = AS_BOOL(v1);
+        return b ? strdup("true") : strdup("false");
+    }
+    else if(IS_OBJ(v1))
+    {
+        int len = snprintf(0, 0, "object<%x>", v1);
+        char* str = malloc(sizeof(char) * (len + 1));
+        snprintf(str, len + 1, "object<%x>", v1);
+        return str;
+    }
+    else
+    {
+        return strdup("NULL");
+    }
+}
+
 void val_print(val_t v1)
 {
     if(IS_INT32(v1))
