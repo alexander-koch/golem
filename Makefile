@@ -54,7 +54,7 @@ debug:
 
 # Final release version
 release:
-	$(CC) -O3 $(CFLAGS) -DNO_IR -DNO_TIME -DNO_MEMINFO -DNO_AST $(INC) $(FILES) $(LDFLAGS) -o $(MODULE)
+	$(CC) -O3 $(CFLAGS) -DNO_IR -DNO_MEMINFO -DNO_AST $(INC) $(FILES) $(LDFLAGS) -o $(MODULE)
 
 # Experimental dll-library feature
 libs:

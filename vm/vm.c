@@ -232,19 +232,13 @@ void vm_register(vm_t* vm, val_t v1)
 	val_append(vm, v1);
 }
 
-// Fetches the next instruction
-instruction_t* vm_fetch(vm_t* vm, vector_t* buffer)
-{
-	return vector_get(buffer, vm->pc);
-}
-
 // Just prints out instruction codes
 void vm_print_code(vm_t* vm, vector_t* buffer)
 {
 	vm->pc = 0;
 	printf("\nImmediate code:\n");
 
-	instruction_t* instr = vm_fetch(vm, buffer);
+	instruction_t* instr = vector_get(buffer, vm->pc);
 	while(instr->op != OP_HLT)
 	{
 		printf("  %.2d: %s", vm->pc, op2str(instr->op));
@@ -261,7 +255,7 @@ void vm_print_code(vm_t* vm, vector_t* buffer)
 		putchar('\n');
 
 		vm->pc++;
-		instr = vm_fetch(vm, buffer);
+		instr = vector_get(buffer, vm->pc);
 	}
 	vm->pc = 0;
 }
@@ -291,8 +285,12 @@ void revert_reserve(vm_t* vm)
 }
 
 // Processes a buffer instruction based on instruction / program counter (pc).
-void vm_process(vm_t* vm, instruction_t* instr)
+void vm_exec(vm_t* vm, vector_t* buffer)
 {
+
+	while(vm->running)
+	{
+		instruction_t* instr = vector_get(buffer, vm->pc);
 
 #ifdef TRACE
 	printf("  %.2d (SP:%.2d, FP:%.2d): %s", vm->pc, vm->sp, vm->fp, op2str(instr->op));
@@ -496,7 +494,8 @@ void vm_process(vm_t* vm, instruction_t* instr)
 
 			vm->fp = vm->sp;
 			vm->pc = address;
-			return;
+			//return;
+			continue;
 		}
 		case OP_INVOKEVIRTUAL:
 		{
@@ -510,7 +509,8 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			push(vm, INT32_VAL(vm->pc));
 			vm->fp = vm->sp;
 			vm->pc = address;
-			return;
+			//return;
+			continue;
 		}
 		case OP_RESERVE:
 		{
@@ -561,7 +561,8 @@ void vm_process(vm_t* vm, instruction_t* instr)
 		case OP_JMP:
 		{
 			vm->pc = AS_INT32(instr->v1);
-			return;
+			//return;
+			continue;
 		}
 		case OP_JMPF:
 		{
@@ -569,7 +570,8 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			if(!result)
 			{
 				vm->pc = AS_INT32(instr->v1);
-				return;
+				//return;
+				continue;
 			}
 			break;
 		}
@@ -1060,7 +1062,6 @@ void vm_process(vm_t* vm, instruction_t* instr)
 			val_t val = cls->fields[index];
 			val = COPY_VAL(val); // <--
 			vm_register(vm, val);
-			//push(vm, val);
 			break;
 		}
 		default:
@@ -1071,6 +1072,8 @@ void vm_process(vm_t* vm, instruction_t* instr)
 	}
 
 	vm->pc++;
+
+	}
 }
 
 // Executes a buffer / list of instructions
@@ -1095,10 +1098,7 @@ void vm_run(vm_t* vm, vector_t* buffer)
 	clock_t begin = clock();
 #endif
 
-	while(vm->running)
-	{
-		vm_process(vm, vm_fetch(vm, buffer));
-	}
+	vm_exec(vm, buffer);
 
 #ifndef NO_TIME
 	clock_t end = clock();

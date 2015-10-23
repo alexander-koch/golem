@@ -15,9 +15,11 @@ On 64-bit systems, you can use the whole 64-bit for a double, and 32-bits for an
 The following table demonstrates the speed.
 For comparison the old VM implementation and python is used.
 
-| Program | Old VM    | VM     | Python |
-|---      |---        |---     |---     |
-| fib.gs  | ~4.95s    | ~1.08s | ~0.73s |
+(Info: The old VM used structs as values)
+
+| Program | Old VM    | VM     | Python 2.7.2 |
+|---      |---        |---     |---           |
+| fib.gs  | ~4.95s    | ~0.72s |    ~0.73s    |
 
 # Bytecode Instruction Set
 
