@@ -787,8 +787,6 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 			push(vm, BOOL_VAL(b1 == b2));
 			break;
 		}
-
-		case OP_CEQ:
 		case OP_IEQ:
 		{
 			int v2 = AS_INT32(pop(vm));
@@ -803,8 +801,6 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 			push(vm, BOOL_VAL(v1 == v2));
 			break;
 		}
-
-		case OP_CNE:
 		case OP_INE:
 		{
 			int v2 = AS_INT32(pop(vm));

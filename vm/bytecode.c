@@ -57,11 +57,9 @@ const char* op2str(opcode_t code)
 		case OP_BEQ: return "beq";
 		case OP_IEQ: return "ieq";
 		case OP_FEQ: return "feq";
-		case OP_CEQ: return "ceq";
 		case OP_BNE: return "bne";
 		case OP_INE: return "ine";
 		case OP_FNE: return "fne";
-		case OP_CNE: return "cne";
 
 		case OP_ILT: return "ilt";
 		case OP_IGT: return "igt";
@@ -204,17 +202,15 @@ opcode_t getOp(token_type_t tok, datatype_t dt)
 		case TOKEN_EQUAL:
 		{
 			if(type == DATA_BOOL) return OP_BEQ;
-			if(type == DATA_INT) return OP_IEQ;
+			if(type == DATA_INT || type == DATA_CHAR) return OP_IEQ;
 			if(type == DATA_FLOAT) return OP_FEQ;
-			if(type == DATA_CHAR) return OP_CEQ;
 			return -1;
 		}
 		case TOKEN_NEQUAL:
 		{
 			if(type == DATA_BOOL) return OP_BNE;
-			if(type == DATA_INT) return OP_INE;
+			if(type == DATA_INT || type == DATA_CHAR) return OP_INE;
 			if(type == DATA_FLOAT) return OP_FNE;
-			if(type == DATA_CHAR) return OP_CNE;
 			return -1;
 		}
 		case TOKEN_LESS:

@@ -68,11 +68,9 @@ typedef enum
 	OP_BEQ,
 	OP_IEQ,
 	OP_FEQ,
-	OP_CEQ,
 	OP_BNE,
 	OP_INE,
 	OP_FNE,
-	OP_CNE,
 
 	// Integer
 	OP_ILT,

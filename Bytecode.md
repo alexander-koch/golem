@@ -88,11 +88,9 @@ For comparison the old VM implementation and python is used.
 |beq                  | boolean equal
 |ieq                  | integer equal
 |feq                  | float equal
-|ceq                  | character equal
 |bne                  | boolean not equal
 |ine                  | integer not equal
 |fne                  | float not equal
-|cne                  | character not equal
 |ilt                  | integer less than
 |igt                  | integer greater than
 |ile                  | integer less equal
