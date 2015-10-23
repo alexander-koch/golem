@@ -37,9 +37,8 @@ typedef struct
 typedef val_t (*gvm_c_function)(vm_t*);
 
 // Methods
-vm_t* vm_new();
+void vm_init(vm_t* vm);
 void vm_run(vm_t* vm, vector_t* buffer);
-void vm_free(vm_t* vm);
 
 void push(vm_t* vm, val_t val);
 val_t pop(vm_t* vm);

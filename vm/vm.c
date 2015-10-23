@@ -46,9 +46,8 @@ static gvm_c_function system_methods[] = {
 // Compile in parser to invokedynamic, <address>, <arguments>
 // where address refers to the index in the system_methods
 
-vm_t* vm_new()
+void vm_init(vm_t* vm)
 {
-	vm_t* vm = malloc(sizeof(*vm));
 	vm->pc = 0;
 	vm->fp = 0;
 	vm->sp = 0;
@@ -57,7 +56,6 @@ vm_t* vm_new()
 	vm->firstVal = 0;
 	vm->numObjects = 0;
 	vm->maxObjects = 8;
-	return vm;
 }
 
 void vm_throw(vm_t* vm, const char* format, ...)
@@ -287,10 +285,28 @@ void revert_reserve(vm_t* vm)
 // Processes a buffer instruction based on instruction / program counter (pc).
 void vm_exec(vm_t* vm, vector_t* buffer)
 {
+	#define FETCH() instr = vector_get(buffer, vm->pc)
 
+	/**
+	Future versions should use computed gotos.
+	(And should validate the instrutions opcodes for safety fist)
+
+	static void* dispatch_table[] =
+	{
+		&&code_push
+	};
+
+	#define DISPATCH() \
+		FETCH() \
+		goto *dispatch_table[instr->op]
+
+	**/
+
+	//instruction_t* instr = 0;
 	while(vm->running)
 	{
 		instruction_t* instr = vector_get(buffer, vm->pc);
+		//FETCH();
 
 #ifdef TRACE
 	printf("  %.2d (SP:%.2d, FP:%.2d): %s", vm->pc, vm->sp, vm->fp, op2str(instr->op));
@@ -1116,10 +1132,4 @@ void vm_run(vm_t* vm, vector_t* buffer)
 
 	vm->sp = 0;
 	gc(vm);
-}
-
-// Frees the memory used by the vm
-void vm_free(vm_t* vm)
-{
-	free(vm);
 }

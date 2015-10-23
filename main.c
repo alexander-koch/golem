@@ -52,7 +52,13 @@ int main(int argc, char** argv)
     compiler_t compiler;
     compiler_init(&compiler);
 
-    /*if(argc == 1)
+    vm_t vm;
+    vm_init(&vm);
+
+    /**
+    Deprecated read-eval-print-loop
+
+    if(argc == 1)
     {
         // Read-eval-print-loop
         printf("Golem compiler - REPL\n");
@@ -61,18 +67,18 @@ int main(int argc, char** argv)
         vm_t* vm = vm_new();
         run_repl(vm, &compiler);
         vm_free(vm);
-    }*/
+    }
+    **/
+
     if(argc == 2)
     {
         // Generate and execute bytecode (Interpreter)
-        vm_t* vm = vm_new();
         vector_t* buffer = compile_file(&compiler, argv[1]);
         if(buffer)
         {
-            vm_run(vm, buffer);
+            vm_run(&vm, buffer);
             compiler_clear(&compiler);
         }
-        vm_free(vm);
     }
     else if(argc == 3)
     {
@@ -94,16 +100,14 @@ int main(int argc, char** argv)
         else if(!strcmp(argv[1], "-r"))
         {
             // Run compiled bytecode file
-            vm_t* vm = vm_new();
             vector_t* buffer = vector_new();
             bool ok = deserialize(argv[2], &buffer);
             compiler.buffer = buffer;
             if(ok)
             {
-                vm_run(vm, buffer);
+                vm_run(&vm, buffer);
             }
             compiler_clear(&compiler);
-            vm_free(vm);
         }
         else if(!strcmp(argv[1], "--ast"))
         {
