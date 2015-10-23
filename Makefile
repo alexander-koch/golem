@@ -65,6 +65,10 @@ dot:
 	dot -Tpng -o ast.png ast.dot
 	rm ast.dot
 
+dotsvg:
+	dot -Tsvg -o ast.svg ast.dot
+	rm ast.dot
+
 # git undo (in case of emergency)
 gitUndo:
 	git reset --soft HEAD~1

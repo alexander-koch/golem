@@ -235,6 +235,11 @@ For loops:
 	for(|iter| in [1...5]) {
 	print(iter)
 }
+
+for(|iter| = 0; 1 < 5; i := i + 1) {
+	print(iter)
+}
+
 ```
 
 ### Internal class functions

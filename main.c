@@ -42,8 +42,9 @@ void print_info()
     printf("Usage:\n");
     printf("  golem <file>       (Run a file)\n");
     printf("  golem -r <file>    (Run a *.gvm file)\n");
-    printf("  golem -c <file>    (Convert to bytecode file (*.gvm))\n");
-    printf("  golem --ast <file> (Convert generated AST to graph)\n\n");
+    printf("  golem -c <file>    (Convert to bytecode file *.gvm)\n");
+    printf("  golem --ast <file> (Convert generated AST to graph *.dot)\n\n");
+    printf("  golem --doc <file> (Create an HTML documentation)\n\n");
 }
 
 int main(int argc, char** argv)
@@ -123,7 +124,7 @@ int main(int argc, char** argv)
         }
         else if(!strcmp(argv[1], "--doc"))
         {
-            doc_generate(argv[2]);
+            doc_generate(&compiler, argv[2]);
         }
         else
         {
