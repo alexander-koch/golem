@@ -7,6 +7,7 @@ extern val_t core_println(vm_t* vm);
 extern val_t core_getline(vm_t* vm);
 extern val_t core_parseFloat(vm_t* vm);
 extern val_t core_break(vm_t* vm);
+extern val_t core_clock(vm_t* vm);
 
 extern val_t math_abs(vm_t* vm);
 extern val_t math_sin(vm_t* vm);
@@ -26,18 +27,19 @@ static gvm_c_function system_methods[] = {
 	core_getline,		// 3
 	core_parseFloat,	// 4
 	core_break,			// 5
+	core_clock,			// 6
 
-	math_abs,			// 6
-	math_sin,			// 7
-	math_cos,			// 8
-	math_tan,			// 9
-	math_sqrt,			// 10
-	math_floor,			// 11
-	math_ceil,			// 12
-	math_pow,			// 13
+	math_abs,			// 7
+	math_sin,			// 8
+	math_cos,			// 9
+	math_tan,			// 10
+	math_sqrt,			// 11
+	math_floor,			// 12
+	math_ceil,			// 13
+	math_pow,			// 14
 
-	io_readFile,		// 14
-	io_writeFile,		// 15
+	io_readFile,		// 15
+	io_writeFile,		// 16
 	0
 };
 

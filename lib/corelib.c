@@ -1,6 +1,7 @@
 
 #include "libdef.h"
 #include <vm/vm.h>
+#include <time.h>
 extern float strtof(const char* str, char** endptr);
 
 GOLEM_API val_t core_print(vm_t* vm)
@@ -36,6 +37,12 @@ GOLEM_API val_t core_break(vm_t* vm)
 	return NULL_VAL;
 }
 
+GOLEM_API val_t core_clock(vm_t* vm)
+{
+	double clocktime = clock() / CLOCKS_PER_SEC;
+	return NUM_VAL(clocktime);
+}
+
 GOLEM_API int core_gen_signatures(list_t* toplevel)
 {
 	signature_new();
@@ -62,6 +69,10 @@ GOLEM_API int core_gen_signatures(list_t* toplevel)
 
 	// break() -> void
 	function_new("break", DATA_VOID, 5);
+	function_upload(toplevel);
+
+	// clock() -> void
+	function_new("clock", DATA_FLOAT, 6);
 	function_upload(toplevel);
 
 	return 0;

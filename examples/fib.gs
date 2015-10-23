@@ -10,8 +10,13 @@ func fib(n:int) -> int {
 	return fib(n-2) + fib(n-1)
 }
 
+let start = clock()
+
 let mut i = 0
 while(i < 5) {
 	println(fib(28))
 	i := i + 1
 }
+
+print("Elapsed ")
+println(clock() - start)
