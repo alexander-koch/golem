@@ -1167,6 +1167,33 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
 	return true;
 }
 
+datatype_t eval_bool_func(compiler_t* compiler, ast_t* node, datatype_t dt)
+{
+	ast_t* call = node->call.callee;
+	ast_t* key = call->subscript.key;
+
+	list_t* formals = node->call.args;
+	size_t ls = list_size(formals);
+
+	if(ls != 0)
+	{
+		compiler_throw(compiler, node, "No such function / Expected zero arguments");
+	}
+
+	if(!strcmp(key->ident, "to_i"))
+	{
+		emit_op(compiler->buffer, OP_B2I);
+		return datatype_new(DATA_INT);
+	}
+	else if(!strcmp(key->ident, "to_str"))
+	{
+		emit_op(compiler->buffer, OP_TOSTR);
+		return datatype_new(DATA_STRING);
+	}
+
+	return datatype_new(DATA_NULL);
+}
+
 datatype_t eval_int32_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 {
 	ast_t* call = node->call.callee;
@@ -1207,7 +1234,7 @@ datatype_t eval_int32_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 		compiler_throw(compiler, node, "No such function");
 	}
 
-	return datatype_new(DATA_INT);
+	return datatype_new(DATA_NULL);
 }
 
 datatype_t eval_float_func(compiler_t* compiler, ast_t* node, datatype_t dt)
@@ -1454,6 +1481,10 @@ datatype_t eval_datatype_call(compiler_t* compiler, ast_t* node, datatype_t dt)
 		else if(dt.type == DATA_INT || dt.type == DATA_CHAR)
 		{
 			return eval_int32_func(compiler, node, dt);
+		}
+		else if(dt.type == DATA_BOOL)
+		{
+			return eval_bool_func(compiler, node, dt);
 		}
 		else if(dt.type == DATA_FLOAT)
 		{

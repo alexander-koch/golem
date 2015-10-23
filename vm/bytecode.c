@@ -39,6 +39,8 @@ const char* op2str(opcode_t code)
 		case OP_F2I: return "f2i";
 
 		case OP_NOT: return "not";
+		case OP_B2I: return "b2i";
+
 		case OP_SYSCALL: return "syscall";
 		case OP_INVOKE: return "invoke";
 		case OP_INVOKEVIRTUAL: return "invokevirutal";

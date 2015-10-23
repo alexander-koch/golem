@@ -48,6 +48,7 @@ typedef enum
 
 	// Boolean
 	OP_NOT,
+	OP_B2I,
 
 	// Special
 	OP_SYSCALL,

@@ -774,6 +774,12 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 			push(vm, BOOL_VAL(!b));
 			break;
 		}
+		case OP_B2I:
+		{
+			bool b = AS_BOOL(pop(vm));
+			push(vm, INT32_VAL(b));
+			break;
+		}
 		case OP_BEQ:
 		{
 			bool b2 = AS_BOOL(pop(vm));

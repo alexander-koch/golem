@@ -43,8 +43,9 @@ More features for the debug-version can be enabled/disabled in the Makfile.
 - [ ] (Advanced) Bytecode optimizations (class optimizer -> remove unused code and functions!) => (Working on it.)
 - [ ] (Intermediate) Implement computed gotos to gain 15%-20% more speed => (Working on it.)
 - [ ] (Easy) Array index out of bounds exceptions => (Task)
-- [ ] (Intermediate) Implement switch statements => (Task)
 - [ ] (Intermediate) Do for loops with iterators => (Task)
+- [ ] (Intermediate) Create an @Doc Annotation => (Task)
+- [ ] (Intermediate) Implement switch statements => (Task)
 - [ ] (Intermediate) Do namespaces => (Task)
 - [ ] (Advanced) Implement tuples => (Task)
 
@@ -264,6 +265,12 @@ to_str() -> char[]
 ```
 to_i() -> int
 to_c() -> float
+to_str() -> char[]
+```
+
+#### Boolean:
+```
+to_i() -> int
 to_str() -> char[]
 ```
 

@@ -84,6 +84,7 @@ int main(int argc, char** argv)
     {
         if(!strcmp(argv[1], "-c"))
         {
+            // Compile to bytecode
             vector_t* buffer = compile_file(&compiler, argv[2]);
             if(buffer)
             {
@@ -111,6 +112,7 @@ int main(int argc, char** argv)
         }
         else if(!strcmp(argv[1], "--ast"))
         {
+            // Generate ast.dot graphviz file
             char* filename = argv[2];
             size_t len = 0;
         	char* source = readFile(filename, &len);
@@ -128,6 +130,7 @@ int main(int argc, char** argv)
         }
         else if(!strcmp(argv[1], "--doc"))
         {
+            // Generate HTML-doc
             doc_generate(&compiler, argv[2]);
         }
         else

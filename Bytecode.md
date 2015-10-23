@@ -25,9 +25,9 @@ For comparison the old VM implementation and python is used.
 
 | Basic stack ops     | Description
 |---                  |---
+|hlt                  | halts the program
 |push                 | pushes a generic value on the stack
 |pop                  | pop value from stack, remove
-|hlt                  | halts the program
 
 | Store               | Description
 |---                  |---
@@ -38,7 +38,7 @@ For comparison the old VM implementation and python is used.
 |ldarg0               | loads current class (argument 0) from stack frame
 |setarg0              | sets current class in stack frame
 
-| Arithmetic          | Description
+| Arithmetic(Integer) | Description
 |---                  |---
 |iadd                 | integer addition, (pop 2 operands, add, push result)
 |isub                 | integer subtraction
@@ -51,13 +51,22 @@ For comparison the old VM implementation and python is used.
 |bit_or               | binary 'or' operation
 |bit_xor              | binary 'xor' operation
 |bit_not              | binary 'not' operation
-|iminus               | integer sign change to minus
+|iminus               | integer sign change
+|i2f                  | convert an integer to a float
+
+| Arithmetic(Float)   | Description
+|---                  |---
 |fadd                 | float addition
 |fsub                 | float subtraction
 |fmul                 | float multiplication
 |fdiv                 | float division
-|fminus               | float sign change to minus
+|fminus               | float sign change
+|f2i                  | converts a float to an integer
+
+| Boolean             | Description
+|---                  |---
 |not                  | logical negation operation
+|b2i                  | boolean to integer
 
 | Special             | Description
 |---                  |---
@@ -71,9 +80,8 @@ For comparison the old VM implementation and python is used.
 |jmpf x               | jump if false
 |arr x                | build an array with the top x elements
 |str x                | build a string with the top x elements
-|len                  | length of an array (or string)
-|append               | appends two arrays
-|cons                 | constructs a new value onto an array
+|ldlib x              | loads library a (Experimental)
+|tostr                | converts value on top of the stack to a string
 
 | Comparison          | Description
 |---                  |---
@@ -100,6 +108,9 @@ For comparison the old VM implementation and python is used.
 |---                  |---
 |getsub               | get the sub-element of the value, expects index (first) and value on top of the stack
 |setsub               | sets the sub-element of the value, same mechanism as above
+|len                  | length of an array (or string)
+|append               | appends two arrays
+|cons                 | constructs a new value onto an array
 
 | Upval               | Description
 |---                  |---
