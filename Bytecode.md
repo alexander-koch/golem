@@ -6,20 +6,20 @@ used because of the complexity.
 
 # VM Benchmark / Speed
 
-The current VM uses a technique called NaN-Tagging or NaN-Boxing.
-It stores all values in a IEEE-754 64-bit float.
+The current VM uses a technique called NaN-Tagging.
+It stores all values in a IEEE-754 64-bit floating-point value (double).
 Integers, double-floats, booleans, characters, etc. and pointers are mapped onto it.
 This greatly improves the speed and the memory usage.
 On 64-bit systems, you can use the whole 64-bit for a double, and 32-bits for an integer.
 
 The following table demonstrates the speed.
-For comparison the old VM implementation and python is used.
+For comparison the old VM implementation is used.
 
 (Info: The old VM used structs as values)
 
-| Program | Old VM    | VM     | Python 2.7.2 |
-|---      |---        |---     |---           |
-| fib.gs  | ~4.95s    | ~0.72s |    ~0.73s    |
+| Program | Old VM    | VM     | VM (using computed gotos) | Python 2.7.2 | Ruby    | Lua
+|---      |---        |---     |---                        |---           |---      |---
+| fib.gs  | ~4.95s    | ~0.72s | ~0.58s                    | ~0.73s       | ~0.29s  | ~0.31s
 
 # Bytecode Instruction Set
 
