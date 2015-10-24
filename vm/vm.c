@@ -285,28 +285,9 @@ void revert_reserve(vm_t* vm)
 // Processes a buffer instruction based on instruction / program counter (pc).
 void vm_exec(vm_t* vm, vector_t* buffer)
 {
-	#define FETCH() instr = vector_get(buffer, vm->pc)
-
-	/**
-	Future versions should use computed gotos.
-	(And should validate the instrutions opcodes for safety fist)
-
-	static void* dispatch_table[] =
-	{
-		&&code_push
-	};
-
-	#define DISPATCH() \
-		FETCH() \
-		goto *dispatch_table[instr->op]
-
-	**/
-
-	//instruction_t* instr = 0;
 	while(vm->running)
 	{
-		instruction_t* instr = vector_get(buffer, vm->pc);
-		//FETCH();
+		instruction_t* instr = buffer->data[vm->pc];
 
 #ifdef TRACE
 	printf("  %.2d (SP:%.2d, FP:%.2d): %s", vm->pc, vm->sp, vm->fp, op2str(instr->op));
@@ -630,6 +611,7 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		}
 		case OP_LDLIB:
 		{
+			// TODO: implement
 			break;
 		}
 		case OP_TOSTR:
@@ -801,6 +783,13 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 			push(vm, BOOL_VAL(v1 == v2));
 			break;
 		}
+		case OP_BNE:
+		{
+			bool b2 = AS_BOOL(pop(vm));
+			bool b1 = AS_BOOL(pop(vm));
+			push(vm, BOOL_VAL(b1 != b2));
+			break;
+		}
 		case OP_INE:
 		{
 			int v2 = AS_INT32(pop(vm));
@@ -815,7 +804,6 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 			push(vm, BOOL_VAL(v1 != v2));
 			break;
 		}
-
 		case OP_ILT:
 		{
 			int v2 = AS_INT32(pop(vm));
@@ -844,7 +832,6 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 			push(vm, BOOL_VAL(v1 >= v2));
 			break;
 		}
-
 		case OP_FLT:
 		{
 			double v2 = AS_NUM(pop(vm));
@@ -909,8 +896,8 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 			else
 			{
 				obj_array_t* arr = AS_ARRAY(obj);
-				val_t element = COPY_VAL(arr->data[idx]);
-				vm_register(vm, element);
+				val_t element = arr->data[idx];
+				vm_register(vm, COPY_VAL(element));
 			}
 			break;
 		}
@@ -1103,6 +1090,9 @@ void vm_run(vm_t* vm, vector_t* buffer)
 	vm->fp = 0;
 	vm->reserve = 0;
 	vm->running = true;
+
+	val_t nil = NULL_VAL;
+	memset(vm->locals, nil, sizeof(val_t) * LOCALS_SIZE);
 
 #ifndef NO_IR
 	// Print out bytecodes

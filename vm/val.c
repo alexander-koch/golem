@@ -270,6 +270,7 @@ void val_print(val_t v1)
                     if(i < arr->len-1) printf(", ");
                 }
                 putchar(']');
+                //printf("array<%x>", (unsigned int)v1);
                 break;
             }
             case OBJ_CLASS:
