@@ -42,7 +42,7 @@ FILES := main.c \
 		compiler/doc.c \
 		vm/val.c \
 		vm/bytecode.c \
-		vm/vm.c \
+		vm/gvm.c \
 		lib/corelib.c \
 		lib/mathlib.c \
 		lib/iolib.c \
@@ -54,7 +54,7 @@ debug:
 
 # Final release version
 release:
-	$(CC) -O3 $(CFLAGS) -DNO_IR -DNO_MEMINFO -DNO_AST $(INC) $(FILES) $(LDFLAGS) -o $(MODULE)
+	$(CC) -O3 -fno-gcse $(CFLAGS) -DNO_IR -DNO_MEMINFO -DNO_AST $(INC) $(FILES) $(LDFLAGS) -o $(MODULE)
 
 # Experimental dll-library feature
 libs:
