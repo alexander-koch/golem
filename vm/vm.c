@@ -402,6 +402,8 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	#define FETCH() instr = buffer->data[vm->pc];
 	#define FETCH_EXT() instr = buffer->data[vm->pc++];
 
+	// TODO: add vm_trace_print if -DTRACE is set
+
 	// Jump to pc
 	#define DISPATCH_RAW() \
 		FETCH(); \
