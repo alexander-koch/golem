@@ -42,7 +42,7 @@ FILES := main.c \
 		compiler/doc.c \
 		vm/val.c \
 		vm/bytecode.c \
-		vm/gvm.c \
+		vm/vm.c \
 		lib/corelib.c \
 		lib/mathlib.c \
 		lib/iolib.c \

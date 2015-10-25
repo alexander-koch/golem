@@ -25,12 +25,13 @@ typedef struct
 	int fp;
 	int sp;
 	int reserve;
-	bool running;
 
 	// Gargabe collection
 	obj_t* firstVal;
 	int numObjects;
 	int maxObjects;
+
+	int errjmp;
 } vm_t;
 
 // Internal function

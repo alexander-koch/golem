@@ -43,8 +43,7 @@ static gvm_c_function system_methods[] = {
 	0
 };
 
-// Compile in parser to invokedynamic, <address>, <arguments>
-// where address refers to the index in the system_methods
+void vm_clear(vm_t* vm);
 
 void vm_init(vm_t* vm)
 {
@@ -52,10 +51,10 @@ void vm_init(vm_t* vm)
 	vm->fp = 0;
 	vm->sp = 0;
 	vm->reserve = 0;
-	vm->running = false;
 	vm->firstVal = 0;
 	vm->numObjects = 0;
 	vm->maxObjects = 8;
+	vm->errjmp = 0;
 }
 
 void vm_throw(vm_t* vm, const char* format, ...)
@@ -66,7 +65,9 @@ void vm_throw(vm_t* vm, const char* format, ...)
     vfprintf(stdout, format, argptr);
     va_end(argptr);
     printf("\nat: PC(%d), SP(%d), FP(%d)\n", vm->pc, vm->sp, vm->fp);
-	vm->running = false;
+
+	vm_clear(vm);
+	vm->pc = vm->errjmp;
 }
 
 void mark(val_t v)
@@ -260,17 +261,14 @@ void vm_print_code(vm_t* vm, vector_t* buffer)
 
 void reserve(vm_t* vm, size_t args)
 {
-	//if(vm->reserve > 0)
-	//{
-		vm->reserve += 1;
-		for(size_t i = 1; i <= args; i++)
-		{
-			vm->stack[vm->sp+vm->reserve-i] = vm->stack[vm->sp-i];
-		}
-		vm->stack[vm->sp+vm->reserve-args-1] = INT32_VAL(vm->reserve-1);
+	vm->reserve += 1;
+	for(size_t i = 1; i <= args; i++)
+	{
+		vm->stack[vm->sp+vm->reserve-i] = vm->stack[vm->sp-i];
+	}
+	vm->stack[vm->sp+vm->reserve-args-1] = INT32_VAL(vm->reserve-1);
 
-		vm->sp += vm->reserve;
-	//}
+	vm->sp += vm->reserve;
 }
 
 void revert_reserve(vm_t* vm)
@@ -282,14 +280,8 @@ void revert_reserve(vm_t* vm)
 	}
 }
 
-// Processes a buffer instruction based on instruction / program counter (pc).
-void vm_exec(vm_t* vm, vector_t* buffer)
+void vm_trace_print(vm_t* vm, instruction_t* instr)
 {
-	while(vm->running)
-	{
-		instruction_t* instr = buffer->data[vm->pc];
-
-#ifdef TRACE
 	printf("  %.2d (SP:%.2d, FP:%.2d): %s", vm->pc, vm->sp, vm->fp, op2str(instr->op));
 	if(instr->v1 != NULL_VAL)
 	{
@@ -325,744 +317,840 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		gc(vm);
 	}
 #endif
+}
 
-#endif
-
-	switch(instr->op)
+// Processes a buffer instruction based on instruction / program counter (pc).
+void vm_exec(vm_t* vm, vector_t* buffer)
+{
+	static void* dispatch_table[] =
 	{
-		case OP_HLT:
+		&&code_hlt,
+		&&code_push,
+		&&code_pop,
+		&&code_store,
+		&&code_load,
+		&&code_gstore,
+		&&code_gload,
+		&&code_ldarg0,
+		&&code_setarg0,
+		&&code_iadd,
+		&&code_isub,
+		&&code_imul,
+		&&code_idiv,
+		&&code_mod,
+		&&code_bitl,
+		&&code_bitr,
+		&&code_bitand,
+		&&code_bitor,
+		&&code_bitxor,
+		&&code_bitnot,
+		&&code_iminus,
+		&&code_i2f,
+		&&code_fadd,
+		&&code_fsub,
+		&&code_fmul,
+		&&code_fdiv,
+		&&code_fminus,
+		&&code_f2i,
+		&&code_not,
+		&&code_b2i,
+		&&code_syscall,
+		&&code_invoke,
+		&&code_invokevirtual,
+		&&code_reserve,
+		&&code_ret,
+		&&code_retvirtual,
+		&&code_jmp,
+		&&code_jmpf,
+		&&code_arr,
+		&&code_str,
+		&&code_ldlib,
+		&&code_tostr,
+		&&code_beq,
+		&&code_ieq,
+		&&code_feq,
+		&&code_bne,
+		&&code_ine,
+		&&code_fne,
+		&&code_ilt,
+		&&code_igt,
+		&&code_ile,
+		&&code_ige,
+		&&code_flt,
+		&&code_fgt,
+		&&code_fle,
+		&&code_fge,
+		&&code_band,
+		&&code_bor,
+		&&code_getsub,
+		&&code_setsub,
+		&&code_len,
+		&&code_append,
+		&&code_cons,
+		&&code_upval,
+		&&code_upstore,
+		&&code_class,
+		&&code_setfield,
+		&&code_getfield
+	};
+
+	// Set the jmp position if an error occurs
+	vm->errjmp = vector_size(buffer)-1;
+
+	// Create the tmp instruction
+	instruction_t* instr = 0;
+	#define FETCH() instr = buffer->data[vm->pc];
+	#define FETCH_EXT() instr = buffer->data[vm->pc++];
+
+	// Jump to pc
+	#define DISPATCH_RAW() \
+		FETCH(); \
+		goto *dispatch_table[instr->op]
+
+
+	// Jump and increase pc
+	#define DISPATCH() \
+		FETCH_EXT(); \
+		goto *dispatch_table[instr->op]
+
+
+	// Dispatch and run
+	DISPATCH();
+	code_hlt:
+	{
+		return;
+	}
+	code_push:
+	{
+		vm_register(vm, COPY_VAL(instr->v1));
+		DISPATCH();
+	}
+	code_pop:
+	{
+		pop(vm);
+		DISPATCH();
+	}
+	code_store:
+	{
+		int offset = AS_INT32(instr->v1);
+		if(offset < 0)
 		{
-			vm->running = false;
-			break;
+			vm->stack[vm->fp+offset] = pop(vm);
 		}
-		case OP_PUSH:
+		else
 		{
-			vm_register(vm, COPY_VAL(instr->v1));
-			break;
+			vm->locals[vm->fp+offset] = pop(vm);
 		}
-		case OP_POP:
+		DISPATCH();
+	}
+	code_load:
+	{
+		int offset = AS_INT32(instr->v1);
+		if(offset < 0)
 		{
-			pop(vm);
-			break;
-		}
-		case OP_STORE:
-		{
-			int offset = AS_INT32(instr->v1);
-			if(offset < 0)
-			{
-				vm->stack[vm->fp+offset] = pop(vm);
-			}
-			else
-			{
-				vm->locals[vm->fp+offset] = pop(vm);
-			}
-			break;
-		}
-		case OP_LOAD:
-		{
-			int offset = AS_INT32(instr->v1);
-			if(offset < 0)
-			{
-				val_t v = vm->stack[vm->fp+offset];
-				vm_register(vm, COPY_VAL(v));
-			}
-			else
-			{
-				val_t v = vm->locals[vm->fp+offset];
-				vm_register(vm, COPY_VAL(v));
-			}
-			break;
-		}
-		case OP_GSTORE:
-		{
-			int offset = AS_INT32(instr->v1);
-			vm->locals[offset] = pop(vm);
-			break;
-		}
-		case OP_GLOAD:
-		{
-			int offset = AS_INT32(instr->v1);
-			val_t v = vm->locals[offset];
+			val_t v = vm->stack[vm->fp+offset];
 			vm_register(vm, COPY_VAL(v));
-			break;
 		}
-		case OP_LDARG0:
+		else
 		{
-			size_t args = AS_INT32(vm->stack[vm->fp-3]);
-			vm_register(vm, COPY_VAL(vm->stack[vm->fp-args-4]));
-			break;
+			val_t v = vm->locals[vm->fp+offset];
+			vm_register(vm, COPY_VAL(v));
 		}
-		case OP_SETARG0:
-		{
-			size_t args = AS_INT32(vm->stack[vm->fp-3]);
-			vm->stack[vm->fp-args-4] = pop(vm);
-			break;
-		}
-		case OP_IADD:
-		{
-			int v2 = AS_INT32(pop(vm));
-			int v1 = AS_INT32(pop(vm));
-			push(vm, INT32_VAL(v1 + v2));
-			break;
-		}
-		case OP_ISUB:
-		{
-			int v2 = AS_INT32(pop(vm));
-			int v1 = AS_INT32(pop(vm));
-			push(vm, INT32_VAL(v1 - v2));
-			break;
-		}
-		case OP_IMUL:
-		{
-			int v2 = AS_INT32(pop(vm));
-			int v1 = AS_INT32(pop(vm));
-			push(vm, INT32_VAL(v1 * v2));
-			break;
-		}
-		case OP_IDIV:
-		{
-			int v2 = AS_INT32(pop(vm));
-			int v1 = AS_INT32(pop(vm));
-			push(vm, INT32_VAL(v1 / v2));
-			break;
-		}
-		case OP_MOD:
-		{
-			int v2 = AS_INT32(pop(vm));
-			int v1 = AS_INT32(pop(vm));
-			push(vm, INT32_VAL(v1 % v2));
-			break;
-		}
-		case OP_BITL:
-		{
-			int v2 = AS_INT32(pop(vm));
-			int v1 = AS_INT32(pop(vm));
-			push(vm, INT32_VAL(v1 << v2));
-			break;
-		}
-		case OP_BITR:
-		{
-			int v2 = AS_INT32(pop(vm));
-			int v1 = AS_INT32(pop(vm));
-			push(vm, INT32_VAL(v1 >> v2));
-			break;
-		}
-		case OP_BITAND:
-		{
-			int v2 = AS_INT32(pop(vm));
-			int v1 = AS_INT32(pop(vm));
-			push(vm, INT32_VAL(v1 & v2));
-			break;
-		}
-		case OP_BITOR:
-		{
-			int v2 = AS_INT32(pop(vm));
-			int v1 = AS_INT32(pop(vm));
-			push(vm, INT32_VAL(v1 | v2));
-			break;
-		}
-		case OP_BITXOR:
-		{
-			int v2 = AS_INT32(pop(vm));
-			int v1 = AS_INT32(pop(vm));
-			push(vm, INT32_VAL(v1 ^ v2));
-			break;
-		}
-		case OP_BITNOT:
-		{
-			int v1 = AS_INT32(pop(vm));
-			push(vm, INT32_VAL(~v1));
-			break;
-		}
-		case OP_IMINUS:
-		{
-			int v1 = AS_INT32(pop(vm));
-			push(vm, INT32_VAL(-v1));
-			break;
-		}
-		case OP_I2F:
-		{
-			int v1 = AS_INT32(pop(vm));
-			push(vm, NUM_VAL(v1));
-			break;
-		}
-		case OP_FADD:
-		{
-			double v2 = AS_NUM(pop(vm));
-			double v1 = AS_NUM(pop(vm));
-			push(vm, NUM_VAL(v1 + v2));
-			break;
-		}
-		case OP_FSUB:
-		{
-			double v2 = AS_NUM(pop(vm));
-			double v1 = AS_NUM(pop(vm));
-			push(vm, NUM_VAL(v1 - v2));
-			break;
-		}
-		case OP_FMUL:
-		{
-			double v2 = AS_NUM(pop(vm));
-			double v1 = AS_NUM(pop(vm));
-			push(vm, NUM_VAL(v1 * v2));
-			break;
-		}
-		case OP_FDIV:
-		{
-			double v2 = AS_NUM(pop(vm));
-			double v1 = AS_NUM(pop(vm));
-			push(vm, NUM_VAL(v1 / v2));
-			break;
-		}
-		case OP_FMINUS:
-		{
-			double v1 = AS_NUM(pop(vm));
-			push(vm, NUM_VAL(-v1));
-			break;
-		}
-		case OP_F2I:
-		{
-			double v1 = AS_NUM(pop(vm));
-			push(vm, INT32_VAL((int)v1));
-			break;
-		}
-		case OP_NOT:
-		{
-			bool b = AS_BOOL(pop(vm));
-			push(vm, BOOL_VAL(!b));
-			break;
-		}
-		case OP_B2I:
-		{
-			bool b = AS_BOOL(pop(vm));
-			push(vm, INT32_VAL(b));
-			break;
-		}
-		case OP_SYSCALL:
-		{
-			size_t index = AS_INT32(instr->v1);
-			val_t ret = system_methods[index](vm);
-			vm_register(vm, ret);
-			break;
-		}
-		case OP_INVOKE:
-		{
-			// Arguments already on the stack
-			int address = AS_INT32(instr->v1);
-			size_t args = AS_INT32(instr->v2);
+		DISPATCH();
+	}
+	code_gstore:
+	{
+		int offset = AS_INT32(instr->v1);
+		vm->locals[offset] = pop(vm);
+		DISPATCH();
+	}
+	code_gload:
+	{
+		int offset = AS_INT32(instr->v1);
+		val_t v = vm->locals[offset];
+		vm_register(vm, COPY_VAL(v));
+		DISPATCH();
+	}
+	code_ldarg0:
+	{
+		size_t args = AS_INT32(vm->stack[vm->fp-3]);
+		vm_register(vm, COPY_VAL(vm->stack[vm->fp-args-4]));
+		DISPATCH();
+	}
+	code_setarg0:
+	{
+		size_t args = AS_INT32(vm->stack[vm->fp-3]);
+		vm->stack[vm->fp-args-4] = pop(vm);
+		DISPATCH();
+	}
+	code_iadd:
+	{
+		int v2 = AS_INT32(pop(vm));
+		int v1 = AS_INT32(pop(vm));
+		push(vm, INT32_VAL(v1 + v2));
+		DISPATCH();
+	}
+	code_isub:
+	{
+		int v2 = AS_INT32(pop(vm));
+		int v1 = AS_INT32(pop(vm));
+		push(vm, INT32_VAL(v1 - v2));
+		DISPATCH();
+	}
+	code_imul:
+	{
+		int v2 = AS_INT32(pop(vm));
+		int v1 = AS_INT32(pop(vm));
+		push(vm, INT32_VAL(v1 * v2));
+		DISPATCH();
+	}
+	code_idiv:
+	{
+		int v2 = AS_INT32(pop(vm));
+		int v1 = AS_INT32(pop(vm));
+		push(vm, INT32_VAL(v1 / v2));
+		DISPATCH();
+	}
+	code_mod:
+	{
+		int v2 = AS_INT32(pop(vm));
+		int v1 = AS_INT32(pop(vm));
+		push(vm, INT32_VAL(v1 % v2));
+		DISPATCH();
+	}
+	code_bitl:
+	{
+		int v2 = AS_INT32(pop(vm));
+		int v1 = AS_INT32(pop(vm));
+		push(vm, INT32_VAL(v1 << v2));
+		DISPATCH();
+	}
+	code_bitr:
+	{
+		int v2 = AS_INT32(pop(vm));
+		int v1 = AS_INT32(pop(vm));
+		push(vm, INT32_VAL(v1 >> v2));
+		DISPATCH();
+	}
+	code_bitand:
+	{
+		int v2 = AS_INT32(pop(vm));
+		int v1 = AS_INT32(pop(vm));
+		push(vm, INT32_VAL(v1 & v2));
+		DISPATCH();
+	}
+	code_bitor:
+	{
+		int v2 = AS_INT32(pop(vm));
+		int v1 = AS_INT32(pop(vm));
+		push(vm, INT32_VAL(v1 | v2));
+		DISPATCH();
+	}
+	code_bitxor:
+	{
+		int v2 = AS_INT32(pop(vm));
+		int v1 = AS_INT32(pop(vm));
+		push(vm, INT32_VAL(v1 ^ v2));
+		DISPATCH();
+	}
+	code_bitnot:
+	{
+		int v1 = AS_INT32(pop(vm));
+		push(vm, INT32_VAL(~v1));
+		DISPATCH();
+	}
+	code_iminus:
+	{
+		int v1 = AS_INT32(pop(vm));
+		push(vm, INT32_VAL(-v1));
+		DISPATCH();
+	}
+	code_i2f:
+	{
+		int v1 = AS_INT32(pop(vm));
+		push(vm, NUM_VAL(v1));
+		DISPATCH();
+	}
+	code_fadd:
+	{
+		double v2 = AS_NUM(pop(vm));
+		double v1 = AS_NUM(pop(vm));
+		push(vm, NUM_VAL(v1 + v2));
+		DISPATCH();
+	}
+	code_fsub:
+	{
+		double v2 = AS_NUM(pop(vm));
+		double v1 = AS_NUM(pop(vm));
+		push(vm, NUM_VAL(v1 - v2));
+		DISPATCH();
+	}
+	code_fmul:
+	{
+		double v2 = AS_NUM(pop(vm));
+		double v1 = AS_NUM(pop(vm));
+		push(vm, NUM_VAL(v1 * v2));
+		DISPATCH();
+	}
+	code_fdiv:
+	{
+		double v2 = AS_NUM(pop(vm));
+		double v1 = AS_NUM(pop(vm));
+		push(vm, NUM_VAL(v1 / v2));
+		DISPATCH();
+	}
+	code_fminus:
+	{
+		double v1 = AS_NUM(pop(vm));
+		push(vm, NUM_VAL(-v1));
+		DISPATCH();
+	}
+	code_f2i:
+	{
+		double v1 = AS_NUM(pop(vm));
+		push(vm, INT32_VAL((int)v1));
+		DISPATCH();
+	}
+	code_not:
+	{
+		bool b = AS_BOOL(pop(vm));
+		push(vm, BOOL_VAL(!b));
+		DISPATCH();
+	}
+	code_b2i:
+	{
+		bool b = AS_BOOL(pop(vm));
+		push(vm, INT32_VAL(b));
+		DISPATCH();
+	}
+	code_syscall:
+	{
+		size_t index = AS_INT32(instr->v1);
+		val_t ret = system_methods[index](vm);
+		vm_register(vm, ret);
+		DISPATCH();
+	}
+	code_invoke:
+	{
+		// Arguments already on the stack
+		int address = AS_INT32(instr->v1);
+		size_t args = AS_INT32(instr->v2);
 
-			// Arg0 -3
-			// Arg1 -2
-			// Arg2 -1
-			// sp (args=3) (reserve=2)
-			// ...  +1
-			// ...  +2
-			reserve(vm, args);
+		// Arg0 -3
+		// Arg1 -2
+		// Arg2 -1
+		// sp (args=3) (reserve=2)
+		// ...  +1
+		// ...  +2
+		reserve(vm, args);
 
-			push(vm, INT32_VAL(args));
-			push(vm, INT32_VAL(vm->fp));
-			push(vm, INT32_VAL(vm->pc));
+		push(vm, INT32_VAL(args));
+		push(vm, INT32_VAL(vm->fp));
+		push(vm, INT32_VAL(vm->pc));
 
-			// |   STACK_BOTTOM	  |
-			// |...				  |
-			// |Arg0			-7|
-			// |Arg1			-6|
-			// |Arg2			-5|
-			// |...				-4|
-			// |NUM_ARGS		-3|
-			// |FP				-2|	<-- vm->fp - 2
-			// |PC				-1|
-			// |...				 0|	<-- current position sp / fp
-			// |...				+1|
-			// |    STACK_TOP     |
+		// |   STACK_BOTTOM	  |
+		// |...				  |
+		// |Arg0			-7|
+		// |Arg1			-6|
+		// |Arg2			-5|
+		// |...				-4|
+		// |NUM_ARGS		-3|
+		// |FP				-2|	<-- vm->fp - 2
+		// |PC				-1|
+		// |...				 0|	<-- current position sp / fp
+		// |...				+1|
+		// |    STACK_TOP     |
 
-			vm->fp = vm->sp;
-			vm->pc = address;
-			continue;
-		}
-		case OP_INVOKEVIRTUAL:
-		{
-			int address = AS_INT32(instr->v1);
-			size_t args = AS_INT32(instr->v2);
+		vm->fp = vm->sp;
+		vm->pc = address;
+		DISPATCH_RAW();
+	}
+	code_invokevirtual:
+	{
+		int address = AS_INT32(instr->v1);
+		size_t args = AS_INT32(instr->v2);
 
-			//if(args > 0) reserve(vm, args+1);
-			reserve(vm, args+1);
-			push(vm, INT32_VAL(args));
-			push(vm, INT32_VAL(vm->fp));
-			push(vm, INT32_VAL(vm->pc));
-			vm->fp = vm->sp;
-			vm->pc = address;
-			continue;
-		}
-		case OP_RESERVE:
-		{
-			// Reserves some memory.
-			// Uses this before any function call to maintain stored values.
-			// Otherwise, if too many locals are saved in the last scope e.g. from 1 - 11,
-			// the new scope overwrites the old values for instance: fp at 5, overwrites 5 - 11.
+		//if(args > 0) reserve(vm, args+1);
+		reserve(vm, args+1);
+		push(vm, INT32_VAL(args));
+		push(vm, INT32_VAL(vm->fp));
+		push(vm, INT32_VAL(vm->pc));
+		vm->fp = vm->sp;
+		vm->pc = address;
+		DISPATCH_RAW();
+	}
+	code_reserve:
+	{
+		// Reserves some memory.
+		// Uses this before any function call to maintain stored values.
+		// Otherwise, if too many locals are saved in the last scope e.g. from 1 - 11,
+		// the new scope overwrites the old values for instance: fp at 5, overwrites 5 - 11.
 
-			vm->reserve = AS_INT32(instr->v1);
-			break;
-		}
-		case OP_RET:
-		{
-			// Returns to previous instruction pointer,
-			// and pushes the return value back on the stack.
-			// If you call this function make sure there is a return value on the stack.
-			val_t ret = pop(vm);
+		vm->reserve = AS_INT32(instr->v1);
+		DISPATCH();
+	}
+	code_ret:
+	{
+		// Returns to previous instruction pointer,
+		// and pushes the return value back on the stack.
+		// If you call this function make sure there is a return value on the stack.
+		val_t ret = pop(vm);
 
-			vm->sp = vm->fp;
-			vm->pc = AS_INT32(pop(vm));
-			vm->fp = AS_INT32(pop(vm));
-			size_t args = AS_INT32(pop(vm));
+		vm->sp = vm->fp;
+		vm->pc = AS_INT32(pop(vm));
+		vm->fp = AS_INT32(pop(vm));
+		size_t args = AS_INT32(pop(vm));
 
-			vm->sp -= args;
-			revert_reserve(vm);
+		vm->sp -= args;
+		revert_reserve(vm);
 
-			push(vm, ret);
-			break;
-		}
-		case OP_RETVIRTUAL:
-		{
-			// Returns from a virtual class function
-			val_t ret = pop(vm);
+		push(vm, ret);
+		DISPATCH();
+	}
+	code_retvirtual:
+	{
+		// Returns from a virtual class function
+		val_t ret = pop(vm);
 
-			vm->sp = vm->fp;
-			vm->pc = AS_INT32(pop(vm));
-			vm->fp = AS_INT32(pop(vm));
-			size_t args = AS_INT32(pop(vm));
+		vm->sp = vm->fp;
+		vm->pc = AS_INT32(pop(vm));
+		vm->fp = AS_INT32(pop(vm));
+		size_t args = AS_INT32(pop(vm));
 
-			vm->sp -= args;
-			val_t clazz = pop(vm);
-			revert_reserve(vm);
+		vm->sp -= args;
+		val_t clazz = pop(vm);
+		revert_reserve(vm);
 
-			push(vm, ret);
-			push(vm, clazz);
-			break;
-		}
-		case OP_JMP:
+		push(vm, ret);
+		push(vm, clazz);
+		DISPATCH();
+	}
+	code_jmp:
+	{
+		vm->pc = AS_INT32(instr->v1);
+		DISPATCH_RAW();
+	}
+	code_jmpf:
+	{
+		bool result = AS_BOOL(pop(vm));
+		if(!result)
 		{
 			vm->pc = AS_INT32(instr->v1);
-			continue;
+			DISPATCH_RAW();
 		}
-		case OP_JMPF:
+		DISPATCH();
+	}
+	code_arr:
+	{
+		// Reverse list fetching and inserting.
+		// Copying is not needed, because array consumes all the objects.
+		// The objects already have to be a copy.
+		size_t elsz = AS_INT32(instr->v1);
+		val_t* arr = malloc(sizeof(val_t) * elsz);
+		for(int i = elsz; i > 0; i--)
 		{
-			bool result = AS_BOOL(pop(vm));
-			if(!result)
+			// Get index object
+			val_t val = vm->stack[vm->sp - i];
+			arr[elsz - i] = COPY_VAL(val);		// <-- vm_register causes all sub objects also to be appended, therefore error
+			vm->stack[vm->sp - i] = NULL_VAL;
+		}
+		vm->sp -= elsz;
+
+		obj_t* obj = obj_array_new(arr, elsz);
+		vm_register(vm, OBJ_VAL(obj));
+		DISPATCH();
+	}
+	code_str:
+	{
+		size_t elsz = AS_INT32(instr->v1);
+		char *str = malloc(sizeof(char) * (elsz+1));
+
+		for(int i = elsz; i > 0; i--)
+		{
+			val_t val = vm->stack[vm->sp - i];
+			str[elsz - i] = (char)AS_INT32(val);
+			vm->stack[vm->sp - i] = 0;
+		}
+		vm->sp -= elsz;
+		str[elsz] = '\0';
+		obj_t* obj = obj_string_nocopy_new(str);
+		vm_register(vm, OBJ_VAL(obj));
+		DISPATCH();
+	}
+	code_ldlib:
+	{
+		// TODO: implement
+		DISPATCH();
+	}
+	code_tostr:
+	{
+		val_t val = pop(vm);
+		char* str = val_tostr(val);
+		vm_register(vm, STRING_NOCOPY_VAL(str));
+		DISPATCH();
+	}
+	code_beq:
+	{
+		bool b2 = AS_BOOL(pop(vm));
+		bool b1 = AS_BOOL(pop(vm));
+		push(vm, BOOL_VAL(b1 == b2));
+		DISPATCH();
+	}
+	code_ieq:
+	{
+		int v2 = AS_INT32(pop(vm));
+		int v1 = AS_INT32(pop(vm));
+		push(vm, BOOL_VAL(v1 == v2));
+		DISPATCH();
+	}
+	code_feq:
+	{
+		double v2 = AS_NUM(pop(vm));
+		double v1 = AS_NUM(pop(vm));
+		push(vm, BOOL_VAL(v1 == v2));
+		DISPATCH();
+	}
+	code_bne:
+	{
+		bool b2 = AS_BOOL(pop(vm));
+		bool b1 = AS_BOOL(pop(vm));
+		push(vm, BOOL_VAL(b1 != b2));
+		DISPATCH();
+	}
+	code_ine:
+	{
+		int v2 = AS_INT32(pop(vm));
+		int v1 = AS_INT32(pop(vm));
+		push(vm, BOOL_VAL(v1 != v2));
+		DISPATCH();
+	}
+	code_fne:
+	{
+		double v2 = AS_NUM(pop(vm));
+		double v1 = AS_NUM(pop(vm));
+		push(vm, BOOL_VAL(v1 != v2));
+		DISPATCH();
+	}
+	code_ilt:
+	{
+		int v2 = AS_INT32(pop(vm));
+		int v1 = AS_INT32(pop(vm));
+		push(vm, BOOL_VAL(v1 < v2));
+		DISPATCH();
+	}
+	code_igt:
+	{
+		int v2 = AS_INT32(pop(vm));
+		int v1 = AS_INT32(pop(vm));
+		push(vm, BOOL_VAL(v1 > v2));
+		DISPATCH();
+	}
+	code_ile:
+	{
+		int v2 = AS_INT32(pop(vm));
+		int v1 = AS_INT32(pop(vm));
+		push(vm, BOOL_VAL(v1 <= v2));
+		DISPATCH();
+	}
+	code_ige:
+	{
+		int v2 = AS_INT32(pop(vm));
+		int v1 = AS_INT32(pop(vm));
+		push(vm, BOOL_VAL(v1 >= v2));
+		DISPATCH();
+	}
+	code_flt:
+	{
+		double v2 = AS_NUM(pop(vm));
+		double v1 = AS_NUM(pop(vm));
+		push(vm, BOOL_VAL(v1 < v2));
+		DISPATCH();
+	}
+	code_fgt:
+	{
+		double v2 = AS_NUM(pop(vm));
+		double v1 = AS_NUM(pop(vm));
+		push(vm, BOOL_VAL(v1 > v2));
+		DISPATCH();
+	}
+	code_fle:
+	{
+		double v2 = AS_NUM(pop(vm));
+		double v1 = AS_NUM(pop(vm));
+		push(vm, BOOL_VAL(v1 <= v2));
+		DISPATCH();
+	}
+	code_fge:
+	{
+		double v2 = AS_NUM(pop(vm));
+		double v1 = AS_NUM(pop(vm));
+		push(vm, BOOL_VAL(v1 >= v2));
+		DISPATCH();
+	}
+	code_band:
+	{
+		bool b2 = AS_BOOL(pop(vm));
+		bool b1 = AS_BOOL(pop(vm));
+		push(vm, BOOL_VAL(b1 && b2));
+		DISPATCH();
+	}
+	code_bor:
+	{
+		bool b2 = AS_BOOL(pop(vm));
+		bool b1 = AS_BOOL(pop(vm));
+		push(vm, BOOL_VAL(b1 || b2));
+		DISPATCH();
+	}
+	code_getsub:
+	{
+		// Stack:
+		// | object |
+		// | key 	|
+		// | getsub |
+		val_t key = pop(vm);
+		val_t obj = pop(vm);
+		int idx = AS_INT32(key);
+
+		if(IS_STRING(obj))
+		{
+			char* str = AS_STRING(obj);
+			push(vm, INT32_VAL(str[idx]));
+		}
+		else
+		{
+			obj_array_t* arr = AS_ARRAY(obj);
+			val_t element = COPY_VAL(arr->data[idx]);
+			vm_register(vm, element);
+		}
+		DISPATCH();
+	}
+	code_setsub:
+	{
+		// Stack:
+		// | value	|
+		// | object |
+		// | key 	|
+		// | setsub |
+		val_t key = pop(vm);
+		val_t obj = pop(vm);
+		val_t val = pop(vm);
+		int idx = AS_INT32(key);
+
+		if(IS_STRING(obj))
+		{
+			obj = COPY_VAL(obj);
+			char* data = AS_STRING(obj);
+			data[idx] = (char)AS_INT32(val);
+			vm_register(vm, obj);
+		}
+		else
+		{
+			// Copy the whole array
+			// Free the copied object at index
+			// Upload the new array
+			obj = COPY_VAL(obj);
+			obj_array_t* arr = AS_ARRAY(obj);
+			val_free(arr->data[idx]);
+			arr->data[idx] = val;
+			vm_register(vm, obj);
+		}
+		DISPATCH();
+	}
+	code_len:
+	{
+		val_t obj = pop(vm);
+
+		if(IS_STRING(obj))
+		{
+			char* data = AS_STRING(obj);
+			push(vm, INT32_VAL(strlen(data)-1));
+		}
+		else
+		{
+			obj_array_t* arr = AS_ARRAY(obj);
+			push(vm, INT32_VAL(arr->len));
+		}
+		DISPATCH();
+	}
+	code_append:
+	{
+		val_t val = pop(vm);
+		val_t obj = pop(vm);
+
+		if(IS_STRING(obj))
+		{
+			// Simple string concatenation
+			char* str1 = AS_STRING(obj);
+			char* str2 = AS_STRING(val);
+			size_t len = strlen(str1) + strlen(str2) + 1;
+			char* data = malloc(sizeof(char) * len);
+			data[0] = '\0';
+			strcat(data, str1);
+			strcat(data, str2);
+
+			obj_t* obj_ptr = obj_string_nocopy_new(data);
+			vm_register(vm, OBJ_VAL(obj_ptr));
+		}
+		else
+		{
+			// Get the two array
+			// Allocate a new val_t array
+			// Upload it into a obj_t form
+			// register it / push it to the stack
+
+			obj_array_t* arr1 = AS_ARRAY(obj);
+			obj_array_t* arr2 = AS_ARRAY(val);
+
+			size_t len = arr1->len + arr2->len;
+			val_t* arr3 = malloc(sizeof(val_t) * len);
+
+			size_t i;
+			for(i = 0; i < arr1->len; i++)
 			{
-				vm->pc = AS_INT32(instr->v1);
-				continue;
+				arr3[i] = val_copy(arr1->data[i]);
 			}
-			break;
-		}
-		case OP_ARR:
-		{
-			// Reverse list fetching and inserting.
-			// Copying is not needed, because array consumes all the objects.
-			// The objects already have to be a copy.
-			size_t elsz = AS_INT32(instr->v1);
-			val_t* arr = malloc(sizeof(val_t) * elsz);
-			for(int i = elsz; i > 0; i--)
+			for(i = 0; i < arr2->len; i++)
 			{
-				// Get index object
-				val_t val = vm->stack[vm->sp - i];
-				arr[elsz - i] = COPY_VAL(val);		// <-- vm_register causes all sub objects also to be appended, therefore error
-				vm->stack[vm->sp - i] = NULL_VAL;
-			}
-			vm->sp -= elsz;
-
-			obj_t* obj = obj_array_new(arr, elsz);
-			vm_register(vm, OBJ_VAL(obj));
-			break;
-		}
-		case OP_STR:
-		{
-			size_t elsz = AS_INT32(instr->v1);
-			char *str = malloc(sizeof(char) * (elsz+1));
-
-			for(int i = elsz; i > 0; i--)
-			{
-				val_t val = vm->stack[vm->sp - i];
-				str[elsz - i] = (char)AS_INT32(val);
-				vm->stack[vm->sp - i] = 0;
-			}
-			vm->sp -= elsz;
-			str[elsz] = '\0';
-			obj_t* obj = obj_string_nocopy_new(str);
-			vm_register(vm, OBJ_VAL(obj));
-			break;
-		}
-		case OP_LDLIB:
-		{
-			// TODO: implement
-			break;
-		}
-		case OP_TOSTR:
-		{
-			val_t val = pop(vm);
-			char* str = val_tostr(val);
-			vm_register(vm, STRING_NOCOPY_VAL(str));
-			break;
-		}
-		case OP_BEQ:
-		{
-			bool b2 = AS_BOOL(pop(vm));
-			bool b1 = AS_BOOL(pop(vm));
-			push(vm, BOOL_VAL(b1 == b2));
-			break;
-		}
-		case OP_IEQ:
-		{
-			int v2 = AS_INT32(pop(vm));
-			int v1 = AS_INT32(pop(vm));
-			push(vm, BOOL_VAL(v1 == v2));
-			break;
-		}
-		case OP_FEQ:
-		{
-			double v2 = AS_NUM(pop(vm));
-			double v1 = AS_NUM(pop(vm));
-			push(vm, BOOL_VAL(v1 == v2));
-			break;
-		}
-		case OP_BNE:
-		{
-			bool b2 = AS_BOOL(pop(vm));
-			bool b1 = AS_BOOL(pop(vm));
-			push(vm, BOOL_VAL(b1 != b2));
-			break;
-		}
-		case OP_INE:
-		{
-			int v2 = AS_INT32(pop(vm));
-			int v1 = AS_INT32(pop(vm));
-			push(vm, BOOL_VAL(v1 != v2));
-			break;
-		}
-		case OP_FNE:
-		{
-			double v2 = AS_NUM(pop(vm));
-			double v1 = AS_NUM(pop(vm));
-			push(vm, BOOL_VAL(v1 != v2));
-			break;
-		}
-		case OP_ILT:
-		{
-			int v2 = AS_INT32(pop(vm));
-			int v1 = AS_INT32(pop(vm));
-			push(vm, BOOL_VAL(v1 < v2));
-			break;
-		}
-		case OP_IGT:
-		{
-			int v2 = AS_INT32(pop(vm));
-			int v1 = AS_INT32(pop(vm));
-			push(vm, BOOL_VAL(v1 > v2));
-			break;
-		}
-		case OP_ILE:
-		{
-			int v2 = AS_INT32(pop(vm));
-			int v1 = AS_INT32(pop(vm));
-			push(vm, BOOL_VAL(v1 <= v2));
-			break;
-		}
-		case OP_IGE:
-		{
-			int v2 = AS_INT32(pop(vm));
-			int v1 = AS_INT32(pop(vm));
-			push(vm, BOOL_VAL(v1 >= v2));
-			break;
-		}
-		case OP_FLT:
-		{
-			double v2 = AS_NUM(pop(vm));
-			double v1 = AS_NUM(pop(vm));
-			push(vm, BOOL_VAL(v1 < v2));
-			break;
-		}
-		case OP_FGT:
-		{
-			double v2 = AS_NUM(pop(vm));
-			double v1 = AS_NUM(pop(vm));
-			push(vm, BOOL_VAL(v1 > v2));
-			break;
-		}
-		case OP_FLE:
-		{
-			double v2 = AS_NUM(pop(vm));
-			double v1 = AS_NUM(pop(vm));
-			push(vm, BOOL_VAL(v1 <= v2));
-			break;
-		}
-		case OP_FGE:
-		{
-			double v2 = AS_NUM(pop(vm));
-			double v1 = AS_NUM(pop(vm));
-			push(vm, BOOL_VAL(v1 >= v2));
-			break;
-		}
-		case OP_BAND:
-		{
-			bool b2 = AS_BOOL(pop(vm));
-			bool b1 = AS_BOOL(pop(vm));
-			push(vm, BOOL_VAL(b1 && b2));
-			break;
-		}
-		case OP_BOR:
-		{
-			bool b2 = AS_BOOL(pop(vm));
-			bool b1 = AS_BOOL(pop(vm));
-			push(vm, BOOL_VAL(b1 || b2));
-			break;
-		}
-		case OP_GETSUB:
-		{
-			// Stack:
-			// | object |
-			// | key 	|
-			// | getsub |
-			val_t key = pop(vm);
-			val_t obj = pop(vm);
-			int idx = AS_INT32(key);
-
-			if(IS_STRING(obj))
-			{
-				char* str = AS_STRING(obj);
-				push(vm, INT32_VAL(str[idx]));
-			}
-			else
-			{
-				obj_array_t* arr = AS_ARRAY(obj);
-				val_t element = arr->data[idx];
-				vm_register(vm, COPY_VAL(element));
-			}
-			break;
-		}
-		case OP_SETSUB:
-		{
-			// Stack:
-			// | value	|
-			// | object |
-			// | key 	|
-			// | setsub |
-			val_t key = pop(vm);
-			val_t obj = pop(vm);
-			val_t val = pop(vm);
-			int idx = AS_INT32(key);
-
-			if(IS_STRING(obj))
-			{
-				obj = COPY_VAL(obj);
-				char* data = AS_STRING(obj);
-				data[idx] = (char)AS_INT32(val);
-				vm_register(vm, obj);
-			}
-			else
-			{
-				// Copy the whole array
-				// Free the copied object at index
-				// Upload the new array
-				obj = COPY_VAL(obj);
-				obj_array_t* arr = AS_ARRAY(obj);
-				val_free(arr->data[idx]);
-				arr->data[idx] = val;
-				vm_register(vm, obj);
-			}
-			break;
-		}
-		case OP_LEN:
-		{
-			val_t obj = pop(vm);
-
-			if(IS_STRING(obj))
-			{
-				char* data = AS_STRING(obj);
-				push(vm, INT32_VAL(strlen(data)-1));
-			}
-			else
-			{
-				obj_array_t* arr = AS_ARRAY(obj);
-				push(vm, INT32_VAL(arr->len));
-			}
-			break;
-		}
-		case OP_APPEND:
-		{
-			val_t val = pop(vm);
-			val_t obj = pop(vm);
-
-			if(IS_STRING(obj))
-			{
-				// Simple string concatenation
-				char* str1 = AS_STRING(obj);
-				char* str2 = AS_STRING(val);
-				size_t len = strlen(str1) + strlen(str2) + 1;
-				char* data = malloc(sizeof(char) * len);
-				data[0] = '\0';
-				strcat(data, str1);
-				strcat(data, str2);
-
-				obj_t* obj_ptr = obj_string_nocopy_new(data);
-				vm_register(vm, OBJ_VAL(obj_ptr));
-			}
-			else
-			{
-				// Get the two array
-				// Allocate a new val_t array
-				// Upload it into a obj_t form
-				// register it / push it to the stack
-
-				obj_array_t* arr1 = AS_ARRAY(obj);
-				obj_array_t* arr2 = AS_ARRAY(val);
-
-				size_t len = arr1->len + arr2->len;
-				val_t* arr3 = malloc(sizeof(val_t) * len);
-
-				size_t i;
-				for(i = 0; i < arr1->len; i++)
-				{
-					arr3[i] = val_copy(arr1->data[i]);
-				}
-				for(i = 0; i < arr2->len; i++)
-				{
-					arr3[i+arr1->len] = val_copy(arr2->data[i]);
-				}
-
-				obj_t* newObj = obj_array_new(arr3, len);
-				vm_register(vm, OBJ_VAL(newObj));
-			}
-			break;
-		}
-		case OP_CONS:
-		{
-			// Construct a new value on top
-			val_t val = pop(vm);
-			val_t obj = pop(vm);
-
-			if(IS_STRING(obj))
-			{
-				char* str = AS_STRING(obj);
-				size_t len = strlen(str);
-				char c = (char)AS_INT32(val);
-				char* newStr = malloc(sizeof(char) * (len+1));
-				strcpy(newStr, str);
-				newStr[len] = c;
-				newStr[len+1] = '\0';
-
-				obj_t* obj_ptr = obj_string_nocopy_new(newStr);
-				vm_register(vm, OBJ_VAL(obj_ptr));
-			}
-			else
-			{
-				// Copy the whole array
-				obj = COPY_VAL(obj);
-
-				// Get the information
-				obj_array_t* arr = AS_ARRAY(obj);
-				arr->len += 1;
-				size_t allocSz = sizeof(val_t) * arr->len;
-
-				// Reallocate and assign its content
-				arr->data = arr->len == 1 ? malloc(allocSz) : realloc(arr->data, allocSz);
-				arr->data[arr->len-1] = val;
-				vm_register(vm, obj);
-			}
-			break;
-		}
-		case OP_UPVAL:
-		{
-			int scopes = AS_INT32(instr->v1);
-			int offset = AS_INT32(instr->v2);
-			int fp = vm->fp;
-			int sp = vm->sp;
-
-			for(int i = 0; i < scopes; i++)
-			{
-				vm->fp = AS_INT32(vm->stack[vm->fp - 2]);
-			}
-			vm->sp = vm->fp;
-
-			val_t val = (offset < 0) ? vm->stack[vm->fp+offset] : vm->locals[vm->fp+offset];
-			vm->sp = sp;
-			vm->fp = fp;
-			vm_register(vm, COPY_VAL(val));
-			break;
-		}
-		case OP_UPSTORE:
-		{
-			val_t newVal = pop(vm);
-
-			int scopes = AS_INT32(instr->v1);
-			int offset = AS_INT32(instr->v2);
-
-			int fp = vm->fp;
-			int sp = vm->sp;
-
-			for(int i = 0; i < scopes; i++)
-			{
-				vm->fp = AS_INT32(vm->stack[vm->fp - 2]);
-			}
-			vm->sp = vm->fp;
-
-			if(offset < 0)
-			{
-				vm->stack[vm->fp+offset] = newVal;
-			}
-			else
-			{
-				vm->locals[vm->fp+offset] = newVal;
+				arr3[i+arr1->len] = val_copy(arr2->data[i]);
 			}
 
-			vm->sp = sp;
-			vm->fp = fp;
-			break;
+			obj_t* newObj = obj_array_new(arr3, len);
+			vm_register(vm, OBJ_VAL(newObj));
 		}
-		case OP_CLASS:
-		{
-			obj_t* obj = obj_class_new();
-			vm_register(vm, OBJ_VAL(obj));
-			break;
-		}
-		case OP_SETFIELD:
-		{
-			// Stack
-			// ---
-			// value
-			// class
+		DISPATCH();
+	}
+	code_cons:
+	{
+		// Construct a new value on top
+		val_t val = pop(vm);
+		val_t obj = pop(vm);
 
-			int index = AS_INT32(instr->v1);
-			val_t val = pop(vm);
-			val_t class = pop(vm);
-
-			obj_class_t* cls = AS_CLASS(class);
-			cls->fields[index] = val;
-
-			push(vm, class);
-			break;
-		}
-		case OP_GETFIELD:
+		if(IS_STRING(obj))
 		{
-			// Copy val to keep class internal value alive
-			int index = AS_INT32(instr->v1);
-			val_t class = pop(vm);
+			char* str = AS_STRING(obj);
+			size_t len = strlen(str);
+			char c = (char)AS_INT32(val);
+			char* newStr = malloc(sizeof(char) * (len+1));
+			strcpy(newStr, str);
+			newStr[len] = c;
+			newStr[len+1] = '\0';
 
-			obj_class_t* cls = AS_CLASS(class);
-			val_t val = cls->fields[index];
-			val = COPY_VAL(val); // <--
-			vm_register(vm, val);
-			break;
+			obj_t* obj_ptr = obj_string_nocopy_new(newStr);
+			vm_register(vm, OBJ_VAL(obj_ptr));
 		}
-		default:
+		else
 		{
-			printf("Uknown operator encountered\n");
-			break;
+			// Copy the whole array
+			obj = COPY_VAL(obj);
+
+			// Get the information
+			obj_array_t* arr = AS_ARRAY(obj);
+			arr->len += 1;
+			size_t allocSz = sizeof(val_t) * arr->len;
+
+			// Reallocate and assign its content
+			arr->data = arr->len == 1 ? malloc(allocSz) : realloc(arr->data, allocSz);
+			arr->data[arr->len-1] = val;
+			vm_register(vm, obj);
 		}
+		DISPATCH();
+	}
+	code_upval:
+	{
+		int scopes = AS_INT32(instr->v1);
+		int offset = AS_INT32(instr->v2);
+		int fp = vm->fp;
+		int sp = vm->sp;
+
+		for(int i = 0; i < scopes; i++)
+		{
+			vm->fp = AS_INT32(vm->stack[vm->fp - 2]);
+		}
+		vm->sp = vm->fp;
+
+		val_t val = (offset < 0) ? vm->stack[vm->fp+offset] : vm->locals[vm->fp+offset];
+		vm->sp = sp;
+		vm->fp = fp;
+		vm_register(vm, COPY_VAL(val));
+		DISPATCH();
+	}
+	code_upstore:
+	{
+		val_t newVal = pop(vm);
+
+		int scopes = AS_INT32(instr->v1);
+		int offset = AS_INT32(instr->v2);
+
+		int fp = vm->fp;
+		int sp = vm->sp;
+
+		for(int i = 0; i < scopes; i++)
+		{
+			vm->fp = AS_INT32(vm->stack[vm->fp - 2]);
+		}
+		vm->sp = vm->fp;
+
+		if(offset < 0)
+		{
+			vm->stack[vm->fp+offset] = newVal;
+		}
+		else
+		{
+			vm->locals[vm->fp+offset] = newVal;
+		}
+
+		vm->sp = sp;
+		vm->fp = fp;
+		DISPATCH();
+	}
+	code_class:
+	{
+		obj_t* obj = obj_class_new();
+		vm_register(vm, OBJ_VAL(obj));
+		DISPATCH();
+	}
+	code_setfield:
+	{
+		// Stack
+		// ---
+		// value
+		// class
+
+		int index = AS_INT32(instr->v1);
+		val_t val = pop(vm);
+		val_t class = pop(vm);
+
+		obj_class_t* cls = AS_CLASS(class);
+		cls->fields[index] = val;
+
+		push(vm, class);
+		DISPATCH();
+	}
+	code_getfield:
+	{
+		// Copy val to keep class internal value alive
+		int index = AS_INT32(instr->v1);
+		val_t class = pop(vm);
+
+		obj_class_t* cls = AS_CLASS(class);
+		val_t val = cls->fields[index];
+		val = COPY_VAL(val); // <--
+		vm_register(vm, val);
+		DISPATCH();
+	}
+}
+
+void vm_clear(vm_t* vm)
+{
+	// Move stack pointer to zero, -> clears all elements by gc
+	// Discard the rest
+	for(int i = 0; i < LOCALS_SIZE; i++)
+	{
+		vm->locals[i] = NULL_VAL;
 	}
 
-	vm->pc++;
-
-	}
+	vm->sp = 0;
+	gc(vm);
 }
 
 // Executes a buffer / list of instructions
@@ -1073,7 +1161,6 @@ void vm_run(vm_t* vm, vector_t* buffer)
 	vm->pc = 0;
 	vm->fp = 0;
 	vm->reserve = 0;
-	vm->running = true;
 
 	val_t nil = NULL_VAL;
 	memset(vm->locals, nil, sizeof(val_t) * LOCALS_SIZE);
@@ -1099,13 +1186,5 @@ void vm_run(vm_t* vm, vector_t* buffer)
 #endif
 #endif
 
-	// Move stack pointer to zero, -> clears all elements by gc
-	// Discard the rest
-	for(int i = 0; i < LOCALS_SIZE; i++)
-	{
-		vm->locals[i] = NULL_VAL;
-	}
-
-	vm->sp = 0;
-	gc(vm);
+	vm_clear(vm);
 }
