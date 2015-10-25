@@ -1029,10 +1029,11 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 
 		if(IS_STRING(obj))
 		{
+			// Allocate len + 2 => one for the char and one for the trailing zero
 			char* str = AS_STRING(obj);
 			size_t len = strlen(str);
 			char c = (char)AS_INT32(val);
-			char* newStr = malloc(sizeof(char) * (len+1));
+			char* newStr = malloc(sizeof(char) * (len+2));
 			strcpy(newStr, str);
 			newStr[len] = c;
 			newStr[len+1] = '\0';

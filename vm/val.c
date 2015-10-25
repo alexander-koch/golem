@@ -225,9 +225,9 @@ char* val_tostr(val_t v1)
     }
     else if(IS_OBJ(v1))
     {
-        int len = snprintf(0, 0, "object<%x>", v1);
+        int len = snprintf(0, 0, "object<%x>", (unsigned int)v1);
         char* str = malloc(sizeof(char) * (len + 1));
-        snprintf(str, len + 1, "object<%x>", v1);
+        snprintf(str, len + 1, "object<%x>", (unsigned int)v1);
         return str;
     }
     else
