@@ -2209,7 +2209,9 @@ datatype_t eval_import(compiler_t* compiler, ast_t* node)
 	}
 	else
 	{
-		// External
+		// Do nothing, the standard library is already loaded.
+
+		// TODO: External
 		/*if(!strcmp(node->import, "core"))
 		{
 			void *lib = dl_load("lib/libcore.dll");

@@ -50,12 +50,12 @@ GOLEM_API int core_gen_signatures(list_t* toplevel)
 
 	// print(T) -> void
 	function_new("print", DATA_VOID, 1);
-	function_add_param(DATA_GENERIC);
+	function_add_param(0, DATA_GENERIC);
 	function_upload(toplevel);
 
 	// println(T) -> void
 	function_new("println", DATA_VOID, 2);
-	function_add_param(DATA_GENERIC);
+	function_add_param(0, DATA_GENERIC);
 	function_upload(toplevel);
 
 	// getline() -> char[]
@@ -64,7 +64,7 @@ GOLEM_API int core_gen_signatures(list_t* toplevel)
 
 	// parseFloat(str:char[]) -> float
 	function_new("parseFloat", DATA_FLOAT, 4);
-	function_add_param(DATA_STRING);
+	function_add_param(0, DATA_STRING);
 	function_upload(toplevel);
 
 	// break() -> void

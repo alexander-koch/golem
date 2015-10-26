@@ -4,6 +4,8 @@
 using core
 using io
 
+# Example file implementation
+# Future: gets merged into io lib
 type File(name:char[]) {
 	@Getter
 	let filename = name

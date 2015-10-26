@@ -64,9 +64,7 @@ int main(int argc, char** argv)
         printf("Golem compiler - REPL\n");
         printf("Copyright (c) Alexander Koch 2015 All Rights Reserved.\n\n");
 
-        vm_t* vm = vm_new();
-        run_repl(vm, &compiler);
-        vm_free(vm);
+        run_repl(&vm, &compiler);
     }
     **/
 
