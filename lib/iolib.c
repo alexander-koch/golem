@@ -25,14 +25,16 @@ GOLEM_API val_t io_readFile(vm_t* vm)
 
 GOLEM_API val_t io_writeFile(vm_t* vm)
 {
-	char* filename = AS_STRING(pop(vm));
-	char* content = AS_STRING(pop(vm));
 	char* mode = AS_STRING(pop(vm));
+	char* content = AS_STRING(pop(vm));
+	char* filename = AS_STRING(pop(vm));
+
+	printf("Writing to file %s; mode %s\n", filename, mode);
 
 	FILE* fp = fopen(filename, mode);
 	if(!fp) return NULL_VAL;
 
-	fwrite(&content, sizeof(char), strlen(content), fp);
+	fprintf(fp, "%s", content);
 	fclose(fp);
 	return NULL_VAL;
 }
@@ -54,9 +56,24 @@ GOLEM_API int io_gen_signatures(list_t* toplevel)
 	function_add_param(0, DATA_STRING);
 	function_upload(toplevel);
 
-#define IO_EXT
-#ifdef IO_EXT
-	// New FILE class
+
+	/**
+	File class API
+
+	type File(name:char[]) {
+		@Getter
+		let filename = name
+
+		func read() -> char[] {
+			return readFile(filename)
+		}
+
+		func write(str:char[]) -> void {
+			writeFile(filename, str, "wb")
+		}
+	}
+
+	**/
 	ast_t *var = 0, *clazz = 0, *ann = 0;
 
 	// Class File(name:char[]) {
@@ -126,9 +143,7 @@ GOLEM_API int io_gen_signatures(list_t* toplevel)
 	list_push(callFunc->call.args, p3);
 	list_push(func->funcdecl.impl.body, callFunc);
 	list_push(clazz->classstmt.body, func);
-
 	class_upload(toplevel);
-#endif
 
 	return 0;
 }

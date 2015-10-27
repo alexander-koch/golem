@@ -178,13 +178,9 @@ int graphviz_eval(graphviz_t* state, ast_t* node)
 			int this = graphviz_get_id(state);
 			char* name = node->funcdecl.name;
 			datatype_t ret = node->funcdecl.rettype;
-			bool ext = node->funcdecl.external;
+			int ext = node->funcdecl.external;
 
-			if(!strcmp(name, "println") || !strcmp(name, "print") ||
-				!strcmp(name, "break") || !strcmp(name, "getline") || !strcmp(name, "parseFloat"))
-			{
-				return 0;
-			}
+			if(ext > 0) return 0;
 
 			graphviz_mnemonic(state);
 			fprintf(state->fp, "node%d [label=\"DECLFUNC %s\\ntype:%s\\nexternal:%s\", shape=\"record\"]\n", this, name, datatype2str(ret), ext?"true":"false");
