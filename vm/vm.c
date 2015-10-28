@@ -919,13 +919,13 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		if(IS_STRING(obj))
 		{
 			char* str = AS_STRING(obj);
-			VM_ASSERT(idx >= 0 && idx < strlen(str), "Array index out of bounds");
+			// VM_ASSERT(idx >= 0 && idx < strlen(str), "Array index out of bounds");
 			push(vm, INT32_VAL(str[idx]));
 		}
 		else
 		{
 			obj_array_t* arr = AS_ARRAY(obj);
-			VM_ASSERT(idx >= 0 && idx < arr->len, "Array index out of bounds");
+			// VM_ASSERT(idx >= 0 && idx < arr->len, "Array index out of bounds");
 			val_t element = COPY_VAL(arr->data[idx]);
 			vm_register(vm, element);
 		}
@@ -946,26 +946,25 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		if(IS_STRING(obj))
 		{
 			obj = COPY_VAL(obj);
-			vm_register(vm, obj);
-
 			char* data = AS_STRING(obj);
-			VM_ASSERT(idx >= 0 && idx < strlen(data), "Array index out of bounds");
+			// VM_ASSERT(idx >= 0 && idx < strlen(data), "Array index out of bounds");
 			data[idx] = (char)AS_INT32(val);
+			vm_register(vm, obj);
 		}
 		else
 		{
 			// Copy the whole array
 			// Upload the new array
 			obj = COPY_VAL(obj);
-			vm_register(vm, obj);
 
 			// Free the copied object at index
 			obj_array_t* arr = AS_ARRAY(obj);
 			val_free(arr->data[idx]);
 
 			// Try to replace it
-			VM_ASSERT(idx >= 0 && idx < arr->len, "Array index out of bounds");
+			// VM_ASSERT(idx >= 0 && idx < arr->len, "Array index out of bounds");
 			arr->data[idx] = val;
+			vm_register(vm, obj);
 		}
 		DISPATCH();
 	}
@@ -1010,7 +1009,6 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 			// Allocate a new val_t array
 			// Upload it into a obj_t form
 			// register it / push it to the stack
-
 			obj_array_t* arr1 = AS_ARRAY(obj);
 			obj_array_t* arr2 = AS_ARRAY(val);
 
@@ -1158,11 +1156,8 @@ void vm_clear(vm_t* vm)
 {
 	// Move stack pointer to zero, -> clears all elements by gc
 	// Discard the rest
-	for(int i = 0; i < LOCALS_SIZE; i++)
-	{
-		vm->locals[i] = NULL_VAL;
-	}
-
+	// Nullify the locals
+	memset64(vm->locals, NULL_VAL, sizeof(val_t) * LOCALS_SIZE);
 	vm->sp = 0;
 	gc(vm);
 }
@@ -1175,9 +1170,7 @@ void vm_run(vm_t* vm, vector_t* buffer)
 	vm->pc = 0;
 	vm->fp = 0;
 	vm->reserve = 0;
-
-	val_t nil = NULL_VAL;
-	memset(vm->locals, nil, sizeof(val_t) * LOCALS_SIZE);
+	memset64(vm->locals, NULL_VAL, sizeof(val_t) * LOCALS_SIZE);
 
 #ifndef NO_IR
 	// Print out bytecodes

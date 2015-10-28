@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdint.h>
 
 // String operations
 char* strdup(const char* str);
@@ -20,5 +21,8 @@ unsigned long djb2(unsigned char* str);
 // File reading methods
 char* readFile(const char* filename, size_t* len);
 char* replaceExt(char* filename, const char* ext, size_t len);
+
+// Memory
+void memset64(void* dest, uint64_t value, uintptr_t size);
 
 #endif

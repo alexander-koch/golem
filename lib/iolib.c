@@ -56,7 +56,6 @@ GOLEM_API int io_gen_signatures(list_t* toplevel)
 	function_add_param(0, DATA_STRING);
 	function_upload(toplevel);
 
-
 	/**
 	File class API
 

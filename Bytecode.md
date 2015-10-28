@@ -19,7 +19,7 @@ For comparison the old VM implementation is used.
 
 | Program | Old VM    | VM     | VM (using computed gotos) | Python 2.7.2 | Ruby    | Lua
 |---      |---        |---     |---                        |---           |---      |---
-| fib.gs  | ~4.95s    | ~0.72s | ~0.58s                    | ~0.73s       | ~0.29s  | ~0.31s
+| fib.gs  | ~4.95s    | ~0.72s | ~0.59s                    | ~0.73s       | ~0.29s  | ~0.31s
 
 # Bytecode Instruction Set
 
@@ -157,7 +157,7 @@ ldarg0 and setarg0. On virtual return the class has to be reassigned to it's ori
 |---           |---      |
 |Stack bottom  |   0x00  |
 |...		   |      ...|
-|Class<>       |       -7|
+|Class<>       |       -7|  <-- (use setarg0 / ldarg0 to access)
 |Arg0		   |       -6|
 |Arg1		   |       -5|
 |Arg2		   |       -4|
