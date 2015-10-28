@@ -1,4 +1,5 @@
 # Makefile for the golem programming language
+# @Author Alexander Koch 2015
 CC := gcc
 MODULE := golem
 INC := -I.
@@ -60,12 +61,8 @@ release:
 libs:
 	make -C ./lib MAKEFLAGS=
 
-# Graphviz *.dot to *.png
+# Graphviz *.dot to *.svg
 dot:
-	dot -Tpng -o ast.png ast.dot
-	rm ast.dot
-
-dotsvg:
 	dot -Tsvg -o ast.svg ast.dot
 	rm ast.dot
 

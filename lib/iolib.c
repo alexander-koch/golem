@@ -72,8 +72,15 @@ GOLEM_API int io_gen_signatures(list_t* toplevel)
 			writeFile(filename, str, "wb")
 		}
 	}
-
 	**/
+
+	/**
+	add:
+	func append(str:char[]) -> void {
+		writeFile(filename, str, ["a"])
+	}
+	**/
+
 	ast_t *var = 0, *clazz = 0, *ann = 0;
 
 	// Class File(name:char[]) {

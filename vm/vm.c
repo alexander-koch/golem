@@ -57,6 +57,9 @@ void vm_init(vm_t* vm)
 	vm->errjmp = 0;
 }
 
+#define VM_ASSERT(x, msg) \
+	if(!(x)) { vm_throw(vm, msg); goto *dispatch_table[OP_HLT]; }
+
 void vm_throw(vm_t* vm, const char* format, ...)
 {
     printf("=> Exception thrown: ");
@@ -916,11 +919,13 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		if(IS_STRING(obj))
 		{
 			char* str = AS_STRING(obj);
+			VM_ASSERT(idx >= 0 && idx < strlen(str), "Array index out of bounds");
 			push(vm, INT32_VAL(str[idx]));
 		}
 		else
 		{
 			obj_array_t* arr = AS_ARRAY(obj);
+			VM_ASSERT(idx >= 0 && idx < arr->len, "Array index out of bounds");
 			val_t element = COPY_VAL(arr->data[idx]);
 			vm_register(vm, element);
 		}
@@ -941,20 +946,26 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		if(IS_STRING(obj))
 		{
 			obj = COPY_VAL(obj);
-			char* data = AS_STRING(obj);
-			data[idx] = (char)AS_INT32(val);
 			vm_register(vm, obj);
+
+			char* data = AS_STRING(obj);
+			VM_ASSERT(idx >= 0 && idx < strlen(data), "Array index out of bounds");
+			data[idx] = (char)AS_INT32(val);
 		}
 		else
 		{
 			// Copy the whole array
-			// Free the copied object at index
 			// Upload the new array
 			obj = COPY_VAL(obj);
+			vm_register(vm, obj);
+
+			// Free the copied object at index
 			obj_array_t* arr = AS_ARRAY(obj);
 			val_free(arr->data[idx]);
+
+			// Try to replace it
+			VM_ASSERT(idx >= 0 && idx < arr->len, "Array index out of bounds");
 			arr->data[idx] = val;
-			vm_register(vm, obj);
 		}
 		DISPATCH();
 	}
