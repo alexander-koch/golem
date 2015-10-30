@@ -104,9 +104,6 @@ int main(int argc, char** argv)
             compiler.buffer = buffer;
             if(ok)
             {
-                argv += 1;
-                argc -= 1;
-
                 vm_run_args(&vm, buffer, argc, argv);
             }
             compiler_clear(&compiler);

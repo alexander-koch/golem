@@ -287,7 +287,7 @@ void revert_reserve(vm_t* vm)
 
 void vm_trace_print(vm_t* vm, instruction_t* instr)
 {
-	printf("  %.2d (SP:%.2d, FP:%.2d): %s\n", vm->pc, vm->sp, vm->fp, op2str(instr->op));
+	printf("  %.2d (SP:%.2d, FP:%.2d): %s", vm->pc, vm->sp, vm->fp, op2str(instr->op));
 	if(instr->v1 != NULL_VAL)
 	{
 		printf(", ");
@@ -305,11 +305,8 @@ void vm_trace_print(vm_t* vm, instruction_t* instr)
 
 	for(int i = 0; i < vm->sp; i++)
 	{
-		if(vm->stack[i] != NULL_VAL)
-		{
-			val_print(vm->stack[i]);
-			if(i < vm->sp-1) printf(", ");
-		}
+		val_print(vm->stack[i]);
+		if(i < vm->sp-1) printf(", ");
 	}
 	printf("]\n");
 
@@ -405,16 +402,15 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	// Create the tmp instruction
 	// Set pc to -1
 	instruction_t* instr = 0;
-	vm->pc = -1;
 
 #ifndef TRACE
 	#define FETCH() instr = buffer->data[vm->pc];
-	#define FETCH_EXT() instr = buffer->data[++vm->pc];
+	#define FETCH_EXT() instr = buffer->data[vm->pc++];
 #else
 	#define FETCH() instr = buffer->data[vm->pc]; \
 		vm_trace_print(vm, instr)
 
-	#define FETCH_EXT() instr = buffer->data[++vm->pc]; \
+	#define FETCH_EXT() instr = buffer->data[vm->pc++]; \
 		vm_trace_print(vm, instr)
 #endif
 
