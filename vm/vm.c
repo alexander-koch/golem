@@ -8,6 +8,7 @@ extern val_t core_getline(vm_t* vm);
 extern val_t core_parseFloat(vm_t* vm);
 extern val_t core_break(vm_t* vm);
 extern val_t core_clock(vm_t* vm);
+extern val_t core_sysarg(vm_t* vm);
 
 extern val_t math_abs(vm_t* vm);
 extern val_t math_sin(vm_t* vm);
@@ -40,6 +41,7 @@ static gvm_c_function system_methods[] = {
 
 	io_readFile,		// 15
 	io_writeFile,		// 16
+	core_sysarg,		// 17
 	0
 };
 
@@ -286,7 +288,7 @@ void revert_reserve(vm_t* vm)
 void vm_trace_print(vm_t* vm, instruction_t* instr)
 {
 	printf("  %.2d (SP:%.2d, FP:%.2d): %s\n", vm->pc, vm->sp, vm->fp, op2str(instr->op));
-	/*if(instr->v1 != NULL_VAL)
+	if(instr->v1 != NULL_VAL)
 	{
 		printf(", ");
 		val_print(instr->v1);
@@ -319,7 +321,7 @@ void vm_trace_print(vm_t* vm, instruction_t* instr)
 	{
 		gc(vm);
 	}
-#endif*/
+#endif
 }
 
 // Processes a buffer instruction based on instruction / program counter (pc).
@@ -401,7 +403,9 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	vm->errjmp = vector_size(buffer)-1;
 
 	// Create the tmp instruction
+	// Set pc to -1
 	instruction_t* instr = 0;
+	vm->pc = -1;
 
 #ifndef TRACE
 	#define FETCH() instr = buffer->data[vm->pc];
@@ -1182,7 +1186,7 @@ void vm_run_args(vm_t* vm, vector_t* buffer, int argc, char** argv)
 	vm->argc = argc;
 	vm->argv = argv;
 	vm->sp = 0;
-	vm->pc = -1;
+	vm->pc = 0;
 	vm->fp = 0;
 	vm->reserve = 0;
 	memset64(vm->locals, NULL_VAL, sizeof(val_t) * LOCALS_SIZE);
