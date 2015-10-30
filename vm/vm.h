@@ -32,6 +32,8 @@ typedef struct
 	int maxObjects;
 
 	int errjmp;
+	int argc;
+	char** argv;
 } vm_t;
 
 // Internal function
@@ -40,6 +42,7 @@ typedef val_t (*gvm_c_function)(vm_t*);
 // Methods
 void vm_init(vm_t* vm);
 void vm_run(vm_t* vm, vector_t* buffer);
+void vm_run_args(vm_t* vm, vector_t* buffer, int argc, char** argv);
 
 void push(vm_t* vm, val_t val);
 val_t pop(vm_t* vm);

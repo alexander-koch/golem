@@ -74,7 +74,7 @@ int main(int argc, char** argv)
         vector_t* buffer = compile_file(&compiler, argv[1]);
         if(buffer)
         {
-            vm_run(&vm, buffer);
+            vm_run_args(&vm, buffer, argc, argv);
             compiler_clear(&compiler);
         }
     }
@@ -104,7 +104,10 @@ int main(int argc, char** argv)
             compiler.buffer = buffer;
             if(ok)
             {
-                vm_run(&vm, buffer);
+                argv += 1;
+                argc -= 1;
+
+                vm_run_args(&vm, buffer, argc, argv);
             }
             compiler_clear(&compiler);
         }

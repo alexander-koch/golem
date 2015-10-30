@@ -285,8 +285,8 @@ void revert_reserve(vm_t* vm)
 
 void vm_trace_print(vm_t* vm, instruction_t* instr)
 {
-	printf("  %.2d (SP:%.2d, FP:%.2d): %s", vm->pc, vm->sp, vm->fp, op2str(instr->op));
-	if(instr->v1 != NULL_VAL)
+	printf("  %.2d (SP:%.2d, FP:%.2d): %s\n", vm->pc, vm->sp, vm->fp, op2str(instr->op));
+	/*if(instr->v1 != NULL_VAL)
 	{
 		printf(", ");
 		val_print(instr->v1);
@@ -319,7 +319,7 @@ void vm_trace_print(vm_t* vm, instruction_t* instr)
 	{
 		gc(vm);
 	}
-#endif
+#endif*/
 }
 
 // Processes a buffer instruction based on instruction / program counter (pc).
@@ -402,30 +402,27 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 
 	// Create the tmp instruction
 	instruction_t* instr = 0;
-	#define FETCH() instr = buffer->data[vm->pc];
-	#define FETCH_EXT() instr = buffer->data[vm->pc++];
 
-// DISPATCH_RAW -> jump directly to pc
-// DISPATCH -> increment pc and jump to it
 #ifndef TRACE
-	#define DISPATCH_RAW() \
-		FETCH(); \
-		goto *dispatch_table[instr->op]
-
-	#define DISPATCH() \
-		FETCH_EXT(); \
-		goto *dispatch_table[instr->op]
+	#define FETCH() instr = buffer->data[vm->pc];
+	#define FETCH_EXT() instr = buffer->data[++vm->pc];
 #else
+	#define FETCH() instr = buffer->data[vm->pc]; \
+		vm_trace_print(vm, instr)
+
+	#define FETCH_EXT() instr = buffer->data[++vm->pc]; \
+		vm_trace_print(vm, instr)
+#endif
+
+	// DISPATCH_RAW -> jump directly to pc
+	// DISPATCH -> increment pc and jump to it
 	#define DISPATCH_RAW() \
 		FETCH(); \
-		vm_trace_print(vm, instr); \
 		goto *dispatch_table[instr->op]
 
 	#define DISPATCH() \
 		FETCH_EXT(); \
-		vm_trace_print(vm, instr); \
 		goto *dispatch_table[instr->op]
-#endif
 
 	// Dispatch and run
 	DISPATCH();
@@ -1168,14 +1165,24 @@ void vm_clear(vm_t* vm)
 	memset64(vm->locals, NULL_VAL, sizeof(val_t) * LOCALS_SIZE);
 	vm->sp = 0;
 	gc(vm);
+
+	vm->argc = 0;
+	vm->argv = 0;
+}
+
+void vm_run(vm_t* vm, vector_t* buffer)
+{
+	vm_run_args(vm, buffer, 0, 0);
 }
 
 // Execute a buffer
-void vm_run(vm_t* vm, vector_t* buffer)
+void vm_run_args(vm_t* vm, vector_t* buffer, int argc, char** argv)
 {
 	// Reset vm
+	vm->argc = argc;
+	vm->argv = argv;
 	vm->sp = 0;
-	vm->pc = 0;
+	vm->pc = -1;
 	vm->fp = 0;
 	vm->reserve = 0;
 	memset64(vm->locals, NULL_VAL, sizeof(val_t) * LOCALS_SIZE);

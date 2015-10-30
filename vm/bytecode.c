@@ -131,7 +131,7 @@ void emit_bool(vector_t* buffer, bool b)
 
 void emit_int(vector_t* buffer, I64 v)
 {
-	val_t val = INT32_VAL(v);//NUM_VAL(v);
+	val_t val = INT32_VAL(v);
 	insert_v1(buffer, OP_PUSH, val);
 }
 

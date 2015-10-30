@@ -42,17 +42,17 @@ GOLEM_API val_t core_clock(vm_t* vm)
 	double clocktime = clock() / CLOCKS_PER_SEC;
 	return NUM_VAL(clocktime);
 }
-
 /*
 GOLEM_API val_t core_sysarg(vm_t* vm)
 {
-	int idx = AS_INT(pop(vm));
-	if(idx >= vm->argc)
+	int idx = AS_INT32(pop(vm));
+	if(idx >= vm->argc || idx < 0)
 	{
 		return STRING_VAL("");
 	}
 
-	return STRING_VAL();
+	char* str = vm->argv[idx];
+	return STRING_VAL(str);
 }*/
 
 GOLEM_API int core_gen_signatures(list_t* toplevel)
@@ -86,6 +86,11 @@ GOLEM_API int core_gen_signatures(list_t* toplevel)
 	// clock() -> void
 	function_new("clock", DATA_FLOAT, 6);
 	function_upload(toplevel);
+
+	// sysarg(idx:int) -> char[]
+	/*function_new("sysarg", DATA_STRING, 17);
+	function_add_param(0, DATA_INT);
+	function_upload(toplevel);*/
 
 	return 0;
 }
