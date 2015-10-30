@@ -400,7 +400,6 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	vm->errjmp = vector_size(buffer)-1;
 
 	// Create the tmp instruction
-	// Set pc to -1
 	instruction_t* instr = 0;
 
 #ifndef TRACE
@@ -417,7 +416,7 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	// DISPATCH_RAW -> jump directly to pc
 	// DISPATCH -> increment pc and jump to it
 	#define DISPATCH_RAW() \
-		FETCH(); \
+		FETCH_EXT(); \
 		goto *dispatch_table[instr->op]
 
 	#define DISPATCH() \
@@ -1162,11 +1161,7 @@ void vm_clear(vm_t* vm)
 	// Move stack pointer to zero, -> clears all elements by gc
 	// Discard the rest
 	// Nullify the locals
-	//memset64(vm->locals, NULL_VAL, sizeof(val_t) * LOCALS_SIZE);
-	for(size_t i = 0; i < LOCALS_SIZE; i++)
-	{
-		vm->locals[i] = NULL_VAL;
-	}
+	memset64(vm->locals, NULL_VAL, sizeof(val_t) * LOCALS_SIZE);
 
 	vm->sp = 0;
 	gc(vm);
@@ -1190,6 +1185,7 @@ void vm_run_args(vm_t* vm, vector_t* buffer, int argc, char** argv)
 	vm->pc = 0;
 	vm->fp = 0;
 	vm->reserve = 0;
+	memset64(vm->stack, NULL_VAL, sizeof(val_t) * STACK_SIZE);
 	memset64(vm->locals, NULL_VAL, sizeof(val_t) * LOCALS_SIZE);
 
 #ifndef NO_IR
