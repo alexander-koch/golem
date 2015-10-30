@@ -405,19 +405,27 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	#define FETCH() instr = buffer->data[vm->pc];
 	#define FETCH_EXT() instr = buffer->data[vm->pc++];
 
-	// TODO: add vm_trace_print if -DTRACE is set
-
-	// Jump to pc
+// DISPATCH_RAW -> jump directly to pc
+// DISPATCH -> increment pc and jump to it
+#ifndef TRACE
 	#define DISPATCH_RAW() \
 		FETCH(); \
 		goto *dispatch_table[instr->op]
 
-
-	// Jump and increase pc
 	#define DISPATCH() \
 		FETCH_EXT(); \
 		goto *dispatch_table[instr->op]
+#else
+	#define DISPATCH_RAW() \
+		FETCH(); \
+		vm_trace_print(vm, instr); \
+		goto *dispatch_table[instr->op]
 
+	#define DISPATCH() \
+		FETCH_EXT(); \
+		vm_trace_print(vm, instr); \
+		goto *dispatch_table[instr->op]
+#endif
 
 	// Dispatch and run
 	DISPATCH();

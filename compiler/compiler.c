@@ -437,7 +437,7 @@ void symbol_replace(compiler_t* compiler, symbol_t* symbol)
 	}
 }
 
-// Eval.block(List<Block>)
+// Eval.block(Block[] blocks)
 // The function evaluates a list of Abstract syntax trees.
 // The datatype of the last entry is returned.
 // If there is no entry, datatype_new(DATA_NULL) is returned.
