@@ -140,7 +140,6 @@ int main(int argc, char** argv)
     else
     {
         print_info();
-        return 0;
     }
 
 #ifndef NO_MEMINFO

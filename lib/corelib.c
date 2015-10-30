@@ -43,6 +43,18 @@ GOLEM_API val_t core_clock(vm_t* vm)
 	return NUM_VAL(clocktime);
 }
 
+/*
+GOLEM_API val_t core_sysarg(vm_t* vm)
+{
+	int idx = AS_INT(pop(vm));
+	if(idx >= vm->argc)
+	{
+		return STRING_VAL("");
+	}
+
+	return STRING_VAL();
+}*/
+
 GOLEM_API int core_gen_signatures(list_t* toplevel)
 {
 	signature_new();

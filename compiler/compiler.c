@@ -855,6 +855,12 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 
 					if(symbol->ref)
 					{
+						// ldarg0
+						// <...>
+						// setfield
+						// setarg0
+
+						// Access class field, load class first
 						emit_op(compiler->buffer, OP_LDARG0);
 					}
 
@@ -867,6 +873,7 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 
 					if(symbol->ref)
 					{
+						// Class field load from class
 						symbol_t* classRef = symbol->ref;
 						ast_t* classNode = classRef->node;
 						void* val = 0;
@@ -982,7 +989,6 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 		// Emit node op-codes
 		datatype_t lhs_type = compiler_eval(compiler, lhs);
 		datatype_t rhs_type = compiler_eval(compiler, rhs);
-
 		if(!datatype_match(lhs_type, rhs_type))
 		{
 			compiler_throw(compiler, node, "Cannot perform operation '%s' on the types '%s' and '%s'", tok2str(op), datatype2str(lhs_type), datatype2str(rhs_type));
@@ -1030,6 +1036,9 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 			// If it is a field of a class
 			if(ptr->ref)
 			{
+				// ldarg0
+				// getfield <addr>
+
 				symbol_t* classRef = ptr->ref;
 				ast_t* classNode = classRef->node;
 				void* val = 0;
@@ -1057,14 +1066,11 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 				}
 			}
 
-			// If local or global
+			// If local or global, otherwise search in upper scope
 			if(depth == 0 || ptr->global)
 			{
-				//printf("%d\n", ptr->address);
-
 				emit_load(compiler->buffer, ptr->address, ptr->global);
 			}
-			// Otherwise in upper scope
 			else
 			{
 				emit_load_upval(compiler->buffer, depth, ptr->address);

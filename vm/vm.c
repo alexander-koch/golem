@@ -1170,7 +1170,7 @@ void vm_clear(vm_t* vm)
 	gc(vm);
 }
 
-// Executes a buffer / list of instructions
+// Execute a buffer
 void vm_run(vm_t* vm, vector_t* buffer)
 {
 	// Reset vm
