@@ -1162,7 +1162,12 @@ void vm_clear(vm_t* vm)
 	// Move stack pointer to zero, -> clears all elements by gc
 	// Discard the rest
 	// Nullify the locals
-	memset64(vm->locals, NULL_VAL, sizeof(val_t) * LOCALS_SIZE);
+	//memset64(vm->locals, NULL_VAL, sizeof(val_t) * LOCALS_SIZE);
+	for(size_t i = 0; i < LOCALS_SIZE; i++)
+	{
+		vm->locals[i] = NULL_VAL;
+	}
+
 	vm->sp = 0;
 	gc(vm);
 
