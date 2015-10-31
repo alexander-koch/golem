@@ -403,24 +403,15 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	instruction_t* instr = 0;
 
 #ifndef TRACE
-	#define FETCH() instr = buffer->data[vm->pc];
-	#define FETCH_EXT() instr = buffer->data[vm->pc++];
+	#define FETCH() instr = buffer->data[vm->pc++];
 #else
-	#define FETCH() instr = buffer->data[vm->pc]; \
-		vm_trace_print(vm, instr)
-
-	#define FETCH_EXT() instr = buffer->data[vm->pc++]; \
+	#define FETCH() instr = buffer->data[vm->pc++]; \
 		vm_trace_print(vm, instr)
 #endif
 
-	// DISPATCH_RAW -> jump directly to pc
-	// DISPATCH -> increment pc and jump to it
-	#define DISPATCH_RAW() \
-		FETCH_EXT(); \
-		goto *dispatch_table[instr->op]
-
+	// DISPATCH -> jump to pc and increment pc afterwards
 	#define DISPATCH() \
-		FETCH_EXT(); \
+		FETCH(); \
 		goto *dispatch_table[instr->op]
 
 	// Dispatch and run
@@ -672,7 +663,8 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 
 		vm->fp = vm->sp;
 		vm->pc = address;
-		DISPATCH_RAW();
+		// DISPATCH_RAW();
+		DISPATCH();
 	}
 	code_invokevirtual:
 	{
@@ -686,7 +678,8 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		push(vm, INT32_VAL(vm->pc));
 		vm->fp = vm->sp;
 		vm->pc = address;
-		DISPATCH_RAW();
+		// DISPATCH_RAW();
+		DISPATCH();
 	}
 	code_reserve:
 	{
@@ -737,7 +730,8 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	code_jmp:
 	{
 		vm->pc = AS_INT32(instr->v1);
-		DISPATCH_RAW();
+		// DISPATCH_RAW();
+		DISPATCH();
 	}
 	code_jmpf:
 	{
@@ -745,7 +739,7 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		if(!result)
 		{
 			vm->pc = AS_INT32(instr->v1);
-			DISPATCH_RAW();
+			//DISPATCH_RAW();
 		}
 		DISPATCH();
 	}
