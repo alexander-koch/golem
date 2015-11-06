@@ -908,7 +908,7 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 			}
 		}
 		// If it's not an identifier
-		// e.g.: myArray[5] = 28
+		// e.g.: myArray[5] := 28
 		else if(lhs->class == AST_SUBSCRIPT)
 		{
 			// Subscript: expr, key: myArray[key]
@@ -918,9 +918,8 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 
 			if(expr->class != AST_IDENT)
 			{
-				// [1,2,3,4][0] = 8
-				// can be valid too, optimize or throw error
-				// TODO: assignment return a value
+				// [1,2,3,4][0] := 4
+				// not permitted
 				compiler_throw(compiler, node, "Warning: Identifier for index access expected");
 			}
 			else
@@ -977,7 +976,8 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 		}
 		else
 		{
-			compiler_throw(compiler, node, "TODO: Unknown assignment operation");
+			// TODO: What would it be?
+			compiler_throw(compiler, node, "Unknown assignment operation");
 			return datatype_new(DATA_NULL);
 		}
 	}
@@ -1281,6 +1281,11 @@ datatype_t eval_float_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 	return datatype_new(DATA_NULL);
 }
 
+#define ASSERT_ZERO_ARGS() \
+	if(ls != 0) { \
+		compiler_throw(compiler, node, "Expected zero arguments"); \
+		return datatype_new(DATA_NULL); }
+
 datatype_t eval_array_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 {
 	// TODO: tail, head, insert, slice, pop and other datatypes
@@ -1296,11 +1301,7 @@ datatype_t eval_array_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 
 	if(!strcmp(key->ident, "length"))
 	{
-		if(ls != 0)
-		{
-			compiler_throw(compiler, node, "Expected zero arguments");
-			return datatype_new(DATA_NULL);
-		}
+		ASSERT_ZERO_ARGS()
 
 		// Length operation
 		emit_op(compiler->buffer, OP_LEN);
@@ -1308,11 +1309,7 @@ datatype_t eval_array_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 	}
 	else if(!strcmp(key->ident, "empty"))
 	{
-		if(ls != 0)
-		{
-			compiler_throw(compiler, node, "Expected zero arguments");
-			return datatype_new(DATA_NULL);
-		}
+		ASSERT_ZERO_ARGS()
 
 		// Length operation
 		emit_op(compiler->buffer, OP_LEN);
@@ -2000,7 +1997,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 				hashmap_set(node->classstmt.fields, sub->vardecl.name, sym);
 				emit_class_setfield(compiler->buffer, compiler->scope->address-1);
 
-				// Check annotations at last, TODO: Warp to a function
+				// Check annotations at last, TODO: Wrap to a function
 				if(scope_requests(compiler->scope, ANN_GETTER))
 				{
 					char* name = sub->vardecl.name;
@@ -2217,7 +2214,9 @@ datatype_t eval_import(compiler_t* compiler, ast_t* node)
 	{
 		// Do nothing, the standard library is already loaded.
 
+
 		// TODO: External
+		// @Native("lib/libcore.dll")
 		/*if(!strcmp(node->import, "core"))
 		{
 			void *lib = dl_load("lib/libcore.dll");

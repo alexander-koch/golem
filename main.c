@@ -15,25 +15,27 @@
 #include <compiler/graphviz.h>
 #include <compiler/doc.h>
 
+/**
 void run_repl(vm_t* vm, compiler_t* compiler)
 {
-    char buf[1024];
+    static char buf[1024];
     while(1)
     {
-        printf(">> ");
+        printf("golem> ");
         fgets(buf, sizeof(buf), stdin);
-        if(!strncmp(buf, "quit", 4))
-        {
-            return;
+        if(!strncmp(buf, "quit", 4)) {
+            break;
         }
+
         vector_t* buffer = compile_buffer(compiler, buf, "Unnamed");
         if(buffer)
         {
-            vm_run(vm, buffer);
+            vm_exec(vm, buffer);
         }
         compiler_clear(compiler);
     }
 }
+**/
 
 void print_info()
 {
@@ -43,7 +45,7 @@ void print_info()
     printf("  golem <file>       (Run a file)\n");
     printf("  golem -r <file>    (Run a *.gvm file)\n");
     printf("  golem -c <file>    (Convert to bytecode file *.gvm)\n");
-    printf("  golem --ast <file> (Convert generated AST to graph *.dot)\n\n");
+    printf("  golem --ast <file> (Convert generated AST to graph *.dot)\n");
     printf("  golem --doc <file> (Create an HTML documentation)\n\n");
 }
 
@@ -55,9 +57,8 @@ int main(int argc, char** argv)
     vm_t vm;
     vm_init(&vm);
 
-    /**
-    Deprecated read-eval-print-loop
 
+    /** Deprecated read-eval-print-loop
     if(argc == 1)
     {
         // Read-eval-print-loop
@@ -65,6 +66,8 @@ int main(int argc, char** argv)
         printf("Copyright (c) Alexander Koch 2015 All Rights Reserved.\n\n");
 
         run_repl(&vm, &compiler);
+        mem_leak_check();
+        return 0;
     }
     **/
 

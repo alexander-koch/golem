@@ -691,7 +691,7 @@ datatype_t parse_datatype(parser_t* parser)
 // ---------------
 // EBNF:
 // formal = ["mut"], ident, ":", datatype;
-// formal_list = "(", [formal, {",", "formal"}], ")";
+// formal_list = "(", [formal, {",", formal}], ")";
 list_t* parse_formals(parser_t* parser)
 {
     list_t* formals = list_new();
@@ -814,8 +814,7 @@ void test_newline(parser_t* parser)
 // ---------------
 // EBNF:
 // newline = "\n" | "\r\n";
-// declaration = import | variable | function | if | while | class | return;
-// stmt = (expr | declaration), newline;
+// stmt = (import | variable | function | if | while | class | return | annotation | expr), newline;
 ast_t* parse_stmt(parser_t* parser)
 {
     location_t pos = get_location(parser);
@@ -1052,8 +1051,8 @@ ast_t* parse_fn_declaration(parser_t* parser, location_t loc)
 // Parses an if-statment-chain, consisting of if, else-if and else statements.
 // EBNF:
 // else = "else", block;
-// else if = "else", " ", "if", "(", expr, ")", block, [elseif, else];
-// if = "if", "(", expr, ")", block, [elseif | else];
+// else if = "else", "if", "(", expr, ")", block;
+// if = "if", "(", expr, ")", block, {elseif}, [else];
 // -----
 // Example:
 // if(cond1)
@@ -1173,7 +1172,7 @@ ast_t* parse_while_declaration(parser_t* parser, location_t loc)
 
 // Parses a class declaration.
 // EBNF:
-// class = "class", ident, formal_list, "{", newline, block
+// class = "class", ident, formal_list, block
 ast_t* parse_class_declaration(parser_t* parser, location_t loc)
 {
     // class expr(constructor) { \n
@@ -1202,7 +1201,7 @@ ast_t* parse_class_declaration(parser_t* parser, location_t loc)
 // Parser.parseReturnDeclaration()
 // Parses the return statement.
 // EBNF:
-// return = "return", [expr];
+// return = "return", [expr], newline;
 ast_t* parse_return_declaration(parser_t* parser, location_t loc)
 {
     ast_t* node = ast_class_create(AST_RETURN, loc);
@@ -1227,6 +1226,7 @@ ast_t* parse_return_declaration(parser_t* parser, location_t loc)
     return node;
 }
 
+// Annotation = "@", ("Getter" | "Setter" | "Unused"), Newline;
 ast_t* parse_annotation_declaration(parser_t* parser, location_t loc)
 {
     ast_t* node = ast_class_create(AST_ANNOTATION, loc);

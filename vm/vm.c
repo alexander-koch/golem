@@ -1059,8 +1059,8 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 			size_t allocSz = sizeof(val_t) * arr->len;
 
 			// Reallocate and assign its content
-			arr->data = arr->len == 1 ? malloc(allocSz) : realloc(arr->data, allocSz);
-			arr->data[arr->len-1] = val;
+			arr->data = (arr->len == 1) ? malloc(allocSz) : realloc(arr->data, allocSz);
+			arr->data[arr->len-1] = COPY_VAL(val);
 			vm_register(vm, obj);
 		}
 		DISPATCH();
