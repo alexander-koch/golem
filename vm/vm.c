@@ -18,6 +18,10 @@ extern val_t math_sqrt(vm_t* vm);
 extern val_t math_floor(vm_t* vm);
 extern val_t math_ceil(vm_t* vm);
 extern val_t math_pow(vm_t* vm);
+extern val_t math_sinh(vm_t* vm);
+extern val_t math_cosh(vm_t* vm);
+extern val_t math_tanh(vm_t* vm);
+extern val_t math_prng(vm_t* vm);
 
 extern val_t io_readFile(vm_t* vm);
 extern val_t io_writeFile(vm_t* vm);
@@ -29,19 +33,23 @@ static gvm_c_function system_methods[] = {
 	core_parseFloat,	// 4
 	core_break,			// 5
 	core_clock,			// 6
+	core_sysarg,		// 8
 
-	math_abs,			// 7
-	math_sin,			// 8
-	math_cos,			// 9
-	math_tan,			// 10
-	math_sqrt,			// 11
-	math_floor,			// 12
-	math_ceil,			// 13
-	math_pow,			// 14
+	math_abs,			// 9
+	math_sin,			// 9
+	math_cos,			// 10
+	math_tan,			// 11
+	math_sqrt,			// 12
+	math_floor,			// 13
+	math_ceil,			// 14
+	math_pow,			// 15
+	math_sinh,			// 16
+	math_cosh,			// 17
+	math_tanh,			// 18
+	math_prng,			// 19
 
-	io_readFile,		// 15
-	io_writeFile,		// 16
-	core_sysarg,		// 17
+	io_readFile,		// 20
+	io_writeFile,		// 21
 	0
 };
 

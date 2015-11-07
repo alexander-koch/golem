@@ -125,3 +125,64 @@ void memset64(void* dest, uint64_t value, uintptr_t size)
         ((char*)dest)[i] = ((char*)&value)[i&7];
     }
 }
+
+// Mersenne-Twister
+#define N 624
+#define M 397
+#define HI 0x80000000
+#define LO 0x7fffffff
+
+static uint32_t seed = 5489UL;
+static const uint32_t A[2] = { 0, 0x9908b0df };
+static uint32_t y[N];
+static int index = N+1;
+
+void seed_prng(uint32_t seed_value)
+{
+    seed = seed_value;
+}
+
+uint32_t mt()
+{
+    uint32_t e;
+    if(index > N) {
+        int i;
+        y[0] = seed;
+
+        for(i = 1; i < N; i++) {
+            y[i] = (1812433253UL * (y[i-1] ^ (y[i-1] >> 30)) + i);
+        }
+    }
+    if(index >= N) {
+        int i;
+        uint32_t h;
+
+        for (i=0; i<N-M; ++i) {
+            h = (y[i] & HI) | (y[i+1] & LO);
+            y[i] = y[i+M] ^ (h >> 1) ^ A[h & 1];
+        }
+        for ( ; i<N-1; ++i) {
+            h = (y[i] & HI) | (y[i+1] & LO);
+            y[i] = y[i+(M-N)] ^ (h >> 1) ^ A[h & 1];
+        }
+
+        h = (y[N-1] & HI) | (y[0] & LO);
+        y[N-1] = y[M-1] ^ (h >> 1) ^ A[h & 1];
+        index = 0;
+    }
+
+    e = y[index++];
+    e ^= (e >> 11);
+    e ^= (e <<  7) & 0x9d2c5680;
+    e ^= (e << 15) & 0xefc60000;
+    e ^= (e >> 18);
+
+    return e;
+}
+
+double prng()
+{
+    uint32_t rnd = mt();
+    double res = rnd / (double)UINT32_MAX;
+    return res;
+}

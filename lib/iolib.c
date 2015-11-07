@@ -45,12 +45,12 @@ GOLEM_API int io_gen_signatures(list_t* toplevel)
 	require_func();
 
 	// readFile(str:char[]) -> char[]
-	function_new("readFile", DATA_STRING, 15);
+	function_new("readFile", DATA_STRING, 20);
 	function_add_param(0, DATA_STRING);
 	function_upload(toplevel);
 
 	// writeFile(name:char[], content:char[], mode:char[]) -> void
-	function_new("writeFile", DATA_VOID, 16);
+	function_new("writeFile", DATA_VOID, 21);
 	function_add_param(0, DATA_STRING);
 	function_add_param(0, DATA_STRING);
 	function_add_param(0, DATA_STRING);

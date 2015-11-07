@@ -1,6 +1,7 @@
 
 #include "libdef.h"
 #include <math.h>
+#include <core/util.h>
 #include <vm/vm.h>
 
 GOLEM_API val_t math_abs(vm_t* vm)
@@ -52,42 +53,80 @@ GOLEM_API val_t math_pow(vm_t* vm)
 	return NUM_VAL(pow(v1, v2));
 }
 
+GOLEM_API val_t math_sinh(vm_t* vm)
+{
+	double v1 = AS_NUM(pop(vm));
+	return NUM_VAL(sinh(v1));
+}
+
+GOLEM_API val_t math_cosh(vm_t* vm)
+{
+	double v1 = AS_NUM(pop(vm));
+	return NUM_VAL(cosh(v1));
+}
+
+GOLEM_API val_t math_tanh(vm_t* vm)
+{
+	double v1 = AS_NUM(pop(vm));
+	return NUM_VAL(tanh(v1));
+}
+
+GOLEM_API val_t math_prng(vm_t* vm)
+{
+	return NUM_VAL(prng());
+}
+
 GOLEM_API int math_gen_signatures(list_t* toplevel)
 {
 	signature_new();
 	require_func();
 
-	function_new("abs", DATA_FLOAT, 7);
+	function_new("abs", DATA_FLOAT, 8);
 	function_add_param(0, DATA_FLOAT);
 	function_upload(toplevel);
 
-	function_new("sin", DATA_FLOAT, 8);
+	function_new("sin", DATA_FLOAT, 9);
 	function_add_param(0, DATA_FLOAT);
 	function_upload(toplevel);
 
-	function_new("cos", DATA_FLOAT, 9);
+	function_new("cos", DATA_FLOAT, 10);
 	function_add_param(0, DATA_FLOAT);
 	function_upload(toplevel);
 
-	function_new("tan", DATA_FLOAT, 10);
+	function_new("tan", DATA_FLOAT, 11);
 	function_add_param(0, DATA_FLOAT);
 	function_upload(toplevel);
 
-	function_new("sqrt", DATA_FLOAT, 11);
+	function_new("sqrt", DATA_FLOAT, 12);
 	function_add_param(0, DATA_FLOAT);
 	function_upload(toplevel);
 
-	function_new("floor", DATA_FLOAT, 12);
+	function_new("floor", DATA_FLOAT, 13);
 	function_add_param(0, DATA_FLOAT);
 	function_upload(toplevel);
 
-	function_new("ceil", DATA_FLOAT, 13);
+	function_new("ceil", DATA_FLOAT, 14);
 	function_add_param(0, DATA_FLOAT);
 	function_upload(toplevel);
 
-	function_new("pow", DATA_FLOAT, 14);
+	function_new("pow", DATA_FLOAT, 15);
 	function_add_param(0, DATA_FLOAT);
 	function_add_param(0, DATA_FLOAT);
+	function_upload(toplevel);
+
+	function_new("sinh", DATA_FLOAT, 16);
+	function_add_param(0, DATA_FLOAT);
+	function_upload(toplevel);
+
+	function_new("cosh", DATA_FLOAT, 17);
+	function_add_param(0, DATA_FLOAT);
+	function_upload(toplevel);
+
+	function_new("tanh", DATA_FLOAT, 18);
+	function_add_param(0, DATA_FLOAT);
+	function_upload(toplevel);
+
+	function_new("prng", DATA_FLOAT, 19);
 	function_upload(toplevel);
 
 	return 0;

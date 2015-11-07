@@ -7,6 +7,7 @@
 
 #define USE_MEM_IMPLEMENTATION
 #include <core/mem.h>
+#include <core/util.h>
 #include <parser/ast.h>
 #include <parser/parser.h>
 #include <vm/vm.h>
@@ -51,12 +52,12 @@ void print_info()
 
 int main(int argc, char** argv)
 {
+    seed_prng(time(0));
     compiler_t compiler;
     compiler_init(&compiler);
 
     vm_t vm;
     vm_init(&vm);
-
 
     /** Deprecated read-eval-print-loop
     if(argc == 1)

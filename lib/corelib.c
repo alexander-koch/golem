@@ -88,7 +88,7 @@ GOLEM_API int core_gen_signatures(list_t* toplevel)
 	function_upload(toplevel);
 
 	// sysarg(idx:int) -> char[]
-	function_new("sysarg", DATA_STRING, 17);
+	function_new("sysarg", DATA_STRING, 7);
 	function_add_param(0, DATA_INT);
 	function_upload(toplevel);
 
