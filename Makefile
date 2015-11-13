@@ -64,7 +64,6 @@ libs:
 # Graphviz *.dot to *.svg
 dot:
 	dot -Tsvg -o ast.svg ast.dot
-	rm ast.dot
 
 # git undo (in case of emergency)
 gitUndo:

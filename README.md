@@ -8,7 +8,7 @@ Golem is a statically typed, object-oriented programming language.
 - **Normal** Object-oriented features (classes, method calls, etc.)
 - Immutablitiy of everything by default
 - Explicit mutable declaration
-- Statically, strong typed => reliable, eliminates programming errors
+- Statically, strong-typed
 - Automatic type inference
 - Strings as arrays of characters, not a datatype
 - **NULL** is not possible to create or use

@@ -118,6 +118,11 @@ int main(int argc, char** argv)
             char* filename = argv[2];
             size_t len = 0;
         	char* source = readFile(filename, &len);
+            if(!source || !len)
+            {
+                printf("File '%s' does not exist\n", filename);
+                return 1;
+            }
 
             parser_t parser;
             parser_init(&parser, filename);
