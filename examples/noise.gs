@@ -1,6 +1,6 @@
 # Perlin-noise in Golem.
 # Original version by Ken Perlin.
-# Ported by from Rosetta Code Go-example.
+# Ported from Rosetta Code Go-example.
 # @author Alexander Koch 2015
 
 using core

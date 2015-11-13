@@ -633,6 +633,12 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 		{
 			int sz = AS_INT32(instr->v1);
 			symbol->arraySize = sz;
+			printf("Found size: %d\n", sz);
+		}
+		else
+		{
+			symbol->arraySize = -1;
+			printf("Size not found\n");
 		}
 	}
 
@@ -1859,10 +1865,15 @@ datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 			symbol_t* symbol = symbol_get(compiler->scope, ident);
 			if(symbol)
 			{
-				// Check the size and the index
-				// Also the node must be immutable, otherwise invalid
 				int index = key->i;
-				if((index < 0 || index >= symbol->arraySize) && !symbol->node->vardecl.mutate)
+
+				// @cond1 Index must be in range
+				// @cond2 Variable must be immutable, we can't keep track of immutable values
+				// @cond3 Array size must be available, we can't deduce the size by subscripts or calls
+				bool cond1 = (index < 0 || index >= symbol->arraySize);
+				bool cond2 = !symbol->node->vardecl.mutate;
+				bool cond3 = (symbol->arraySize != -1);
+				if(cond1 && cond2 && cond3)
 				{
 					compiler_throw(compiler, node, "Array index out of bounds");
 					return datatype_new(DATA_NULL);
