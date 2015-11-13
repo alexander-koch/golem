@@ -336,6 +336,7 @@ symbol_t* symbol_new(compiler_t* compiler, ast_t* node, int address, datatype_t 
 	symbol->global = (compiler->depth == 0) ? true : false;
 	symbol->isClassParam = false;
 	symbol->ref = 0;
+	symbol->arraySize = -1;
 	return symbol;
 }
 
@@ -633,10 +634,6 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 		{
 			int sz = AS_INT32(instr->v1);
 			symbol->arraySize = sz;
-		}
-		else
-		{
-			symbol->arraySize = -1;
 		}
 	}
 
