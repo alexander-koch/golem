@@ -19,6 +19,7 @@ typedef struct symbol_t
 	bool global;
 	bool isClassParam;
 	struct symbol_t* ref;
+	int arraySize;
 } symbol_t;
 
 // Scope: contains symbols

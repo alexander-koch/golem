@@ -9,12 +9,12 @@ GOLEM_API val_t io_readFile(vm_t* vm)
 	char* filename = AS_STRING(pop(vm));
 
 	FILE* file = fopen(filename, "rb");
-	if(!file) return NULL_VAL;
+	if(!file) return STRING_VAL("");
 	fseek(file, 0, SEEK_END);
 	size = ftell(file);
 	rewind(file);
 	char* source = (char*)malloc(size+1);
-	if(!source) return NULL_VAL;
+	if(!source) return STRING_VAL("");
 
 	fread(source, sizeof(char), size, file);
 	source[size] = '\0';

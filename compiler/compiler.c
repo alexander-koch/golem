@@ -572,8 +572,9 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 	if(symbol_exists(compiler, node, node->vardecl.name)) return datatype_new(DATA_NULL);
 
 	// First eval initializer to get type
-	// Then test for non-valid types
 	datatype_t vartype = compiler_eval(compiler, node->vardecl.initializer);
+
+	// Then test for non-valid types
 	if(vartype.type == DATA_VOID)
 	{
 		compiler_throw(compiler, node, "Variable initializer is of type VOID");
@@ -616,6 +617,24 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 	symbol_t* symbol = symbol_new(compiler, node, compiler->scope->address, vartype);
 	symbol->node->vardecl.type = vartype;
 	hashmap_set(compiler->scope->symbols, node->vardecl.name, symbol);
+
+	// Array secure size information
+	if((vartype.type & DATA_ARRAY) == DATA_ARRAY)
+	{
+		// What if variable assigns to variables that points to an array?
+		// 1. variable is identifier
+		// 2. identifier points to symbol
+		// 3. symbol points to array
+		// 4. array has the elements and therefore the size
+
+		// HACK:(#1) using bytecodes to set the array size
+		instruction_t* instr = vector_top(compiler->buffer);
+		if(instr->op == OP_ARR || instr->op == OP_STR)
+		{
+			int sz = AS_INT32(instr->v1);
+			symbol->arraySize = sz;
+		}
+	}
 
 	// Emit bytecode and increase compiler address
 	emit_store(compiler->buffer, symbol->address, symbol->global);
@@ -1829,6 +1848,40 @@ datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 
 	if((exprType.type & DATA_ARRAY) == DATA_ARRAY)
 	{
+		// INDEX: Hack:#2-#3
+		// Simplified testing if index is out of bounds
+		// May not work for functions returning an array
+
+		// HACK:(#2) expect that expression is an identifier
+		if(expr->class == AST_IDENT)
+		{
+			char* ident = expr->ident;
+			symbol_t* symbol = symbol_get(compiler->scope, ident);
+			if(symbol)
+			{
+				// Check the size and the index
+				// Also the node must be immutable, otherwise invalid
+				int index = key->i;
+				if((index < 0 || index >= symbol->arraySize) && !symbol->node->vardecl.mutate)
+				{
+					compiler_throw(compiler, node, "Array index out of bounds");
+					return datatype_new(DATA_NULL);
+				}
+			}
+		}
+		// HACK:(#3) Count the array objects
+		else if(expr->class == AST_ARRAY)
+		{
+			list_t* elements = expr->array.elements;
+			int sz = list_size(elements);
+			int index = key->i;
+			if(index < 0 || index >= sz)
+			{
+				compiler_throw(compiler, node, "Array index out of bounds");
+				return datatype_new(DATA_NULL);
+			}
+		}
+
 		// We got an array and want to access an element.
 		// Remove the array flag to get the return type.
 		emit_op(compiler->buffer, OP_GETSUB);

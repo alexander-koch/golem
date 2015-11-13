@@ -40,8 +40,8 @@ More features for the debug-version can be enabled/disabled in the Makfile.
 ##### Tasks
 
 - [ ] (Advanced) Standard libraries and external classes, DLL loading => (Working on it.)
+- [ ] (Advanced) Array index out of bounds exceptions (handled by the compiler) => (Working on it.)
 - [ ] (Advanced) Bytecode optimizations (class optimizer -> remove unused code and functions!) => (Working on it.)
-- [ ] (Advanced) Array index out of bounds exceptions (handled by the compiler) => (Task)
 - [ ] (Intermediate) Do for loops with iterators => (Task)
 - [ ] (Intermediate) Create an @Doc annotation => (Task)
 - [ ] (Intermediate) Implement switch statements => (Task)
