@@ -633,12 +633,10 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 		{
 			int sz = AS_INT32(instr->v1);
 			symbol->arraySize = sz;
-			printf("Found size: %d\n", sz);
 		}
 		else
 		{
 			symbol->arraySize = -1;
-			printf("Size not found\n");
 		}
 	}
 
