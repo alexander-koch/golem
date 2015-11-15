@@ -1,4 +1,5 @@
-/** vector.h
+/**
+ *  vector.h
  *	@author Alexander Koch
  * 	@desc Vector implementation
  */
@@ -26,7 +27,7 @@ void* vector_pop(vector_t* vector);
 void* vector_top(vector_t* vector);
 void vector_set(vector_t* vector, size_t index, void* data);
 void* vector_get(vector_t* vector, size_t index);
-size_t vector_size(vector_t* vector);
+size_t vector_size(const vector_t* vector);
 void vector_free(vector_t* vector);
 
 #endif

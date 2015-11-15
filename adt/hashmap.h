@@ -1,4 +1,5 @@
-/** hashmap.h
+/**
+ *  hashmap.h
  *	@author Alexander Koch
  * 	@desc Hashmap implementation
  */

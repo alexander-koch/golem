@@ -1,6 +1,11 @@
-// Compiler
-// @desc Compiles source AST to a list of bytecode instructions
-// @author Alexander Koch
+/**
+ * Compiler
+ * @author Alexander Koch
+ * @desc Compiles an abstract syntax tree (AST) into bytecode instructions.
+ *
+ * Scopes are managed, ASTs are optimized and converted to bytecode instructions.
+ * An error is thrown by the compiler if the semantics are wrong.
+ */
 
 #ifndef compiler_h
 #define compiler_h
@@ -14,9 +19,6 @@
 #include <compiler/scope.h>
 #include <lib/loadlib.h>
 
-// Compiler: manages scopes, converts every AST to multiple instructions
-// Throws errors if wrong code is detected
-// Also optimizes ASTs
 typedef struct compiler_t
 {
 	parser_t* parser;

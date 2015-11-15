@@ -1,3 +1,21 @@
+/**
+ *  bytecode.h
+ *  @author Alexander Koch
+ *  @desc Bytecode definition for the VM.
+ *
+ *  An instruction is defined as a c-struct
+ *  with one opcode and two optional val_t generic values.
+ *  (See val.h / val.c for more info.)
+ *
+ *  instruction
+ *  |- op
+ *  |- v0
+ *  |- v1
+ *
+ *  Also the compiler-specific helper functions are defined below.
+ *  For instruction lists a vector_t should be used (see vector.h).
+ */
+
 #ifndef bytecode_h
 #define bytecode_h
 
@@ -104,6 +122,7 @@ typedef enum
 	OP_GETFIELD
 } opcode_t;
 
+// Instruction definition
 typedef struct
 {
 	opcode_t op;
@@ -111,12 +130,14 @@ typedef struct
 	val_t v2;
 } instruction_t;
 
+// Helper functions
 const char* op2str(opcode_t code);
 
 void insert(vector_t* buffer, opcode_t op);
 void insert_v1(vector_t* buffer, opcode_t op, val_t v1);
 void insert_v2(vector_t* buffer, opcode_t op, val_t v1, val_t v2);
 
+// compiler-specific fast insert functions.
 void emit_bool(vector_t* buffer, bool b);
 void emit_int(vector_t* buffer, I64 v);
 void emit_float(vector_t* buffer, F64 f);

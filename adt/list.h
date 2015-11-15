@@ -1,4 +1,5 @@
-/** list.h
+/**
+ *  list.h
  *	@author Alexander Koch
  * 	@desc List implementation based on a queue
  */

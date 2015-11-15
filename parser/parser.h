@@ -1,8 +1,11 @@
+/**
+ *  parser.h
+ *  @author Alexander Koch
+ *  @desc Parser structure for analysis of tokens.
+ */
+
 #ifndef parser_h
 #define parser_h
-
-// Parser structure for analysis of tokens
-// provided by the lexer.
 
 #include <stddef.h>
 #include <stdint.h>

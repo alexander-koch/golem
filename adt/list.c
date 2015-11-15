@@ -12,8 +12,7 @@ list_t* list_new()
 void* list_top(list_t* list)
 {
 	list_node_t* top = list->tail;
-	void* val = top->val;
-	return val;
+	return top->val;
 }
 
 void list_push(list_t* list, void* val)

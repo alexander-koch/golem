@@ -27,7 +27,7 @@ char* replaceExt(char* filename, const char* ext, size_t len);
 void memset64(void* dest, uint64_t value, uintptr_t size);
 
 // Mersenne-Twister
-void seed_prng(uint32_t seed_value);
+void seed_prng(const uint32_t seed_value);
 double prng();
 
 #endif

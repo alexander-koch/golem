@@ -60,7 +60,7 @@ void* vector_get(vector_t* vector, size_t index)
 	return vector->data[index];
 }
 
-size_t vector_size(vector_t* vector)
+size_t vector_size(const vector_t* vector)
 {
 	return vector->size;
 }

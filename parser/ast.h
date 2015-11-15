@@ -1,11 +1,15 @@
+/**
+ *  ast.h
+ *  @author Alexander Koch
+ *  @desc Abstract syntax tree (AST) representation.
+ *
+ *  Used for storing expressions in a tree-like structure
+ *  and converting them to final bytecode by the compiler.
+ *  Also the datatypes and the annotation types are defined here.
+ */
+
 #ifndef ast_h
 #define ast_h
-
-// Abstract syntax tree
-// Used for storing expressions in a tree-like structure,
-// and converting them to final bytecode by the compiler.
-
-// Also the datatypes and the annotation types are defined here.
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -30,10 +34,13 @@ typedef enum
     DATA_ARRAY = 1 << 8, // 0x80
     DATA_GENERIC = 1 << 9,
     DATA_LAMBDA = 1 << 10
+    #define DATA_STRING (DATA_ARRAY | DATA_CHAR)
 } type_t;
 
-#define DATA_STRING (DATA_ARRAY | DATA_CHAR)
-
+// datatype_t
+// Internal datatype representation
+// Stores one type and an ID for classes; standard value for an id is 0.
+// Integers and other types that aren't classes may not have any other value but zero.
 typedef struct datatype_t
 {
     type_t type;
@@ -56,8 +63,8 @@ typedef enum
     ANN_UNUSED = 1 << 3
 } annotation_t;
 
-// Actual AST-types
-// ------------------
+// ast_class_t
+// Enumerates all the possible classes for an AST.
 // AST_NULL       -> stores literally nothing, means it is invalid
 // AST_IDENT      -> stores an identifier
 // AST_FLOAT      -> stores a floating point value
@@ -80,7 +87,6 @@ typedef enum
 // AST_RETURN     -> stores a return statement
 // AST_TOPLEVEL   -> stores a list of ASTs
 // AST_ANNOTATION -> stores an annotation
-
 typedef enum
 {
     AST_NULL,

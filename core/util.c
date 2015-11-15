@@ -137,7 +137,7 @@ static const uint32_t A[2] = { 0, 0x9908b0df };
 static uint32_t y[N];
 static int index = N+1;
 
-void seed_prng(uint32_t seed_value)
+void seed_prng(const uint32_t seed_value)
 {
     seed = seed_value;
 }
