@@ -964,6 +964,12 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 							// let var = "Hello World"
 							// var[0] = "B"
 
+							// If it is a class, reload for modifying
+							if(symbol->ref)
+							{
+								emit_op(compiler->buffer, OP_LDARG0);
+							}
+
 							// If we found a subscript, it has to be an array
 							// Evaluate the rhs and lhs
 							datatype_t rhsType = compiler_eval(compiler, rhs);
@@ -983,7 +989,29 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 							compiler_eval(compiler, key);
 							emit_op(compiler->buffer, OP_SETSUB);
 							//emit_store(compiler->buffer, symbol->address, symbol->global);
-							symbol_replace(compiler, symbol);
+
+							// If it is a class field, we have to reassign it to the actual field / class
+							if(symbol->ref)
+							{
+								// Emit setfield
+								symbol_t* classRef = symbol->ref;
+								ast_t* classNode = classRef->node;
+								void* val = 0;
+								if(hashmap_get(classNode->classstmt.fields, expr->ident, &val) == HMAP_MISSING)
+								{
+									compiler_throw(compiler, node, "No such class field");
+									return datatype_new(DATA_NULL);
+								}
+								symbol = (symbol_t*)val;
+
+								emit_class_setfield(compiler->buffer, symbol->address);
+								emit_op(compiler->buffer, OP_SETARG0);
+							}
+							else
+							{
+								symbol_replace(compiler, symbol);
+							}
+
 						}
 					}
 				}

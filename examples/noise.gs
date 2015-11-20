@@ -5,6 +5,7 @@
 
 using core
 using math
+using io
 
 let permutation = [
 	151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225,

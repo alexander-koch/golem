@@ -29,8 +29,6 @@ GOLEM_API val_t io_writeFile(vm_t* vm)
 	char* content = AS_STRING(pop(vm));
 	char* filename = AS_STRING(pop(vm));
 
-	printf("Writing to file %s; mode %s\n", filename, mode);
-
 	FILE* fp = fopen(filename, mode);
 	if(!fp) return NULL_VAL;
 
