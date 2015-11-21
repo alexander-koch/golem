@@ -96,7 +96,9 @@ val_t deserialize_value(FILE* fp)
 		fread(&len, sizeof(uint32_t), 1, fp);
 		if(len <= 0) return ret;
 
-		char* str = malloc(sizeof(char) * len);
+		char* str = malloc(sizeof(char) * (len+1));
+		*str = '\0';
+
 		fread((char*)str, sizeof(char), len, fp);
 		ret = STRING_NOCOPY_VAL(str);
 	}

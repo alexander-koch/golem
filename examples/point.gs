@@ -1,7 +1,8 @@
+# Implementation of a 2D Point/Vector
+# Copyright (c) Alexander Koch 2015
 using core
 using math
 
-# Implementation of a 2D Point/Vector
 type Point(xp:float, yp:float)
 {
 	@Getter

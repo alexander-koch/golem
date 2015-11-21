@@ -1,3 +1,5 @@
+# TODO-List Implementation
+# Copyright (c) Alexander Koch 2015
 using core
 
 type Task(_title:char[], _desc:char[], _done:bool) {

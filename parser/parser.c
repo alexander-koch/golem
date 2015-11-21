@@ -373,7 +373,7 @@ ast_t* parse_simpleliteral(parser_t* parser)
 // let y = [::int]
 // -----
 // EBNF:
-// array = "[", [expr, {",", expr}], "]";
+// array = "[", (Expression, {",", Expression}) | ("::", Datatype), "]";
 ast_t* parse_array(parser_t* parser)
 {
     ast_t* ast = ast_class_create(AST_ARRAY, get_location(parser));
