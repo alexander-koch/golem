@@ -146,7 +146,7 @@ void emit_char(vector_t* buffer, char c);
 void emit_pop(vector_t* buffer);
 void emit_op(vector_t* buffer, opcode_t op);
 bool emit_tok2op(vector_t* buffer, token_type_t tok, datatype_t type);
-void emit_syscall(vector_t* buffer, size_t index, size_t args);
+void emit_syscall(vector_t* buffer, size_t index);
 void emit_invoke(vector_t* buffer, size_t address, size_t args);
 void emit_return(vector_t* buffer);
 void emit_store(vector_t* buffer, int address, bool global);

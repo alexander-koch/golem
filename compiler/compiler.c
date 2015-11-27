@@ -1209,7 +1209,7 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
 	if(external)
 	{
 		int idx = func->funcdecl.external-1;
-		emit_syscall(compiler->buffer, idx, argc);
+		emit_syscall(compiler->buffer, idx);
 	}
 	else
 	{

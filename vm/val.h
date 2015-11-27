@@ -41,7 +41,7 @@
 typedef uint64_t val_t;
 
 // TODO: Make this dynamic
-#define CLASS_FIELDS_SIZE 64
+#define CLASS_FIELDS_SIZE 32
 
 // Class subtype
 typedef struct obj_class_t

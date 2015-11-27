@@ -253,11 +253,10 @@ bool emit_tok2op(vector_t* buffer, token_type_t tok, datatype_t type)
 	return op == -1 ? false : true;
 }
 
-void emit_syscall(vector_t* buffer, size_t index, size_t args)
+void emit_syscall(vector_t* buffer, size_t index)
 {
 	val_t v1 = INT32_VAL(index);
-	val_t v2 = INT32_VAL(args);
-	insert_v2(buffer, OP_SYSCALL, v1, v2);
+	insert_v1(buffer, OP_SYSCALL, v1);
 }
 
 void emit_invoke(vector_t* buffer, size_t address, size_t args)
@@ -306,7 +305,7 @@ void emit_class_getfield(vector_t* buffer, int address)
 
 void emit_lib_load(vector_t* buffer, char* name)
 {
-	insert_v1(buffer, OP_LDLIB, OBJ_VAL(obj_string_new(name)));
+	insert_v1(buffer, OP_LDLIB, STRING_VAL(name));
 }
 
 void emit_reserve(vector_t* buffer, size_t sz)

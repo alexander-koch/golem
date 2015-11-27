@@ -70,8 +70,8 @@ For comparison the old VM implementation is used.
 
 | Special             | Description
 |---                  |---
-|syscall x, y         | invokes an internal known method at internal-index x, with y args, pushes a return value
-|invoke x y           | invoke method at address x with y args, push return value
+|syscall x            | invokes an internal known method at internal-index x, pushes a return value (similar to asm int-instruction)
+|invoke x,y           | invoke method at address x with y args, push return value
 |invokevirtual x,y    | invokes a virtual class method, at address x with y args, and saves a class in the stack frame
 |reserve x            | reserves x memory for function calls, to keep values in VRAM
 |ret                  | returns from function to last instruction pointer
@@ -112,7 +112,7 @@ For comparison the old VM implementation is used.
 
 | Upval               | Description
 |---                  |---
-|upval x, y           | gets a value of the upper scope x, at the address y
+|upval x,y            | gets a value of the upper scope x, at the address y
 |upstore x,y          | sets the value of scope x, at the address y to value on top of the stack
 
 | Class               | Description
