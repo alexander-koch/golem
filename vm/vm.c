@@ -326,6 +326,23 @@ void vm_trace_print(vm_t* vm, instruction_t* instr)
 #endif
 }
 
+// Fast, optimized version for vm_register.
+// Use if value needs to be copied and pushed onto the stack.
+void vm_copy(vm_t* vm, val_t val) {
+	if(IS_OBJ(val))
+	{
+		obj_t* obj = AS_OBJ(val);
+		obj_t* newObj = COPY_OBJ(obj);
+
+		push(vm, OBJ_VAL(newObj));
+		obj_append(vm, newObj);
+	}
+	else
+	{
+		push(vm, val);
+	}
+}
+
 // Processes a buffer instruction based on instruction / program counter (pc).
 void vm_exec(vm_t* vm, vector_t* buffer)
 {
@@ -424,20 +441,7 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	code_hlt: return;
 	code_push:
 	{
-		if(IS_OBJ(instr->v1))
-		{
-			obj_t* obj = AS_OBJ(instr->v1);
-			obj_t* newObj = COPY_OBJ(obj);
-
-			push(vm, OBJ_VAL(newObj));
-			obj_append(vm, newObj);
-		}
-		else
-		{
-			push(vm, instr->v1);
-		}
-		// vm register is too expensive
-		//vm_register(vm, COPY_VAL(instr->v1));
+		vm_copy(vm, instr->v1);
 		DISPATCH();
 	}
 	code_pop:
@@ -464,12 +468,12 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		if(offset < 0)
 		{
 			val_t v = vm->stack[vm->fp+offset];
-			vm_register(vm, COPY_VAL(v));
+			vm_copy(vm, v);
 		}
 		else
 		{
 			val_t v = vm->locals[vm->fp+offset];
-			vm_register(vm, COPY_VAL(v));
+			vm_copy(vm, v);
 		}
 		DISPATCH();
 	}
@@ -483,13 +487,13 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	{
 		int offset = AS_INT32(instr->v1);
 		val_t v = vm->locals[offset];
-		vm_register(vm, COPY_VAL(v));
+		vm_copy(vm, v);
 		DISPATCH();
 	}
 	code_ldarg0:
 	{
 		size_t args = AS_INT32(vm->stack[vm->fp-3]);
-		vm_register(vm, COPY_VAL(vm->stack[vm->fp-args-4]));
+		vm_copy(vm, vm->stack[vm->fp-args-4]);
 		DISPATCH();
 	}
 	code_setarg0:
