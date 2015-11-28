@@ -137,10 +137,13 @@ void obj_free(obj_t* obj);
 #define STRING_NOCOPY_VAL(p) (val_t)(OBJ_VAL(obj_string_nocopy_new(p)))
 
 #define COPY_VAL(p) (val_copy(p))
+#define COPY_OBJ(p) (obj_copy(p))
 
 bool val_is_int32(val_t val);
 val_t val_of_int32(int32_t i);
 int val_to_int32(val_t val);
+
+obj_t* obj_copy(obj_t* obj);
 
 double val_to_double(val_t value);
 val_t val_of_double(double num);

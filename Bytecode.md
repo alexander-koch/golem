@@ -19,7 +19,7 @@ For comparison the old VM implementation is used.
 
 | Program | Old VM    | VM     | VM (using computed gotos) | Python 2.7.2 | Ruby    | Lua
 |---      |---        |---     |---                        |---           |---      |---
-| fib.gs  | ~4.95s    | ~0.72s | ~0.54s                    | ~0.73s       | ~0.29s  | ~0.31s
+| fib.gs  | ~4.95s    | ~0.72s | ~0.48s                    | ~0.73s       | ~0.29s  | ~0.31s
 
 # Bytecode Instruction Set
 

@@ -424,7 +424,20 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	code_hlt: return;
 	code_push:
 	{
-		vm_register(vm, COPY_VAL(instr->v1));
+		if(IS_OBJ(instr->v1))
+		{
+			obj_t* obj = AS_OBJ(instr->v1);
+			obj_t* newObj = COPY_OBJ(obj);
+
+			push(vm, OBJ_VAL(newObj));
+			obj_append(vm, newObj);
+		}
+		else
+		{
+			push(vm, instr->v1);
+		}
+		// vm register is too expensive
+		//vm_register(vm, COPY_VAL(instr->v1));
 		DISPATCH();
 	}
 	code_pop:
@@ -732,7 +745,6 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	code_jmp:
 	{
 		vm->pc = AS_INT32(instr->v1);
-		// DISPATCH_RAW();
 		DISPATCH();
 	}
 	code_jmpf:
@@ -741,7 +753,6 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		if(!result)
 		{
 			vm->pc = AS_INT32(instr->v1);
-			//DISPATCH_RAW();
 		}
 		DISPATCH();
 	}

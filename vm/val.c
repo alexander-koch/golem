@@ -52,46 +52,49 @@ bool val_equal(val_t v1, val_t v2)
 	return v1 == v2;
 }
 
+obj_t* obj_copy(obj_t* obj)
+{
+    switch(obj->type) {
+        case OBJ_STRING: return obj_string_new(obj->data);
+        case OBJ_ARRAY: {
+            obj_array_t* old = obj->data;
+
+            // Create a new array
+            val_t* arr = malloc(sizeof(val_t) * old->len);
+            for(size_t i = 0; i < old->len; i++) {
+                arr[i] = val_copy(old->data[i]);
+            }
+
+            // Create the corresponding object
+            obj_t* newArr = obj_array_new(arr, old->len);
+            return newArr;
+        }
+        case OBJ_CLASS: {
+            obj_class_t* cls = obj->data;
+
+            // Create a new class, and get the internal struct
+            obj_t* clsObj = obj_class_new();
+            obj_class_t* newCls = clsObj->data;
+
+            // Copy all the fields
+            for(size_t i = 0; i < CLASS_FIELDS_SIZE; i++) {
+                newCls->fields[i] = val_copy(cls->fields[i]);
+            }
+
+            return clsObj;
+        }
+        default: return 0;
+    }
+}
+
 val_t val_copy(val_t val)
 {
     if(IS_OBJ(val))
     {
         obj_t* obj = AS_OBJ(val);
-        switch(obj->type)
-        {
-            case OBJ_STRING: return STRING_VAL(obj->data);
-            case OBJ_ARRAY:
-            {
-                obj_array_t* old = obj->data;
-
-                // Create a new array
-                val_t* arr = malloc(sizeof(val_t) * old->len);
-                for(size_t i = 0; i < old->len; i++) {
-                    arr[i] = val_copy(old->data[i]);
-                }
-
-                // Create the corresponding object
-                obj_t* newArr = obj_array_new(arr, old->len);
-                return OBJ_VAL(newArr);
-            }
-            case OBJ_CLASS:
-            {
-                // Copy a class
-                obj_class_t* cls = obj->data;
-
-                // Create a new class, and get the internal struct
-                obj_t* clsObj = obj_class_new();
-                obj_class_t* newCls = clsObj->data;
-
-                // Copy all the fields
-                for(size_t i = 0; i < CLASS_FIELDS_SIZE; i++) {
-                    newCls->fields[i] = val_copy(cls->fields[i]);
-                }
-
-                return OBJ_VAL(clsObj);
-            }
-            default: return val;
-        }
+        obj_t* copy = obj_copy(obj);
+        if(!copy) return val;
+        return OBJ_VAL(copy);
     }
     else
     {
