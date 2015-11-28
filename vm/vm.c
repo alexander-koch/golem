@@ -219,8 +219,7 @@ void obj_append(vm_t* vm, obj_t* obj)
 		case OBJ_CLASS:
 		{
 			obj_class_t* cls = obj->data;
-			for(size_t i = 0; i < CLASS_FIELDS_SIZE; i++)
-			{
+			for(size_t i = 0; i < CLASS_FIELDS_SIZE; i++) {
 				val_append(vm, cls->fields[i]);
 			}
 			break;
@@ -275,8 +274,7 @@ void vm_print_code(vm_t* vm, vector_t* buffer)
 void reserve(vm_t* vm, size_t args)
 {
 	vm->reserve += 1;
-	for(size_t i = 1; i <= args; i++)
-	{
+	for(size_t i = 1; i <= args; i++) {
 		vm->stack[vm->sp+vm->reserve-i] = vm->stack[vm->sp-i];
 	}
 	vm->stack[vm->sp+vm->reserve-args-1] = INT32_VAL(vm->reserve-1);
@@ -287,8 +285,7 @@ void reserve(vm_t* vm, size_t args)
 void revert_reserve(vm_t* vm)
 {
 	int undo = AS_INT32(pop(vm));
-	for(int i = 0; i < undo; i++)
-	{
+	for(int i = 0; i < undo; i++) {
 		pop(vm);
 	}
 }
@@ -424,10 +421,7 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 
 	// Dispatch and run
 	DISPATCH();
-	code_hlt:
-	{
-		return;
-	}
+	code_hlt: return;
 	code_push:
 	{
 		vm_register(vm, COPY_VAL(instr->v1));
@@ -642,7 +636,7 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	{
 		// Arguments already on the stack
 		int address = AS_INT32(instr->v1);
-		size_t args = AS_INT32(instr->v2);
+		int args = AS_INT32(instr->v2);
 
 		// Arg0 -3
 		// Arg1 -2
@@ -677,7 +671,7 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	code_invokevirtual:
 	{
 		int address = AS_INT32(instr->v1);
-		size_t args = AS_INT32(instr->v2);
+		int args = AS_INT32(instr->v2);
 
 		//if(args > 0) reserve(vm, args+1);
 		reserve(vm, args+1);

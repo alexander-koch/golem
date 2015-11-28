@@ -333,7 +333,7 @@ symbol_t* symbol_new(compiler_t* compiler, ast_t* node, int address, datatype_t 
 	symbol->node = node;
 	symbol->address = address;
 	symbol->type = type;
-	symbol->global = (compiler->depth == 0) ? true : false;
+	symbol->global = (compiler->depth == 0);
 	symbol->isClassParam = false;
 	symbol->ref = 0;
 	symbol->arraySize = -1;
@@ -347,7 +347,7 @@ symbol_t* symbol_get_ext(scope_t* scope, char* ident, int* depth)
 	void* val;
 	if(hashmap_get(scope->symbols, ident, &val) != HMAP_MISSING)
 	{
-		return (symbol_t*)val;
+		return val;
 	}
 
 	if(scope->super)
@@ -369,7 +369,7 @@ symbol_t* symbol_get(scope_t* scope, char* ident)
 	void* val;
 	if(hashmap_get(scope->symbols, ident, &val) != HMAP_MISSING)
 	{
-		return (symbol_t*)val;
+		return val;
 	}
 
 	if(scope->super)
@@ -470,8 +470,10 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 		return datatype_new(DATA_NULL);
 	}
 
-	// Register a symbol for the function, save the bytecode address
+	// Add a jump, set the position at the end
 	val_t* addr = emit_jmp(compiler->buffer, 0);
+
+	// Register a symbol for the function, save the bytecode address
 	int byte_address = vector_size(compiler->buffer);
 	symbol_t* fnSymbol = symbol_new(compiler, node, byte_address, datatype_new(DATA_LAMBDA));
 	hashmap_set(compiler->scope->symbols, node->funcdecl.name, fnSymbol);
@@ -529,6 +531,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	if(node->funcdecl.rettype.type == DATA_VOID)
 	{
 		// Just return 0 if void
+		// (as needed by retvirtual / return)
 		emit_int(compiler->buffer, 0);
 		ast_t* refNode = 0;
 		if(scope_is_class(compiler->scope, AST_CLASS, &refNode))
@@ -542,7 +545,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	}
 	else
 	{
-		if(hasReturn == false)
+		if(!hasReturn)
 		{
 			compiler_throw(compiler, node, "Warning: Function without return statement");
 		}
@@ -614,8 +617,8 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 		}
 	}
 
-	// Store the symbol
-	symbol_t* symbol = symbol_new(compiler, node, compiler->scope->address, vartype);
+	// Store the symbol, increase the scope address
+	symbol_t* symbol = symbol_new(compiler, node, compiler->scope->address++, vartype);
 	symbol->node->vardecl.type = vartype;
 	hashmap_set(compiler->scope->symbols, node->vardecl.name, symbol);
 
@@ -637,9 +640,8 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 		}
 	}
 
-	// Emit bytecode and increase compiler address
+	// Emit bytecode
 	emit_store(compiler->buffer, symbol->address, symbol->global);
-	compiler->scope->address++;
 
 	// Debug variables if flag is set
 #ifdef DB_VARS
@@ -692,12 +694,12 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 	    {
 	        case TOKEN_ADD:
 	        {
-	            lhs->i = lhs->i + rhs->i;
+	            lhs->i += rhs->i;
 	            break;
 	        }
 	        case TOKEN_SUB:
 	        {
-	            lhs->i = lhs->i - rhs->i;
+	            lhs->i -= rhs->i;
 	            break;
 	        }
 	        case TOKEN_MUL:
@@ -1208,8 +1210,7 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
 	// Emit invocation
 	if(external)
 	{
-		int idx = func->funcdecl.external-1;
-		emit_syscall(compiler->buffer, idx);
+		emit_syscall(compiler->buffer, func->funcdecl.external-1);
 	}
 	else
 	{
@@ -1225,12 +1226,9 @@ datatype_t eval_bool_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 {
 	ast_t* call = node->call.callee;
 	ast_t* key = call->subscript.key;
+	size_t argc = list_size(node->call.args);
 
-	list_t* formals = node->call.args;
-	size_t ls = list_size(formals);
-
-	if(ls != 0)
-	{
+	if(argc != 0) {
 		compiler_throw(compiler, node, "No such function / Expected zero arguments");
 	}
 
@@ -1252,12 +1250,9 @@ datatype_t eval_int32_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 {
 	ast_t* call = node->call.callee;
 	ast_t* key = call->subscript.key;
+	size_t argc = list_size(node->call.args);
 
-	list_t* formals = node->call.args;
-	size_t ls = list_size(formals);
-
-	if(ls != 0)
-	{
+	if(argc != 0) {
 		compiler_throw(compiler, node, "No such function / Expected zero arguments");
 	}
 
@@ -1295,12 +1290,9 @@ datatype_t eval_float_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 {
 	ast_t* call = node->call.callee;
 	ast_t* key = call->subscript.key;
+	size_t argc = list_size(node->call.args);
 
-	list_t* formals = node->call.args;
-	size_t ls = list_size(formals);
-
-	if(ls != 0)
-	{
+	if(argc != 0) {
 		compiler_throw(compiler, node, "No such function / Expected zero arguments");
 	}
 
@@ -1337,7 +1329,6 @@ datatype_t eval_float_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 datatype_t eval_array_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 {
 	// TODO: tail, head, insert, slice, pop and other datatypes
-
 	ast_t* call = node->call.callee;
 	ast_t* key = call->subscript.key;
 
@@ -1748,6 +1739,7 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
 		// Get sub-ifclause
 		ast_t* subnode = list_iterator_next(iter);
 
+		// Jump #1 - declaration
 		// Test if not an else-statement
 		val_t* instr = 0;
 		if(subnode->ifclause.cond)
@@ -1762,17 +1754,17 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
 		eval_block(compiler, subnode->ifclause.body);
 		// pop_scope_virtual(compiler);
 
-		// Optimization
+		// Optimization:
 		// If not an else statement and more ifclauses than one
-		// Generate a jump to end
-		if(list_size(node->ifstmt) > 1 && subnode->ifclause.cond)
-		{
-			val_t* pos = emit_jmp(compiler->buffer, 0);
-			list_push(jmps, pos);
+		// Generate a jump to end; add new jump to the list
+		if(list_size(node->ifstmt) > 1 && subnode->ifclause.cond) {
+			list_push(jmps, emit_jmp(compiler->buffer, 0));
 		}
 
+		// Jump #1 - set
 		// If not an else statement
 		// Generate jump to next clause
+		// (set the previously generated jump)
 		if(subnode->ifclause.cond)
 		{
 			*instr = INT32_VAL(vector_size(compiler->buffer));
@@ -2011,8 +2003,8 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 {
 	// Approach:
 	// Convert the constructor to a function that returns a 'class'-object value
-	// Class declaration is the main function, instantiating the classes values and functions
-	// functions and values are saved in class value + symbol
+	// Class declaration is the main function, instantiating the classes values and functions.
+	// Functions and values are saved in class value + symbol
 
 	// Get the class data
 	char* name = node->classstmt.name;
@@ -2036,7 +2028,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 		return datatype_new(DATA_NULL);
 	}
 
-	// Register the class
+	// Register the class and emit bytecode
 	symbol_t* symbol = symbol_new(compiler, node, byte_address, dt);
 	hashmap_set(compiler->scope->classes, name, symbol);
 	hashmap_set(compiler->scope->symbols, name, symbol);
@@ -2304,6 +2296,11 @@ datatype_t eval_import(compiler_t* compiler, ast_t* node)
 
 		// TODO: External
 		// @Native("lib/libcore.dll")
+		// or
+		// @Native
+		// using libcore.dll
+		// (modifies using statement)
+
 		/*if(!strcmp(node->import, "core"))
 		{
 			void *lib = dl_load("lib/libcore.dll");
@@ -2411,7 +2408,7 @@ vector_t* compile_buffer(compiler_t* compiler, const char* source, const char* n
 	compiler->scope = scope_new();
 	compiler->dlls = vector_new();
 	compiler->parsers = list_new();
-	compiler->parser = malloc(sizeof(*compiler->parser));
+	compiler->parser = malloc(sizeof(parser_t));
 	list_push(compiler->parsers, compiler->parser);
 	list_iterator_t* iter = 0;
 

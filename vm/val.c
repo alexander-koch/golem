@@ -66,8 +66,7 @@ val_t val_copy(val_t val)
 
                 // Create a new array
                 val_t* arr = malloc(sizeof(val_t) * old->len);
-                for(size_t i = 0; i < old->len; i++)
-                {
+                for(size_t i = 0; i < old->len; i++) {
                     arr[i] = val_copy(old->data[i]);
                 }
 
