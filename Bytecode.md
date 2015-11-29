@@ -1,12 +1,12 @@
 # Golem Bytecode Set
 
 Golem runs on an internal stack-based bytecode virtual machine (gvm).
-Bytecode is used because of the speed compared to simple Tree-walkers, a JIT is not
-used because of the complexity.
+Bytecode is used because of the better speed compared to simple Tree-walkers, a JIT is not
+used because of the complexity of its implementation.
 
 # VM Benchmark / Speed
 
-The current VM uses a technique called NaN-Tagging.
+The current VM uses a technique called NaN-Tagging, similar to javascript's technique.
 It stores all values in a IEEE-754 64-bit floating-point value (double).
 Integers, double-floats, booleans, characters, etc. and pointers are mapped onto it.
 This greatly improves the speed and the memory usage.
@@ -19,7 +19,7 @@ For comparison the old VM implementation is used.
 
 | Program | Old VM    | VM     | VM (using computed gotos) | Python 2.7.2 | Ruby    | Lua
 |---      |---        |---     |---                        |---           |---      |---
-| fib.gs  | ~4.95s    | ~0.72s | ~0.307s                   | ~0.73s       | ~0.29s  | ~0.31s
+| fib.gs  | ~4.95s    | ~0.72s | ~0.31s                    | ~0.73s       | ~0.29s  | ~0.31s
 
 # Bytecode Instruction Set
 

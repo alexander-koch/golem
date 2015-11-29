@@ -205,14 +205,19 @@ void obj_append(vm_t* vm, obj_t* obj)
 	vm->firstVal = obj;
 	vm->numObjects++;
 
-	// Is the objects are containers, check their content
+	// If the objects are containers, check their content
 	switch(obj->type)
 	{
 		case OBJ_ARRAY:
 		{
 			obj_array_t* arr = obj->data;
-			for(size_t i = 0; i < arr->len; i++) {
+			/*for(size_t i = 0; i < arr->len; i++) {
 				val_append(vm, arr->data[i]);
+			}*/
+
+			// faster ?
+			for(size_t i = arr->len; i != 0; i--) {
+				val_append(vm, arr->data[i-1]);
 			}
 			break;
 		}
@@ -777,7 +782,8 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		vm->sp -= elsz;
 
 		obj_t* obj = obj_array_new(arr, elsz);
-		vm_register(vm, OBJ_VAL(obj));
+		push(vm, OBJ_VAL(obj));
+		obj_append(vm, obj);
 		DISPATCH();
 	}
 	code_str:
@@ -794,7 +800,8 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		vm->sp -= elsz;
 		str[elsz] = '\0';
 		obj_t* obj = obj_string_nocopy_new(str);
-		vm_register(vm, OBJ_VAL(obj));
+		push(vm, OBJ_VAL(obj));
+		obj_append(vm, obj);
 		DISPATCH();
 	}
 	code_ldlib:
@@ -941,8 +948,7 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		{
 			obj_array_t* arr = AS_ARRAY(obj);
 			// VM_ASSERT(idx >= 0 && idx < arr->len, "Array index out of bounds");
-			val_t element = COPY_VAL(arr->data[idx]);
-			vm_register(vm, element);
+			vm_copy(vm, arr->data[idx]);
 		}
 		DISPATCH();
 	}
@@ -1016,7 +1022,8 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 			strcat(data, str2);
 
 			obj_t* obj_ptr = obj_string_nocopy_new(data);
-			vm_register(vm, OBJ_VAL(obj_ptr));
+			push(vm, OBJ_VAL(obj_ptr));
+			obj_append(vm, obj_ptr);
 		}
 		else
 		{
@@ -1041,7 +1048,8 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 			}
 
 			obj_t* newObj = obj_array_new(arr3, len);
-			vm_register(vm, OBJ_VAL(newObj));
+			push(vm, OBJ_VAL(newObj));
+			obj_append(vm, newObj);
 		}
 		DISPATCH();
 	}
@@ -1063,7 +1071,8 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 			newStr[len+1] = '\0';
 
 			obj_t* obj_ptr = obj_string_nocopy_new(newStr);
-			vm_register(vm, OBJ_VAL(obj_ptr));
+			push(vm, OBJ_VAL(obj_ptr));
+			obj_append(vm, obj_ptr);
 		}
 		else
 		{
@@ -1098,7 +1107,9 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		val_t val = (offset < 0) ? vm->stack[vm->fp+offset] : vm->locals[vm->fp+offset];
 		vm->sp = sp;
 		vm->fp = fp;
-		vm_register(vm, COPY_VAL(val));
+
+		vm_copy(vm, val);
+		//vm_register(vm, COPY_VAL(val));
 		DISPATCH();
 	}
 	code_upstore:
@@ -1133,7 +1144,10 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	code_class:
 	{
 		obj_t* obj = obj_class_new();
-		vm_register(vm, OBJ_VAL(obj));
+		push(vm, OBJ_VAL(obj));
+		obj_append(vm, obj);
+
+		//vm_register(vm, OBJ_VAL(obj));
 		DISPATCH();
 	}
 	code_setfield:
