@@ -21,6 +21,11 @@ For comparison the old VM implementation is used.
 |---      |---        |---     |---                        |---           |---      |---
 | fib.gs  | ~4.95s    | ~0.72s | ~0.31s                    | ~0.73s       | ~0.29s  | ~0.31s
 
+| Benchmark    | Golem    | Python 2.7 | Ruby    | Lua
+|---           |---       |---         |---      |---
+| fib          | ~0.31s   | ~0.73s     | ~0.29s  | ~0.31s
+| bubble       | ~0.002s  | ~0.003s    | ~0.002s | ~0.002s
+
 # Bytecode Instruction Set
 
 | Basic stack ops     | Description
