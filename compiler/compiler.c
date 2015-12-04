@@ -1350,10 +1350,10 @@ datatype_t eval_array_func(compiler_t* compiler, ast_t* node, datatype_t dt)
 	{
 		ASSERT_ZERO_ARGS()
 
-		// Length operation
+		// empty? = (len <= 0)
 		emit_op(compiler->buffer, OP_LEN);
 		emit_int(compiler->buffer, 0);
-		emit_op(compiler->buffer, OP_IEQ);
+		emit_op(compiler->buffer, OP_ILE);
 		return datatype_new(DATA_BOOL);
 	}
 	else if(!strcmp(key->ident, "append"))

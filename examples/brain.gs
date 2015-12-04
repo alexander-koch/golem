@@ -34,6 +34,9 @@ func process(c:char) -> void {
 func eval(filename:char[]) -> void {
 	let file = readFile(filename)
 	let len = file.length()
+	if(len = -1) {
+		println("File doesn't exist")
+	}
 
 	# Process the tape
 	let mut i = 0
