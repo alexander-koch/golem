@@ -108,7 +108,7 @@ int main(int argc, char** argv)
             {
                 vm_run_args(&vm, buffer, argc, argv);
             }
-            compiler_clear(&compiler);
+            compiler_buffer_free(&compiler);
         }
         else if(!strcmp(argv[1], "--ast"))
         {

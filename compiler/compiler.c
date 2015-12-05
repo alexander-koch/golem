@@ -2396,8 +2396,6 @@ datatype_t compiler_eval(compiler_t* compiler, ast_t* node)
 	return datatype_new(DATA_NULL);
 }
 
-void buffer_free(compiler_t* compiler);
-
 // Compiler.compileBuffer(string code)
 // Compiles code into bytecode instructions
 vector_t* compile_buffer(compiler_t* compiler, const char* source, const char* name)
@@ -2460,39 +2458,37 @@ vector_t* compile_file(compiler_t* compiler, const char* filename)
 // Clears the current instruction buffer of the compiler
 void compiler_clear(compiler_t* compiler)
 {
-	if(compiler->parsers) {
-		// Free Scope and parsers
-		list_iterator_t* iter = list_iterator_create(compiler->parsers);
+	// Free Scope and parsers
+	list_iterator_t* iter = list_iterator_create(compiler->parsers);
+	while(!list_iterator_end(iter))
+	{
+		parser_t* parser = list_iterator_next(iter);
+		parser_free(parser);
+		ast_free(parser->top);
+		free(parser);
+	}
+	list_iterator_free(iter);
+	list_free(compiler->parsers);
+	scope_free(compiler->scope);
+
+	// Free the loaded dlls content
+	/*for(size_t i = 0; i < vector_size(compiler->dlls); i++)
+	{
+		list_t* ls = vector_get(compiler->dlls, i);
+		iter = list_iterator_create(ls);
 		while(!list_iterator_end(iter))
 		{
-			parser_t* parser = list_iterator_next(iter);
-			parser_free(parser);
-			ast_free(parser->top);
-			free(parser);
+			ast_free(list_iterator_next(iter));
 		}
 		list_iterator_free(iter);
-		list_free(compiler->parsers);
-		scope_free(compiler->scope);
-
-		// Free the loaded dlls content
-		/*for(size_t i = 0; i < vector_size(compiler->dlls); i++)
-		{
-			list_t* ls = vector_get(compiler->dlls, i);
-			iter = list_iterator_create(ls);
-			while(!list_iterator_end(iter))
-			{
-				ast_free(list_iterator_next(iter));
-			}
-			list_iterator_free(iter);
-			list_free(ls);
-		}
-		vector_free(compiler->dlls);*/
+		list_free(ls);
 	}
+	vector_free(compiler->dlls);*/
 
-	if(compiler->buffer) buffer_free(compiler);
+	if(compiler->buffer) compiler_buffer_free(compiler);
 }
 
-void buffer_free(compiler_t* compiler) {
+void compiler_buffer_free(compiler_t* compiler) {
 	// Free the buffer
 	for(size_t i = 0; i < vector_size(compiler->buffer); i++)
 	{
