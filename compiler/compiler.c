@@ -2461,49 +2461,48 @@ vector_t* compile_file(compiler_t* compiler, const char* filename)
 // Clears the current instruction buffer of the compiler
 void compiler_clear(compiler_t* compiler)
 {
-	// Free Scope and parsers
-	list_iterator_t* iter = list_iterator_create(compiler->parsers);
-	while(!list_iterator_end(iter))
-	{
-		parser_t* parser = list_iterator_next(iter);
-		parser_free(parser);
-		ast_free(parser->top);
-		free(parser);
-	}
-	list_iterator_free(iter);
-	list_free(compiler->parsers);
-	scope_free(compiler->scope);
-
-	// Free the loaded dlls content
-	/*for(size_t i = 0; i < vector_size(compiler->dlls); i++)
-	{
-		list_t* ls = vector_get(compiler->dlls, i);
-		iter = list_iterator_create(ls);
+	if(compiler->buffer) {
+		// Free Scope and parsers
+		list_iterator_t* iter = list_iterator_create(compiler->parsers);
 		while(!list_iterator_end(iter))
 		{
-			ast_free(list_iterator_next(iter));
+			parser_t* parser = list_iterator_next(iter);
+			parser_free(parser);
+			ast_free(parser->top);
+			free(parser);
 		}
 		list_iterator_free(iter);
-		list_free(ls);
-	}
-	vector_free(compiler->dlls);*/
+		list_free(compiler->parsers);
+		scope_free(compiler->scope);
 
-	buffer_free(compiler);
+		// Free the loaded dlls content
+		/*for(size_t i = 0; i < vector_size(compiler->dlls); i++)
+		{
+			list_t* ls = vector_get(compiler->dlls, i);
+			iter = list_iterator_create(ls);
+			while(!list_iterator_end(iter))
+			{
+				ast_free(list_iterator_next(iter));
+			}
+			list_iterator_free(iter);
+			list_free(ls);
+		}
+		vector_free(compiler->dlls);*/
+
+		buffer_free(compiler);
+	}
 }
 
 void buffer_free(compiler_t* compiler) {
 	// Free the buffer
-	if(compiler->buffer)
+	for(size_t i = 0; i < vector_size(compiler->buffer); i++)
 	{
-		for(size_t i = 0; i < vector_size(compiler->buffer); i++)
-		{
-			instruction_t* instr = vector_get(compiler->buffer, i);
-			if(instr->v1 != NULL_VAL) val_free(instr->v1);
-			if(instr->v2 != NULL_VAL) val_free(instr->v2);
-			free(instr);
-		}
-
-		vector_free(compiler->buffer);
-		compiler->buffer = 0;
+		instruction_t* instr = vector_get(compiler->buffer, i);
+		if(instr->v1 != NULL_VAL) val_free(instr->v1);
+		if(instr->v2 != NULL_VAL) val_free(instr->v2);
+		free(instr);
 	}
+
+	vector_free(compiler->buffer);
+	compiler->buffer = 0;
 }
