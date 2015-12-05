@@ -25,7 +25,7 @@ typedef struct compiler_t
 	list_t* parsers;
 	vector_t* buffer;
 	scope_t* scope;
-	vector_t* dlls;
+	//vector_t* dlls;
 	bool error;
 	int depth;
 } compiler_t;

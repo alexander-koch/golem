@@ -1,13 +1,11 @@
 #include "compiler.h"
-datatype_t compiler_eval(compiler_t* compiler, ast_t* node);
 
 // Compiler.init()
 void compiler_init(compiler_t* compiler)
 {
 	compiler->buffer = 0;
-	compiler->error = false;
 	compiler->scope = 0;
-	compiler->dlls = 0;
+	compiler->error = false;
 }
 
 // Compiler.throw(node, message)
@@ -266,6 +264,8 @@ void compiler_dump(ast_t* node, int level)
 		default: break;
 	}
 }
+
+datatype_t compiler_eval(compiler_t* compiler, ast_t* node);
 
 void push_scope(compiler_t* compiler, ast_t* node)
 {
@@ -2252,7 +2252,7 @@ datatype_t eval_import(compiler_t* compiler, ast_t* node)
 	if(strstr(node->import, ".gs"))
 	{
 		// Create a new subparser for new file
-		parser_t* subparser = malloc(sizeof(*subparser));
+		parser_t* subparser = malloc(sizeof(parser_t));
 		parser_init(subparser, (const char*)node->import);
 		list_push(compiler->parsers, subparser);
 
@@ -2396,75 +2396,47 @@ datatype_t compiler_eval(compiler_t* compiler, ast_t* node)
 	return datatype_new(DATA_NULL);
 }
 
+void buffer_free(compiler_t* compiler);
+
 // Compiler.compileBuffer(string code)
 // Compiles code into bytecode instructions
 vector_t* compile_buffer(compiler_t* compiler, const char* source, const char* name)
 {
-	// Reset compiler
-	compiler_clear(compiler);
 	compiler->buffer = vector_new();
 	compiler->error = false;
 	compiler->depth = 0;
 	compiler->scope = scope_new();
-	compiler->dlls = vector_new();
+	//compiler->dlls = vector_new();
 	compiler->parsers = list_new();
 	compiler->parser = malloc(sizeof(parser_t));
 	list_push(compiler->parsers, compiler->parser);
-	list_iterator_t* iter = 0;
+
+	// For future versions:
+	/*if(list_size(compiler->parsers) > 0) {
+		compiler->parser = malloc(sizeof(parser_t));
+		list_push(compiler->parsers, compiler->parser);
+		buffer_free(compiler->buffer);
+		compiler->buffer = vector_new();
+	}*/
 
 	// Run the parser
 	parser_init(compiler->parser, name);
 	ast_t* root = parser_run(compiler->parser, source);
 	if(root)
 	{
-#ifndef NO_AST
+		#ifndef NO_AST
 		printf("Abstract syntax tree '%s':\n", compiler->parser->name);
 		compiler_dump(root, 0);
 		putchar('\n');
-#endif
+		#endif
+
+		// Evaluate AST
+		// Add final HALT instruction to end
 		compiler_eval(compiler, root);
 		emit_op(compiler->buffer, OP_HLT);
 	}
 
-	// Free Scope and parsers
-	iter = list_iterator_create(compiler->parsers);
-	while(!list_iterator_end(iter))
-	{
-		parser_t* parser = list_iterator_next(iter);
-		parser_free(parser);
-		ast_free(parser->top);
-		free(parser);
-	}
-	list_iterator_free(iter);
-	list_free(compiler->parsers);
-	scope_free(compiler->scope);
-
-	// Free the loaded dlls content
-	for(size_t i = 0; i < vector_size(compiler->dlls); i++)
-	{
-		list_t* ls = vector_get(compiler->dlls, i);
-		iter = list_iterator_create(ls);
-		while(!list_iterator_end(iter))
-		{
-			ast_t* nd = list_iterator_next(iter);
-			ast_free(nd);
-		}
-		list_iterator_free(iter);
-		list_free(ls);
-	}
-
-	vector_free(compiler->dlls);
-
-	// Return bytecode if valid
-	if(root && !compiler->error)
-	{
-		return compiler->buffer;
-	}
-	else
-	{
-		compiler_clear(compiler);
-		return 0;
-	}
+	return compiler->buffer;
 }
 
 // Compiler.compileFile(string filename)
@@ -2489,6 +2461,38 @@ vector_t* compile_file(compiler_t* compiler, const char* filename)
 // Clears the current instruction buffer of the compiler
 void compiler_clear(compiler_t* compiler)
 {
+	// Free Scope and parsers
+	list_iterator_t* iter = list_iterator_create(compiler->parsers);
+	while(!list_iterator_end(iter))
+	{
+		parser_t* parser = list_iterator_next(iter);
+		parser_free(parser);
+		ast_free(parser->top);
+		free(parser);
+	}
+	list_iterator_free(iter);
+	list_free(compiler->parsers);
+	scope_free(compiler->scope);
+
+	// Free the loaded dlls content
+	/*for(size_t i = 0; i < vector_size(compiler->dlls); i++)
+	{
+		list_t* ls = vector_get(compiler->dlls, i);
+		iter = list_iterator_create(ls);
+		while(!list_iterator_end(iter))
+		{
+			ast_free(list_iterator_next(iter));
+		}
+		list_iterator_free(iter);
+		list_free(ls);
+	}
+	vector_free(compiler->dlls);*/
+
+	buffer_free(compiler);
+}
+
+void buffer_free(compiler_t* compiler) {
+	// Free the buffer
 	if(compiler->buffer)
 	{
 		for(size_t i = 0; i < vector_size(compiler->buffer); i++)

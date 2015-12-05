@@ -79,8 +79,8 @@ int main(int argc, char** argv)
         if(buffer)
         {
             vm_run_args(&vm, buffer, argc, argv);
-            compiler_clear(&compiler);
         }
+        compiler_clear(&compiler);
     }
     else if(argc == 3)
     {
@@ -93,12 +93,10 @@ int main(int argc, char** argv)
                 // Write to file
                 char* out = replaceExt(argv[2], ".gvm", 4);
                 serialize(out, compiler.buffer);
-
-                // Clear the compiler
-                compiler_clear(&compiler);
                 printf("Wrote bytecode to file '%s'\n", out);
                 free(out);
             }
+            compiler_clear(&compiler);
         }
         else if(!strcmp(argv[1], "-r"))
         {

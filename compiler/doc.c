@@ -162,9 +162,8 @@ void doc_generate(compiler_t* compiler, const char* filename)
 			fprintf(fp, "\n");
 		}
 		fprintf(fp, "</pre>\n\t\t</div>\n\n");
-
-		compiler_clear(compiler);
 	}
+	compiler_clear(compiler);
 
 	fprintf(fp, "\t\t</main>\n");
 	fprintf(fp, "\t\t</div>\n");
