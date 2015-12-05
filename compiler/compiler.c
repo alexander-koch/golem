@@ -2433,9 +2433,8 @@ vector_t* compile_buffer(compiler_t* compiler, const char* source, const char* n
 		// Evaluate AST
 		// Add final HALT instruction to end
 		compiler_eval(compiler, root);
-		emit_op(compiler->buffer, OP_HLT);
 	}
-
+	emit_op(compiler->buffer, OP_HLT);
 	return compiler->buffer;
 }
 
@@ -2461,7 +2460,7 @@ vector_t* compile_file(compiler_t* compiler, const char* filename)
 // Clears the current instruction buffer of the compiler
 void compiler_clear(compiler_t* compiler)
 {
-	if(compiler->buffer) {
+	if(compiler->parsers) {
 		// Free Scope and parsers
 		list_iterator_t* iter = list_iterator_create(compiler->parsers);
 		while(!list_iterator_end(iter))
@@ -2488,9 +2487,9 @@ void compiler_clear(compiler_t* compiler)
 			list_free(ls);
 		}
 		vector_free(compiler->dlls);*/
-
-		buffer_free(compiler);
 	}
+
+	if(compiler->buffer) buffer_free(compiler);
 }
 
 void buffer_free(compiler_t* compiler) {
