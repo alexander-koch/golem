@@ -16,7 +16,7 @@ type TodoList(tasks:Task[]) {
 
 	func printTasks() -> void {
 		let mut i = 0
-		while(i < taskList.length()) {
+		while i < taskList.length() {
 			let task = taskList.at(i)
 			print("Task: ")
 			println(task.getTitle())

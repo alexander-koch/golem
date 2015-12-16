@@ -44,11 +44,11 @@ More features for the debug-version can be enabled/disabled in the Makfile.
 - [ ] (Advanced) Array index out of bounds exceptions (handled by the compiler) => (Working on it.)
 - [ ] (Advanced) Bytecode optimizations (class optimizer -> remove unused code and functions!) => (Working on it.)
 - [ ] (Advanced) Replace instruction_t vector by array of type val_t for faster processing => (Task.)
-- [ ] (Intermediate) Do for loops with iterators => (Task)
+- [ ] (Intermediate) Do for loops => (Task)
 - [ ] (Intermediate) Create an @Doc annotation => (Task)
 - [ ] (Intermediate) Implement switch statements => (Task)
 - [ ] (Intermediate) Do namespaces => (Task)
-- [ ] (Advanced) Implement tuples => (Task)
+- [ ] (Advanced) Multiple value assignment => (Task)
 
 ##### Final fixes
 

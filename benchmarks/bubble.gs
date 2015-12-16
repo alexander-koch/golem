@@ -15,13 +15,12 @@ func bubblesort(mut list:int[]) -> int[] {
 	# Actual algorithm
 	let len = list.length()
 	let mut swapped = true
-	while(swapped) {
+	while swapped {
 		swapped := false
 
 		let mut k = 0
-		while(k < len-1) {
-			if(list[k] > list[k+1])
-			{
+		while k < len-1 {
+			if list[k] > list[k+1] {
 				swap(k, k+1)
 				swapped := true
 			}
@@ -32,5 +31,5 @@ func bubblesort(mut list:int[]) -> int[] {
 	return list
 }
 
-let arr = [5, 6, 1, 2, 9, 14, 2, 15, 6, 7, 8, 97]
+let arr = [1,5,3,4,2,8,2,4,19,10,17,24,47,18,26]
 println(bubblesort(arr))
