@@ -1051,23 +1051,20 @@ ast_t* parse_fn_declaration(parser_t* parser, location_t loc)
 // Parses an if-statment-chain, consisting of if, else-if and else statements.
 // EBNF:
 // else = "else", block;
-// else if = "else", "if", "(", expr, ")", block;
-// if = "if", "(", expr, ")", block, {elseif}, [else];
+// else if = "else", "if", expr, block;
+// if = "if", expr, block, {elseif}, [else];
 // -----
 // Example:
-// if(cond1)
-// {
+// if cond1 {
 //     do1()
-// } else if(cond2)
-// {
+// } else if cond2 {
 //     do2()
-// } else
-// {
+// } else {
 //     do3()
 // }
 ast_t* parse_if_declaration(parser_t* parser, location_t loc)
 {
-    // if (expr) { \n
+    // if expr { \n
     ast_t* node = ast_class_create(AST_IF, loc);
     node->ifstmt = list_new();
 
@@ -1086,31 +1083,8 @@ ast_t* parse_if_declaration(parser_t* parser, location_t loc)
             accept_token_string(parser, KEYWORD_IF);
         }
 
-        // begin expression
-        token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
-        if(!lparen)
-        {
-            parser_throw(parser, "Malformed if-statement, opening parenthesis expected");
-            ast_free(clause);
-            return node;
-        }
-        else
-        {
-            clause->ifclause.cond = parse_expression(parser);
-        }
-
-        token_t* rparen = accept_token_type(parser, TOKEN_RPAREN);
-        if(rparen)
-        {
-            clause->ifclause.body = parse_block(parser);
-        }
-        else
-        {
-            parser_throw(parser, "Conditional expression without end");
-            ast_free(clause);
-            return node;
-        }
-
+        clause->ifclause.cond = parse_expression(parser);
+        clause->ifclause.body = parse_block(parser);
         list_push(node->ifstmt, clause);
     }
 
@@ -1139,34 +1113,15 @@ ast_t* parse_if_declaration(parser_t* parser, location_t loc)
 // Parser.parseWhileDeclaration()
 // Builds an ast for a while loop
 // EBNF:
-// while_loop = "while", "(", expr, ")", block;
+// while_loop = "while", expr, block;
 ast_t* parse_while_declaration(parser_t* parser, location_t loc)
 {
-    // while (expr) { \n
+    // while expr { \n
     ast_t* node = ast_class_create(AST_WHILE, loc);
+    accept_token(parser);
 
-    token_t* key = accept_token_string(parser, KEYWORD_WHILE);
-    token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
-
-    if(key && lparen)
-    {
-        node->whilestmt.cond = parse_expression(parser);
-
-        token_t* rparen = accept_token_type(parser, TOKEN_RPAREN);
-        if(rparen)
-        {
-            node->whilestmt.body = parse_block(parser);
-        }
-        else
-        {
-            parser_throw(parser, "While loop without end");
-        }
-    }
-    else
-    {
-        parser_throw(parser, "Malformed while loop block");
-    }
-
+    node->whilestmt.cond = parse_expression(parser);
+    node->whilestmt.body = parse_block(parser);
     return node;
 }
 

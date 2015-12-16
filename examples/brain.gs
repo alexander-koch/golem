@@ -9,20 +9,20 @@ let mut idx = 0
 
 # Process an input character
 func process(c:char) -> void {
-	if(c = "+") {
+	if c = "+" {
 		tape[idx] := tape[idx] + 1
-	} else if(c = "-") {
+	} else if c = "-" {
 		tape[idx] := tape[idx] - 1
-	} else if(c = ">") {
+	} else if c = ">" {
 		idx := idx + 1
 
 		# Allocate more tape if needed
-		if(idx > tape.length() - 1) {
+		if idx > tape.length() - 1 {
 			tape := tape.cons(0)
 		}
-	} else if(c = "<") {
+	} else if c = "<" {
 		idx := idx - 1
-	} else if(c = ".") {
+	} else if c = "." {
 		print(tape[idx])
 	} else {
 		# Invalid operation
@@ -34,13 +34,13 @@ func process(c:char) -> void {
 func eval(filename:char[]) -> void {
 	let file = readFile(filename)
 	let len = file.length()
-	if(len = -1) {
+	if len = -1 {
 		println("File doesn't exist")
 	}
 
 	# Process the tape
 	let mut i = 0
-	while(i < len) {
+	while i < len {
 		process(file.at(i))
 		i := i + 1
 	}

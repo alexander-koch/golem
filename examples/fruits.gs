@@ -14,7 +14,7 @@ let apple = String("apple")
 
 let fruits = [mango, kiwi, apple]
 
-if(fruits.empty()) {
+if fruits.empty() {
 	println("There are no fruits")
 } else {
 	print(fruits.length())
