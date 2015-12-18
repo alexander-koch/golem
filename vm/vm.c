@@ -97,7 +97,7 @@ void mark(val_t v)
 				case OBJ_CLASS:
 				{
 					obj_class_t* cls = obj->data;
-					for(size_t i = 0; i < CLASS_FIELDS_SIZE; i++)
+					for(int i = 0; i < CLASS_FIELDS_SIZE; i++)
 					{
 						mark(cls->fields[i]);
 					}
@@ -106,7 +106,7 @@ void mark(val_t v)
 				case OBJ_ARRAY:
 				{
 					obj_array_t* arr = obj->data;
-					for(size_t i = 0; i < arr->len; i++)
+					for(int i = 0; i < arr->len; i++)
 					{
 						mark(arr->data[i]);
 					}
@@ -279,7 +279,7 @@ void vm_print_code(vm_t* vm, vector_t* buffer)
 void reserve(vm_t* vm, size_t args)
 {
 	vm->reserve += 1;
-	for(size_t i = 1; i <= args; i++) {
+	for(int i = 1; i <= args; i++) {
 		vm->stack[vm->sp+vm->reserve-i] = vm->stack[vm->sp-i];
 	}
 	vm->stack[vm->sp+vm->reserve-args-1] = INT32_VAL(vm->reserve-1);
@@ -497,13 +497,13 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	}
 	code_ldarg0:
 	{
-		size_t args = AS_INT32(vm->stack[vm->fp-3]);
+		int args = AS_INT32(vm->stack[vm->fp-3]);
 		vm_copy(vm, vm->stack[vm->fp-args-4]);
 		DISPATCH();
 	}
 	code_setarg0:
 	{
-		size_t args = AS_INT32(vm->stack[vm->fp-3]);
+		int args = AS_INT32(vm->stack[vm->fp-3]);
 		vm->stack[vm->fp-args-4] = pop(vm);
 		DISPATCH();
 	}
@@ -649,7 +649,7 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	}
 	code_syscall:
 	{
-		size_t index = AS_INT32(instr->v1);
+		int index = AS_INT32(instr->v1);
 		val_t ret = system_methods[index](vm);
 		vm_register(vm, ret);
 		DISPATCH();

@@ -2469,7 +2469,7 @@ void compiler_clear(compiler_t* compiler)
 	}
 	list_iterator_free(iter);
 	list_free(compiler->parsers);
-	scope_free(compiler->scope);
+	if(compiler->scope) scope_free(compiler->scope);
 
 	// Free the loaded dlls content
 	/*for(size_t i = 0; i < vector_size(compiler->dlls); i++)
