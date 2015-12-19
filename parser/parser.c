@@ -85,6 +85,10 @@ token_t* accept_token(parser_t* parser)
     return &parser->buffer[parser->cursor++];
 }
 
+void consume_token(parser_t* parser) {
+    parser->cursor++;
+}
+
 token_t* accept_token_string(parser_t* parser, const char* str)
 {
     if(parser_end(parser)) return 0;
@@ -609,10 +613,8 @@ ast_t* parse_expression(parser_t* parser)
     if(!lhs) return lhs;
 
     // TODO: test if next is a valid operator
-    if(!match_type(parser, TOKEN_NEWLINE))
-    {
-        ast_t* rhs = parse_expression_last(parser, lhs, 0);
-        return rhs;
+    if(!match_type(parser, TOKEN_NEWLINE)) {
+        lhs = parse_expression_last(parser, lhs, 0);
     }
 
     return lhs;
@@ -833,6 +835,8 @@ ast_t* parse_stmt(parser_t* parser)
         {KEYWORD_RETURN, parse_return_declaration}
     };
 
+    // Test for a statement
+    // If there is a statement, test for a newline
     for(size_t i = 0; i < sizeof(parsers)/sizeof(parsers[0]); i++)
     {
         if(match_string(parser, parsers[i].token))
@@ -858,9 +862,9 @@ ast_t* parse_stmt(parser_t* parser)
         return 0;
     }
 
+    // Otherwise just do expression testing
     ast_t* node = parse_expression(parser);
-    if(node)
-    {
+    if(node) {
         return node;
     }
 
@@ -904,7 +908,6 @@ ast_t* parser_run(parser_t* parser, const char* content)
         skip_newline(parser);
     }
 
-//    parser->top = 0;
     return ast;
 }
 
@@ -912,6 +915,7 @@ ast_t* parser_run(parser_t* parser, const char* content)
 // Parsing subroutines
 //////------------------
 
+// TODO: put these in a look-up-table (LUT)
 extern int core_gen_signatures(list_t* list);
 extern int math_gen_signatures(list_t* list);
 extern int io_gen_signatures(list_t* list);
@@ -919,45 +923,35 @@ extern int io_gen_signatures(list_t* list);
 // Parser.parseImportDeclaration()
 // Parses an import statement and handles internal libraries.
 // EBNF:
-// import = KEYWORD_IMPORT, ident, newline;
+// import = KEYWORD_IMPORT, (ident | string), newline;
 ast_t* parse_import_declaration(parser_t* parser, location_t loc)
 {
-    // <KEYWORD_IMPORT> io \n
     ast_t* node = ast_class_create(AST_IMPORT, loc);
-    token_t* inc = accept_token_string(parser, KEYWORD_IMPORT);
+    consume_token(parser); // import keyword
 
     // Built-in library handling
-    if(inc && match_type(parser, TOKEN_WORD))
-    {
+    if(match_type(parser, TOKEN_WORD)) {
         token_t* val = accept_token(parser);
         node->import = val->value;
 
         // Built-in core library
-        if(!strcmp(node->import, "core"))
-        {
+        if(!strcmp(node->import, "core")) {
             core_gen_signatures(parser->top->toplevel);
         }
-        else if(!strcmp(node->import, "math"))
-        {
+        else if(!strcmp(node->import, "math")) {
             math_gen_signatures(parser->top->toplevel);
         }
-        else if(!strcmp(node->import, "io"))
-        {
+        else if(!strcmp(node->import, "io")) {
             io_gen_signatures(parser->top->toplevel);
         }
-        else
-        {
+        else {
             parser_throw(parser, "System library '%s' doesn't exist", node->import);
         }
-    }
     // External file handling
-    else if(inc && match_type(parser, TOKEN_STRING))
-    {
+    } else if(match_type(parser, TOKEN_STRING)) {
         token_t* val = accept_token(parser);
         node->import = val->value;
-    }
-    else
-    {
+    } else {
         parser_throw(parser, "Malformed import statement");
     }
 
@@ -972,11 +966,10 @@ ast_t* parse_var_declaration(parser_t* parser, location_t loc)
 {
     // let x = expr \n
     ast_t* node = ast_class_create(AST_DECLVAR, loc);
-    bool mutate = false;
+    consume_token(parser); // let keyword
 
-    token_t* var = accept_token_string(parser, KEYWORD_DECLARATION);
-    if(match_string(parser, KEYWORD_MUTATE))
-    {
+    bool mutate = false;
+    if(match_string(parser, KEYWORD_MUTATE)) {
         accept_token(parser);
         mutate = true;
     }
@@ -984,19 +977,17 @@ ast_t* parse_var_declaration(parser_t* parser, location_t loc)
     token_t* ident = accept_token_type(parser, TOKEN_WORD);
     token_t* eq = accept_token_type(parser, TOKEN_EQUAL);
 
-    if(var && ident && eq)
-    {
+    // If WORD followed by EQUAL
+    if(ident && eq) {
         node->vardecl.name = ident->value;
         node->vardecl.mutate = mutate;
         node->vardecl.initializer = parse_expression(parser);
 
-        if(!node->vardecl.initializer)
-        {
+        if(!node->vardecl.initializer) {
             parser_throw(parser, "Invalid or missing variable initializer");
         }
-    }
-    else
-    {
+    // otherwise error
+    } else {
         parser_throw(parser, "Malformed variable declaration");
         node->class = AST_NULL;
     }
@@ -1013,25 +1004,21 @@ ast_t* parse_fn_declaration(parser_t* parser, location_t loc)
     // func name(params) -> datatype { \n
     // lambda (params) -> int { \n
     ast_t* node = ast_class_create(AST_DECLFUNC, loc);
+    consume_token(parser); // function keyword
 
-    token_t* fn = accept_token_string(parser, KEYWORD_FUNCTION);
     token_t* ident = accept_token_type(parser, TOKEN_WORD);
     token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
 
-    if(fn && ident && lparen)
-    {
+    if(ident && lparen) {
         node->funcdecl.name = ident->value;
         node->funcdecl.impl.formals = parse_formals(parser);
         node->funcdecl.rettype = datatype_new(DATA_NULL);
         node->funcdecl.external = false;
 
-        if(!match_type(parser, TOKEN_ARROW))
-        {
+        if(!match_type(parser, TOKEN_ARROW)) {
             parser_throw(parser, "Return type expected");
             return node;
-        }
-        else
-        {
+        } else {
             accept_token(parser);
             datatype_t tp = parse_datatype(parser);
             node->funcdecl.rettype = tp;
@@ -1039,8 +1026,7 @@ ast_t* parse_fn_declaration(parser_t* parser, location_t loc)
 
         node->funcdecl.impl.body = parse_block(parser);
     }
-    else
-    {
+    else {
         parser_throw(parser, "Malformed function declaration");
     }
 
@@ -1118,7 +1104,7 @@ ast_t* parse_while_declaration(parser_t* parser, location_t loc)
 {
     // while expr { \n
     ast_t* node = ast_class_create(AST_WHILE, loc);
-    accept_token(parser);
+    consume_token(parser); // while keyword
 
     node->whilestmt.cond = parse_expression(parser);
     node->whilestmt.body = parse_block(parser);
@@ -1132,16 +1118,15 @@ ast_t* parse_class_declaration(parser_t* parser, location_t loc)
 {
     // class expr(constructor) { \n
     ast_t* node = ast_class_create(AST_CLASS, loc);
+    consume_token(parser);
 
-    token_t* key = accept_token_string(parser, KEYWORD_CLASS);
     token_t* ident = accept_token_type(parser, TOKEN_WORD);
-
     token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
-    node->classstmt.formals = parse_formals(parser);
 
-    if(key && ident && lparen)
+    if(ident && lparen)
     {
         node->classstmt.name = ident->value;
+        node->classstmt.formals = parse_formals(parser);
         node->classstmt.body = parse_block(parser);
         node->classstmt.fields = hashmap_new();
     }
@@ -1160,22 +1145,12 @@ ast_t* parse_class_declaration(parser_t* parser, location_t loc)
 ast_t* parse_return_declaration(parser_t* parser, location_t loc)
 {
     ast_t* node = ast_class_create(AST_RETURN, loc);
-    token_t* ret = accept_token_string(parser, KEYWORD_RETURN);
+    consume_token(parser);
 
-    if(ret)
-    {
-        if(match_type(parser, TOKEN_NEWLINE))
-        {
-            node->returnstmt = 0;
-        }
-        else
-        {
-            node->returnstmt = parse_expression(parser);
-        }
-    }
-    else
-    {
-        parser_throw(parser, "Invalid return statement");
+    if(match_type(parser, TOKEN_NEWLINE)) {
+        node->returnstmt = 0;
+    } else {
+        node->returnstmt = parse_expression(parser);
     }
 
     return node;
