@@ -196,52 +196,46 @@ datatype_t parse_datatype(parser_t* parser);
 // Parser.parseCall()
 // Parses a call structure
 // Example: func(), foo(baz, bar)
+//
+// Call:
+//  ARGS:LIST
+//  CALLEE:NODE
+//
 // EBNF:
 // call = expr, "(", [expr, {",", expr}], ")";
-ast_t* parse_call(parser_t* parser, ast_t* node)
-{
+ast_t* parse_call(parser_t* parser, ast_t* node) {
     ast_t* class = ast_class_create(AST_CALL, node->location);
     class->call.args = list_new();
     class->call.callee = node;
     ast_t* expr = 0;
 
-    if(node->class != AST_IDENT && node->class != AST_SUBSCRIPT)
-    {
+    if(node->class != AST_IDENT && node->class != AST_SUBSCRIPT) {
         parser_throw(parser, "Function callee has to be an identifier");
         return class;
     }
 
-    while(!match_type(parser, TOKEN_RPAREN) && (expr = parse_expression(parser)))
-    {
-        list_push(class->call.args, (void*)expr);
-        if(match_type(parser, TOKEN_COMMA))
-        {
-            accept_token(parser);
+    while(!match_type(parser, TOKEN_RPAREN) && (expr = parse_expression(parser))) {
+        list_push(class->call.args, expr);
+        if(match_type(parser, TOKEN_COMMA)) {
+            consume_token(parser);
         }
-        else
-        {
-            // TODO: do better handling
-            // FIXME: is it even an error, can it occur ?
+        else {
             break;
         }
     }
 
-    if(!match_type(parser, TOKEN_RPAREN))
-    {
+    if(!match_type(parser, TOKEN_RPAREN)) {
         parser_throw(parser, "Expected closing parenthesis");
     }
-    else
-    {
-        accept_token(parser);
+    else {
+        consume_token(parser);
     }
 
-    if(match_type(parser, TOKEN_DOT))
-    {
+    if(match_type(parser, TOKEN_DOT)) {
         accept_token(parser);
         return parse_subscript_sugar(parser, class);
     }
-    else if(match_type(parser, TOKEN_LBRACKET))
-    {
+    else if(match_type(parser, TOKEN_LBRACKET)) {
         accept_token(parser);
         return parse_subscript(parser, class);
     }
@@ -252,10 +246,16 @@ ast_t* parse_call(parser_t* parser, ast_t* node)
 // Parser.parseSubscript()
 // Parses a subscript, bracket based.
 // Example: myarray[5] = x
+//
+// Subscript:
+//  Expr:Node
+//  Key:Expression
+//
 // EBNF:
 // subscript = ident, "[", expr, "]";
 ast_t* parse_subscript(parser_t* parser, ast_t* node)
 {
+    // Create the node
     ast_t* ast = ast_class_create(AST_SUBSCRIPT, node->location);
     ast->subscript.expr = node;
     ast->subscript.key = parse_expression(parser);
@@ -266,20 +266,20 @@ ast_t* parse_subscript(parser_t* parser, ast_t* node)
         return ast;
     }
 
-    accept_token(parser);
-    if(match_type(parser, TOKEN_LPAREN))
-    {
-        accept_token(parser);
+    // Consume the bracket
+    consume_token(parser);
+
+    // Continue the parsing if possible
+    if(match_type(parser, TOKEN_LPAREN)) {
+        consume_token(parser);
         return parse_call(parser, ast);
     }
-    else if(match_type(parser, TOKEN_LBRACKET))
-    {
-        accept_token(parser);
+    else if(match_type(parser, TOKEN_LBRACKET)) {
+        consume_token(parser);
         return parse_subscript(parser, ast);
     }
-    else if(match_type(parser, TOKEN_DOT))
-    {
-        accept_token(parser);
+    else if(match_type(parser, TOKEN_DOT)) {
+        consume_token(parser);
         return parse_subscript_sugar(parser, ast);
     }
 
@@ -294,32 +294,33 @@ ast_t* parse_subscript(parser_t* parser, ast_t* node)
 // subscript_sugar = expr, ".", ident, [call | subscript | subscript_sugar];
 ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node)
 {
+    // Create the subscript node
     ast_t* ast = ast_class_create(AST_SUBSCRIPT, node->location);
     ast->subscript.expr = node;
-    if(!match_type(parser, TOKEN_WORD))
-    {
+
+    if(!match_type(parser, TOKEN_WORD)) {
         parser_throw(parser, "Subscript: Identifier expected");
         return ast;
     }
 
+    // Consume the identifier
     token_t* ident = accept_token(parser);
+
+    // Create the identifier node
     ast_t* key = ast_class_create(AST_IDENT, ident->location);
     key->ident = ident->value;
     ast->subscript.key = key;
 
-    if(match_type(parser, TOKEN_LPAREN))
-    {
-        accept_token(parser);
+    if(match_type(parser, TOKEN_LPAREN)) {
+        consume_token(parser);
         return parse_call(parser, ast);
     }
-    else if(match_type(parser, TOKEN_LBRACKET))
-    {
-        accept_token(parser);
+    else if(match_type(parser, TOKEN_LBRACKET)) {
+        consume_token(parser);
         return parse_subscript(parser, ast);
     }
-    else if(match_type(parser, TOKEN_DOT))
-    {
-        accept_token(parser);
+    else if(match_type(parser, TOKEN_DOT)) {
+        consume_token(parser);
         return parse_subscript_sugar(parser, ast);
     }
     return ast;

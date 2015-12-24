@@ -101,7 +101,7 @@ When modifiying a variable, the re-assignment operator ':=' is used.
 x := x + 1
 ```
 
-Although you can change the value of the variable, you can **NOT** change the type.
+Although you can change the value of the variable, you can **NOT** change its type.
 The following types can be used:
 
 	int -> e.g. 2, 4, 512, 128, 65535
