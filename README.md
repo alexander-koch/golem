@@ -125,7 +125,7 @@ let str = "Hello World" // Same as ["H", "E", "L", ...]
 
 One wide strings / characters
 
-```ruby
+```rust
 	# Declares a character
 let c1 = "r"
 
@@ -135,7 +135,7 @@ let c2 = ["r"]
 
 If you want to use empty arrays, you have to declare the type of them
 using the following form: (EBNF)
-```sh
+```rust
 	array = '[', '::', type, ']'
 ```
 
@@ -151,7 +151,7 @@ This would create an empty, mutable integer-array.
 Functions are declared using the 'func' keyword.
 After that you have to declare the parameters with their type and finally a return type using the 'arrow' notation.
 
-```ruby
+```rust
 	func main(arg0:char[]) -> void
 {
 	# body
@@ -160,7 +160,7 @@ After that you have to declare the parameters with their type and finally a retu
 
 Parameters are always immutable, if the 'mut' keyword is not set.
 
-```ruby
+```go
 	func main(mut arg0:char[], arg1:int, arg2:float) -> float
 {
 	arg0 := "Foobar"
@@ -178,7 +178,7 @@ All attributes are private.
 To index or set a field, getters and setters are used, to maintain encapsulation.
 The Class declaration is also the class's constructor to prevent NULL-values for initialization.
 
-```ruby
+```go
 	using core
 
 type Class(_x:int, _y:int, _z:int) {
@@ -209,14 +209,11 @@ main()
 Control flows are created by if statements or while loops.
 Example: (assuming variable 'number' is declared as an integer):
 ```rust
-	if(number = 5)
-{
+	if number = 5 {
 	println("Your number is odd.")
-} else if(number = 3)
-{
+} else if number = 3 {
 	println("Your number is odd and it's three.")
-} else
-{
+} else {
 	println("Your number isn't 5 or 3. You should feel bad.")
 }
 ```
@@ -224,9 +221,8 @@ For equality the '='-operator is used (not the double-equal '==' as in other pro
 
 
 While loops:
-```ruby
-	while(number = 5)
-{
+```rust
+	while number = 5)  {
 	number := number + 1
 }
 ```
@@ -235,12 +231,12 @@ While loops:
 For future implementations, for loops should also be an option, but they are currently not implemented.
 For loops:
 ```ruby
-	for(|iter| in [1...5]) {
+	for |iter| in [1...5] {
 	print(iter)
 }
 
-for(|iter| = 0; 1 < 5; i := i + 1) {
-	print(iter)
+for |i| = 0; 1 < 5; i := i + 1 {
+	print(i)
 }
 
 ```
