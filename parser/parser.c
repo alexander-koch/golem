@@ -23,6 +23,7 @@ ast_t* parse_annotation_declaration(parser_t* parser, location_t loc);
 ast_t* parse_expression(parser_t* parser);
 ast_t* parse_stmt(parser_t* parser);
 ast_t* parse_expression(parser_t* parser);
+void test_newline(parser_t* parser);
 
 void parser_init(parser_t* parser, const char* name)
 {
@@ -735,7 +736,7 @@ list_t* parse_formals(parser_t* parser)
         }
         else if(match_type(parser, TOKEN_COMMA))
         {
-            accept_token(parser);
+            consume_token(parser);
         }
     }
 
@@ -752,7 +753,7 @@ list_t* parse_formals(parser_t* parser)
 // Parses a block until a closing brace is reached.
 // Every statement is returned in a list.
 // EBNF:
-// block = "{", {stmt}, "}", newline
+// block = "{", NEWLINE, {stmt}, "}", newline
 list_t* parse_block(parser_t* parser)
 {
     list_t* statements = list_new();
@@ -763,8 +764,13 @@ list_t* parse_block(parser_t* parser)
         return statements;
     }
 
-    accept_token(parser);
-    skip_newline(parser);
+    consume_token(parser);
+    if(!match_type(parser, TOKEN_NEWLINE)) {
+        parser_throw(parser, "Newline after block begin expected");
+        return statements;
+    }
+    parser->cursor++;
+
     while(!match_type(parser, TOKEN_RBRACE) && !parser_error(parser))
     {
         if(parser_end(parser))
@@ -799,15 +805,12 @@ list_t* parse_block(parser_t* parser)
 // Newline ::= '\r\n' / '\n'
 void test_newline(parser_t* parser)
 {
-    if(!parser->error)
-    {
-        if(!match_type(parser, TOKEN_NEWLINE))
-        {
+    if(!parser->error) {
+        if(!match_type(parser, TOKEN_NEWLINE)) {
             parser_throw(parser, "Invalid statement (Newline missing?)");
         }
-        else
-        {
-            accept_token(parser);
+        else {
+            parser->cursor++;
         }
     }
 }
