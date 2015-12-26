@@ -964,14 +964,16 @@ ast_t* parse_var_declaration(parser_t* parser, location_t loc)
 
 // Parser.parseFnDeclaration()
 // Parses a function declaration.
+// If there is no arrow with a datatype, the function is of type void.
+//
 // EBNF:
-// funcdecl = "func", ident, formal_list, block;
+// Function = "func", TOKEN_WORD, Formals, (("->", Datatype, Block) | Block), Newline;
 ast_t* parse_fn_declaration(parser_t* parser, location_t loc)
 {
     // func name(params) -> datatype { \n
     // lambda (params) -> int { \n
     ast_t* node = ast_class_create(AST_DECLFUNC, loc);
-    consume_token(parser); // function keyword
+    parser->cursor++; // function keyword
 
     token_t* ident = accept_token_type(parser, TOKEN_WORD);
     token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
@@ -982,18 +984,31 @@ ast_t* parse_fn_declaration(parser_t* parser, location_t loc)
         node->funcdecl.rettype = datatype_new(DATA_NULL);
         node->funcdecl.external = false;
 
-        if(!match_type(parser, TOKEN_ARROW)) {
+        // Make arrow optional
+        if(match_type(parser, TOKEN_LBRACE)) {
+            // function is of type void
+            // there is no datatype
+
+            node->funcdecl.rettype = datatype_new(DATA_VOID);
+        } else if(match_type(parser, TOKEN_ARROW)) {
+            parser->cursor++;
+            node->funcdecl.rettype = parse_datatype(parser);
+        } else {
+            parser_throw(parser, "Return type expected");
+            return node;
+        }
+
+        /*if(!match_type(parser, TOKEN_ARROW)) {
             parser_throw(parser, "Return type expected");
             return node;
         } else {
-            accept_token(parser);
+            parser->cursor++;
             datatype_t tp = parse_datatype(parser);
             node->funcdecl.rettype = tp;
-        }
+        }*/
 
         node->funcdecl.impl.body = parse_block(parser);
-    }
-    else {
+    } else {
         parser_throw(parser, "Malformed function declaration");
     }
 
