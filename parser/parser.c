@@ -551,15 +551,13 @@ ast_t* parse_expression_primary(parser_t* parser)
 
 ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
 {
-    for(;;)
-    {
+    for(;;) {
         // TODO: Test if the operator is valid or not, otherwise
         // throws error of missing newline
 
         token_type_t op = current_token(parser)->type;
         int prec = parse_precedence(op);
-        if(prec < minprec)
-        {
+        if(prec < minprec) {
             return lhs;
         }
 
@@ -568,31 +566,26 @@ ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
         // TODO: Test if next is a valid operator
 
         ast_t* rhs = parse_expression_primary(parser);
-        if(!rhs)
-        {
+        if(!rhs) {
             parser_throw(parser, "Operator with missing second operand");
             return lhs;
         }
 
         int nextprec = parse_precedence(current_token(parser)->type);
-        if(prec < nextprec)
-        {
+        if(prec < nextprec) {
             rhs = parse_expression_last(parser, rhs, prec + 1);
-            if(!rhs)
-            {
+            if(!rhs) {
                 return 0;
             }
         }
 
         // Float optimization
-        if(lhs->class == AST_FLOAT && rhs->class == AST_INT)
-        {
+        if(lhs->class == AST_FLOAT && rhs->class == AST_INT) {
             // convert right hand side to float too
             rhs->class = AST_FLOAT;
             rhs->f = (F64)rhs->i;
         }
-        else if(lhs->class == AST_INT && rhs->class == AST_FLOAT)
-        {
+        else if(lhs->class == AST_INT && rhs->class == AST_FLOAT) {
             lhs->class = AST_FLOAT;
             lhs->f = (F64)lhs->i;
         }
@@ -640,44 +633,35 @@ datatype_t parse_datatype(parser_t* parser)
     datatype_t type = datatype_new(DATA_NULL);
     char* v = typestr->value;
 
-    if(!strcmp(v, "int"))
-    {
+    if(!strcmp(v, "int")) {
         type = datatype_new(DATA_INT);
     }
-    else if(!strcmp(v, "float"))
-    {
+    else if(!strcmp(v, "float")) {
         type = datatype_new(DATA_FLOAT);
     }
-    else if(!strcmp(v, "char"))
-    {
+    else if(!strcmp(v, "char")) {
         type = datatype_new(DATA_CHAR);
     }
-    else if(!strcmp(v, "bool"))
-    {
+    else if(!strcmp(v, "bool")) {
         type = datatype_new(DATA_BOOL);
     }
-    else if(!strcmp(v, "void"))
-    {
+    else if(!strcmp(v, "void")) {
         type = datatype_new(DATA_VOID);
     }
-    else
-    {
+    else {
         type.type = DATA_CLASS;
         type.id = djb2((unsigned char*)v);
     }
 
-    if(match_type(parser, TOKEN_LBRACKET))
-    {
-        accept_token(parser);
+    if(match_type(parser, TOKEN_LBRACKET)) {
+        parser->cursor++;
         token_t* rbrac = accept_token_type(parser, TOKEN_RBRACKET);
-        if(!rbrac)
-        {
+        if(!rbrac) {
             parser_throw(parser, "Expected closing bracket");
             return datatype_new(DATA_NULL);
         }
 
-        if(type.type == DATA_VOID)
-        {
+        if(type.type == DATA_VOID) {
             parser_throw(parser, "Invalid: array of type void");
             return datatype_new(DATA_NULL);
         }
@@ -696,32 +680,28 @@ datatype_t parse_datatype(parser_t* parser)
 // EBNF:
 // formal = ["mut"], ident, ":", datatype;
 // formal_list = "(", [formal, {",", formal}], ")";
-list_t* parse_formals(parser_t* parser)
-{
+list_t* parse_formals(parser_t* parser) {
     list_t* formals = list_new();
-    while(!match_type(parser, TOKEN_RPAREN))
-    {
+    while(!match_type(parser, TOKEN_RPAREN)) {
+
         // Mutable parameter
         bool mutable = false;
-        if(match_string(parser, "mut"))
-        {
-            accept_token(parser);
+        if(match_string(parser, "mut")) {
+            parser->cursor++;
             mutable = true;
         }
 
-        if(!match_type(parser, TOKEN_WORD))
-        {
+        if(!match_type(parser, TOKEN_WORD)) {
             parser_throw(parser, "Invalid argument list");
             return formals;
         }
 
         token_t* name = accept_token(parser);
-        if(!match_type(parser, TOKEN_COLON))
-        {
+        if(!match_type(parser, TOKEN_COLON)) {
             parser_throw(parser, "Type expected");
             return formals;
         }
-        accept_token(parser); // ':'
+        parser->cursor++; // ':'
 
         ast_t* param = ast_class_create(AST_DECLVAR, get_location(parser));
         param->vardecl.name = name->value;
@@ -729,20 +709,17 @@ list_t* parse_formals(parser_t* parser)
         param->vardecl.mutate = mutable;
         list_push(formals, param);
 
-        if(!match_type(parser, TOKEN_COMMA) && !match_type(parser, TOKEN_RPAREN))
-        {
+        if(!match_type(parser, TOKEN_COMMA) && !match_type(parser, TOKEN_RPAREN)) {
             parser_throw(parser, "Expected seperator");
             return formals;
         }
-        else if(match_type(parser, TOKEN_COMMA))
-        {
-            consume_token(parser);
+        else if(match_type(parser, TOKEN_COMMA)) {
+            parser->cursor++;
         }
     }
 
     token_t* rparen = accept_token_type(parser, TOKEN_RPAREN);
-    if(!rparen)
-    {
+    if(!rparen) {
         parser_throw(parser, "Missing right parenthesis");
     }
 
@@ -754,12 +731,10 @@ list_t* parse_formals(parser_t* parser)
 // Every statement is returned in a list.
 // EBNF:
 // block = "{", NEWLINE, {stmt}, "}", newline
-list_t* parse_block(parser_t* parser)
-{
+list_t* parse_block(parser_t* parser) {
     list_t* statements = list_new();
     skip_newline(parser);
-    if(!match_type(parser, TOKEN_LBRACE))
-    {
+    if(!match_type(parser, TOKEN_LBRACE)) {
         parser_throw(parser, "Expected opening brace");
         return statements;
     }
@@ -771,17 +746,14 @@ list_t* parse_block(parser_t* parser)
     }
     parser->cursor++;
 
-    while(!match_type(parser, TOKEN_RBRACE) && !parser_error(parser))
-    {
-        if(parser_end(parser))
-        {
+    while(!match_type(parser, TOKEN_RBRACE) && !parser_error(parser)) {
+        if(parser_end(parser)) {
             parser_throw(parser, "Block not closed, reached end");
             return statements;
         }
 
         ast_t* stmt = parse_stmt(parser);
-        if(!stmt)
-        {
+        if(!stmt) {
             return statements;
         }
 
@@ -789,11 +761,9 @@ list_t* parse_block(parser_t* parser)
         skip_newline(parser);
     }
 
-    if(!parser_error(parser))
-    {
+    if(!parser_error(parser)) {
         token_t* rbrace = accept_token_type(parser, TOKEN_RBRACE);
-        if(!rbrace)
-        {
+        if(!rbrace) {
             parser_throw(parser, "Missing closing brace");
         }
     }
@@ -821,8 +791,7 @@ void test_newline(parser_t* parser)
 // EBNF:
 // newline = "\n" | "\r\n";
 // stmt = (import | variable | function | if | while | class | return | annotation | expr), newline;
-ast_t* parse_stmt(parser_t* parser)
-{
+ast_t* parse_stmt(parser_t* parser) {
     location_t pos = get_location(parser);
     static const struct
     {
@@ -841,10 +810,8 @@ ast_t* parse_stmt(parser_t* parser)
 
     // Test for a statement
     // If there is a statement, test for a newline
-    for(size_t i = 0; i < sizeof(parsers)/sizeof(parsers[0]); i++)
-    {
-        if(match_string(parser, parsers[i].token))
-        {
+    for(size_t i = 0; i < sizeof(parsers)/sizeof(parsers[0]); i++) {
+        if(match_string(parser, parsers[i].token)) {
             ast_t* node = parsers[i].fn(parser, pos);
             test_newline(parser);
             return node;
@@ -852,16 +819,14 @@ ast_t* parse_stmt(parser_t* parser)
     }
 
     // Annotation testing
-    if(match_type(parser, TOKEN_AT))
-    {
+    if(match_type(parser, TOKEN_AT)) {
         ast_t* node = parse_annotation_declaration(parser, pos);
         test_newline(parser);
         return node;
     }
 
     // Error testing
-    if(match_string(parser, KEYWORD_ELSE))
-    {
+    if(match_string(parser, KEYWORD_ELSE)) {
         parser_throw(parser, "If-clause error: No beginning if-statement / Else-if out of if-chain");
         return 0;
     }
@@ -896,11 +861,9 @@ ast_t* parser_run(parser_t* parser, const char* content)
 
     // Parse each statement and abort if an error occurs
     skip_newline(parser);
-    while(!parser_end(parser))
-    {
+    while(!parser_end(parser)) {
         ast_t* node = parse_stmt(parser);
-        if(!node || parser_error(parser))
-        {
+        if(!node || parser_error(parser)) {
             ast_free(node);
             ast_free(ast);
             parser->top = 0;
