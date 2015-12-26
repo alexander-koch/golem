@@ -733,18 +733,18 @@ list_t* parse_formals(parser_t* parser) {
 // block = "{", NEWLINE, {stmt}, "}", newline
 list_t* parse_block(parser_t* parser) {
     list_t* statements = list_new();
-    skip_newline(parser);
     if(!match_type(parser, TOKEN_LBRACE)) {
         parser_throw(parser, "Expected opening brace");
         return statements;
     }
+    parser->cursor++;
 
-    consume_token(parser);
     if(!match_type(parser, TOKEN_NEWLINE)) {
         parser_throw(parser, "Newline after block begin expected");
         return statements;
     }
     parser->cursor++;
+    skip_newline(parser);
 
     while(!match_type(parser, TOKEN_RBRACE) && !parser_error(parser)) {
         if(parser_end(parser)) {
@@ -997,15 +997,6 @@ ast_t* parse_fn_declaration(parser_t* parser, location_t loc)
             parser_throw(parser, "Return type expected");
             return node;
         }
-
-        /*if(!match_type(parser, TOKEN_ARROW)) {
-            parser_throw(parser, "Return type expected");
-            return node;
-        } else {
-            parser->cursor++;
-            datatype_t tp = parse_datatype(parser);
-            node->funcdecl.rettype = tp;
-        }*/
 
         node->funcdecl.impl.body = parse_block(parser);
     } else {

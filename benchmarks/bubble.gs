@@ -6,7 +6,7 @@ using core
 func bubblesort(mut list:int[]) -> int[] {
 
 	# Nested helper function
-	func swap(i:int, j:int) -> void {
+	func swap(i:int, j:int) {
 		let temp = list[i]
 		list[i] := list[j]
 		list[j] := temp

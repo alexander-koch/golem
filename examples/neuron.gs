@@ -20,7 +20,7 @@ type Neuron() {
 	let c = 0.1
 
 	# Erstellen
-	func create(n:int) -> void {
+	func create(n:int) {
 		let mut i = 0
 		while i < n {
 			weights := weights.cons(rand(-1.0, 1.0))
@@ -40,7 +40,7 @@ type Neuron() {
 	}
 
 	# Neuron trainieren
-	func train(inputs:float[], desired:float) -> void {
+	func train(inputs:float[], desired:float) {
 		let guess = feedForward(inputs)
 		let error = desired - guess
 		let mut i = 0

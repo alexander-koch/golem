@@ -14,7 +14,7 @@ type Task(_title:char[], _desc:char[], _done:bool) {
 type TodoList(tasks:Task[]) {
 	let taskList = tasks
 
-	func printTasks() -> void {
+	func printTasks() {
 		let mut i = 0
 		while i < taskList.length() {
 			let task = taskList.at(i)

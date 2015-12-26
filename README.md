@@ -152,8 +152,7 @@ Functions are declared using the 'func' keyword.
 After that you have to declare the parameters with their type and finally a return type using the 'arrow' notation.
 
 ```rust
-	func main(arg0:char[]) -> void
-{
+	func main(arg0:char[]) -> void {
 	# body
 }
 ```
@@ -161,8 +160,7 @@ After that you have to declare the parameters with their type and finally a retu
 Parameters are always immutable, if the 'mut' keyword is not set.
 
 ```go
-	func main(mut arg0:char[], arg1:int, arg2:float) -> float
-{
+	func main(mut arg0:char[], arg1:int, arg2:float) -> float {
 	arg0 := "Foobar"
 	let answer = arg1
 	return arg2
@@ -194,8 +192,7 @@ type Class(_x:int, _y:int, _z:int) {
 	}
 }
 
-func main() -> void
-{
+func main() {
 	let cls = Class(7,5,2)
 	cls.run()
 	println(cls.getX())
