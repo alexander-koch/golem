@@ -218,7 +218,7 @@ ast_t* parse_call(parser_t* parser, ast_t* node) {
     while(!match_type(parser, TOKEN_RPAREN) && (expr = parse_expression(parser))) {
         list_push(class->call.args, expr);
         if(match_type(parser, TOKEN_COMMA)) {
-            consume_token(parser);
+            parser->cursor++;
         }
         else {
             break;
@@ -229,15 +229,15 @@ ast_t* parse_call(parser_t* parser, ast_t* node) {
         parser_throw(parser, "Expected closing parenthesis");
     }
     else {
-        consume_token(parser);
+        parser->cursor++;
     }
 
     if(match_type(parser, TOKEN_DOT)) {
-        accept_token(parser);
+        parser->cursor++;
         return parse_subscript_sugar(parser, class);
     }
     else if(match_type(parser, TOKEN_LBRACKET)) {
-        accept_token(parser);
+        parser->cursor++;
         return parse_subscript(parser, class);
     }
 
@@ -1167,28 +1167,22 @@ ast_t* parse_annotation_declaration(parser_t* parser, location_t loc)
     token_t* keyword = accept_token_type(parser, TOKEN_AT);
     token_t* content = accept_token_type(parser, TOKEN_WORD);
 
-    if(keyword && content)
-    {
+    if(keyword && content) {
         char* str = content->value;
-        if(!strcmp(str, "Getter"))
-        {
+        if(!strcmp(str, "Getter")) {
             node->annotation = ANN_GETTER;
         }
-        else if(!strcmp(str, "Setter"))
-        {
+        else if(!strcmp(str, "Setter")) {
             node->annotation = ANN_SETTER;
         }
-        else if(!strcmp(str, "Unused"))
-        {
+        else if(!strcmp(str, "Unused")) {
             node->annotation = ANN_UNUSED;
         }
-        else
-        {
+        else {
             parser_throw(parser, "Unknown annotation type");
         }
     }
-    else
-    {
+    else {
         parser_throw(parser, "Malformed annotation");
     }
 

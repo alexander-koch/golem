@@ -1026,7 +1026,8 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 		}
 		else
 		{
-			// TODO: What would it be?
+			// Example: [1,2,3] := 5
+			// Completely invalid!
 			compiler_throw(compiler, node, "Unknown assignment operation");
 			return datatype_new(DATA_NULL);
 		}

@@ -76,7 +76,7 @@ int main(int argc, char** argv)
     {
         // Generate and execute bytecode (Interpreter)
         vector_t* buffer = compile_file(&compiler, argv[1]);
-        if(buffer)
+        if(buffer && !compiler.error)
         {
             vm_run_args(&vm, buffer, argc, argv);
         }
@@ -88,7 +88,7 @@ int main(int argc, char** argv)
         {
             // Compile to bytecode
             vector_t* buffer = compile_file(&compiler, argv[2]);
-            if(buffer)
+            if(buffer && !compiler.error)
             {
                 // Write to file
                 char* out = replaceExt(argv[2], ".gvm", 4);
