@@ -149,10 +149,12 @@ This would create an empty, mutable integer-array.
 ### Functions
 
 Functions are declared using the 'func' keyword.
-After that you have to declare the parameters with their type and finally a return type using the 'arrow' notation.
+After that you have to declare the parameters with their type and finally a return type using the 'arrow' notation. For code blocks
+the 'egyptian'-style brackets are used.
+For void functions, you don't have to use the arrow, it is optional.
 
 ```rust
-	func main(arg0:char[]) -> void {
+	func main(arg0:char[]) -> int {
 	# body
 }
 ```
@@ -186,7 +188,7 @@ type Class(_x:int, _y:int, _z:int) {
 	let y = _y
 	let z = _z
 
-	func run() -> void {
+	func run() {
 		println(x)
 		println(y)
 	}

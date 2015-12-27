@@ -86,10 +86,6 @@ token_t* accept_token(parser_t* parser)
     return &parser->buffer[parser->cursor++];
 }
 
-void consume_token(parser_t* parser) {
-    parser->cursor++;
-}
-
 token_t* accept_token_string(parser_t* parser, const char* str)
 {
     if(parser_end(parser)) return 0;
@@ -268,19 +264,19 @@ ast_t* parse_subscript(parser_t* parser, ast_t* node)
     }
 
     // Consume the bracket
-    consume_token(parser);
+    parser->cursor++;
 
     // Continue the parsing if possible
     if(match_type(parser, TOKEN_LPAREN)) {
-        consume_token(parser);
+        parser->cursor++;
         return parse_call(parser, ast);
     }
     else if(match_type(parser, TOKEN_LBRACKET)) {
-        consume_token(parser);
+        parser->cursor++;
         return parse_subscript(parser, ast);
     }
     else if(match_type(parser, TOKEN_DOT)) {
-        consume_token(parser);
+        parser->cursor++;
         return parse_subscript_sugar(parser, ast);
     }
 
@@ -313,15 +309,15 @@ ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node)
     ast->subscript.key = key;
 
     if(match_type(parser, TOKEN_LPAREN)) {
-        consume_token(parser);
+        parser->cursor++;
         return parse_call(parser, ast);
     }
     else if(match_type(parser, TOKEN_LBRACKET)) {
-        consume_token(parser);
+        parser->cursor++;
         return parse_subscript(parser, ast);
     }
     else if(match_type(parser, TOKEN_DOT)) {
-        consume_token(parser);
+        parser->cursor++;
         return parse_subscript_sugar(parser, ast);
     }
     return ast;
@@ -894,7 +890,7 @@ extern int io_gen_signatures(list_t* list);
 ast_t* parse_import_declaration(parser_t* parser, location_t loc)
 {
     ast_t* node = ast_class_create(AST_IMPORT, loc);
-    consume_token(parser); // import keyword
+    parser->cursor++; // import keyword
 
     // Built-in library handling
     if(match_type(parser, TOKEN_WORD)) {
@@ -933,11 +929,11 @@ ast_t* parse_var_declaration(parser_t* parser, location_t loc)
 {
     // let x = expr \n
     ast_t* node = ast_class_create(AST_DECLVAR, loc);
-    consume_token(parser); // let keyword
+    parser->cursor++; // let keyword
 
     bool mutate = false;
     if(match_string(parser, KEYWORD_MUTATE)) {
-        accept_token(parser);
+        parser->cursor++;
         mutate = true;
     }
 
@@ -953,7 +949,6 @@ ast_t* parse_var_declaration(parser_t* parser, location_t loc)
         if(!node->vardecl.initializer) {
             parser_throw(parser, "Invalid or missing variable initializer");
         }
-    // otherwise error
     } else {
         parser_throw(parser, "Malformed variable declaration");
         node->class = AST_NULL;
@@ -1077,7 +1072,7 @@ ast_t* parse_while_declaration(parser_t* parser, location_t loc)
 {
     // while expr { \n
     ast_t* node = ast_class_create(AST_WHILE, loc);
-    consume_token(parser); // while keyword
+    parser->cursor++; // while keyword
 
     node->whilestmt.cond = parse_expression(parser);
     node->whilestmt.body = parse_block(parser);
@@ -1091,20 +1086,17 @@ ast_t* parse_class_declaration(parser_t* parser, location_t loc)
 {
     // class expr(constructor) { \n
     ast_t* node = ast_class_create(AST_CLASS, loc);
-    consume_token(parser);
+    parser->cursor++;
 
     token_t* ident = accept_token_type(parser, TOKEN_WORD);
     token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
 
-    if(ident && lparen)
-    {
+    if(ident && lparen) {
         node->classstmt.name = ident->value;
         node->classstmt.formals = parse_formals(parser);
         node->classstmt.body = parse_block(parser);
         node->classstmt.fields = hashmap_new();
-    }
-    else
-    {
+    } else {
         parser_throw(parser, "Malformed class declaration");
     }
 
@@ -1118,7 +1110,7 @@ ast_t* parse_class_declaration(parser_t* parser, location_t loc)
 ast_t* parse_return_declaration(parser_t* parser, location_t loc)
 {
     ast_t* node = ast_class_create(AST_RETURN, loc);
-    consume_token(parser);
+    parser->cursor++;
 
     if(match_type(parser, TOKEN_NEWLINE)) {
         node->returnstmt = 0;

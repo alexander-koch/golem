@@ -18,8 +18,8 @@
 // Location in file / code location
 typedef struct
 {
-    unsigned line;
-    unsigned column;
+    unsigned int line;
+    unsigned int column;
 } location_t;
 
 // Lexer structure
@@ -31,7 +31,6 @@ typedef struct lexer_t
     const char* cursor;
     const char* lastline;
     int error;
-    int eof;
 } lexer_t;
 
 typedef enum

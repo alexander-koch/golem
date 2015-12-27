@@ -56,7 +56,6 @@ void lexer_init(lexer_t* lexer)
     lexer->cursor = 0;
     lexer->lastline = 0;
     lexer->error = 0;
-    lexer->eof = 0;
 }
 
 void lex_error(lexer_t* lexer, const char* err)
@@ -401,7 +400,6 @@ int next_token(lexer_t* lexer, token_t* token)
     }
     if(is_eof(lexer))
     {
-        lexer->eof = 1;
         return 0;
     }
 
@@ -415,7 +413,6 @@ token_t* lexer_lex(lexer_t* lexer, const char* name, const char* src, size_t* nu
     lexer->location.column = 1;
     lexer->source = src;
     lexer->lastline = src;
-    lexer->eof = 0;
     lexer->error = 0;
     lexer->cursor = src;
     lexer->name = name;
