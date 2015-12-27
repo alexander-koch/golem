@@ -397,7 +397,7 @@ int next_token(lexer_t* lexer, token_t* token)
     return 0;
 }
 
-token_t* lexer_lex(const char* name, const char* src, size_t* numTokens)
+token_t* lexer_scan(const char* name, const char* src, size_t* numTokens)
 {
     lexer_t lexer;
     lexer.location.line = 1;

@@ -843,7 +843,7 @@ ast_t* parse_stmt(parser_t* parser) {
 
 ast_t* parser_run(parser_t* parser, const char* content)
 {
-    parser->buffer = lexer_lex(parser->name, content, &parser->num_tokens);
+    parser->buffer = lexer_scan(parser->name, content, &parser->num_tokens);
     if(!parser->buffer) return 0;
 
     // Use this for lexical analysis, debug if tokens are read wrong
