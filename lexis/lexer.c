@@ -411,7 +411,7 @@ token_t* lexer_scan(const char* name, const char* src, size_t* numTokens)
     size_t alloc_size = 8;
     size_t n = 0;
     token_t* buffer = malloc(alloc_size * sizeof(token_t));
-    assert(buffer);
+    if(!buffer) return 0;
 
     token_t token;
     while(next_token(&lexer, &token))
@@ -443,25 +443,20 @@ token_t* lexer_scan(const char* name, const char* src, size_t* numTokens)
 
 void lexer_print_tokens(token_t* tokens, size_t n)
 {
-    for(size_t i = 0; i < n; i++)
-    {
+    for(size_t i = 0; i < n; i++) {
         token_t* token = &tokens[i];
-        if(token->type == TOKEN_NEWLINE)
-        {
-            fprintf(stdout, "[TOK: NEWLINE]\n");
-        }
-        else
-        {
-            fprintf(stdout, "[TOK: %s], ", token->value);
+        if(token->type == TOKEN_NEWLINE) {
+            printf("[TOK: NEWLINE]\n");
+        } else {
+            printf("[TOK: %s], ", token->value);
         }
     }
-    fprintf(stdout, "\n");
+    printf("\n");
 }
 
 void lexer_free_buffer(token_t* buffer, size_t n)
 {
-    for(size_t i = 0; i < n; i++)
-    {
+    for(size_t i = 0; i < n; i++) {
         free(buffer[i].value);
     }
     free(buffer);

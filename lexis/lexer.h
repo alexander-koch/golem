@@ -6,7 +6,6 @@
 // Each tokens has a certain type with a string value.
 // The string value may be NULL.
 
-#include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <ctype.h>
