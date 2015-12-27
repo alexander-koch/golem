@@ -22,7 +22,6 @@
 // Parser structure
 // ----------
 // @name Name of the current parser (filename)
-// @lexer Lexical analysis tool
 // @buffer Buffer that keeps the tokens
 // @num_tokens Length of the token buffer
 // @cursor Current position within the buffer
@@ -44,7 +43,6 @@
 typedef struct parser_t
 {
     const char* name;
-    lexer_t lexer;
     token_t* buffer;
     size_t num_tokens;
     size_t cursor;

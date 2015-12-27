@@ -48,16 +48,6 @@ const char* tok2str(token_type_t type)
     }
 }
 
-void lexer_init(lexer_t* lexer)
-{
-    lexer->location.line = 0;
-    lexer->location.column = 0;
-    lexer->source = 0;
-    lexer->cursor = 0;
-    lexer->lastline = 0;
-    lexer->error = 0;
-}
-
 void lex_error(lexer_t* lexer, const char* err)
 {
     lexer->error = 1;
@@ -407,15 +397,16 @@ int next_token(lexer_t* lexer, token_t* token)
     return 0;
 }
 
-token_t* lexer_lex(lexer_t* lexer, const char* name, const char* src, size_t* numTokens)
+token_t* lexer_lex(const char* name, const char* src, size_t* numTokens)
 {
-    lexer->location.line = 1;
-    lexer->location.column = 1;
-    lexer->source = src;
-    lexer->lastline = src;
-    lexer->error = 0;
-    lexer->cursor = src;
-    lexer->name = name;
+    lexer_t lexer;
+    lexer.location.line = 1;
+    lexer.location.column = 1;
+    lexer.name = name;
+    lexer.source = src;
+    lexer.cursor = src;
+    lexer.lastline = src;
+    lexer.error = 0;
 
     size_t alloc_size = 8;
     size_t n = 0;
@@ -423,7 +414,7 @@ token_t* lexer_lex(lexer_t* lexer, const char* name, const char* src, size_t* nu
     assert(buffer);
 
     token_t token;
-    while(next_token(lexer, &token))
+    while(next_token(&lexer, &token))
     {
         if(token.type == TOKEN_SPACE)
         {
@@ -440,7 +431,7 @@ token_t* lexer_lex(lexer_t* lexer, const char* name, const char* src, size_t* nu
         buffer[n++] = token;
     }
 
-    if(lexer->error)
+    if(lexer.error)
     {
         lexer_free_buffer(buffer, n);
         return 0;
