@@ -142,7 +142,7 @@ void doc_generate(compiler_t* compiler, const char* filename)
 	fprintf(fp, "\t\t<h2>Bytecode</h2>\n\n");
 	fprintf(fp, "\t\t<div>\n<pre>");
 	vector_t* buffer = compile_file(compiler, filename);
-	if(buffer)
+	if(buffer && !compiler->error)
 	{
 		for(size_t i = 0; i < vector_size(buffer); i++)
 		{
