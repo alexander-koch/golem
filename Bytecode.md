@@ -122,7 +122,7 @@ For comparison the old VM implementation is used.
 
 | Class               | Description
 |---                  |---
-|class x              | creates a class with the top x elements
+|class                | creates a class
 |setfield x           | pop value, stores it in a field of the class
 |getfield x           | get value x in of the class fields
 

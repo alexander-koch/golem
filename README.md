@@ -365,5 +365,5 @@ class[getX]()
 * [Computed gotos](http://eli.thegreenplace.net/2012/07/12/computed-goto-for-efficient-dispatch-tables)
 
 # Licence
-Copyright (c) Alexander Koch 2015 All Rights Reserved.
+Copyright (c) Alexander Koch 2016 All Rights Reserved.
 Project start: 18.05.2015

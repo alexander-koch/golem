@@ -41,7 +41,7 @@ void run_repl(vm_t* vm, compiler_t* compiler)
 void print_info()
 {
     printf("Golem compiler\n");
-    printf("Copyright (c) Alexander Koch 2015\nAll Rights Reserved.\n\n");
+    printf("Copyright (c) Alexander Koch 2016\nAll Rights Reserved.\n\n");
     printf("Usage:\n");
     printf("  golem <file>       (Run a file)\n");
     printf("  golem -r <file>    (Run a *.gvm file)\n");
