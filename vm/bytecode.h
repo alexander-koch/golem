@@ -163,4 +163,6 @@ void emit_array_merge(vector_t* buffer, size_t sz);
 val_t* emit_jmp(vector_t* buffer, int address);
 val_t* emit_jmpf(vector_t* buffer, int address);
 
+void bytecode_buffer_free(vector_t* buffer);
+
 #endif

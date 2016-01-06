@@ -338,3 +338,14 @@ val_t* emit_jmpf(vector_t* buffer, int address)
 	insert_v1(buffer, OP_JMPF, val);
 	return GEN_JMP_REF();
 }
+
+void bytecode_buffer_free(vector_t* buffer) {
+	for(size_t i = 0; i < vector_size(buffer); i++) {
+		instruction_t* instr = vector_get(buffer, i);
+		if(instr->v1 != NULL_VAL) val_free(instr->v1);
+		if(instr->v2 != NULL_VAL) val_free(instr->v2);
+		free(instr);
+	}
+
+	vector_free(buffer);
+}

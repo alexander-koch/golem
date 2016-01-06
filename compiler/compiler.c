@@ -2425,7 +2425,7 @@ vector_t* compile_buffer(const char* source, const char* name)
 	compiler_clear(&compiler);
 
 	if(compiler.error) {
-		compiler_buffer_free(buffer);
+		bytecode_buffer_free(buffer);
 		return 0;
 	}
 
@@ -2466,16 +2466,4 @@ void compiler_clear(compiler_t* compiler)
 	list_iterator_free(iter);
 	list_free(compiler->parsers);
 	if(compiler->scope) scope_free(compiler->scope);
-}
-
-void compiler_buffer_free(vector_t* buffer) {
-	// Free the buffer
-	for(size_t i = 0; i < vector_size(buffer); i++) {
-		instruction_t* instr = vector_get(buffer, i);
-		if(instr->v1 != NULL_VAL) val_free(instr->v1);
-		if(instr->v2 != NULL_VAL) val_free(instr->v2);
-		free(instr);
-	}
-
-	vector_free(buffer);
 }

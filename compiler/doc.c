@@ -161,7 +161,7 @@ void doc_generate(const char* filename)
 			fprintf(fp, "\n");
 		}
 		fprintf(fp, "</pre>\n\t\t</div>\n\n");
-		compiler_buffer_free(buffer);
+		bytecode_buffer_free(buffer);
 	}
 
 	fprintf(fp, "\t\t</main>\n");

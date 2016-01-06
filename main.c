@@ -75,7 +75,7 @@ int main(int argc, char** argv)
         vector_t* buffer = compile_file(argv[1]);
         if(buffer) {
             vm_run_args(&vm, buffer, argc, argv);
-            compiler_buffer_free(buffer);
+            bytecode_buffer_free(buffer);
         }
     } else if(argc == 3) {
         if(!strcmp(argv[1], "-c")) {
@@ -87,7 +87,7 @@ int main(int argc, char** argv)
                 serialize(out, buffer);
                 printf("Wrote bytecode to file '%s'\n", out);
                 free(out);
-                compiler_buffer_free(buffer);
+                bytecode_buffer_free(buffer);
             }
         } else if(!strcmp(argv[1], "-r")) {
             // Run compiled bytecode file
@@ -95,7 +95,7 @@ int main(int argc, char** argv)
             if(deserialize(argv[2], &buffer)) {
                 vm_run_args(&vm, buffer, argc, argv);
             }
-            compiler_buffer_free(buffer);
+            bytecode_buffer_free(buffer);
         } else if(!strcmp(argv[1], "--ast")) {
             // Generate ast.dot graphviz file
             char* filename = argv[2];
