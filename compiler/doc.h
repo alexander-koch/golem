@@ -6,6 +6,6 @@
 #include <vm/bytecode.h>
 #include <adt/vector.h>
 
-void doc_generate(compiler_t* compiler, const char* filename);
+void doc_generate(const char* filename);
 
 #endif

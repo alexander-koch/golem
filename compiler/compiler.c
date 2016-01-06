@@ -1,13 +1,5 @@
 #include "compiler.h"
 
-// Compiler.init()
-void compiler_init(compiler_t* compiler)
-{
-	compiler->buffer = 0;
-	compiler->scope = 0;
-	compiler->error = false;
-}
-
 // Compiler.throw(node, message)
 // If an error occurs, this function can be used as an exception.
 // It halts the compilation, and prints an error message to the console.
@@ -2399,47 +2391,50 @@ datatype_t compiler_eval(compiler_t* compiler, ast_t* node)
 
 // Compiler.compileBuffer(string code)
 // Compiles code into bytecode instructions
-vector_t* compile_buffer(compiler_t* compiler, const char* source, const char* name)
+vector_t* compile_buffer(const char* source, const char* name)
 {
-	compiler->buffer = vector_new();
-	compiler->error = false;
-	compiler->depth = 0;
-	compiler->scope = scope_new();
-	//compiler->dlls = vector_new();
-	compiler->parsers = list_new();
-	compiler->parser = malloc(sizeof(parser_t));
-	list_push(compiler->parsers, compiler->parser);
-
-	// For future versions:
-	/*if(list_size(compiler->parsers) > 0) {
-		compiler->parser = malloc(sizeof(parser_t));
-		list_push(compiler->parsers, compiler->parser);
-		buffer_free(compiler->buffer);
-		compiler->buffer = vector_new();
-	}*/
+	compiler_t compiler;
+	compiler.parser = malloc(sizeof(parser_t));
+	compiler.parsers = list_new();
+	compiler.buffer = vector_new();
+	compiler.scope = scope_new();
+	compiler.error = false;
+	compiler.depth = 0;
+	list_push(compiler.parsers, compiler.parser);
 
 	// Run the parser
-	parser_init(compiler->parser, name);
-	ast_t* root = parser_run(compiler->parser, source);
+	parser_init(compiler.parser, name);
+	ast_t* root = parser_run(compiler.parser, source);
 	if(root)
 	{
 		#ifndef NO_AST
-		printf("Abstract syntax tree '%s':\n", compiler->parser->name);
+		printf("Abstract syntax tree '%s':\n", compiler.parser->name);
 		compiler_dump(root, 0);
 		putchar('\n');
 		#endif
 
 		// Evaluate AST
 		// Add final HALT instruction to end
-		compiler_eval(compiler, root);
+		compiler_eval(&compiler, root);
+		emit_op(compiler.buffer, OP_HLT);
+	} else {
+		compiler.error = true;
 	}
-	emit_op(compiler->buffer, OP_HLT);
-	return compiler->buffer;
+
+	vector_t* buffer = compiler.buffer;
+	compiler_clear(&compiler);
+
+	if(compiler.error) {
+		compiler_buffer_free(buffer);
+		return 0;
+	}
+
+	return buffer;
 }
 
 // Compiler.compileFile(string filename)
 // Compiles a file into an instruction set
-vector_t* compile_file(compiler_t* compiler, const char* filename)
+vector_t* compile_file(const char* filename)
 {
 	size_t len = 0;
 	char* source = readFile(filename, &len);
@@ -2450,7 +2445,7 @@ vector_t* compile_file(compiler_t* compiler, const char* filename)
 	}
 
 	// Compile into instructions
-	vector_t* buffer = compile_buffer(compiler, source, filename);
+	vector_t* buffer = compile_buffer(source, filename);
 	free(source);
 	return buffer;
 }
@@ -2471,34 +2466,16 @@ void compiler_clear(compiler_t* compiler)
 	list_iterator_free(iter);
 	list_free(compiler->parsers);
 	if(compiler->scope) scope_free(compiler->scope);
-
-	// Free the loaded dlls content
-	/*for(size_t i = 0; i < vector_size(compiler->dlls); i++)
-	{
-		list_t* ls = vector_get(compiler->dlls, i);
-		iter = list_iterator_create(ls);
-		while(!list_iterator_end(iter))
-		{
-			ast_free(list_iterator_next(iter));
-		}
-		list_iterator_free(iter);
-		list_free(ls);
-	}
-	vector_free(compiler->dlls);*/
-
-	if(compiler->buffer) compiler_buffer_free(compiler);
 }
 
-void compiler_buffer_free(compiler_t* compiler) {
+void compiler_buffer_free(vector_t* buffer) {
 	// Free the buffer
-	for(size_t i = 0; i < vector_size(compiler->buffer); i++)
-	{
-		instruction_t* instr = vector_get(compiler->buffer, i);
+	for(size_t i = 0; i < vector_size(buffer); i++) {
+		instruction_t* instr = vector_get(buffer, i);
 		if(instr->v1 != NULL_VAL) val_free(instr->v1);
 		if(instr->v2 != NULL_VAL) val_free(instr->v2);
 		free(instr);
 	}
 
-	vector_free(compiler->buffer);
-	compiler->buffer = 0;
+	vector_free(buffer);
 }

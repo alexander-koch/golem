@@ -53,8 +53,6 @@ void print_info()
 int main(int argc, char** argv)
 {
     seed_prng(time(0));
-    compiler_t compiler;
-    compiler_init(&compiler);
 
     vm_t vm;
     vm_init(&vm);
@@ -72,52 +70,38 @@ int main(int argc, char** argv)
     }
     **/
 
-    if(argc == 2)
-    {
+    if(argc == 2) {
         // Generate and execute bytecode (Interpreter)
-        vector_t* buffer = compile_file(&compiler, argv[1]);
-        if(buffer && !compiler.error)
-        {
+        vector_t* buffer = compile_file(argv[1]);
+        if(buffer) {
             vm_run_args(&vm, buffer, argc, argv);
+            compiler_buffer_free(buffer);
         }
-        compiler_clear(&compiler);
-    }
-    else if(argc == 3)
-    {
-        if(!strcmp(argv[1], "-c"))
-        {
+    } else if(argc == 3) {
+        if(!strcmp(argv[1], "-c")) {
             // Compile to bytecode
-            vector_t* buffer = compile_file(&compiler, argv[2]);
-            if(buffer && !compiler.error)
-            {
+            vector_t* buffer = compile_file(argv[2]);
+            if(buffer) {
                 // Write to file
                 char* out = replaceExt(argv[2], ".gvm", 4);
-                serialize(out, compiler.buffer);
+                serialize(out, buffer);
                 printf("Wrote bytecode to file '%s'\n", out);
                 free(out);
+                compiler_buffer_free(buffer);
             }
-            compiler_clear(&compiler);
-        }
-        else if(!strcmp(argv[1], "-r"))
-        {
+        } else if(!strcmp(argv[1], "-r")) {
             // Run compiled bytecode file
             vector_t* buffer = vector_new();
-            bool ok = deserialize(argv[2], &buffer);
-            compiler.buffer = buffer;
-            if(ok)
-            {
+            if(deserialize(argv[2], &buffer)) {
                 vm_run_args(&vm, buffer, argc, argv);
             }
-            compiler_buffer_free(&compiler);
-        }
-        else if(!strcmp(argv[1], "--ast"))
-        {
+            compiler_buffer_free(buffer);
+        } else if(!strcmp(argv[1], "--ast")) {
             // Generate ast.dot graphviz file
             char* filename = argv[2];
             size_t len = 0;
         	char* source = readFile(filename, &len);
-            if(!source || !len)
-            {
+            if(!source || !len) {
                 printf("File '%s' does not exist\n", filename);
                 return 1;
             }
@@ -125,27 +109,20 @@ int main(int argc, char** argv)
             parser_t parser;
             parser_init(&parser, filename);
             ast_t* root = parser_run(&parser, source);
-            if(root)
-            {
+            if(root) {
                 graphviz_build(root);
             }
             ast_free(parser.top);
             parser_free(&parser);
             free(source);
-        }
-        else if(!strcmp(argv[1], "--doc"))
-        {
+        } else if(!strcmp(argv[1], "--doc")) {
             // Generate HTML-doc
-            doc_generate(&compiler, argv[2]);
-        }
-        else
-        {
+            doc_generate(argv[2]);
+        } else {
             printf("Flag: '%s' is invalid\n\n", argv[1]);
             return 1;
         }
-    }
-    else
-    {
+    } else {
         print_info();
     }
 

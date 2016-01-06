@@ -63,7 +63,7 @@ void doc_val(FILE* fp, val_t val)
 	}
 }
 
-void doc_generate(compiler_t* compiler, const char* filename)
+void doc_generate(const char* filename)
 {
 	size_t len = 0;
 	char* source = readFile(filename, &len);
@@ -141,9 +141,8 @@ void doc_generate(compiler_t* compiler, const char* filename)
 
 	fprintf(fp, "\t\t<h2>Bytecode</h2>\n\n");
 	fprintf(fp, "\t\t<div>\n<pre>");
-	vector_t* buffer = compile_file(compiler, filename);
-	if(buffer && !compiler->error)
-	{
+	vector_t* buffer = compile_file(filename);
+	if(buffer) {
 		for(size_t i = 0; i < vector_size(buffer); i++)
 		{
 			instruction_t* instr = vector_get(buffer, i);
@@ -162,8 +161,8 @@ void doc_generate(compiler_t* compiler, const char* filename)
 			fprintf(fp, "\n");
 		}
 		fprintf(fp, "</pre>\n\t\t</div>\n\n");
+		compiler_buffer_free(buffer);
 	}
-	compiler_clear(compiler);
 
 	fprintf(fp, "\t\t</main>\n");
 	fprintf(fp, "\t\t</div>\n");

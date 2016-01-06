@@ -31,7 +31,7 @@ For comparison the old VM implementation is used.
 | Basic stack ops     | Description
 |---                  |---
 |hlt                  | halts the program
-|push                 | pushes a generic value on the stack
+|push x               | pushes a generic value on the stack
 |pop                  | pop value from stack, remove
 
 | Store               | Description
@@ -85,7 +85,7 @@ For comparison the old VM implementation is used.
 |jmpf x               | jump if false
 |arr x                | build an array with the top x elements
 |str x                | build a string with the top x elements
-|ldlib x              | loads library a (Experimental)
+|ldlib x              | loads a library (Experimental)
 |tostr                | converts value on top of the stack to a string
 
 | Comparison          | Description
