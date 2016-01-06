@@ -223,7 +223,7 @@ void obj_append(vm_t* vm, obj_t* obj)
 		}
 		case OBJ_CLASS:
 		{
-			obj_class_t* cls = obj->data;	
+			obj_class_t* cls = obj->data;
 			for(size_t i = 0; i < CLASS_FIELDS_SIZE; i++) {
 				val_append(vm, cls->fields[i]);
 			}

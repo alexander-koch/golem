@@ -16,28 +16,6 @@
 #include <compiler/graphviz.h>
 #include <compiler/doc.h>
 
-/**
-void run_repl(vm_t* vm, compiler_t* compiler)
-{
-    static char buf[1024];
-    while(1)
-    {
-        printf("golem> ");
-        fgets(buf, sizeof(buf), stdin);
-        if(!strncmp(buf, "quit", 4)) {
-            break;
-        }
-
-        vector_t* buffer = compile_buffer(compiler, buf, "Unnamed");
-        if(buffer)
-        {
-            vm_exec(vm, buffer);
-        }
-        compiler_clear(compiler);
-    }
-}
-**/
-
 void print_info() {
     printf("Golem compiler\n");
     printf("Copyright (c) Alexander Koch 2016\nAll Rights Reserved.\n\n");
@@ -49,25 +27,11 @@ void print_info() {
     printf("  golem --doc <file> (Create an HTML documentation)\n\n");
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     seed_prng(time(0));
 
     vm_t vm;
     vm_init(&vm);
-
-    /** Deprecated read-eval-print-loop
-    if(argc == 1)
-    {
-        // Read-eval-print-loop
-        printf("Golem compiler - REPL\n");
-        printf("Copyright (c) Alexander Koch 2015 All Rights Reserved.\n\n");
-
-        run_repl(&vm, &compiler);
-        mem_leak_check();
-        return 0;
-    }
-    **/
 
     if(argc == 2) {
         // Generate and execute bytecode (Interpreter)
