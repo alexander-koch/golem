@@ -44,8 +44,12 @@ void* vector_top(vector_t* vector)
 
 void vector_set(vector_t* vector, size_t index, void* data)
 {
-	if(index == vector->size)
+	if(index >= vector->size)
 	{
+		for(int i = vector->size; i < index; i++) {
+			vector_push(vector, 0);
+		}
+
 		vector_push(vector, data);
 		return;
 	}
