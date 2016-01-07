@@ -13,7 +13,7 @@ typedef struct {
 } shared_lib;
 
 void* dl_load(char* path);
-void* dl_func(void* lib, char* name);
+void* dl_sym(void* lib, char* name);
 void dl_unload(void* lib);
 
 char* create_system_library_name(char* lib);

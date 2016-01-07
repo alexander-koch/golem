@@ -2283,6 +2283,14 @@ datatype_t eval_import(compiler_t* compiler, ast_t* node)
 		free(source);
 	}
 
+	// Dynamic library checking
+	if(!strcmp(node->import, "core") || !strcmp(node->import, "io") || !strcmp(node->import, "math")) {
+		// Nothing to do
+	}
+	else {
+		printf("WARNING: Dynamic libraries are not supported\n");
+	}
+
 	return datatype_new(DATA_NULL);
 }
 

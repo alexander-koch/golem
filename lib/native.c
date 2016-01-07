@@ -8,7 +8,7 @@ void* dl_load(char* path)
 	return LoadLibraryExA(path, 0, 0);
 }
 
-void* dl_func(void* lib, char* name)
+void* dl_sym(void* lib, char* name)
 {
 	return GetProcAddress((HMODULE)lib, name);
 }
@@ -25,7 +25,7 @@ void* dl_load(char* path)
 	return dlopen(path, RTLD_NOW | RTLD_LOCAL);
 }
 
-void* dl_func(void* lib, char* name)
+void* dl_sym(void* lib, char* name)
 {
 	return dlsym(lib, name);
 }

@@ -877,7 +877,6 @@ ast_t* parser_run(parser_t* parser, const char* content)
 // Parsing subroutines
 //////------------------
 
-// TODO: put these in a look-up-table (LUT)
 extern int core_gen_signatures(list_t* list);
 extern int math_gen_signatures(list_t* list);
 extern int io_gen_signatures(list_t* list);
@@ -905,9 +904,6 @@ ast_t* parse_import_declaration(parser_t* parser, location_t loc)
         }
         else if(!strcmp(node->import, "io")) {
             io_gen_signatures(parser->top->toplevel);
-        }
-        else {
-            parser_throw(parser, "System library '%s' doesn't exist", node->import);
         }
     // External file handling
     } else if(match_type(parser, TOKEN_STRING)) {
