@@ -2282,42 +2282,6 @@ datatype_t eval_import(compiler_t* compiler, ast_t* node)
 		}
 		free(source);
 	}
-	else
-	{
-		// Do nothing, the standard library is already loaded.
-
-
-		// TODO: External
-		// @Native("lib/libcore.dll")
-		// or
-		// @Native
-		// using libcore.dll
-		// (modifies using statement)
-
-		/*if(!strcmp(node->import, "core"))
-		{
-			void *lib = dl_load("lib/libcore.dll");
-			if(lib)
-			{
-				SymbolFunc func = dl_func(lib, (char*)"lib_signatures");
-
-				list_t* toplevel = func();
-				eval_block(compiler, toplevel);
-				emit_lib_load(compiler->buffer, (char*)"lib/libcore.dll");
-
-				vector_push(compiler->dlls, toplevel);
-				dl_unload(lib);
-			}
-			else
-			{
-				compiler_throw(compiler, node, "Failed to load library");
-			}
-		}
-		else
-		{
-			compiler_throw(compiler, node, "Unknown library");
-		}*/
-	}
 
 	return datatype_new(DATA_NULL);
 }
