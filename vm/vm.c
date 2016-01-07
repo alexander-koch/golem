@@ -179,14 +179,12 @@ void push(vm_t* vm, val_t val)
 		return;
 	}
 
-	vm->stack[vm->sp] = val;
-	vm->sp++;
+	vm->stack[vm->sp++] = val;
 }
 
 val_t pop(vm_t* vm)
 {
-	vm->sp--;
-	val_t v = vm->stack[vm->sp];
+	val_t v = vm->stack[--vm->sp];
 	vm->stack[vm->sp] = 0;
 	return v;
 }
@@ -211,11 +209,7 @@ void obj_append(vm_t* vm, obj_t* obj)
 		case OBJ_ARRAY:
 		{
 			obj_array_t* arr = obj->data;
-			/*for(size_t i = 0; i < arr->len; i++) {
-				val_append(vm, arr->data[i]);
-			}*/
 
-			// faster ?
 			for(size_t i = arr->len; i != 0; i--) {
 				val_append(vm, arr->data[i-1]);
 			}
@@ -1087,7 +1081,10 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 			// Reallocate and assign its content
 			arr->data = (arr->len == 1) ? malloc(allocSz) : realloc(arr->data, allocSz);
 			arr->data[arr->len-1] = COPY_VAL(val);
-			vm_register(vm, obj);
+
+			//vm_register(vm, obj);
+			push(vm, obj);
+			obj_append(vm, AS_OBJ(obj));
 		}
 		DISPATCH();
 	}
@@ -1109,7 +1106,6 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		vm->fp = fp;
 
 		vm_copy(vm, val);
-		//vm_register(vm, COPY_VAL(val));
 		DISPATCH();
 	}
 	code_upstore:
@@ -1146,8 +1142,6 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		obj_t* obj = obj_class_new();
 		push(vm, OBJ_VAL(obj));
 		obj_append(vm, obj);
-
-		//vm_register(vm, OBJ_VAL(obj));
 		DISPATCH();
 	}
 	code_setfield:
@@ -1175,8 +1169,12 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 
 		obj_class_t* cls = AS_CLASS(class);
 		val_t val = cls->fields[index];
-		val = COPY_VAL(val); // <--
-		vm_register(vm, val);
+
+		// Old, slow version
+		//val = COPY_VAL(val); // <--
+		//vm_register(vm, val);
+
+		vm_copy(vm, val);
 		DISPATCH();
 	}
 }
