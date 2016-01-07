@@ -209,7 +209,6 @@ void obj_append(vm_t* vm, obj_t* obj)
 		case OBJ_ARRAY:
 		{
 			obj_array_t* arr = obj->data;
-
 			for(size_t i = arr->len; i != 0; i--) {
 				val_append(vm, arr->data[i-1]);
 			}
@@ -227,6 +226,7 @@ void obj_append(vm_t* vm, obj_t* obj)
 	}
 }
 
+// Append a value to the GC system
 void val_append(vm_t* vm, val_t v1)
 {
 	if(IS_OBJ(v1))
@@ -272,6 +272,11 @@ void vm_print_code(vm_t* vm, vector_t* buffer)
 
 void reserve(vm_t* vm, size_t args)
 {
+	// 1. Increase the reserve size by one
+	// 2. Move content from vm->sp-i to vm->sp+vm->reserve-i, just move by reserve
+	// 3. Store the value of reserved entries at the end vm->sp+vm->reserve-args-1
+	// 4. Increase stack pointer by vm->reserve
+
 	vm->reserve += 1;
 	for(int i = 1; i <= args; i++) {
 		vm->stack[vm->sp+vm->reserve-i] = vm->stack[vm->sp-i];
@@ -283,6 +288,9 @@ void reserve(vm_t* vm, size_t args)
 
 void revert_reserve(vm_t* vm)
 {
+	// 1. Get the reserve value N.
+	// 2. Pop N times.
+
 	int undo = AS_INT32(pop(vm));
 	for(int i = 0; i < undo; i++) {
 		pop(vm);
