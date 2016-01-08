@@ -133,6 +133,20 @@ int hashmap_rehash(hashmap_t* hmap)
 	return HMAP_OK;
 }
 
+hashmap_t* hashmap_new()
+{
+	hashmap_t* hmap = malloc(sizeof(*hmap));
+	hmap->data = (bucket_t*)malloc(INIT_SIZE * sizeof(bucket_t));
+	for(int i = 0; i < INIT_SIZE; i++)
+	{
+		hmap->data[i].use = false;
+	}
+
+	hmap->table_size = INIT_SIZE;
+	hmap->size = 0;
+	return hmap;
+}
+
 int hashmap_set(hashmap_t* hashmap, char* key, void* value)
 {
 	int index = hashmap_hash(hashmap, key);
@@ -174,18 +188,19 @@ int hashmap_get(hashmap_t* hashmap, char* key, void** value)
 	return HMAP_MISSING;
 }
 
-hashmap_t* hashmap_new()
+int hashmap_foreach(hashmap_t* hashmap, HashForeachFunc func, void* arg)
 {
-	hashmap_t* hmap = malloc(sizeof(*hmap));
-	hmap->data = (bucket_t*)malloc(INIT_SIZE * sizeof(bucket_t));
-	for(int i = 0; i < INIT_SIZE; i++)
-	{
-		hmap->data[i].use = false;
+	int val;
+	for(int i = 0; i < hashmap->table_size; i++) {
+		bucket_t* bucket = &hashmap->data[i];
+		if(bucket) {
+			val = (*func)(bucket->data, arg);
+			if(val != 0) {
+				return val;
+			}
+		}
 	}
-
-	hmap->table_size = INIT_SIZE;
-	hmap->size = 0;
-	return hmap;
+	return 0;
 }
 
 size_t hashmap_length(hashmap_t* hashmap)

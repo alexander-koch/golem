@@ -18,6 +18,8 @@
 #define HMAP_MEM -1
 #define HMAP_OK 0
 
+typedef int (*HashForeachFunc)(void* data, void* arg);
+
 typedef struct bucket_t
 {
 	char* key;
@@ -35,6 +37,7 @@ typedef struct hashmap_t
 hashmap_t* hashmap_new();
 int hashmap_set(hashmap_t* hashmap, char* key, void* value);
 int hashmap_get(hashmap_t* hashmap, char* key, void** value);
+int hashmap_foreach(hashmap_t* hashmap, HashForeachFunc func, void* arg);
 size_t hashmap_length(hashmap_t* hashmap);
 void hashmap_free(hashmap_t* hashmap);
 

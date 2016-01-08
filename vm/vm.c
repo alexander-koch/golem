@@ -804,8 +804,9 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 
 		char* path = AS_STRING(instr->v1);
 		shared_lib* lib = calloc(1, sizeof(shared_lib));
-		lib->name = path;
+		lib->pathName = path;
 		lib->handle = dl_load(path);
+		hashmap_set(vm->libraries, lib->pathName, lib);
 
 		// TODO:
 		// 1. findSharedLibrary(path);
