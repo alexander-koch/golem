@@ -323,6 +323,11 @@ void emit_array_merge(vector_t* buffer, size_t sz)
 	insert_v1(buffer, OP_ARR, INT32_VAL(sz));
 }
 
+void emit_dynlib(vector_t* buffer, char* name)
+{
+	insert_v1(buffer, OP_LDLIB, STRING_VAL(name));
+}
+
 #define GEN_JMP_REF() (val_t*)&((instruction_t*)vector_top(buffer))->v1
 
 val_t* emit_jmp(vector_t* buffer, int address)

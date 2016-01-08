@@ -16,6 +16,6 @@ void* dl_load(char* path);
 void* dl_sym(void* lib, char* name);
 void dl_unload(void* lib);
 
-char* create_system_library_name(char* lib);
+char* createSystemLibraryName(char* lib);
 
 #endif

@@ -159,6 +159,7 @@ void emit_lib_load(vector_t* buffer, char* name);
 void emit_reserve(vector_t* buffer, size_t sz);
 void emit_string_merge(vector_t* buffer, size_t sz);
 void emit_array_merge(vector_t* buffer, size_t sz);
+void emit_dynlib(vector_t* buffer, char* name);
 
 val_t* emit_jmp(vector_t* buffer, int address);
 val_t* emit_jmpf(vector_t* buffer, int address);
