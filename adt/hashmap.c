@@ -171,8 +171,7 @@ int hashmap_get(hashmap_t* hashmap, char* key, void** value)
 	unsigned int curr = hashmap_hash_int(hashmap, key);
 	for(int i = 0; i < MAX_CHAIN_LENGTH; i++)
 	{
-		bool use = hashmap->data[curr].use;
-		if(use)
+		if(hashmap->data[curr].use)
 		{
 			if(!strcmp(hashmap->data[curr].key, key))
 			{
@@ -193,7 +192,7 @@ int hashmap_foreach(hashmap_t* hashmap, HashForeachFunc func, void* arg)
 	int val;
 	for(int i = 0; i < hashmap->table_size; i++) {
 		bucket_t* bucket = &hashmap->data[i];
-		if(bucket) {
+		if(bucket && bucket->use) {
 			val = (*func)(bucket->data, arg);
 			if(val != 0) {
 				return val;
@@ -205,14 +204,7 @@ int hashmap_foreach(hashmap_t* hashmap, HashForeachFunc func, void* arg)
 
 size_t hashmap_length(hashmap_t* hashmap)
 {
-	if(hashmap)
-	{
-		return hashmap->size;
-	}
-	else
-	{
-		return 0;
-	}
+	return hashmap->size;
 }
 
 void hashmap_free(hashmap_t* hashmap)
