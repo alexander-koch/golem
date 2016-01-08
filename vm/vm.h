@@ -65,7 +65,6 @@ typedef struct
 typedef val_t (*gvm_c_function)(vm_t*);
 
 // Methods
-void vm_init(vm_t* vm);
 void vm_run(vm_t* vm, vector_t* buffer);
 void vm_run_args(vm_t* vm, vector_t* buffer, int argc, char** argv);
 

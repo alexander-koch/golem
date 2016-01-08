@@ -29,9 +29,7 @@ void print_info() {
 
 int main(int argc, char** argv) {
     seed_prng(time(0));
-
-    vm_t vm;
-    vm_init(&vm);
+    vm_t vm = {0};
 
     if(argc == 2) {
         // Generate and execute bytecode (Interpreter)

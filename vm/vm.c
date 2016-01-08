@@ -55,18 +55,6 @@ static gvm_c_function system_methods[] = {
 
 void vm_clear(vm_t* vm);
 
-void vm_init(vm_t* vm)
-{
-	vm->pc = 0;
-	vm->fp = 0;
-	vm->sp = 0;
-	vm->reserve = 0;
-	vm->firstVal = 0;
-	vm->numObjects = 0;
-	vm->maxObjects = 8;
-	vm->errjmp = 0;
-}
-
 #define VM_ASSERT(x, msg) \
 	if(!(x)) { vm_throw(vm, msg); goto *dispatch_table[OP_HLT]; }
 
@@ -1209,15 +1197,9 @@ void vm_run(vm_t* vm, vector_t* buffer)
 // Execute a buffer
 void vm_run_args(vm_t* vm, vector_t* buffer, int argc, char** argv)
 {
-	// Reset vm
 	vm->argc = argc;
 	vm->argv = argv;
-	vm->sp = 0;
-	vm->pc = 0;
-	vm->fp = 0;
-	vm->reserve = 0;
-	memset64(vm->stack, NULL_VAL, sizeof(val_t) * STACK_SIZE);
-	memset64(vm->locals, NULL_VAL, sizeof(val_t) * LOCALS_SIZE);
+	vm->maxObjects = 8;
 
 #ifndef NO_IR
 	// Print out bytecodes
