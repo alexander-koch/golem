@@ -2289,16 +2289,15 @@ datatype_t eval_import(compiler_t* compiler, ast_t* node)
 	}
 	else {
 		printf("WARNING: Dynamic libraries are not supported\n");
-
-
-#ifdef USE_EXPERIMENTAL_FEATURES
+#ifdef USE_DYNLIB_FEATURE
 		// 1. Create the formatted name for lib. e.g. png -> libpng.dll
 		// 2. Feed instruction
 
+		// free on scope end?
+		// register in local scope?
+
 		char* name = createSystemLibraryName(node->import);
 		emit_dynlib(compiler->buffer, name);
-
-		// Don't forget to free
 		free(name);
 #endif
 	}

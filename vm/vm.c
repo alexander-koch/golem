@@ -796,7 +796,22 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	}
 	code_ldlib:
 	{
-		// TODO: implement
+#ifdef USE_DYNLIB_FEATURE
+		// Instr. ldlib "somelib.dll"
+		// 1. Test if library is loaded
+		// 2. Load library into hashtable
+		// For now, testing the loading
+
+		char* path = AS_STRING(instr->v1);
+		shared_lib* lib = calloc(1, sizeof(shared_lib));
+		lib->name = path;
+		lib->handle = dl_load(path);
+
+		// TODO:
+		// 1. findSharedLibrary(path);
+		// 2. lib = addSharedLibrary(lib);
+
+#endif
 		DISPATCH();
 	}
 	code_tostr:

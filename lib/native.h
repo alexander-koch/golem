@@ -8,7 +8,7 @@
 #endif
 
 typedef struct {
-	char* name;
+	char* pathName;
 	void* handle;
 } shared_lib;
 
