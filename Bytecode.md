@@ -23,7 +23,7 @@ For comparison the old VM implementation is used.
 
 | Benchmark    | Golem    | Python 2.7 | Ruby    | Lua
 |---           |---       |---         |---      |---
-| fib          | ~0.31s   | ~0.73s     | ~0.29s  | ~0.31s
+| fib          | ~0.297s  | ~0.758s    | ~0.296s | ~0.328s
 | bubble       | ~0.002s  | ~0.003s    | ~0.002s | ~0.002s
 
 # Bytecode Instruction Set

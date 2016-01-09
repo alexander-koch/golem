@@ -50,11 +50,6 @@ More features for the debug-version can be enabled/disabled in the Makfile.
 - [ ] (Intermediate) Do namespaces => (Task)
 - [ ] (Advanced) Multiple value assignment => (Task)
 
-##### Final fixes
-
-- [ ] (Easy) Serious tests / Benchmarks => (Side task)
-- [ ] (Intermediate) Improve the REPL => (Long-term-task)
-
 ##### Done
 
 - [x] (Intermediate) Implement computed gotos to gain 15%-20% more speed => (Done.)
@@ -351,7 +346,6 @@ class[getX]()
 
 * [Ducklang programming language design](http://ducklang.org/designing-a-programming-language-i)
 * [A Walk in x86_64 Assembly Land](http://www.codejury.com/a-walk-in-x64-land/)
-* [Stack machine](http://www.d.umn.edu/~rmaclin/cs5641/Notes/L19_CodeGenerationI.pdf)
 * [Simple scripting language part 5](http://www.incubatorgames.com/20110621/simple-scripting-language-part-5/)
 * [Fastest bytecode interpreter (Contest)](http://byteworm.com/2010/11/21/the-fastest-vm-bytecode-interpreter/)
 * [Virtual machine by Terence Parr](https://www.youtube.com/watch?v=OjaAToVkoTw)
@@ -361,7 +355,6 @@ class[getX]()
 * [Lambda lifting](https://en.wikipedia.org/wiki/Lambda_lifting)
 * [Call stack](https://en.wikipedia.org/wiki/Call_stack#Structure)
 * [Nested function - implementation](https://en.wikipedia.org/wiki/Nested_function#Implementation)
-* [Immutable stack](http://amitdev.github.io/coding/2013/12/31/Functional-Stack/)
 * [Computed gotos](http://eli.thegreenplace.net/2012/07/12/computed-goto-for-efficient-dispatch-tables)
 
 # Licence
