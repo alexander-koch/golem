@@ -884,13 +884,12 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 						// Class field load from class
 						symbol_t* classRef = symbol->ref;
 						ast_t* classNode = classRef->node;
-						void* val = 0;
-						if(hashmap_get(classNode->classstmt.fields, lhs->ident, &val) == HMAP_MISSING)
-						{
+
+						symbol_t* symbol = hashmap_find(classNode->classstmt.fields, lhs->ident);
+						if(!symbol) {
 							compiler_throw(compiler, node, "No such class field");
 							return datatype_new(DATA_NULL);
 						}
-						symbol = (symbol_t*)val;
 
 						emit_class_setfield(compiler->buffer, symbol->address);
 						emit_op(compiler->buffer, OP_SETARG0);
@@ -984,13 +983,12 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 								// Emit setfield
 								symbol_t* classRef = symbol->ref;
 								ast_t* classNode = classRef->node;
-								void* val = 0;
-								if(hashmap_get(classNode->classstmt.fields, expr->ident, &val) == HMAP_MISSING)
-								{
+
+								symbol_t* symbol = hashmap_find(classNode->classstmt.fields, expr->ident);
+								if(!symbol) {
 									compiler_throw(compiler, node, "No such class field");
 									return datatype_new(DATA_NULL);
 								}
-								symbol = (symbol_t*)val;
 
 								emit_class_setfield(compiler->buffer, symbol->address);
 								emit_op(compiler->buffer, OP_SETARG0);
