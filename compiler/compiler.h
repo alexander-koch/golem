@@ -17,6 +17,7 @@
 #include <parser/parser.h>
 #include <vm/bytecode.h>
 #include <compiler/scope.h>
+#include <lib/native.h>
 
 typedef struct compiler_t
 {

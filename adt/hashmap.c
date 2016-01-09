@@ -187,6 +187,18 @@ int hashmap_get(hashmap_t* hashmap, char* key, void** value)
 	return HMAP_MISSING;
 }
 
+void* hashmap_find(hashmap_t* hashmap, char* key)
+{
+	void* val;
+	int err = hashmap_get(hashmap, key, &val);
+	if(err == HMAP_OK) {
+		return val;
+	}
+	else {
+		return 0;
+	}
+}
+
 int hashmap_foreach(hashmap_t* hashmap, HashForeachFunc func, void* arg)
 {
 	int val;

@@ -21,6 +21,7 @@
 #include <vm/val.h>
 #include <vm/bytecode.h>
 #include <lib/libdef.h>
+#include <lib/native.h>
 
 #define STACK_SIZE 512
 #define LOCALS_SIZE 512

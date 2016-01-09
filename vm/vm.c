@@ -800,17 +800,15 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		// Instr. ldlib "somelib.dll"
 		// 1. Test if library is loaded
 		// 2. Load library into hashtable
-		// For now, testing the loading
 
-		char* path = AS_STRING(instr->v1);
-		shared_lib* lib = calloc(1, sizeof(shared_lib));
-		lib->pathName = path;
-		lib->handle = dl_load(path);
-		hashmap_set(vm->libraries, lib->pathName, lib);
-
-		// TODO:
-		// 1. findSharedLibrary(path);
-		// 2. lib = addSharedLibrary(lib);
+		/*char* path = AS_STRING(instr->v1);
+	 	shared_lib* lib = hashmap_find(vm->libraries, path);
+		if(!lib) {
+			shared_lib* lib = calloc(1, sizeof(shared_lib));
+			lib->pathName = path;
+			lib->handle = dl_load(path);
+			hashmap_set(vm->libraries, lib->pathName, lib);
+		}*/
 
 #endif
 		DISPATCH();

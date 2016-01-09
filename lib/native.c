@@ -38,7 +38,7 @@ void dl_unload(void* lib)
 */
 #endif
 
-char* createSystemLibraryName(char* lib)
+char* createSystemLibraryName(char* libName)
 {
 	char buf[256];
     int len = snprintf(buf, sizeof(buf), OS_SHARED_LIB_FORMAT_STR, libName);
