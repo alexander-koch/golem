@@ -20,13 +20,12 @@ scope_t* scope_new()
 
 // Scope.free()
 void scope_free(scope_t* scope)
-{	
+{
 	// Free symbols
 	hashmap_iterator_t* iter = hashmap_iterator_create(scope->symbols);
 	while(!hashmap_iterator_end(iter))
 	{
-		symbol_t* symbol = hashmap_iterator_next(iter);
-		free(symbol);
+		free(hashmap_iterator_next(iter));
 	}
 	hashmap_iterator_free(iter);
 	hashmap_free(scope->symbols);

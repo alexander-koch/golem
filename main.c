@@ -1,4 +1,4 @@
-/** Copyright (c) 2015 Alexander Koch All Rights Reserved. **/
+/** Copyright (c) 2015-2016 Alexander Koch All Rights Reserved. **/
 
 #include <stdio.h>
 #include <stdlib.h>
