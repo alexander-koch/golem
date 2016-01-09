@@ -9,8 +9,10 @@ func fib(n:int) -> int {
 	return fib(n-2) + fib(n-1)
 }
 
+let t0 = clock()
 let mut i = 0
 while i < 5 {
 	println(fib(28))
 	i := i + 1
 }
+println("Elapsed: ".append((clock() - t0).to_str()))

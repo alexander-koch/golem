@@ -1223,17 +1223,7 @@ void vm_run_args(vm_t* vm, vector_t* buffer, int argc, char** argv)
 
 	// Run
 #ifndef NO_EXEC
-#ifndef NO_TIME
-	clock_t begin = clock();
-#endif
-
 	vm_exec(vm, buffer);
-
-#ifndef NO_TIME
-	clock_t end = clock();
-	double elapsed = (double)(end - begin) / CLOCKS_PER_SEC;
-	printf("Elapsed time: %.5f (sec)\n", elapsed);
-#endif
 #endif
 
 	vm_clear(vm);

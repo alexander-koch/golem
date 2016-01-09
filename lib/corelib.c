@@ -39,7 +39,7 @@ GOLEM_API val_t core_break(vm_t* vm)
 
 GOLEM_API val_t core_clock(vm_t* vm)
 {
-	double clocktime = clock() / CLOCKS_PER_SEC;
+	double clocktime = (double)clock() / (double)CLOCKS_PER_SEC;
 	return NUM_VAL(clocktime);
 }
 

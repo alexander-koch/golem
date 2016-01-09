@@ -13,7 +13,6 @@ GFLAGS := #-DTRACE #-DTRACE_STEP #-DNO_AST
 #   -DNO_AST     <-- Prints out the abstract syntax tree
 #   -DNO_IR	     <-- Prints out immediate representation (bytecode)
 #   -DNO_EXEC    <-- Bytecode is not executed
-#   -DNO_TIME    <-- Disables execution time printing
 # 	-DNO_MEMINFO <-- Disables info on memory usage
 # Enable:
 #   -DTRACE 	 <-- While bytecode is executed, stack + instructions are printed
