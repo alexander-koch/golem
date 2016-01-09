@@ -31,5 +31,7 @@ func bubblesort(mut list:int[]) -> int[] {
 	return list
 }
 
+let t0 = clock()
 let arr = [1,5,3,4,2,8,2,4,19,10,17,24,47,18,26]
 println(bubblesort(arr))
+println("Elapsed: ".append((clock() - t0).to_str()))
