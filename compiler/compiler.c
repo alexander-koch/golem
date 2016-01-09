@@ -336,11 +336,8 @@ symbol_t* symbol_new(compiler_t* compiler, ast_t* node, int address, datatype_t 
 // Checks if the symbol is stored in the current local scope.
 symbol_t* symbol_get_ext(scope_t* scope, char* ident, int* depth)
 {
-	void* val;
-	if(hashmap_get(scope->symbols, ident, &val) != HMAP_MISSING)
-	{
-		return val;
-	}
+	void* val = hashmap_find(scope->symbols, ident);
+	if(val) return val;
 
 	if(scope->super)
 	{
@@ -358,11 +355,8 @@ symbol_t* symbol_get_ext(scope_t* scope, char* ident, int* depth)
 // is returned.
 symbol_t* symbol_get(scope_t* scope, char* ident)
 {
-	void* val;
-	if(hashmap_get(scope->symbols, ident, &val) != HMAP_MISSING)
-	{
-		return val;
-	}
+	void* val = hashmap_find(scope->symbols, ident);
+	if(val) return val;
 
 	if(scope->super)
 	{
@@ -371,27 +365,27 @@ symbol_t* symbol_get(scope_t* scope, char* ident)
 	return 0;
 }
 
+static symbol_t* tmp = 0;
+int cmpId(void* val, void* arg)
+{
+	unsigned long* id = arg;
+	symbol_t* symbol = val;
+	if(symbol->type.id == *id) {
+		tmp = symbol;
+		return 1;
+	}
+	return 0;
+}
+
 // Look in the scopes class hashmap for the given id.
 // If it fails, look in super.
 symbol_t* class_find(scope_t* scope, unsigned long id)
 {
-	hashmap_iterator_t* iter = hashmap_iterator_create(scope->classes);
-	while(!hashmap_iterator_end(iter))
-	{
-		symbol_t* symbol = hashmap_iterator_next(iter);
-		if(symbol)
-		{
-			if(symbol->type.id == id)
-			{
-				hashmap_iterator_free(iter);
-				return symbol;
-			}
-		}
+	if(hashmap_foreach(scope->classes, cmpId, &id)) {
+		return tmp;
 	}
-	hashmap_iterator_free(iter);
 
-	if(scope->super)
-	{
+	if(scope->super) {
 		return class_find(scope->super, id);
 	}
 	return 0;
