@@ -18,16 +18,16 @@ scope_t* scope_new()
 	return scope;
 }
 
+int freeSymbols(void* arg, void* val) {
+	free(arg);
+	return 0;
+}
+
 // Scope.free()
 void scope_free(scope_t* scope)
 {
-	// Free symbols
-	hashmap_iterator_t* iter = hashmap_iterator_create(scope->symbols);
-	while(!hashmap_iterator_end(iter))
-	{
-		free(hashmap_iterator_next(iter));
-	}
-	hashmap_iterator_free(iter);
+	// Free the symbols
+	hashmap_foreach(scope->symbols, freeSymbols, 0);
 	hashmap_free(scope->symbols);
 	hashmap_free(scope->classes);
 
