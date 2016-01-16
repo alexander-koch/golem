@@ -11,7 +11,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include <core/mem.h>
-#include <core/api.h>
 
 #define HMAP_MISSING -3
 #define HMAP_FULL -2

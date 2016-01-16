@@ -9,8 +9,8 @@
 
 #include <stddef.h>
 #include <assert.h>
-#include <core/mem.h>
 #include <string.h>
+#include <core/mem.h>
 
 #define VECTOR_CAPACITY 15
 
