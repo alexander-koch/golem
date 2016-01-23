@@ -67,6 +67,7 @@ void doc_generate(const char* filename)
 {
 	size_t len = 0;
 	char* source = readFile(filename, &len);
+	if(!source && len == 0) return;
 
 	// Create a new file
 	FILE* fp = fopen("doc.html", "wb");
@@ -95,6 +96,7 @@ void doc_generate(const char* filename)
 	fprintf(fp, "\t\t<div class=\"page\">\n");
 	fprintf(fp, "\t\t<main>\n\n");
 
+	// Printing the Tokens
 	parser_t parser;
 	parser_init(&parser, filename);
 	ast_t* root = parser_run(&parser, source);
@@ -112,26 +114,12 @@ void doc_generate(const char* filename)
 		for(size_t i = 0; i < len; i++)
 		{
 			token_t* tok = &buffer[i];
-			switch(tok->type)
-			{
-				case TOKEN_NEWLINE:
-				{
-					fprintf(fp, "NEWLINE,\n");
-					continue;
-				}
-				case TOKEN_SPACE:
-				{
-					fprintf(fp, "SPACE");
-					break;
-				}
-				default:
-				{
-					fprintf(fp, "%s", tok->value);
-					break;
-				}
+			if(tok->type == TOKEN_NEWLINE) {
+				fprintf(fp, "NEWLINE\n");
+			} else {
+				fprintf(fp, "%s", tok->value);
+				if(i < len-1) fprintf(fp, ", ");
 			}
-
-			if(i < len-1) fprintf(fp, ", ");
 		}
 		fprintf(fp, "</pre>\n\t\t</div>\n\n");
 	}
@@ -139,6 +127,7 @@ void doc_generate(const char* filename)
 	parser_free(&parser);
 	free(source);
 
+	// Print the bytecode
 	fprintf(fp, "\t\t<h2>Bytecode</h2>\n\n");
 	fprintf(fp, "\t\t<div>\n<pre>");
 	vector_t* buffer = compile_file(filename);
@@ -160,10 +149,10 @@ void doc_generate(const char* filename)
 			}
 			fprintf(fp, "\n");
 		}
-		fprintf(fp, "</pre>\n\t\t</div>\n\n");
+
 		bytecode_buffer_free(buffer);
 	}
-
+	fprintf(fp, "</pre>\n\t\t</div>\n\n");
 	fprintf(fp, "\t\t</main>\n");
 	fprintf(fp, "\t\t</div>\n");
 	fprintf(fp, "\t</body>\n");
