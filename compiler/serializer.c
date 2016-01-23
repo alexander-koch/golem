@@ -97,9 +97,8 @@ val_t deserialize_value(FILE* fp)
 		if(len <= 0) return ret;
 
 		char* str = malloc(sizeof(char) * (len+1));
-		*str = '\0';
-
 		fread((char*)str, sizeof(char), len, fp);
+		str[len] = '\0';
 		ret = STRING_NOCOPY_VAL(str);
 	}
 	return ret;
