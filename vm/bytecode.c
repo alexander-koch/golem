@@ -1,7 +1,5 @@
 #include "bytecode.h"
 
-// Helper functions
-
 const char* op2str(opcode_t code)
 {
 	switch(code)
@@ -96,21 +94,16 @@ instruction_t* instruction_new(opcode_t op)
 	return ins;
 }
 
-void push_ins(vector_t* buffer, instruction_t* ins)
-{
-	vector_push(buffer, ins);
-}
-
 void insert(vector_t* buffer, opcode_t op)
 {
-	push_ins(buffer, instruction_new(op));
+	vector_push(buffer, instruction_new(op));
 }
 
 void insert_v1(vector_t* buffer, opcode_t op, val_t v1)
 {
 	instruction_t* ins = instruction_new(op);
 	ins->v1 = v1;
-	push_ins(buffer, ins);
+	vector_push(buffer, ins);
 }
 
 void insert_v2(vector_t* buffer, opcode_t op, val_t v1, val_t v2)
@@ -118,7 +111,7 @@ void insert_v2(vector_t* buffer, opcode_t op, val_t v1, val_t v2)
 	instruction_t* ins = instruction_new(op);
 	ins->v1 = v1;
 	ins->v2 = v2;
-	push_ins(buffer, ins);
+	vector_push(buffer, ins);
 }
 
 // Main functions
@@ -163,6 +156,11 @@ void emit_op(vector_t* buffer, opcode_t op)
 	insert(buffer, op);
 }
 
+/**
+ * Try to cast a token_type_t to an opcode_t.
+ * datatype_t specifies the datatype for the operation.
+ * If the cast fails, -1 is returned.
+ */
 opcode_t getOp(token_type_t tok, datatype_t dt)
 {
 	type_t type = dt.type;
@@ -246,6 +244,10 @@ opcode_t getOp(token_type_t tok, datatype_t dt)
 	}
 }
 
+/**
+ * Emit an operator based on a token and a datatype.
+ * If the token cannot be casted into a opcode, false is returned.
+ */
 bool emit_tok2op(vector_t* buffer, token_type_t tok, datatype_t type)
 {
 	opcode_t op = getOp(tok, type);
@@ -344,13 +346,13 @@ val_t* emit_jmpf(vector_t* buffer, int address)
 	return GEN_JMP_REF();
 }
 
-void bytecode_buffer_free(vector_t* buffer) {
+void bytecode_buffer_free(vector_t* buffer)
+{
 	for(size_t i = 0; i < vector_size(buffer); i++) {
 		instruction_t* instr = vector_get(buffer, i);
 		if(instr->v1 != NULL_VAL) val_free(instr->v1);
 		if(instr->v2 != NULL_VAL) val_free(instr->v2);
 		free(instr);
 	}
-
 	vector_free(buffer);
 }

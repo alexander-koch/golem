@@ -194,7 +194,7 @@ This should compile to the following instructions (unoptimized):
       05: iadd
       06: gstore, 0
       07: gload, 0
-      08: syscall, 1, 1
+      08: syscall, 1
 
 Optimized (not done by vm or compiler, maybe in future versions):
 
@@ -202,7 +202,7 @@ Optimized (not done by vm or compiler, maybe in future versions):
       01: push, 5
       02: push, 5
       03: iadd
-      04: syscall, 1, 1
+      04: syscall, 1
 
 Result of execution:
 

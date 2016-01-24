@@ -13,7 +13,7 @@
  *  |- v1
  *
  *  Also the compiler-specific helper functions are defined below.
- *  For instruction lists a vector_t should be used (see vector.h).
+ *  For instruction lists a vector_t should be used (see adt/vector.h).
  */
 
 #ifndef bytecode_h
@@ -122,7 +122,9 @@ typedef enum
 	OP_GETFIELD
 } opcode_t;
 
-// Instruction definition
+/**
+ * Instruction definition
+ */
 typedef struct
 {
 	opcode_t op;
@@ -133,11 +135,16 @@ typedef struct
 // Helper functions
 const char* op2str(opcode_t code);
 
+/**
+ * Insert one opcode and one or two values.
+ */
 void insert(vector_t* buffer, opcode_t op);
 void insert_v1(vector_t* buffer, opcode_t op, val_t v1);
 void insert_v2(vector_t* buffer, opcode_t op, val_t v1, val_t v2);
 
-// compiler-specific fast insert functions.
+/**
+ * Helper functions for creating bytecode
+ */
 void emit_bool(vector_t* buffer, bool b);
 void emit_int(vector_t* buffer, I64 v);
 void emit_float(vector_t* buffer, F64 f);
@@ -161,9 +168,17 @@ void emit_string_merge(vector_t* buffer, size_t sz);
 void emit_array_merge(vector_t* buffer, size_t sz);
 void emit_dynlib(vector_t* buffer, char* name);
 
+/**
+ * Jumps return a value pointer.
+ * Modify it, if you want to change the address afterwards.
+ */
 val_t* emit_jmp(vector_t* buffer, int address);
 val_t* emit_jmpf(vector_t* buffer, int address);
 
+/**
+ * Free a list/vector of instructions.
+ * Always use this.
+ */
 void bytecode_buffer_free(vector_t* buffer);
 
 #endif
