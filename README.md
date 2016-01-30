@@ -17,7 +17,7 @@ Golem is a statically typed, object-oriented programming language.
 # Installing
 
 Golem is written in C99, and has been tested to run on Linux and Windows.
-Also it uses 64-bit NaN-Tagging to store its values, so it might not run on 32-bit systems.
+It uses 64-bit NaN-Tagging to store its values, so it might not run on 32-bit systems.
 To build it, a Makefile is used, just type
 
 	$ make release
@@ -27,7 +27,7 @@ you can use the debug version, which prints out the abstract syntax tree, the by
 
 	$ make debug
 
-More features for the debug-version can be enabled/disabled in the Makfile.
+More features for the debug-version can be enabled/disabled in the Makefile.
 
 # TODO
 
@@ -40,18 +40,16 @@ More features for the debug-version can be enabled/disabled in the Makfile.
 ##### Tasks
 
 - [ ] (Advanced) Standard libraries and external classes, DLL loading => (Working on it.)
-- [ ] (Easy) Add a few benchmarks => (Working on it.)
 - [ ] (Advanced) Array index out of bounds exceptions (handled by the compiler) => (Working on it.)
 - [ ] (Advanced) Bytecode optimizations (class optimizer -> remove unused code and functions!) => (Working on it.)
 - [ ] (Advanced) Replace instruction_t vector by array of type val_t for faster processing => (Task.)
 - [ ] (Intermediate) Do for loops => (Task)
-- [ ] (Intermediate) Create an @Doc annotation => (Task)
 - [ ] (Intermediate) Implement switch statements => (Task)
 - [ ] (Intermediate) Do namespaces => (Task)
-- [ ] (Advanced) Multiple value assignment => (Task)
 
 ##### Done
 
+- [x] (Easy) Add a few benchmarks => (Done.)
 - [x] (Intermediate) Implement computed gotos to gain 15%-20% more speed => (Done.)
 - [x] (Intermediate) Standard operators for internal classes => (Done.)
 - [x] (Intermediate) Serializer for bytecodes => (Done.)
