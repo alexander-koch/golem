@@ -13,7 +13,6 @@
 // Forward declaration of main parsing methods
 ast_t* parse_import_declaration(parser_t* parser, location_t loc);
 ast_t* parse_var_declaration(parser_t* parser, location_t loc);
-ast_t* parse_lambda_declaration(parser_t* parser, location_t loc);
 ast_t* parse_fn_declaration(parser_t* parser, location_t loc);
 ast_t* parse_if_declaration(parser_t* parser, location_t loc);
 ast_t* parse_while_declaration(parser_t* parser, location_t loc);

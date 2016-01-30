@@ -39,10 +39,8 @@ const char* datatype2str(datatype_t type)
 
 ast_t* ast_class_create(ast_class_t class, location_t location)
 {
-	ast_t* ast = malloc(sizeof(*ast));
+	ast_t* ast = calloc(1, sizeof(*ast));
 	if(!ast) return ast;
-
-	memset(ast, 0, sizeof(*ast));
 	ast->class = class;
 	ast->location = location;
     return ast;
