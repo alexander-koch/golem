@@ -107,7 +107,7 @@ With classes you can also use custom types and arrays are also permitted.
 ### Arrays
 
 Arrays are defined using two brackets, in which the content is placed and seperated by commas.
-An array can only be of one datatype and can not be replaced or modified if it is immutable.
+An array can only be of one datatype and cannot be replaced or modified if it is immutable.
 For character arrays, a string initializer can be used (type char[]).
 
 Integer array:

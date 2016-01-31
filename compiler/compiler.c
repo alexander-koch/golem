@@ -1958,7 +1958,7 @@ datatype_t eval_unary(compiler_t* compiler, ast_t* node)
 		{
 			if(node->unary.op != TOKEN_NOT)
 			{
-				compiler_throw(compiler, node, "Arithmetic operations can not be applied on objects of type boolean");
+				compiler_throw(compiler, node, "Arithmetic operations cannot be applied on objects of type boolean");
 			}
 			else
 			{

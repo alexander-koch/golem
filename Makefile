@@ -49,11 +49,11 @@ FILES := main.c \
 
 # Debugging version (default)
 debug:
-	$(CC) -O2 $(CFLAGS) $(INC) $(FILES) $(LDFLAGS) -g -o $(MODULE)
+	$(CC) -O2 $(CFLAGS) $(INC) $(FILES) -g -o $(MODULE)
 
 # Final release version
 release:
-	$(CC) -O3 -fno-gcse -fno-crossjumping $(CFLAGS) -DNO_IR -DNO_MEMINFO -DNO_AST $(INC) $(FILES) $(LDFLAGS) -o $(MODULE)
+	$(CC) -O3 -fno-gcse -fno-crossjumping $(CFLAGS) -DNO_IR -DNO_MEMINFO -DNO_AST $(INC) $(FILES) -o $(MODULE)
 
 # Experimental dll-library feature
 libs:
