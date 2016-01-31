@@ -2273,6 +2273,7 @@ datatype_t eval_import(compiler_t* compiler, ast_t* node)
 		    compiler_throw(compiler, node, "Could not read file named '%s'", node->import);
 		}
 		free(source);
+		return datatype_new(DATA_NULL);
 	}
 
 	// Dynamic library checking
@@ -2280,7 +2281,7 @@ datatype_t eval_import(compiler_t* compiler, ast_t* node)
 		// Nothing to do
 	}
 	else {
-		printf("WARNING: Dynamic libraries are not supported\n");
+		printf("WARNING: Dynamic libraries are not supported (for %s)\n", node->import);
 #ifdef USE_DYNLIB_FEATURE
 		// 1. Create the formatted name for lib. e.g. png -> libpng.dll
 		// 2. Feed instruction
