@@ -577,11 +577,11 @@ ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
         if(lhs->class == AST_FLOAT && rhs->class == AST_INT) {
             // convert right hand side to float too
             rhs->class = AST_FLOAT;
-            rhs->f = (F64)rhs->i;
+            rhs->f = (double)rhs->i;
         }
         else if(lhs->class == AST_INT && rhs->class == AST_FLOAT) {
             lhs->class = AST_FLOAT;
-            lhs->f = (F64)lhs->i;
+            lhs->f = (double)lhs->i;
         }
 
         ast_t* new_lhs = ast_class_create(AST_BINARY, get_location(parser));

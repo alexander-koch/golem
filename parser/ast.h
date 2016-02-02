@@ -17,7 +17,6 @@
 #include <lexis/lexer.h>
 #include <adt/list.h>
 #include <core/mem.h>
-#include <core/api.h>
 #include <adt/hashmap.h>
 
 // All valid datatypes: void, bool, char, int, float, custom types.
@@ -174,8 +173,8 @@ struct ast_s
         char ch;
         list_t* toplevel;
         list_t* ifstmt;
-        I64 i;
-        F64 f;
+        int i;
+        double f;
         bool b;
         ast_t* returnstmt;
         ast_field_t subscript;

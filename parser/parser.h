@@ -14,7 +14,6 @@
 #include <stdarg.h>
 
 #include <core/mem.h>
-#include <core/api.h>
 #include <lexis/lexer.h>
 #include <parser/ast.h>
 #include <adt/vector.h>

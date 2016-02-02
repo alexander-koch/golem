@@ -92,7 +92,7 @@ void compiler_dump(ast_t* node, int level)
 		}
 		case AST_INT:
 		{
-			printf(":num = %li", (long int)node->i);
+			printf(":num = %d", node->i);
 			break;
 		}
 		case AST_STRING:
@@ -674,98 +674,49 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 	token_type_t op = node->binary.op;
 
 	// Integer check -> first optimization pass
-	if(lhs->class == AST_INT && rhs->class == AST_INT)
-	{
-	    switch(op)
-	    {
-	        case TOKEN_ADD:
-	        {
-	            lhs->i += rhs->i;
-	            break;
-	        }
-	        case TOKEN_SUB:
-	        {
-	            lhs->i -= rhs->i;
-	            break;
-	        }
-	        case TOKEN_MUL:
-	        {
-	            lhs->i = lhs->i * rhs->i;
-	            break;
-	        }
-	        case TOKEN_DIV:
-	        {
-	            lhs->i = lhs->i / rhs->i;
-	            break;
-	        }
-	        case TOKEN_MOD:
-	        {
-	            lhs->i = lhs->i % rhs->i;
-	            break;
-	        }
-	        case TOKEN_BITLSHIFT:
-	        {
-	            lhs->i = lhs->i << rhs->i;
-	            break;
-	        }
-	        case TOKEN_BITRSHIFT:
-	        {
-	            lhs->i = lhs->i >> rhs->i;
-	            break;
-	        }
-	        case TOKEN_BITAND:
-	        {
-	            lhs->i = lhs->i & rhs->i;
-	            break;
-	        }
-	        case TOKEN_BITOR:
-	        {
-	            lhs->i = lhs->i | rhs->i;
-	            break;
-	        }
-	        case TOKEN_BITXOR:
-	        {
-	            lhs->i = lhs->i ^ rhs->i;
-	            break;
-	        }
-	        case TOKEN_EQUAL:
-	        {
+	if(lhs->class == AST_INT && rhs->class == AST_INT) {
+	    switch(op) {
+	        case TOKEN_ADD: lhs->i += rhs->i; break;
+	        case TOKEN_SUB: lhs->i -= rhs->i; break;
+	        case TOKEN_MUL: lhs->i *= rhs->i; break;
+	        case TOKEN_DIV: lhs->i /= rhs->i; break;
+	        case TOKEN_MOD: lhs->i %= rhs->i; break;
+	        case TOKEN_BITLSHIFT: lhs->i <<= rhs->i; break;
+	        case TOKEN_BITRSHIFT: lhs->i >>= rhs->i; break;
+	        case TOKEN_BITAND: lhs->i %= rhs->i; break;
+	        case TOKEN_BITOR: lhs->i |= rhs->i; break;
+	        case TOKEN_BITXOR: lhs->i ^= rhs->i; break;
+	        case TOKEN_EQUAL: {
 	            lhs->class = AST_BOOL;
 	            lhs->b = (lhs->i == rhs->i);
 	            break;
 	        }
-	        case TOKEN_NEQUAL:
-	        {
+	        case TOKEN_NEQUAL: {
 	            lhs->class = AST_BOOL;
 	            lhs->b = (lhs->i != rhs->i);
 	            break;
 	        }
-	        case TOKEN_LEQUAL:
-	        {
+	        case TOKEN_LEQUAL: {
 	            lhs->class = AST_BOOL;
 	            lhs->b = (lhs->i <= rhs->i);
 	            break;
 	        }
-	        case TOKEN_GEQUAL:
-	        {
+	        case TOKEN_GEQUAL: {
 	            lhs->class = AST_BOOL;
 	            lhs->b = (lhs->i >= rhs->i);
 	            break;
 	        }
-	        case TOKEN_LESS:
-	        {
+	        case TOKEN_LESS: {
 	            lhs->class = AST_BOOL;
 	            lhs->b = (lhs->i < rhs->i);
 	            break;
 	        }
-	        case TOKEN_GREATER:
-	        {
+	        case TOKEN_GREATER: {
 	            lhs->class = AST_BOOL;
 	            lhs->b = (lhs->i > rhs->i);
 	            break;
 	        }
-	        default:
-	        {
+	        default: {
 				compiler_throw(compiler, node, "Invalid operator. Operator might not be available for integers");
 	            return datatype_new(DATA_NULL);
 	        }
@@ -775,68 +726,43 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 	}
 
 	// Float checking -> second optimization pass
-	if(lhs->class == AST_FLOAT && rhs->class == AST_FLOAT)
-	{
-		switch(op)
-		{
-			case TOKEN_ADD:
-			{
-				lhs->f = lhs->f + rhs->f;
-				break;
-			}
-			case TOKEN_SUB:
-			{
-				lhs->f = lhs->f - rhs->f;
-				break;
-			}
-			case TOKEN_MUL:
-			{
-				lhs->f = lhs->f * rhs->f;
-				break;
-			}
-			case TOKEN_DIV:
-			{
-				lhs->f = lhs->f / rhs->f;
-				break;
-			}
-			case TOKEN_EQUAL:
-			{
+	if(lhs->class == AST_FLOAT && rhs->class == AST_FLOAT) {
+		switch(op) {
+			case TOKEN_ADD: lhs->f += rhs->f; break;
+			case TOKEN_SUB: lhs->f -= rhs->f; break;
+			case TOKEN_MUL: lhs->f *= rhs->f; break;
+			case TOKEN_DIV: lhs->f /= rhs->f; break;
+			case TOKEN_EQUAL: {
 				lhs->class = AST_BOOL;
 				lhs->b = (lhs->f == rhs->f);
 				break;
 			}
-			case TOKEN_NEQUAL:
-			{
+			case TOKEN_NEQUAL: {
 				lhs->class = AST_BOOL;
 				lhs->b = (lhs->f != rhs->f);
 				break;
 			}
-			case TOKEN_LEQUAL:
-			{
+			case TOKEN_LEQUAL: {
 				lhs->class = AST_BOOL;
 				lhs->b = (lhs->f <= lhs->f);
 				break;
 			}
-			case TOKEN_GEQUAL:
-			{
+			case TOKEN_GEQUAL: {
 				lhs->class = AST_BOOL;
 				lhs->b = (lhs->f >= lhs->f);
 				break;
 			}
-			case TOKEN_LESS:
-			{
+			case TOKEN_LESS: {
 				lhs->class = AST_BOOL;
 				lhs->b = (lhs->f < lhs->f);
 				break;
 			}
-			case TOKEN_GREATER:
-			{
+			case TOKEN_GREATER: {
 				lhs->class = AST_BOOL;
 				lhs->b = (lhs->f > lhs->f);
 				break;
 			}
-			default:
-			{
+			default: {
 				compiler_throw(compiler, node, "Invalid operator. Operator might not be available for floats");
 				return datatype_new(DATA_NULL);
 			}

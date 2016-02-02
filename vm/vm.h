@@ -14,7 +14,6 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include <core/api.h>
 #include <adt/vector.h>
 #include <adt/hashmap.h>
 

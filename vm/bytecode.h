@@ -146,8 +146,8 @@ void insert_v2(vector_t* buffer, opcode_t op, val_t v1, val_t v2);
  * Helper functions for creating bytecode
  */
 void emit_bool(vector_t* buffer, bool b);
-void emit_int(vector_t* buffer, I64 v);
-void emit_float(vector_t* buffer, F64 f);
+void emit_int(vector_t* buffer, int v);
+void emit_float(vector_t* buffer, double f);
 void emit_string(vector_t* buffer, char* str);
 void emit_char(vector_t* buffer, char c);
 void emit_pop(vector_t* buffer);
