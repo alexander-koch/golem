@@ -3,7 +3,7 @@
 #include <vm/vm.h>
 #include <core/util.h>
 
-GOLEM_API val_t io_readFile(vm_t* vm)
+val_t io_readFile(vm_t* vm)
 {
 	size_t size = 0;
 	char* filename = AS_STRING(pop(vm));
@@ -23,7 +23,7 @@ GOLEM_API val_t io_readFile(vm_t* vm)
 	return STRING_NOCOPY_VAL(source);
 }
 
-GOLEM_API val_t io_writeFile(vm_t* vm)
+val_t io_writeFile(vm_t* vm)
 {
 	char* mode = AS_STRING(pop(vm));
 	char* content = AS_STRING(pop(vm));
@@ -37,7 +37,7 @@ GOLEM_API val_t io_writeFile(vm_t* vm)
 	return NULL_VAL;
 }
 
-GOLEM_API int io_gen_signatures(list_t* toplevel)
+int io_gen_signatures(list_t* toplevel)
 {
 	signature_new();
 	require_func();

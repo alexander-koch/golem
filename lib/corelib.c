@@ -4,20 +4,20 @@
 #include <time.h>
 extern float strtof(const char* str, char** endptr);
 
-GOLEM_API val_t core_print(vm_t* vm)
+val_t core_print(vm_t* vm)
 {
 	val_print(pop(vm));
 	return NULL_VAL;
 }
 
-GOLEM_API val_t core_println(vm_t* vm)
+val_t core_println(vm_t* vm)
 {
 	core_print(vm);
 	putchar('\n');
 	return NULL_VAL;
 }
 
-GOLEM_API val_t core_getline(vm_t* vm)
+val_t core_getline(vm_t* vm)
 {
 	// Get input to buffer
 	char buf[512];
@@ -25,37 +25,35 @@ GOLEM_API val_t core_getline(vm_t* vm)
 	return STRING_VAL(buf);
 }
 
-GOLEM_API val_t core_parseFloat(vm_t* vm)
+val_t core_parseFloat(vm_t* vm)
 {
 	char* str = AS_STRING(pop(vm));
 	return NUM_VAL(strtof(str, 0));
 }
 
-GOLEM_API val_t core_break(vm_t* vm)
+val_t core_break(vm_t* vm)
 {
 	getchar();
 	return NULL_VAL;
 }
 
-GOLEM_API val_t core_clock(vm_t* vm)
+val_t core_clock(vm_t* vm)
 {
 	double clocktime = (double)clock() / (double)CLOCKS_PER_SEC;
 	return NUM_VAL(clocktime);
 }
 
-GOLEM_API val_t core_sysarg(vm_t* vm)
+val_t core_sysarg(vm_t* vm)
 {
 	int idx = AS_INT32(pop(vm));
-	if(idx >= vm->argc || idx < 0)
-	{
+	if(idx >= vm->argc || idx < 0) {
 		return STRING_VAL("");
 	}
 
-	char* str = vm->argv[idx];
-	return STRING_VAL(str);
+	return STRING_VAL(vm->argv[idx]);
 }
 
-GOLEM_API int core_gen_signatures(list_t* toplevel)
+int core_gen_signatures(list_t* toplevel)
 {
 	signature_new();
 	require_func();
