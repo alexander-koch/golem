@@ -4,6 +4,11 @@ CC := gcc
 MODULE := golem
 INC := -I.
 
+# Linux:
+# To build on linux, add -lm at the end.
+# Also _msize is not available, so set the
+# -DNO_MEMINFO flag to disable the memory usage tracker.
+
 # Golem flags
 # Add flags explained below for debugging features
 GFLAGS := #-DTRACE #-DTRACE_STEP #-DNO_AST
@@ -54,10 +59,6 @@ debug:
 # Final release version
 release:
 	$(CC) -O3 -fno-gcse -fno-crossjumping $(CFLAGS) -DNO_IR -DNO_MEMINFO -DNO_AST $(INC) $(FILES) -o $(MODULE)
-
-# Experimental dll-library feature
-libs:
-	make -C ./lib MAKEFLAGS=
 
 # Graphviz *.dot to *.svg
 dot:
