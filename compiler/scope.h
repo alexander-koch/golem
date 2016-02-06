@@ -31,7 +31,6 @@ typedef struct scope_t
 	struct scope_t* super;
 	list_t* subscopes;
 	int address;
-	bool virtual;
 	int flag;
 } scope_t;
 

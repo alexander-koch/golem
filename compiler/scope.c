@@ -13,7 +13,6 @@ scope_t* scope_new()
 	scope->subscopes = list_new();
 	scope->address = 0;
 	scope->node = 0;
-	scope->virtual = false;
 	scope->flag = 0;
 	return scope;
 }

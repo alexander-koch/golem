@@ -285,23 +285,6 @@ void pop_scope(compiler_t* compiler)
 	compiler->depth--;
 }
 
-// <Experimental>
-void push_scope_virtual(compiler_t* compiler, ast_t* node)
-{
-	size_t addr = compiler->scope->address;
-	push_scope(compiler, node);
-	compiler->scope->virtual = true;
-	compiler->scope->address = addr;
-}
-
-void pop_scope_virtual(compiler_t* compiler)
-{
-	size_t addr = compiler->scope->address;
-	pop_scope(compiler);
-	compiler->scope->address = addr;
-}
-// </Experimental>
-
 bool scope_is_class(scope_t* scope, ast_class_t class, ast_t** node)
 {
 	if(scope->node && scope)
@@ -1785,36 +1768,31 @@ datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 		// May not work for functions returning an array
 
 		// HACK:(#2) expect that expression is an identifier
-		if(expr->class == AST_IDENT)
-		{
+		if(expr->class == AST_IDENT && key->class == AST_INT) {
 			char* ident = expr->ident;
 			symbol_t* symbol = symbol_get(compiler->scope, ident);
-			if(symbol)
-			{
+			if(symbol) {
 				int index = key->i;
 
 				// @cond1 Index must be in range
-				// @cond2 Variable must be immutable, we can't keep track of immutable values
+				// @cond2 Variable must be immutable, we can't keep track of mutable values
 				// @cond3 Array size must be available, we can't deduce the size by subscripts or calls
 				bool cond1 = (index < 0 || index >= symbol->arraySize);
 				bool cond2 = !symbol->node->vardecl.mutate;
 				bool cond3 = (symbol->arraySize != -1);
-				if(cond1 && cond2 && cond3)
-				{
-					compiler_throw(compiler, node, "Array index out of bounds");
+				if(cond1 && cond2 && cond3) {
+					compiler_throw(compiler, node, "H2: Array index out of bounds");
 					return datatype_new(DATA_NULL);
 				}
 			}
 		}
 		// HACK:(#3) Count the array objects
-		else if(expr->class == AST_ARRAY)
-		{
+		else if(expr->class == AST_ARRAY) {
 			list_t* elements = expr->array.elements;
 			int sz = list_size(elements);
 			int index = key->i;
-			if(index < 0 || index >= sz)
-			{
-				compiler_throw(compiler, node, "Array index out of bounds");
+			if(index < 0 || index >= sz) {
+				compiler_throw(compiler, node, "H3: Array index out of bounds");
 				return datatype_new(DATA_NULL);
 			}
 		}
@@ -1826,8 +1804,7 @@ datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 		ret.id = exprType.id;
 		return ret;
 	}
-	else
-	{
+	else {
 		compiler_throw(compiler, node, "Invalid subscript operation");
 		return datatype_new(DATA_NULL);
 	}
