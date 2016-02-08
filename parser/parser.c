@@ -24,8 +24,7 @@ ast_t* parse_stmt(parser_t* parser);
 ast_t* parse_expression(parser_t* parser);
 void test_newline(parser_t* parser);
 
-void parser_init(parser_t* parser, const char* name)
-{
+void parser_init(parser_t* parser, const char* name) {
     parser->name = name;
     parser->buffer = 0;
     parser->num_tokens = 0;
@@ -37,95 +36,75 @@ void parser_init(parser_t* parser, const char* name)
 // helper functions begin
 
 // Check if we reached the end
-int parser_end(parser_t* parser)
-{
+int parser_end(parser_t* parser) {
     return parser->cursor >= parser->num_tokens;
 }
 
 // Get the token under the cursor
-token_t* current_token(parser_t* parser)
-{
+token_t* current_token(parser_t* parser) {
     return &parser->buffer[parser->cursor];
 }
 
 // Get the location in code of the current cursor
-location_t get_location(parser_t* parser)
-{
+location_t get_location(parser_t* parser) {
     return current_token(parser)->location;
 }
 
 // Test if the current token matches a given string
-bool match_string(parser_t* parser, const char* token)
-{
+bool match_string(parser_t* parser, const char* token) {
     if(parser_end(parser) || !token) return false;
     if(!parser->buffer[parser->cursor].value) return false;
     return !strcmp(parser->buffer[parser->cursor].value, token);
 }
 
 // Test if the current token matches a given type
-bool match_type(parser_t* parser, token_type_t type)
-{
+bool match_type(parser_t* parser, token_type_t type) {
     return current_token(parser)->type == type;
 }
 
-bool match_next(parser_t* parser, const char* token)
-{
+bool match_next(parser_t* parser, const char* token) {
     if(parser_end(parser) || parser->cursor+1 >= parser->num_tokens) return false;
     char* val = parser->buffer[parser->cursor+1].value;
-    if(val)
-    {
-        return !strcmp(val, token);
-    }
-    return false;
+    return (val != NULL) ? !strcmp(val, token) : false;
 }
 
-token_t* accept_token(parser_t* parser)
-{
+token_t* accept_token(parser_t* parser) {
     return &parser->buffer[parser->cursor++];
 }
 
-token_t* accept_token_string(parser_t* parser, const char* str)
-{
+token_t* accept_token_string(parser_t* parser, const char* str) {
     if(parser_end(parser)) return 0;
 
-    if(match_string(parser, str))
-    {
+    if(match_string(parser, str)) {
         return accept_token(parser);
     }
     return 0;
 }
 
-token_t* accept_token_type(parser_t* parser, token_type_t type)
-{
+token_t* accept_token_type(parser_t* parser, token_type_t type) {
     if(parser_end(parser)) return 0;
 
-    if(parser->buffer[parser->cursor].type == type)
-    {
+    if(parser->buffer[parser->cursor].type == type) {
         return accept_token(parser);
     }
-    else
-    {
+    else {
         token_type_t tp = parser->buffer[parser->cursor].type;
         parser_throw(parser, "Invalid syntax token '%s'. Expected '%s'", tok2str(tp), tok2str(type));
     }
     return 0;
 }
 
-void skip_newline(parser_t* parser)
-{
-    while(parser->buffer[parser->cursor].type == TOKEN_NEWLINE)
-    {
+void skip_newline(parser_t* parser) {
+    while(parser->buffer[parser->cursor].type == TOKEN_NEWLINE) {
         parser->cursor++;
     }
 }
 
-void parser_free(parser_t* parser)
-{
+void parser_free(parser_t* parser) {
     lexer_free_buffer(parser->buffer, parser->num_tokens);
 }
 
-int parser_error(parser_t* parser)
-{
+int parser_error(parser_t* parser) {
     return parser->error;
 }
 
@@ -447,12 +426,16 @@ ast_t* parse_array(parser_t* parser) {
     return ast;
 }
 
-// Parser.parseLiteral()
-// Parses a literal.
-// A literal is either a number, a string, a boolean or an array.
-// EBNF:
-// simpleliteral = number | string | boolean;
-// literal = simpleliteral | array;
+/**
+ * parse_literal:
+ * Parses a literal.
+ * A literal is a number, a string , a boolean or an array.
+ *
+ * EBNF:
+ * number = float | integer;
+ * simpleliteral = number | string | boolean;
+ * literal = simpleliteral | array;
+ */
 ast_t* parse_literal(parser_t* parser) {
     if(match_simple(parser)) {
         return parse_simpleliteral(parser);
@@ -466,48 +449,47 @@ ast_t* parse_literal(parser_t* parser) {
     return 0;
 }
 
-// Parser.parseExpressionPrimary()
-// Parses a primary expression.
-// ---------------
-// EBNF:
-// expr_primary = literal | ident | expr | unary | call | subscript | subscript_sugar;
-ast_t* parse_expression_primary(parser_t* parser)
-{
-    if(match_type(parser, TOKEN_NEWLINE))
-    {
+/**
+ *
+ * parse_expression_primary:
+ * Parses a primary expression.
+ *
+ * EBNF:
+ * expr_primary = literal | ident | expr | unary | call | subscript | subscript_sugar;
+ */
+ast_t* parse_expression_primary(parser_t* parser) {
+    if(match_type(parser, TOKEN_NEWLINE)) {
         return 0;
     }
 
     ast_t* ast = 0;
-    if(match_literal(parser))
-    {
+    // Literal
+    if(match_literal(parser)) {
         // Example literals: 1|2|3|4|5 - "Hello World", true, false
         ast = parse_literal(parser);
     }
-    else if(match_type(parser, TOKEN_WORD))
-    {
+    // Identifier
+    else if(match_type(parser, TOKEN_WORD)) {
         // myscript.access = denied
         ast = ast_class_create(AST_IDENT, get_location(parser));
         ast->ident = accept_token(parser)->value;
     }
-    else if(match_type(parser, TOKEN_LPAREN))
-    {
+    // (expr)
+    else if(match_type(parser, TOKEN_LPAREN)) {
         // (2 + 3) * 5
         accept_token(parser);
         ast = parse_expression(parser);
 
-        if(!match_type(parser, TOKEN_RPAREN))
-        {
+        if(!match_type(parser, TOKEN_RPAREN)) {
             parser_throw(parser, "Expected closing parenthesis");
         }
-        else
-        {
+        else {
             accept_token(parser);
         }
     }
-    else if(match_type(parser, TOKEN_ADD) || match_type(parser, TOKEN_SUB) ||
-        match_type(parser, TOKEN_NOT) || match_type(parser, TOKEN_BITNOT))
-    {
+    // Unary
+    else if(match_type(parser, TOKEN_ADD) || match_type(parser, TOKEN_SUB)
+        || match_type(parser, TOKEN_NOT) || match_type(parser, TOKEN_BITNOT)) {
         // Binary operators: plus, minus, not, bitnot
 
         // +2 -> unary(+, 2)
@@ -525,24 +507,22 @@ ast_t* parse_expression_primary(parser_t* parser)
         ast->unary.op = op;
         ast->unary.expr = parse_expression_primary(parser);
     }
-    else
-    {
+    // Error
+    else {
         parser_throw(parser, "Expected expression, found '%s'", current_token(parser)->value);
         return ast;
     }
 
-    if(match_type(parser, TOKEN_LPAREN))
-    {
+    // If no error occured, try to continue.
+    if(match_type(parser, TOKEN_LPAREN)) {
         accept_token(parser);
         return parse_call(parser, ast);
     }
-    else if(match_type(parser, TOKEN_LBRACKET))
-    {
+    else if(match_type(parser, TOKEN_LBRACKET)) {
         accept_token(parser);
         return parse_subscript(parser, ast);
     }
-    else if(match_type(parser, TOKEN_DOT))
-    {
+    else if(match_type(parser, TOKEN_DOT)) {
         accept_token(parser);
         return parse_subscript_sugar(parser, ast);
     }
@@ -550,8 +530,7 @@ ast_t* parse_expression_primary(parser_t* parser)
     return ast;
 }
 
-ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec)
-{
+ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec) {
     for(;;) {
         // TODO: Test if the operator is valid or not, otherwise
         // throws error of missing newline
