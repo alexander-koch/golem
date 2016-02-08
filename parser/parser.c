@@ -129,8 +129,12 @@ int parser_error(parser_t* parser)
     return parser->error;
 }
 
-void parser_throw(parser_t* parser, const char* format, ...)
-{
+/**
+ * parser_throw:
+ * If an error occurs, use this function to print the error.
+ * Requires the parser to print the location.
+ */
+void parser_throw(parser_t* parser, const char* format, ...) {
     parser->error = 1;
     location_t loc = get_location(parser);
 
@@ -143,24 +147,25 @@ void parser_throw(parser_t* parser, const char* format, ...)
 }
 
 // Parsing Functions
-int match_simple(parser_t* parser)
-{
-    return match_type(parser, TOKEN_INT) ||
-        match_type(parser, TOKEN_FLOAT) ||
-        match_type(parser, TOKEN_STRING) ||
-        match_type(parser, TOKEN_BOOL);
+int match_simple(parser_t* parser) {
+    return match_type(parser, TOKEN_INT)
+        || match_type(parser, TOKEN_FLOAT)
+        || match_type(parser, TOKEN_STRING)
+        || match_type(parser, TOKEN_BOOL);
 }
 
-int match_literal(parser_t* parser)
-{
-    return match_simple(parser) ||
-        match_type(parser, TOKEN_LBRACKET);
+int match_literal(parser_t* parser) {
+    return match_simple(parser)
+        || match_type(parser, TOKEN_LBRACKET);
 }
 
-int parse_precedence(token_type_t type)
-{
-    switch(type)
-    {
+/**
+ * parse_precedence:
+ * Returns the precedence for given token_type_t type.
+ * If the token type is not listed, -1 is returned.
+ */
+int parse_precedence(token_type_t type) {
+    switch(type) {
         case TOKEN_ASSIGN: return 0;    // =
         case TOKEN_OR: return 1;        // ||
         case TOKEN_AND: return 2;       // &&
@@ -188,16 +193,18 @@ ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node);
 ast_t* parse_subscript(parser_t* parser, ast_t* node);
 datatype_t parse_datatype(parser_t* parser);
 
-// Parser.parseCall()
-// Parses a call structure
-// Example: func(), foo(baz, bar)
-//
-// Call:
-//  ARGS:LIST
-//  CALLEE:NODE
-//
-// EBNF:
-// call = expr, "(", [expr, {",", expr}], ")";
+/**
+ * parse_call:
+ * Parses a call structure
+ * Examples: func(), foo(baz, bar)
+ *
+ * Call:
+ *  Args:List
+ *  Callee:Node
+ *
+ * EBNF:
+ * call = expr, "(", [expr, {",", expr}], ")";
+ */
 ast_t* parse_call(parser_t* parser, ast_t* node) {
     ast_t* class = ast_class_create(AST_CALL, node->location);
     class->call.args = list_new();
@@ -238,25 +245,25 @@ ast_t* parse_call(parser_t* parser, ast_t* node) {
     return class;
 }
 
-// Parser.parseSubscript()
-// Parses a subscript, bracket based.
-// Example: myarray[5] = x
-//
-// Subscript:
-//  Expr:Node
-//  Key:Expression
-//
-// EBNF:
-// subscript = ident, "[", expr, "]";
-ast_t* parse_subscript(parser_t* parser, ast_t* node)
-{
+/**
+ * parse_subscript:
+ * Parses a subscript (bracket based).
+ * Example: myarray[5] = x
+ *
+ * Subscript:
+ *  Expr:Node
+ *  Key:Expression
+ *
+ * EBNF:
+ * subscript = ident, "[", expr, "]";
+ */
+ast_t* parse_subscript(parser_t* parser, ast_t* node) {
     // Create the node
     ast_t* ast = ast_class_create(AST_SUBSCRIPT, node->location);
     ast->subscript.expr = node;
     ast->subscript.key = parse_expression(parser);
 
-    if(!match_type(parser, TOKEN_RBRACKET))
-    {
+    if(!match_type(parser, TOKEN_RBRACKET)) {
         parser_throw(parser, "Expected closing bracket");
         return ast;
     }
@@ -281,14 +288,20 @@ ast_t* parse_subscript(parser_t* parser, ast_t* node)
     return ast;
 }
 
-// Parser.parseSubscriptSugar()
-// Parses a special type of a subscript (syntactic sugar).
-// The subscript uses a dot instead of brackets.
-// Example: myclass.x = 5
-// EBNF:
-// subscript_sugar = expr, ".", ident, [call | subscript | subscript_sugar];
-ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node)
-{
+/**
+ * parse_subscript_sugar:
+ * Parses a special type of a subscript (syntactic sugar).
+ * The subscript uses a dot instead of brackets.
+ * Example: myclass.x = 5
+ *
+ * Subscript:
+ *  Expr:Node
+ *  Key:Ident
+ *
+ * EBNF:
+ * subscript_sugar = expr, ".", ident, [call | subscript | subscript_sugar];
+ */
+ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node) {
     // Create the subscript node
     ast_t* ast = ast_class_create(AST_SUBSCRIPT, node->location);
     ast->subscript.expr = node;
@@ -301,7 +314,7 @@ ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node)
     // Consume the identifier
     token_t* ident = accept_token(parser);
 
-    // Create the identifier node
+    // Create the identifier node and set is as key
     ast_t* key = ast_class_create(AST_IDENT, ident->location);
     key->ident = ident->value;
     ast->subscript.key = key;
@@ -321,28 +334,32 @@ ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node)
     return ast;
 }
 
-// Parser.parseSimpleLiteral()
-// Parses simple literal structures -> Float / Integer / String / Boolean
-// EBNF:
-// number = float / integer;
-// simpleliteral = number | string | boolean;
-ast_t* parse_simpleliteral(parser_t* parser)
-{
+/**
+ * parse_simpleliteral:
+ * Parses simple literal structures: Float || Integer || String || Boolean
+ *
+ * EBNF:
+ * number = float | integer;
+ * simpleliteral = number | string | boolean;
+ */
+ast_t* parse_simpleliteral(parser_t* parser) {
+    // Create a 'placeholder'-node
     ast_t* node = ast_class_create(-1, get_location(parser));
-    if(match_type(parser, TOKEN_FLOAT))
-    {
+
+    // Float
+    if(match_type(parser, TOKEN_FLOAT)) {
         node->class = AST_FLOAT;
         node->f = atof(accept_token(parser)->value);
         return node;
     }
-    else if(match_type(parser, TOKEN_INT))
-    {
+    // Int
+    else if(match_type(parser, TOKEN_INT)) {
         node->class = AST_INT;
         node->i = atol(accept_token(parser)->value);
         return node;
     }
-    else if(match_type(parser, TOKEN_STRING))
-    {
+    // String
+    else if(match_type(parser, TOKEN_STRING)) {
         node->class = AST_STRING;
         node->string = accept_token(parser)->value;
 
@@ -353,84 +370,78 @@ ast_t* parse_simpleliteral(parser_t* parser)
         }
         return node;
     }
-    else if(match_type(parser, TOKEN_BOOL))
-    {
+    // Boolean
+    else if(match_type(parser, TOKEN_BOOL)) {
         node->class = AST_BOOL;
         node->b = !strcmp(accept_token(parser)->value, "true") ? true : false;
         return node;
     }
-    else
-    {
+    // Error
+    else {
         parser_throw(parser, "Token is not a literal");
     }
     return node;
 }
 
-// Parser.parseArray()
-// Array parsing function
-// Example:
-// let x = [1,2,3,4,5]
-// let y = [::int]
-// -----
-// EBNF:
-// array = "[", (Expression, {",", Expression}) | ("::", Datatype), "]";
-ast_t* parse_array(parser_t* parser)
-{
+/**
+ * parse_array:
+ * Array parsing function.
+ *
+ * Example:
+ * let x = [1,2,3,4,5]
+ * let y = [::int]
+ *
+ * EBNF:
+ * array = "[", (Expression, {",", Expression}) | ("::", Datatype), "]";
+ */
+ast_t* parse_array(parser_t* parser) {
     ast_t* ast = ast_class_create(AST_ARRAY, get_location(parser));
     ast->array.elements = list_new();
     ast->array.type = datatype_new(DATA_NULL);
 
     token_t* tmp = accept_token_type(parser, TOKEN_LBRACKET);
-    if(!tmp)
-    {
+    if(!tmp) {
         parser_throw(parser, "Expected array begin");
+        // TODO: Return ast?
     }
 
     skip_newline(parser);
 
-    // New Feature [::int] -> initializes array with zero elements of type int
-    if(match_type(parser, TOKEN_DOUBLECOLON))
-    {
+    // New Feature 'Doublecolon initializer': [::int] -> initializes array with zero elements of type int
+    if(match_type(parser, TOKEN_DOUBLECOLON)) {
         accept_token(parser);
         datatype_t dt = parse_datatype(parser);
         ast->array.type = dt;
 
-        if(!match_type(parser, TOKEN_RBRACKET))
-        {
+        if(!match_type(parser, TOKEN_RBRACKET)) {
             parser_throw(parser, "Expected closing bracket");
         }
-        else
-        {
+        else {
             accept_token(parser);
         }
         return ast;
     }
 
-    if(match_type(parser, TOKEN_RBRACKET))
-    {
+    if(match_type(parser, TOKEN_RBRACKET)) {
         parser_throw(parser, "Initialized array with no elements");
         return ast;
     }
 
     ast_t* expr = 0;
-    while(!match_type(parser, TOKEN_RBRACKET) && (expr = parse_expression(parser)))
-    {
+    while(!match_type(parser, TOKEN_RBRACKET) && (expr = parse_expression(parser))) {
         list_push(ast->array.elements, (void*)expr);
         skip_newline(parser);
-        if(!match_type(parser, TOKEN_COMMA))
-        {
+        if(!match_type(parser, TOKEN_COMMA)) {
             break;
         }
-        else
-        {
+        else {
             accept_token(parser);
         }
         skip_newline(parser);
     }
     skip_newline(parser);
     tmp = accept_token_type(parser, TOKEN_RBRACKET);
-    if(!tmp)
-    {
+    if(!tmp) {
         parser_throw(parser, "Expected array end");
     }
     return ast;
@@ -442,18 +453,14 @@ ast_t* parse_array(parser_t* parser)
 // EBNF:
 // simpleliteral = number | string | boolean;
 // literal = simpleliteral | array;
-ast_t* parse_literal(parser_t* parser)
-{
-    if(match_simple(parser))
-    {
+ast_t* parse_literal(parser_t* parser) {
+    if(match_simple(parser)) {
         return parse_simpleliteral(parser);
     }
-    else if(match_type(parser, TOKEN_LBRACKET))
-    {
+    else if(match_type(parser, TOKEN_LBRACKET)) {
         return parse_array(parser);
     }
-    else
-    {
+    else {
         parser_throw(parser, "Could not parse literal");
     }
     return 0;
