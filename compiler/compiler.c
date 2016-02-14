@@ -299,11 +299,20 @@ bool scope_is_class(scope_t* scope, ast_class_t class, ast_t** node)
 	return false;
 }
 
-// Symbol.new(node, address, type)
-// Stores an indentifier with an address, an AST and a type
-// If the scope depth is zero, the  global flag is set to true
-symbol_t* symbol_new(compiler_t* compiler, ast_t* node, int address, datatype_t type)
-{
+/**
+ * symbol_new:
+ * Stores an indentifier with an address, an AST and a type
+ * If the scope depth is zero, the  global flag is set to true
+ *
+ * @node The corresponding AST-node
+ * @address Bytecode address
+ * @type Datatype
+ * @global If GSTORE or STORE is used (scope level is equal to zero)
+ * @isClassParam Self-explanatory
+ * @ref Referenced by a class (hold the class symbol)
+ * @arraySize Array size of the symbol (if it is of type array)
+ */
+symbol_t* symbol_new(compiler_t* compiler, ast_t* node, int address, datatype_t type) {
 	symbol_t* symbol = malloc(sizeof(*symbol));
 	symbol->node = node;
 	symbol->address = address;
@@ -315,42 +324,50 @@ symbol_t* symbol_new(compiler_t* compiler, ast_t* node, int address, datatype_t 
 	return symbol;
 }
 
-// Symbol.isLocal(string ident, ref int depth)
-// Checks if the symbol is stored in the current local scope.
-symbol_t* symbol_get_ext(scope_t* scope, char* ident, int* depth)
-{
+/**
+ * symbol_get_ext:
+ * Tries to find a symbol by the given identifier.
+ * Returns the symbol if found, otherwise NULL.
+ * Depth returns the number of scopes it had to go upwards.
+ */
+symbol_t* symbol_get_ext(scope_t* scope, char* ident, int* depth) {
+
+	// If found, return
 	void* val = hashmap_find(scope->symbols, ident);
 	if(val) return val;
 
-	if(scope->super)
-	{
+	// If there is a super scope, search in that
+	if(scope->super) {
 		(*depth)++;
 		return symbol_get_ext(scope->super, ident, depth);
 	}
 	return 0;
 }
 
-// Symbol.get(string ident)
-// Tries to find a symbol by the given identifier.
-// This function works recursive and searches upwards until
-// there is no parent available.
-// If the symbol is found it is returned, if not, a null pointer
-// is returned.
-symbol_t* symbol_get(scope_t* scope, char* ident)
-{
+/**
+ * symbol_get:
+ * Tries to find a symbol by the given identifier.
+ * This function works recursive and searches upwards,
+ * until there is no parent available.
+ * Returns the symbol if found, otherwise NULL.
+ */
+symbol_t* symbol_get(scope_t* scope, char* ident) {
 	void* val = hashmap_find(scope->symbols, ident);
 	if(val) return val;
-
-	if(scope->super)
-	{
-		return symbol_get(scope->super, ident);
-	}
+	if(scope->super) return symbol_get(scope->super, ident);
 	return 0;
 }
 
+/**
+ * cmpId:
+ * Small helper function for comparing IDs.
+ * Tests if given symbol id and the id match.
+ * Actual definition:
+ * cmpdId(symbol_t symbol, unsigned long id)
+ * Returns 1 if ids are the same.
+ */
 static symbol_t* tmp = 0;
-int cmpId(void* val, void* arg)
-{
+int cmpId(void* val, void* arg) {
 	unsigned long* id = arg;
 	symbol_t* symbol = val;
 	if(symbol->type.id == *id) {
@@ -360,28 +377,26 @@ int cmpId(void* val, void* arg)
 	return 0;
 }
 
-// Look in the scopes class hashmap for the given id.
-// If it fails, look in super.
-symbol_t* class_find(scope_t* scope, unsigned long id)
-{
-	if(hashmap_foreach(scope->classes, cmpId, &id)) {
-		return tmp;
-	}
-
-	if(scope->super) {
-		return class_find(scope->super, id);
-	}
+/**
+ * class_find:
+ * Look in the scopes class hashmap for the given class id.
+ * If it fails, it will look in super scope.
+ */
+symbol_t* class_find(scope_t* scope, unsigned long id) {
+	if(hashmap_foreach(scope->classes, cmpId, &id)) return tmp;
+	if(scope->super) return class_find(scope->super, id);
 	return 0;
 }
 
-// Symbol.exists(node, name)
-// Test if given identifier exists in the symbol-table.
-// If so, an exception is thrown and true returned.
-bool symbol_exists(compiler_t* compiler, ast_t* node, char* ident)
-{
+/**
+ * symbol_exists:
+ * Test if given identifier exists in the symbol-table.
+ * If so, an exception is thrown and true returned.
+ * @param node The current node we are visiting.
+ */
+bool symbol_exists(compiler_t* compiler, ast_t* node, char* ident) {
 	symbol_t* symbol = symbol_get(compiler->scope, ident);
-	if(symbol)
-	{
+	if(symbol) {
 		location_t loc = symbol->node->location;
 		compiler_throw(compiler, node,
 			"Redefinition of symbol '%s'.\nPrevious definition: [line %d column %d]",
@@ -391,49 +406,64 @@ bool symbol_exists(compiler_t* compiler, ast_t* node, char* ident)
 	return false;
 }
 
-// Tries to get the symbol, and emits a store operation based on the depth
-void symbol_replace(compiler_t* compiler, symbol_t* symbol)
-{
+/**
+ * symbol_replace:
+ * Used to emit a replacement operation for a given symbol (store).
+ * Tries to get the symbol, and emits a store operation based on the depth
+ */
+void symbol_replace(compiler_t* compiler, symbol_t* symbol) {
+
+	// Get the depth
 	int depth = 0;
 	symbol_get_ext(compiler->scope, symbol->node->vardecl.name, &depth);
 
-	if(depth == 0 || symbol->global)
-	{
+	// Global?
+	if(depth == 0 || symbol->global) {
 		emit_store(compiler->buffer, symbol->address, symbol->global);
 	}
-	else
-	{
+	// Up!
+	else {
 		emit_store_upval(compiler->buffer, depth, symbol->address);
 	}
 }
 
-// Eval.block(Block[] blocks)
-// The function evaluates a list of Abstract syntax trees.
-// The datatype of the last entry is returned.
-// If there is no entry, datatype_new(DATA_NULL) is returned.
-datatype_t eval_block(compiler_t* compiler, list_t* block)
-{
+/**
+ * eval_block:
+ * Evaluate a list of abstract syntax trees.
+ * The evaluated datatype of the last entry is returned.
+ * If there is no entry, datatype_new(DATA_NULL) is returned.
+ */
+datatype_t eval_block(compiler_t* compiler, list_t* block) {
 	datatype_t ret = datatype_new(DATA_NULL);
 	list_iterator_t* iter = list_iterator_create(block);
-	while(!list_iterator_end(iter))
-	{
+	while(!list_iterator_end(iter)) {
+		// Evaluate each list item.
 		ret = compiler_eval(compiler, list_iterator_next(iter));
 	}
 	list_iterator_free(iter);
 	return ret;
 }
 
-// Eval.declfunc(node)
-// Compiles a function.
-// Therefore it creates a jump at the beginning to prevent runtime execution.
-// A new scope is created as well as the parameter symbols and
-// the function signature. Finally the body gets analysed.
-datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
-{
+/**
+ * eval_declfunc:
+ * Compiles / evaluates a function declaration.
+ *
+ * Algorithm: (simplified)
+ * 1. Check the symbols.
+ * 2. Create a jump at the beginning to prevent runtime execution.
+ * 3. Register signature.
+ * 4. Create a new scope to evaluate it's content.
+ * 5. Create parameter symbols.
+ * 6. Analyse body.
+ * 7. Emit return.
+ * 8. Set jump address.
+ */
+datatype_t eval_declfunc(compiler_t* compiler, ast_t* node) {
 	// Check if existing and non-external
 	if(symbol_exists(compiler, node, node->funcdecl.name)) return datatype_new(DATA_NULL);
-	if(node->funcdecl.external)
-	{
+
+	// If it is external, just register the symbol.
+	if(node->funcdecl.external) {
 		symbol_t* sym = symbol_new(compiler, node, -1, node->funcdecl.rettype);
 		hashmap_set(compiler->scope->symbols, node->funcdecl.name, sym);
 		return datatype_new(DATA_NULL);
@@ -452,8 +482,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	push_scope(compiler, node);
 	list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.formals);
 	int i = -(list_size(node->funcdecl.impl.formals) + 3);
-	while(!list_iterator_end(iter))
-	{
+	while(!list_iterator_end(iter)) {
 		// Create parameter in symbols list
 	 	ast_t* param = list_iterator_next(iter);
 
@@ -467,25 +496,20 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	// Body analysis
 	iter = list_iterator_create(node->funcdecl.impl.body);
 	bool hasReturn = false;
-	while(!list_iterator_end(iter))
-	{
+	while(!list_iterator_end(iter)) {
 		ast_t* sub = list_iterator_next(iter);
-		if(sub->class == AST_RETURN && !list_iterator_end(iter))
-		{
+		if(sub->class == AST_RETURN && !list_iterator_end(iter)) {
 			compiler_throw(compiler, node, "Return statement declared before end was reached");
 			break;
 		}
 
-		if(sub->class == AST_RETURN)
-		{
+		if(sub->class == AST_RETURN) {
 			hasReturn = true;
-			if(sub->returnstmt && node->funcdecl.rettype.type == DATA_VOID)
-			{
+			if(sub->returnstmt && node->funcdecl.rettype.type == DATA_VOID) {
 				compiler_throw(compiler, node, "Functions with type void do not return a value");
 				break;
 			}
-			else if(!sub->returnstmt && node->funcdecl.rettype.type != DATA_VOID)
-			{
+			else if(!sub->returnstmt && node->funcdecl.rettype.type != DATA_VOID) {
 				compiler_throw(compiler, node, "Return statement without a value");
 				break;
 			}
@@ -497,25 +521,20 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node)
 	pop_scope(compiler);
 
 	// Handle void return
-	if(node->funcdecl.rettype.type == DATA_VOID)
-	{
+	if(node->funcdecl.rettype.type == DATA_VOID) {
 		// Just return 0 if void
 		// (as needed by retvirtual / return)
 		emit_int(compiler->buffer, 0);
 		ast_t* refNode = 0;
-		if(scope_is_class(compiler->scope, AST_CLASS, &refNode))
-		{
+		if(scope_is_class(compiler->scope, AST_CLASS, &refNode)) {
 			emit_op(compiler->buffer, OP_RETVIRTUAL);
 		}
-		else
-		{
+		else {
 			emit_return(compiler->buffer);
 		}
 	}
-	else
-	{
-		if(!hasReturn)
-		{
+	else {
+		if(!hasReturn) {
 			compiler_throw(compiler, node, "Warning: Function without return statement");
 		}
 	}
