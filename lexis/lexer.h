@@ -1,10 +1,14 @@
+/**
+ * lexer.h
+ * @author Alexander Koch
+ * @desc Lexical analysis tool.
+ * Reads a string and converts its content into fragments: Tokens.
+ * Each token has a certain type with a string value.
+ * The string value may be NULL.
+ */
+
 #ifndef lexer_h
 #define lexer_h
-
-// Lexer - reads a string and converts its content
-// into text fragments: Tokens.
-// Each tokens has a certain type with a string value.
-// The string value may be NULL.
 
 #include <stddef.h>
 #include <stdio.h>
@@ -15,15 +19,13 @@
 #include <adt/bytebuffer.h>
 
 // Location in file / code location
-typedef struct
-{
+typedef struct {
     unsigned int line;
     unsigned int column;
 } location_t;
 
 // Lexer structure
-typedef struct lexer_t
-{
+typedef struct lexer_t {
     location_t location;
     const char* name;
     const char* source;
@@ -32,8 +34,7 @@ typedef struct lexer_t
     int error;
 } lexer_t;
 
-typedef enum
-{
+typedef enum {
     TOKEN_NEWLINE,
     TOKEN_SPACE,
     TOKEN_WORD,
@@ -77,8 +78,7 @@ typedef enum
     TOKEN_AT         // '@'
 } token_type_t;
 
-typedef struct
-{
+typedef struct {
     location_t location;
     token_type_t type;
     char* value;

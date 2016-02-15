@@ -1,11 +1,11 @@
 /**
- *  ast.h
- *  @author Alexander Koch
- *  @desc Abstract syntax tree (AST) representation.
+ * ast.h
+ * @author Alexander Koch
+ * @desc Abstract syntax tree (AST) representation.
  *
- *  Used for storing expressions in a tree-like structure
- *  and converting them to final bytecode by the compiler.
- *  Also the datatypes and the annotation types are defined here.
+ * Used for storing expressions in a tree-like structure
+ * and converting them to final bytecode by the compiler.
+ * Also the datatypes and the annotation types are defined here.
  */
 
 #ifndef ast_h

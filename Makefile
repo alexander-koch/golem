@@ -1,7 +1,8 @@
 # Makefile for the golem programming language
 # @Author Alexander Koch 2015
 CC := gcc
-MODULE := golem
+MODULE_RELEASE := golem
+MODULE_DEBUG := golem-debug
 INC := -I.
 
 # Linux:
@@ -54,11 +55,11 @@ FILES := main.c \
 
 # Debugging version (default)
 debug:
-	$(CC) -O2 $(CFLAGS) $(INC) $(FILES) -g -o $(MODULE)
+	$(CC) -O2 $(CFLAGS) $(INC) $(FILES) -g -o $(MODULE_DEBUG)
 
 # Final release version
 release:
-	$(CC) -O3 -fno-gcse -fno-crossjumping $(CFLAGS) -DNO_IR -DNO_MEMINFO -DNO_AST $(INC) $(FILES) -o $(MODULE)
+	$(CC) -O3 -fno-gcse -fno-crossjumping $(CFLAGS) -DNO_IR -DNO_MEMINFO -DNO_AST $(INC) $(FILES) -o $(MODULE_RELEASE)
 
 # Graphviz *.dot to *.svg
 dot:
