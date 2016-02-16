@@ -1537,9 +1537,103 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 	return datatype_new(DATA_NULL);
 }
 
+// TODO: Improve this
+bool is_ident(char* str) {
+	for(int i = 0; i < strlen(str); i++) {
+		if(!isalpha(str[i])) return false;
+	}
+
+	return true;
+}
+
+// Helper function
+bool append_interpolated(compiler_t* compiler, char* buffer) {
+	if(!is_ident(buffer)) {
+		printf(":%s: Cannot interpolate string, aborting.\n", buffer);
+		return false;
+	}
+
+	symbol_t* symbol = symbol_get(compiler->scope, buffer);
+	if(!symbol) {
+		printf("Symbol does not exist!\n");
+		return false;
+	}
+
+	eval_ident(compiler, symbol->node);
+	emit_op(compiler->buffer, OP_TOSTR);
+	emit_op(compiler->buffer, OP_APPEND);
+	return true;
+}
+
+void interpolate_string(compiler_t* compiler, char* str) {
+	char content[96];
+	char buffer[32];
+	int bp = 0;
+
+	char* c = str;
+	char* start = c;
+	bool reading_ident = false;
+	bool string_on_stack = false;
+
+	while(*c != '\0') {
+
+		// Identifier found!
+		if(*c == '$') {
+			reading_ident = true;
+
+			// Clear and set buffer
+			memset(content, 0, 96 * sizeof(char));
+			memcpy(content, start, c-start);
+
+			emit_string(compiler->buffer, content);
+			c++;
+			continue;
+		}
+
+		// Ending subspected?
+		if(isspace(*c) && reading_ident == 1) {
+			buffer[bp] = '\0';
+			append_interpolated(compiler, buffer);
+
+			if(string_on_stack) {
+				emit_op(compiler->buffer, OP_APPEND);
+			}
+
+			reading_ident = false;
+			string_on_stack = true;
+			bp = 0;
+			start = c;
+		}
+
+		// Still reading?
+		if(reading_ident) {
+			buffer[bp++] = *c;
+		}
+
+		c++;
+	}
+
+	// Final check (if ended on NULL-Terminator)
+	if(reading_ident == 1) {
+		buffer[bp] = '\0';
+		append_interpolated(compiler, buffer);
+
+		if(string_on_stack) {
+			emit_op(compiler->buffer, OP_APPEND);
+		}
+	}
+}
+
 datatype_t eval_string(compiler_t* compiler, ast_t* node)
 {
-	emit_string(compiler->buffer, node->string);
+	char* str = node->string;
+	if(strchr(str, '$')) {
+		interpolate_string(compiler, str);
+	}
+	else {
+		emit_string(compiler->buffer, str);
+	}
+
 	return datatype_new(DATA_STRING);
 }
 

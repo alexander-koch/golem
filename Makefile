@@ -1,8 +1,8 @@
 # Makefile for the golem programming language
 # @Author Alexander Koch 2015
 CC := gcc
-MODULE_RELEASE := golem
-MODULE_DEBUG := golem-debug
+MODULE_RELEASE := golem3
+MODULE_DEBUG := golem3
 INC := -I.
 
 # Linux:
