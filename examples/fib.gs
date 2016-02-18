@@ -15,4 +15,5 @@ while i < 5 {
 	println(fib(28))
 	i := i + 1
 }
-println("Elapsed: ".append((clock() - t0).to_str()))
+let elapsed = clock() - t0
+println("Elapsed: $elapsed")
