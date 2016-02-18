@@ -1559,9 +1559,19 @@ bool append_interpolated(compiler_t* compiler, char* buffer) {
 		return false;
 	}
 
-	eval_ident(compiler, symbol->node);
-	emit_op(compiler->buffer, OP_TOSTR);
-	emit_op(compiler->buffer, OP_APPEND);
+	// Do operation based on datatype
+	datatype_t dt = eval_ident(compiler, symbol->node);
+	if(dt.type == DATA_STRING) {
+		emit_op(compiler->buffer, OP_APPEND);
+	}
+	else if(dt.type == DATA_CHAR) {
+		emit_op(compiler->buffer, OP_CONS);
+	}
+	else {
+		emit_op(compiler->buffer, OP_TOSTR);
+		emit_op(compiler->buffer, OP_APPEND);
+	}
+
 	return true;
 }
 
@@ -1591,7 +1601,7 @@ void interpolate_string(compiler_t* compiler, char* str) {
 		}
 
 		// Ending subspected?
-		if(isspace(*c) && reading_ident == 1) {
+		if(!isalpha(*c) && reading_ident == 1) {
 			buffer[bp] = '\0';
 			append_interpolated(compiler, buffer);
 
@@ -1619,6 +1629,16 @@ void interpolate_string(compiler_t* compiler, char* str) {
 		append_interpolated(compiler, buffer);
 
 		if(string_on_stack) {
+			emit_op(compiler->buffer, OP_APPEND);
+		}
+	}
+	else {
+		// Check if there is any string left
+		if(start != c) {
+			memset(content, 0, 96 * sizeof(char));
+			memcpy(content, start, c-start);
+
+			emit_string(compiler->buffer, content);
 			emit_op(compiler->buffer, OP_APPEND);
 		}
 	}
