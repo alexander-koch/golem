@@ -5,7 +5,7 @@ Golem is a statically typed, object-oriented programming language.
 # Features
 
 - Easily readable and learnable, because of familiar syntax
-- **Normal** Object-oriented features (classes, method calls, etc.)
+- **Normal** object-oriented features (classes, method calls, etc.)
 - Immutablitiy of everything by default
 - Explicit mutable declaration
 - Statically, strong-typed
@@ -17,21 +17,22 @@ Golem is a statically typed, object-oriented programming language.
 # Installing
 
 Golem is written in C99, and has been tested to run on Linux and Windows.
-It uses 64-bit NaN-Tagging to store its values, so it might not run on 32-bit systems.
 To build it, a Makefile is used, just type
 
 	$ make release
+	$ golem your/file/here.gs
 
 to build the release version. If you are a developer and you want to improve Golem,
 you can use the debug version, which prints out the abstract syntax tree, the bytecode and additional information.
 
 	$ make debug
+	§ golem-debug your/file/here.gs
 
 More features for the debug-version can be enabled/disabled in the Makefile.
 
 # TODO
 
-#### Main tasks (Sorted by importance / Flagged by difficulty)
+#### Main tasks
 
 ##### Serious issues
 
@@ -40,12 +41,11 @@ More features for the debug-version can be enabled/disabled in the Makefile.
 ##### Tasks
 
 - [ ] (Advanced) Standard libraries and external classes, DLL loading => (Working on it.)
-- [ ] (Advanced) Array index out of bounds exceptions (handled by the compiler) => (Working on it.)
 - [ ] (Advanced) Bytecode optimizations (class optimizer -> remove unused code and functions!) => (Working on it.)
 - [ ] (Advanced) Replace instruction_t vector by array of type val_t for faster processing => (Task.)
 - [ ] (Intermediate) Do for loops => (Task)
-- [ ] (Intermediate) Implement switch statements => (Task)
 - [ ] (Intermediate) Do namespaces => (Task)
+- [ ] (Intermediate) Implement switch statements => (Task)
 
 ##### Done
 
@@ -102,7 +102,8 @@ The following types can be used:
 	char -> "a", "b", "c", "d", "e", "f"
 	bool -> "true", "false"
 
-With classes you can also use custom types and arrays are also permitted.
+With classes you can also use custom types.
+Arrays are also permitted.
 
 ### Arrays
 
@@ -142,8 +143,8 @@ This would create an empty, mutable integer-array.
 ### Functions
 
 Functions are declared using the 'func' keyword.
-After that you have to declare the parameters with their type and finally a return type using the 'arrow' notation. For code blocks
-the 'egyptian'-style brackets are used.
+After that you have to declare the parameters with their type and finally a return type using the 'arrow' notation.
+For code blocks the 'egyptian'-style brackets are used.
 For void functions, you don't have to use the arrow, it is optional.
 
 ```rust
@@ -169,7 +170,7 @@ main("Foo", 42, 3.14)
 Classes are defined using the structure below.
 All attributes are private.
 To index or set a field, getters and setters are used, to maintain encapsulation.
-The Class declaration is also the class's constructor to prevent NULL-values for initialization.
+The class declaration is also the class's constructor to prevent NULL-values during initialization.
 
 ```go
 	using core
@@ -221,7 +222,7 @@ While loops:
 
 
 For future implementations, for loops should also be an option, but they are currently not implemented.
-For loops:
+For loops (Ideas):
 ```ruby
 	for |iter| in [1...5] {
 	print(iter)
@@ -229,6 +230,10 @@ For loops:
 
 for |i| = 0; 1 < 5; i := i + 1 {
 	print(i)
+}
+
+for(condition) {
+	print("Condition is still true")
 }
 
 ```
@@ -339,6 +344,7 @@ class[getX]()
 - annotations
 - relatively fast bytecode vm
 - compiler error reports
+- string interpolation
 
 # Useful stuff / internet ressources
 
