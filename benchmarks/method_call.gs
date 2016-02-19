@@ -31,7 +31,8 @@ func main() {
 	} else {
 		println("false")
 	}
-	println("Elapsed: ".append((clock() - t0).to_str()))
+	let elapsed = clock() - t0
+	println("Elapsed: $elapsed")
 }
 
 main()
