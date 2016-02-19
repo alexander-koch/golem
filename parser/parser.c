@@ -579,11 +579,14 @@ ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec) {
     return 0;
 }
 
-// Parses one expression
-// EBNF:
-// expr = expr_primary, {op, expr_primary};
-ast_t* parse_expression(parser_t* parser)
-{
+/**
+ * parse_expression:
+ * Parses one expression.
+ *
+ * EBNF:
+ * expr = expr_primary, {op, expr_primary};
+ */
+ast_t* parse_expression(parser_t* parser) {
     ast_t* lhs = parse_expression_primary(parser);
     if(!lhs) return lhs;
 
@@ -595,17 +598,18 @@ ast_t* parse_expression(parser_t* parser)
     return lhs;
 }
 
-// Parser.parseDatatype()
-// Reads a datatype.
-// EBNF:
-// object = string;
-// basicType = "int" | "float" | "char" | "bool" | "void" | object;
-// datatype = basicType, ["[]"];
-datatype_t parse_datatype(parser_t* parser)
-{
+/**
+ * parse_datatype:
+ * Reads a datatype.
+ *
+ * EBNF:
+ * object = string;
+ * basicType = "int" | "float" | "char" | "bool" | "void" | object;
+ * datatype = basicType, ["[]"];
+ */
+datatype_t parse_datatype(parser_t* parser) {
     token_t* typestr = accept_token_type(parser, TOKEN_WORD);
-    if(!typestr)
-    {
+    if(!typestr) {
         parser_throw(parser, "Type must be an identifier, invalid");
         return datatype_new(DATA_NULL);
     }
@@ -652,14 +656,16 @@ datatype_t parse_datatype(parser_t* parser)
     return type;
 }
 
-// Parser.parseFormals()
-// The function parses the paramters of a function.
-// Every parameter is stored in a variable declaration AST
-// and returned in a list.
-// ---------------
-// EBNF:
-// formal = ["mut"], ident, ":", datatype;
-// formal_list = "(", [formal, {",", formal}], ")";
+/**
+ * parse_formals:
+ * The function parses the paramters of a function.
+ * Every parameter is stored in a variable declaration AST
+ * and returned in a list.
+ *
+ * EBNF:
+ * formal = ["mut"], ident, ":", datatype;
+ * formal_list = "(", [formal, {",", formal}], ")";
+ */
 list_t* parse_formals(parser_t* parser) {
     list_t* formals = list_new();
     while(!match_type(parser, TOKEN_RPAREN)) {
@@ -706,11 +712,14 @@ list_t* parse_formals(parser_t* parser) {
     return formals;
 }
 
-// Parser.parseBlock()
-// Parses a block until a closing brace is reached.
-// Every statement is returned in a list.
-// EBNF:
-// block = "{", NEWLINE, {stmt}, "}", newline
+/**
+ * parse_block:
+ * Parses a block until a closing brace is reached.
+ * Every statement is returned in a list.
+ *
+ * EBNF:
+ * block = "{", newline, {stmt}, "}", newline.
+ */
 list_t* parse_block(parser_t* parser) {
     list_t* statements = list_new();
     if(!match_type(parser, TOKEN_LBRACE)) {
@@ -752,9 +761,8 @@ list_t* parse_block(parser_t* parser) {
 }
 
 // Newline testing, throws error if there is none
-// Newline ::= '\r\n' / '\n'
-void test_newline(parser_t* parser)
-{
+// Newline = '\r\n' | '\n';
+void test_newline(parser_t* parser) {
     if(!parser->error) {
         if(!match_type(parser, TOKEN_NEWLINE)) {
             parser_throw(parser, "Invalid statement (Newline missing?)");
@@ -765,20 +773,23 @@ void test_newline(parser_t* parser)
     }
 }
 
-// Parser.parseStatement()
-// Every statement is followed by a newline
-// ---------------
-// EBNF:
-// newline = "\n" | "\r\n";
-// stmt = (import | variable | function | if | while | class | return | annotation | expr), newline;
+/**
+ * parse_stmt:
+ * Parses a statement.
+ * Every statement is followed / ended by a newline.
+ *
+ * EBNF:
+ * newline = "\n" | "\r\n";
+ * stmt = (import | variable | function | if | while | class | return | annotation | expr), newline;
+ */
 ast_t* parse_stmt(parser_t* parser) {
     location_t pos = get_location(parser);
-    static const struct
-    {
+
+    // Look-up-table
+    static const struct {
         const char* token;
         ast_t* (*fn)(parser_t*, location_t);
-    } parsers[] =
-    {
+    } parsers[] = {
         {KEYWORD_IMPORT, parse_import_declaration},
         {KEYWORD_DECLARATION, parse_var_declaration},
         {KEYWORD_FUNCTION, parse_fn_declaration},
@@ -826,8 +837,7 @@ ast_t* parse_stmt(parser_t* parser) {
 // Main parsing function
 //////------------------
 
-ast_t* parser_run(parser_t* parser, const char* content)
-{
+ast_t* parser_run(parser_t* parser, const char* content) {
     parser->buffer = lexer_scan(parser->name, content, &parser->num_tokens);
     if(!parser->buffer) return 0;
 
@@ -866,12 +876,14 @@ extern int core_gen_signatures(list_t* list);
 extern int math_gen_signatures(list_t* list);
 extern int io_gen_signatures(list_t* list);
 
-// Parser.parseImportDeclaration()
-// Parses an import statement and handles internal libraries.
-// EBNF:
-// import = KEYWORD_IMPORT, (ident | string), newline;
-ast_t* parse_import_declaration(parser_t* parser, location_t loc)
-{
+/**
+ * parse_import:
+ * Parses an import statement and handles internal libraries.
+ *
+ * EBNF:
+ * import = KEYWORD_IMPORT, (ident | string), newline;
+ */
+ast_t* parse_import_declaration(parser_t* parser, location_t loc) {
     ast_t* node = ast_class_create(AST_IMPORT, loc);
     parser->cursor++; // import keyword
 
@@ -901,22 +913,25 @@ ast_t* parse_import_declaration(parser_t* parser, location_t loc)
     return node;
 }
 
-// Parser.parseVarDeclaration
-// Parses a variable declaration, returns AST of class 'AST_DECLVAR'.
-// EBNF:
-// vardecl = "let", ["mut"], ident, "=", expr, newline;
-ast_t* parse_var_declaration(parser_t* parser, location_t loc)
-{
-    // let x = expr \n
+/**
+ * parse_var_declaration:
+ * Parses a variable declaration, returns AST of class 'AST_DECLVAR'.
+ *
+ * EBNF:
+ * vardecl = "let", ["mut"], ident, "=", expr, newline;
+ */
+ast_t* parse_var_declaration(parser_t* parser, location_t loc) {
     ast_t* node = ast_class_create(AST_DECLVAR, loc);
     parser->cursor++; // let keyword
 
+    // Test for the 'mutable'-keyword
     bool mutate = false;
     if(match_string(parser, KEYWORD_MUTATE)) {
         parser->cursor++;
         mutate = true;
     }
 
+    // ident, '='
     token_t* ident = accept_token_type(parser, TOKEN_WORD);
     token_t* eq = accept_token_type(parser, TOKEN_EQUAL);
 
@@ -929,7 +944,8 @@ ast_t* parse_var_declaration(parser_t* parser, location_t loc)
         if(!node->vardecl.initializer) {
             parser_throw(parser, "Invalid or missing variable initializer");
         }
-    } else {
+    }
+    else {
         parser_throw(parser, "Malformed variable declaration");
         node->class = AST_NULL;
     }
@@ -937,19 +953,19 @@ ast_t* parse_var_declaration(parser_t* parser, location_t loc)
     return node;
 }
 
-// Parser.parseFnDeclaration()
-// Parses a function declaration.
-// If there is no arrow with a datatype, the function is of type void.
-//
-// EBNF:
-// Function = "func", TOKEN_WORD, Formals, (("->", Datatype, Block) | Block), Newline;
-ast_t* parse_fn_declaration(parser_t* parser, location_t loc)
-{
-    // func name(params) -> datatype { \n
-    // lambda (params) -> int { \n
+/**
+ * parse_fn_declaration:
+ * Parses a function declaration.
+ * If there is no arrow with a datatype, the function is of type void.
+ *
+ * EBNF:
+ * Function = "func", TOKEN_WORD, Formals, (("->", Datatype, Block) | Block), Newline;
+ */
+ast_t* parse_fn_declaration(parser_t* parser, location_t loc) {
     ast_t* node = ast_class_create(AST_DECLFUNC, loc);
     parser->cursor++; // function keyword
 
+    // TOKEN_WORD, '('
     token_t* ident = accept_token_type(parser, TOKEN_WORD);
     token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
 
@@ -981,29 +997,34 @@ ast_t* parse_fn_declaration(parser_t* parser, location_t loc)
     return node;
 }
 
-// Parser.parseIfDelcaration()
-// Parses an if-statment-chain, consisting of if, else-if and else statements.
-// EBNF:
-// else = "else", block;
-// else if = "else", "if", expr, block;
-// if = "if", expr, block, {elseif}, [else];
-// -----
-// Example:
-// if cond1 {
-//     do1()
-// } else if cond2 {
-//     do2()
-// } else {
-//     do3()
-// }
-ast_t* parse_if_declaration(parser_t* parser, location_t loc)
-{
-    // if expr { \n
+/**
+ * parse_if_declaration:
+ * Parses an if-statment-chain, consisting of:
+ * an if-statement, optionally multiple else-if-statements
+ * and optionally one else statement.
+ *
+ * EBNF:
+ * else = "else", block;
+ * else if = "else", "if", expr, block;
+ * if = "if", expr, block, {elseif}, [else];
+ *
+ * Example:
+ * if cond1 {
+ *     do1()
+ * } else if cond2 {
+ *     do2()
+ * } else {
+ *     do3()
+ * }
+ */
+ast_t* parse_if_declaration(parser_t* parser, location_t loc) {
     ast_t* node = ast_class_create(AST_IF, loc);
     node->ifstmt = list_new();
 
     // if (if / else if) do
-    while(match_string(parser, KEYWORD_IF) || (match_string(parser, KEYWORD_ELSE) && match_next(parser, KEYWORD_IF)))
+    while(match_string(parser, KEYWORD_IF)
+        || (match_string(parser, KEYWORD_ELSE)
+        && match_next(parser, KEYWORD_IF)))
     {
         // create a subclause and skip tokens
         ast_t* clause = ast_class_create(AST_IFCLAUSE, get_location(parser));
@@ -1022,17 +1043,14 @@ ast_t* parse_if_declaration(parser_t* parser, location_t loc)
         list_push(node->ifstmt, clause);
     }
 
-    if(match_string(parser, KEYWORD_ELSE))
-    {
+    if(match_string(parser, KEYWORD_ELSE)) {
         ast_t* clause = ast_class_create(AST_IFCLAUSE, get_location(parser));
         token_t* elsetok = accept_token_string(parser, KEYWORD_ELSE);
-        if(elsetok)
-        {
+        if(elsetok) {
             clause->ifclause.cond = 0;
             clause->ifclause.body = parse_block(parser);
         }
-        else
-        {
+        else {
             parser_throw(parser, "Else statement without else keyword");
             free(clause);
             return node;
@@ -1044,12 +1062,14 @@ ast_t* parse_if_declaration(parser_t* parser, location_t loc)
     return node;
 }
 
-// Parser.parseWhileDeclaration()
-// Builds an ast for a while loop
-// EBNF:
-// while_loop = "while", expr, block;
-ast_t* parse_while_declaration(parser_t* parser, location_t loc)
-{
+/**
+ * parse_while_declaration:
+ * Builds an ast for a while loop.
+ *
+ * EBNF:
+ * while_loop = "while", expr, block;
+ */
+ast_t* parse_while_declaration(parser_t* parser, location_t loc) {
     // while expr { \n
     ast_t* node = ast_class_create(AST_WHILE, loc);
     parser->cursor++; // while keyword
@@ -1059,11 +1079,14 @@ ast_t* parse_while_declaration(parser_t* parser, location_t loc)
     return node;
 }
 
-// Parses a class declaration.
-// EBNF:
-// class = "class", ident, formal_list, block
-ast_t* parse_class_declaration(parser_t* parser, location_t loc)
-{
+/**
+ * parse_class_declaration:
+ * Parses a class declaration.
+ *
+ * EBNF:
+ * class = "class", ident, formal_list, block;
+ */
+ast_t* parse_class_declaration(parser_t* parser, location_t loc) {
     // class expr(constructor) { \n
     ast_t* node = ast_class_create(AST_CLASS, loc);
     parser->cursor++;
@@ -1083,12 +1106,14 @@ ast_t* parse_class_declaration(parser_t* parser, location_t loc)
     return node;
 }
 
-// Parser.parseReturnDeclaration()
-// Parses the return statement.
-// EBNF:
-// return = "return", [expr], newline;
-ast_t* parse_return_declaration(parser_t* parser, location_t loc)
-{
+/**
+ * parse_return_declaration:
+ * Parses a return statement.
+ *
+ * EBNF:
+ * return = "return", [expr], newline;
+ */
+ast_t* parse_return_declaration(parser_t* parser, location_t loc) {
     ast_t* node = ast_class_create(AST_RETURN, loc);
     parser->cursor++;
 
@@ -1101,9 +1126,14 @@ ast_t* parse_return_declaration(parser_t* parser, location_t loc)
     return node;
 }
 
-// Annotation = "@", ("Getter" | "Setter" | "Unused"), Newline;
-ast_t* parse_annotation_declaration(parser_t* parser, location_t loc)
-{
+/**
+ * parse_annotation_declaration:
+ * Parses an annotation.
+ *
+ * EBNF:
+ * Annotation = "@", ("Getter" | "Setter" | "Unused"), Newline;
+ */
+ast_t* parse_annotation_declaration(parser_t* parser, location_t loc) {
     ast_t* node = ast_class_create(AST_ANNOTATION, loc);
     token_t* keyword = accept_token_type(parser, TOKEN_AT);
     token_t* content = accept_token_type(parser, TOKEN_WORD);

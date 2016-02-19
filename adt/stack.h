@@ -3,8 +3,7 @@
 
 #include <core/mem.h>
 
-typedef struct stack_t
-{
+typedef struct stack_t {
 	void** content;
 	int size;
 	int top;

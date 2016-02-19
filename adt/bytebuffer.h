@@ -4,8 +4,7 @@
 #include <stdint.h>
 #include <core/mem.h>
 
-typedef struct
-{
+typedef struct {
 	uint8_t* data;
 	int count;
 	int capacity;

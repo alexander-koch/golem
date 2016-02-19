@@ -1,7 +1,7 @@
 /**
- *  vector.h
- *	@author Alexander Koch
- * 	@desc Vector implementation
+ * vector.h
+ * @author Alexander Koch
+ * @desc Vector implementation
  */
 
 #ifndef vector_h
@@ -14,8 +14,7 @@
 
 #define VECTOR_CAPACITY 15
 
-typedef struct vector_t
-{
+typedef struct vector_t {
 	void** data;
 	size_t capacity;
 	size_t size;

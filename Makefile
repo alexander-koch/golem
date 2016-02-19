@@ -64,7 +64,3 @@ release:
 # Graphviz *.dot to *.svg
 dot:
 	dot -Tsvg -o ast.svg ast.dot
-
-# git undo (in case of emergency)
-gitUndo:
-	git reset --soft HEAD~1

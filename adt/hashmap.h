@@ -1,7 +1,7 @@
 /**
- *  hashmap.h
- *	@author Alexander Koch
- * 	@desc Hashmap implementation
+ * hashmap.h
+ * @author Alexander Koch
+ * @desc Hashmap implementation
  */
 
 #ifndef hashmap_h
@@ -12,6 +12,7 @@
 #include <string.h>
 #include <core/mem.h>
 
+// Tags for return codes
 #define HMAP_MISSING -3
 #define HMAP_FULL -2
 #define HMAP_MEM -1
@@ -19,15 +20,13 @@
 
 typedef int (*HashForeachFunc)(void* data, void* arg);
 
-typedef struct bucket_t
-{
+typedef struct bucket_t {
 	char* key;
 	bool use;
 	void* data;
 } bucket_t;
 
-typedef struct hashmap_t
-{
+typedef struct hashmap_t {
 	size_t table_size;
 	size_t size;
 	bucket_t* data;
@@ -41,8 +40,8 @@ int hashmap_foreach(hashmap_t* hashmap, HashForeachFunc func, void* arg);
 size_t hashmap_length(hashmap_t* hashmap);
 void hashmap_free(hashmap_t* hashmap);
 
-typedef struct hashmap_iterator_t
-{
+// Hashmap iteration
+typedef struct hashmap_iterator_t {
 	hashmap_t* hmap;
 	size_t idx;
 } hashmap_iterator_t;

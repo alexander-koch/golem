@@ -5,14 +5,12 @@
 #include <assert.h>
 #include <core/mem.h>
 
-typedef struct queue_node_t
-{
+typedef struct queue_node_t {
 	struct queue_node_t* next;
 	void* val;
 } queue_node_t;
 
-typedef struct
-{
+typedef struct {
 	size_t size;
 	queue_node_t* head;
 	queue_node_t* tail;
