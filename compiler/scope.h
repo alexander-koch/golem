@@ -1,18 +1,28 @@
+/**
+ * scope.h
+ * @author Alexander Koch
+ * @desc Scope definition and helper functions.
+ * Used to store symbols and bind variables to a certain lifetime.
+ */
+
 #ifndef scope_h
 #define scope_h
 
 #include <parser/ast.h>
 #include <adt/hashmap.h>
 
-// Symbol is a certain info for the compiler,
-// can be a function, variable, class, etc.
-// everything that has to be identified.
-// variable => immutable / mutable + name + type
-// function => name + returntype
-// class    => name + functions + variables
-
-typedef struct symbol_t
-{
+/**
+ * A symbol is an info for the compiler.
+ * It can be a function, a variable, a class, etc.
+ * Based on the symbol the compiler can reload it at any time
+ * and check it's definition.
+ *
+ * Examples:
+ * Variable => immutable / mutable + name + type
+ * Function => name + returntype
+ * Class    => name + functions + attributes / variables
+ */
+typedef struct symbol_t {
 	ast_t* node;
 	int address;
 	datatype_t type;
@@ -23,8 +33,7 @@ typedef struct symbol_t
 } symbol_t;
 
 // Scope: contains symbols
-typedef struct scope_t
-{
+typedef struct scope_t {
 	ast_t* node;
 	hashmap_t* symbols;
 	hashmap_t* classes;

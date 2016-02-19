@@ -1,11 +1,13 @@
 #include "compiler.h"
 
-// Compiler.throw(node, message)
-// If an error occurs, this function can be used as an exception.
-// It halts the compilation, and prints an error message to the console.
-// The parameter node is needed to get the location in the source-code that is wrong.
-void compiler_throw(compiler_t* compiler, ast_t* node, const char* format, ...)
-{
+/**
+ * compiler_throw:
+ * If an error occurs, this function can be used as an exception.
+ * It halts the compilation and prints an error message to the console.
+ * The parameter @node is needed to print the location in the source code that
+ * contains the error.
+ */
+void compiler_throw(compiler_t* compiler, ast_t* node, const char* format, ...) {
 	compiler->error = true;
     location_t loc = node->location;
     printf("%s:%d:%d (Semantic): ", compiler->parser->name, loc.line, loc.column);
@@ -16,23 +18,21 @@ void compiler_throw(compiler_t* compiler, ast_t* node, const char* format, ...)
     putchar('\n');
 }
 
-// Compiler.dump(node)
-// 'Dumps' the node to the console.
-// Just a printing function for abstract syntax trees
-void compiler_dump(ast_t* node, int level)
-{
+/**
+ * compiler_dump:
+ * 'Dumps' the node to the console.
+ * Prints the abstract syntax tree.
+ */
+void compiler_dump(ast_t* node, int level) {
 	if(!node) return;
 
 	if(level > 0) printf("  ");
 	for(int i = 0; i < level; i++) putchar('#');
 
-	switch(node->class)
-	{
-		case AST_TOPLEVEL:
-		{
+	switch(node->class) {
+		case AST_TOPLEVEL: {
 			list_iterator_t* iter = list_iterator_create(node->toplevel);
-			while(!list_iterator_end(iter))
-			{
+			while(!list_iterator_end(iter)) {
 				ast_t* next = list_iterator_next(iter);
 				compiler_dump(next, level+1);
 				putchar('\n');
@@ -40,30 +40,25 @@ void compiler_dump(ast_t* node, int level)
 			list_iterator_free(iter);
 			break;
 		}
-		case AST_ANNOTATION:
-		{
+		case AST_ANNOTATION: {
 			printf(":annotation<%d>", (int)node->annotation);
 			break;
 		}
-		case AST_DECLVAR:
-		{
+		case AST_DECLVAR: {
 			printf(":decl %s->%s<", node->vardecl.name, datatype2str(node->vardecl.type));
 			compiler_dump(node->vardecl.initializer, 0);
 			putchar('>');
 			break;
 		}
-		case AST_DECLFUNC:
-		{
+		case AST_DECLFUNC: {
 			printf(":func<%s::(", node->funcdecl.name);
 
 			list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.formals);
-			while(!list_iterator_end(iter))
-			{
+			while(!list_iterator_end(iter)) {
 				ast_t* param = list_iterator_next(iter);
 				printf("%s: %s->%lu", param->vardecl.name, datatype2str(param->vardecl.type), param->vardecl.type.id);
 
-				if(!list_iterator_end(iter))
-				{
+				if(!list_iterator_end(iter)) {
 					printf(", ");
 				}
 			}
@@ -71,8 +66,7 @@ void compiler_dump(ast_t* node, int level)
 
 			list_iterator_free(iter);
 			iter = list_iterator_create(node->funcdecl.impl.body);
-			while(!list_iterator_end(iter))
-			{
+			while(!list_iterator_end(iter)) {
 				ast_t* next = list_iterator_next(iter);
 				compiler_dump(next, level+1);
 				putchar('\n');
@@ -80,53 +74,44 @@ void compiler_dump(ast_t* node, int level)
 			list_iterator_free(iter);
 			break;
 		}
-		case AST_IDENT:
-		{
+		case AST_IDENT: {
 			printf(":ident = %s", node->ident);
 			break;
 		}
-		case AST_FLOAT:
-		{
+		case AST_FLOAT: {
 			printf(":num = %f", node->f);
 			break;
 		}
-		case AST_INT:
-		{
+		case AST_INT: {
 			printf(":num = %d", node->i);
 			break;
 		}
-		case AST_STRING:
-		{
+		case AST_STRING: {
 			printf(":str = '%s'", node->string);
 			break;
 		}
-		case AST_CHAR:
-		{
+		case AST_CHAR: {
 			printf(":char = '%c'", node->ch);
 			break;
 		}
-		case AST_BOOL:
-		{
+		case AST_BOOL: {
 			printf(":bool = '%s'", node->b == true ? "true" : "false");
 			break;
 		}
-		case AST_BINARY:
-		{
+		case AST_BINARY: {
 			printf(":bin<");
 			compiler_dump(node->binary.left, 0);
 			compiler_dump(node->binary.right, 0);
 			printf(":op = %s>", tok2str(node->binary.op));
 			break;
 		}
-		case AST_UNARY:
-		{
+		case AST_UNARY: {
 			printf(":unary<%s, ", tok2str(node->unary.op));
 			compiler_dump(node->unary.expr, 0);
 			putchar('>');
 			break;
 		}
-		case AST_SUBSCRIPT:
-		{
+		case AST_SUBSCRIPT: {
 			printf(":subscript<(key)");
 			compiler_dump(node->subscript.key, 0);
 			printf("; (expr)");
@@ -134,12 +119,10 @@ void compiler_dump(ast_t* node, int level)
 			putchar('>');
 			break;
 		}
-		case AST_IF:
-		{
+		case AST_IF: {
 			printf(":if<>\n");
 			list_iterator_t* iter = list_iterator_create(node->ifstmt);
-			while(!list_iterator_end(iter))
-			{
+			while(!list_iterator_end(iter)) {
 				ast_t* next = list_iterator_next(iter);
 				compiler_dump(next, level+1);
 				putchar('\n');
@@ -147,25 +130,20 @@ void compiler_dump(ast_t* node, int level)
 			list_iterator_free(iter);
 			break;
 		}
-		case AST_IFCLAUSE:
-		{
-			if(node->ifclause.cond != 0)
-			{
+		case AST_IFCLAUSE: {
+			if(node->ifclause.cond != 0) {
 				printf(":ifclause<");
 				compiler_dump(node->ifclause.cond, 0);
 				putchar('>');
 			}
-			else
-			{
+			else {
 				printf(":else<>");
 			}
 
-			if(list_size(node->ifclause.body) > 0)
-			{
+			if(list_size(node->ifclause.body) > 0) {
 				putchar('\n');
 				list_iterator_t* iter = list_iterator_create(node->ifclause.body);
-				while(!list_iterator_end(iter))
-				{
+				while(!list_iterator_end(iter)) {
 					ast_t* next = list_iterator_next(iter);
 					compiler_dump(next, level+1);
 					putchar('\n');
@@ -174,15 +152,13 @@ void compiler_dump(ast_t* node, int level)
 			}
 			break;
 		}
-		case AST_WHILE:
-		{
+		case AST_WHILE: {
 			printf(":while<");
 			compiler_dump(node->whilestmt.cond, 0);
 			printf(">\n");
 
 			list_iterator_t* iter = list_iterator_create(node->whilestmt.body);
-			while(!list_iterator_end(iter))
-			{
+			while(!list_iterator_end(iter)) {
 				ast_t* next = list_iterator_next(iter);
 				compiler_dump(next, level+1);
 				putchar('\n');
@@ -190,31 +166,26 @@ void compiler_dump(ast_t* node, int level)
 			list_iterator_free(iter);
 			break;
 		}
-		case AST_IMPORT:
-		{
+		case AST_IMPORT: {
 			printf(":import<%s>", node->import);
 			break;
 		}
-		case AST_ARRAY:
-		{
+		case AST_ARRAY: {
 			printf(":array<");
-
 			list_iterator_t* iter = list_iterator_create(node->array.elements);
-			while(!list_iterator_end(iter))
-			{
+
+			while(!list_iterator_end(iter)) {
 				compiler_dump(list_iterator_next(iter), 0);
 			}
 			list_iterator_free(iter);
 			putchar('>');
 			break;
 		}
-		case AST_CLASS:
-		{
+		case AST_CLASS: {
 			printf(":class<%s->%lu>\n", node->classstmt.name, djb2((unsigned char*)node->classstmt.name));
 
 			list_iterator_t* iter = list_iterator_create(node->classstmt.formals);
-			while(!list_iterator_end(iter))
-			{
+			while(!list_iterator_end(iter)) {
 				ast_t* next = list_iterator_next(iter);
 				compiler_dump(next, level+1);
 				putchar('\n');
@@ -222,8 +193,7 @@ void compiler_dump(ast_t* node, int level)
 			list_iterator_free(iter);
 
 			iter = list_iterator_create(node->classstmt.body);
-			while(!list_iterator_end(iter))
-			{
+			while(!list_iterator_end(iter)) {
 				ast_t* next = list_iterator_next(iter);
 				compiler_dump(next, level+1);
 				putchar('\n');
@@ -231,15 +201,13 @@ void compiler_dump(ast_t* node, int level)
 			list_iterator_free(iter);
 			break;
 		}
-		case AST_RETURN:
-		{
+		case AST_RETURN: {
 			printf(":return<");
 			compiler_dump(node->returnstmt, 0);
 			putchar('>');
 			break;
 		}
-		case AST_CALL:
-		{
+		case AST_CALL: {
 			printf(":call<");
 			compiler_dump(node->call.callee, 0);
 
@@ -259,8 +227,13 @@ void compiler_dump(ast_t* node, int level)
 
 datatype_t compiler_eval(compiler_t* compiler, ast_t* node);
 
-void push_scope(compiler_t* compiler, ast_t* node)
-{
+/**
+ * push_scope:
+ * Create a new scope to work on.
+ * This will create a subscope and mounts it to the parent scope.
+ * Symbols, classes, etc. can be stored.
+ */
+void push_scope(compiler_t* compiler, ast_t* node) {
 	// Create scope
 	scope_t* scope = scope_new();
 	scope->super = compiler->scope;
@@ -275,8 +248,11 @@ void push_scope(compiler_t* compiler, ast_t* node)
 	compiler->scope->address = 0;
 }
 
-void pop_scope(compiler_t* compiler)
-{
+/**
+ * pop_scope:
+ * Move from current scope to the parent scope (super scope).
+ */
+void pop_scope(compiler_t* compiler) {
 	// Get parent scope
 	scope_t* super = compiler->scope->super;
 
@@ -285,12 +261,13 @@ void pop_scope(compiler_t* compiler)
 	compiler->depth--;
 }
 
-bool scope_is_class(scope_t* scope, ast_class_t class, ast_t** node)
-{
-	if(scope->node && scope)
-	{
-		if(scope->node->class == class)
-		{
+/**
+ * scope_is_class:
+ * Test if the current scope is within a class.
+ */
+bool scope_is_class(scope_t* scope, ast_class_t class, ast_t** node) {
+	if(scope->node && scope) {
+		if(scope->node->class == class) {
 			(*node) = scope->node;
 			return true;
 		}
@@ -546,16 +523,16 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node) {
 	return datatype_new(DATA_LAMBDA);
 }
 
-// Eval.declvar(node)
-// The function evaluates a variable declaration.
-// This registers a new symbol with the name
-// and the current available address.
-// The return value is NULL.
-datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
-{
+/**
+ * eval_declvar:
+ * The function evaluates a variable declaration.
+ * This registers a new symbol with the name
+ * and the current available address.
+ * The return value is NULL.
+ */
+datatype_t eval_declvar(compiler_t* compiler, ast_t* node) {
 	// First check the unused annotation
-	if(scope_requests(compiler->scope, ANN_UNUSED))
-	{
+	if(scope_requests(compiler->scope, ANN_UNUSED)) {
 		scope_unflag(compiler->scope);
 		return datatype_new(DATA_NULL);
 	}
@@ -567,38 +544,31 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 	datatype_t vartype = compiler_eval(compiler, node->vardecl.initializer);
 
 	// Then test for non-valid types
-	if(vartype.type == DATA_VOID)
-	{
+	if(vartype.type == DATA_VOID) {
 		compiler_throw(compiler, node, "Variable initializer is of type VOID");
 		return datatype_new(DATA_NULL);
 	}
-	else if(vartype.type == DATA_NULL)
-	{
+	else if(vartype.type == DATA_NULL) {
 		compiler_throw(compiler, node, "Variable initializer is NULL");
 		return datatype_new(DATA_NULL);
 	}
-	else if(vartype.type == DATA_LAMBDA)
-	{
+	else if(vartype.type == DATA_LAMBDA) {
 		compiler_throw(compiler, node, "Trying to assign a function to a value (Currently not supported)");
 		return datatype_new(DATA_NULL);
 	}
 
 	// Verify if within a class
-	if(compiler->scope->node)
-	{
+	if(compiler->scope->node) {
 		ast_t* nd = compiler->scope->node;
-		if(nd->class == AST_CLASS)
-		{
+		if(nd->class == AST_CLASS) {
 			// Attribute of class
 			symbol_t* class = symbol_get(compiler->scope, nd->classstmt.name);
-			if(!class)
-			{
+			if(!class) {
 				compiler_throw(compiler, node, "The attributes class is not found");
 				return datatype_new(DATA_NULL);
 			}
 
-			if(vartype.id == class->type.id)
-			{
+			if(vartype.id == class->type.id) {
 				compiler_throw(compiler, node, "Circular reference");
 				return datatype_new(DATA_NULL);
 			}
@@ -611,8 +581,7 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 	hashmap_set(compiler->scope->symbols, node->vardecl.name, symbol);
 
 	// Array secure size information
-	if((vartype.type & DATA_ARRAY) == DATA_ARRAY)
-	{
+	if((vartype.type & DATA_ARRAY) == DATA_ARRAY) {
 		// What if variable assigns to variables that points to an array?
 		// 1. variable is identifier
 		// 2. identifier points to symbol
@@ -621,8 +590,7 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 
 		// HACK:(#1) using bytecodes to set the array size
 		instruction_t* instr = vector_top(compiler->buffer);
-		if(instr->op == OP_ARR || instr->op == OP_STR)
-		{
+		if(instr->op == OP_ARR || instr->op == OP_STR) {
 			int sz = AS_INT32(instr->v1);
 			symbol->arraySize = sz;
 		}
@@ -638,14 +606,14 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node)
 	return datatype_new(DATA_NULL);
 }
 
-// Eval.number(node)
-// The function evaluates a number.
-// The number can only be of type float or integer.
-// Emits only one push instruction
-datatype_t eval_number(compiler_t* compiler, ast_t* node)
-{
-	if(node->class == AST_FLOAT)
-	{
+/**
+ * eval_number:
+ * The function evaluates a number.
+ * The number can only be of type float or integer.
+ * Emits only one push instruction
+ */
+datatype_t eval_number(compiler_t* compiler, ast_t* node) {
+	if(node->class == AST_FLOAT) {
 		emit_float(compiler->buffer, node->f);
 		return datatype_new(DATA_FLOAT);
 	}
@@ -654,8 +622,12 @@ datatype_t eval_number(compiler_t* compiler, ast_t* node)
 	return datatype_new(DATA_INT);
 }
 
-datatype_t eval_bool(compiler_t* compiler, ast_t* node)
-{
+/**
+ * eval_bool:
+ * As the name says, evaluates a boolean node.
+ * Emits a push instruction.
+ */
+datatype_t eval_bool(compiler_t* compiler, ast_t* node) {
 	emit_bool(compiler->buffer, node->b);
 	return datatype_new(DATA_BOOL);
 }

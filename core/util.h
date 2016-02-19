@@ -1,3 +1,9 @@
+/**
+ * util.h
+ * @author Alexander Koch 2016
+ * @desc Utility / helper functions.
+ */
+
 #ifndef util_h
 #define util_h
 

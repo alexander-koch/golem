@@ -1,19 +1,19 @@
 /**
- *  bytecode.h
- *  @author Alexander Koch
- *  @desc Bytecode definition for the VM.
+ * bytecode.h
+ * @author Alexander Koch
+ * @desc Bytecode definition for the VM.
  *
- *  An instruction is defined as a c-struct
- *  with one opcode and two optional val_t generic values.
- *  (See val.h / val.c for more info.)
+ * An instruction is defined as a c-struct
+ * with one opcode and two optional val_t generic values.
+ * (See val.h / val.c for more info.)
  *
- *  instruction
- *  |- op
- *  |- v0
- *  |- v1
+ * instruction
+ * |- op
+ * |- v0
+ * |- v1
  *
- *  Also the compiler-specific helper functions are defined below.
- *  For instruction lists a vector_t should be used (see adt/vector.h).
+ * Also the compiler-specific helper functions are defined below.
+ * For instruction lists a vector_t should be used (see adt/vector.h).
  */
 
 #ifndef bytecode_h
@@ -25,8 +25,7 @@
 #include <parser/ast.h>
 #include <vm/val.h>
 
-typedef enum
-{
+typedef enum {
 	// Basic stack
 	OP_HLT 					= 0x00,
 	OP_PUSH					= 0x01,
@@ -122,11 +121,8 @@ typedef enum
 	OP_GETFIELD
 } opcode_t;
 
-/**
- * Instruction definition
- */
-typedef struct
-{
+// Instruction definition
+typedef struct {
 	opcode_t op;
 	val_t v1;
 	val_t v2;

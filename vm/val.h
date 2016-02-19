@@ -1,3 +1,11 @@
+/**
+ * val.h
+ * @author Alexander Koch 2016
+ * @desc Generic value definition.
+ *
+ * NaN-Tagging to store values on IEEE 754 doubles.
+ */
+
 #ifndef val_h
 #define val_h
 
@@ -44,20 +52,17 @@ typedef uint64_t val_t;
 #define CLASS_FIELDS_SIZE 32
 
 // Class subtype
-typedef struct obj_class_t
-{
+typedef struct obj_class_t {
 	val_t fields[CLASS_FIELDS_SIZE];
 } obj_class_t;
 
-typedef struct obj_array_t
-{
+typedef struct obj_array_t {
 	val_t* data;
 	size_t len;
 } obj_array_t;
 
 // Object types
-typedef enum obj_type_t
-{
+typedef enum obj_type_t {
 	OBJ_NULL,
 	OBJ_STRING,
 	OBJ_ARRAY,
@@ -65,8 +70,7 @@ typedef enum obj_type_t
 } obj_type_t;
 
 // Object definition
-typedef struct obj_t
-{
+typedef struct obj_t {
 	obj_type_t type;
 	void* data;
 	unsigned char marked;

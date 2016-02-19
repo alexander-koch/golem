@@ -1,32 +1,25 @@
 #include "serializer.h"
 
-bool serialize_value(FILE* fp, val_t val)
-{
+bool serialize_value(FILE* fp, val_t val) {
 	uint8_t tag;
-	if(IS_NUM(val))
-	{
+	if(IS_NUM(val)) {
 		tag = TAG_NUM;
 	}
-	else if(IS_BOOL(val))
-	{
+	else if(IS_BOOL(val)) {
 		tag = TAG_BOOL;
 	}
-	else if(IS_STRING(val))
-	{
+	else if(IS_STRING(val)) {
 		tag = TAG_STR;
 	}
-	else
-	{
+	else {
 		return false;
 	}
 
 	fwrite((const void*)&tag, sizeof(uint8_t), 1, fp);
-	if(tag != TAG_STR)
-	{
+	if(tag != TAG_STR) {
 		fwrite((val_t*)&val, sizeof(val_t), 1, fp);
 	}
-	else
-	{
+	else {
 		char* str = AS_STRING(val);
 		uint32_t len = strlen(str);
 
@@ -37,8 +30,7 @@ bool serialize_value(FILE* fp, val_t val)
 	return true;
 }
 
-bool serialize_instruction(FILE* fp, instruction_t* ins)
-{
+bool serialize_instruction(FILE* fp, instruction_t* ins) {
 	bool valid = true;
 	uint8_t opcode = ins->op;
 	fwrite((const void*)&opcode, sizeof(uint8_t), 1, fp);
@@ -58,8 +50,7 @@ bool serialize_instruction(FILE* fp, instruction_t* ins)
 	return valid;
 }
 
-bool serialize(const char* filename, vector_t* buffer)
-{
+bool serialize(const char* filename, vector_t* buffer) {
 	FILE* fp = fopen(filename, "wb");
 	if(!fp) return false;
 
@@ -70,8 +61,7 @@ bool serialize(const char* filename, vector_t* buffer)
 	fwrite((const void*)&codes, sizeof(uint32_t), 1, fp);
 
 	bool valid = true;
-	for(size_t i = 0; i < vector_size(buffer); i++)
-	{
+	for(size_t i = 0; i < vector_size(buffer); i++) {
 		instruction_t* ins = vector_get(buffer, i);
 		valid &= serialize_instruction(fp, ins);
 	}
@@ -80,18 +70,19 @@ bool serialize(const char* filename, vector_t* buffer)
 	return valid;
 }
 
-val_t deserialize_value(FILE* fp)
-{
+val_t deserialize_value(FILE* fp) {
 	val_t ret = NULL_VAL;
 
+	// Read the tag
 	uint8_t tag = 0;
 	fread(&tag, sizeof(uint8_t), 1, fp);
-	if(tag != TAG_STR)
-	{
+
+	// If not string, read directly
+	if(tag != TAG_STR) {
 		fread(&ret, sizeof(val_t), 1, fp);
 	}
-	else
-	{
+	// Otherwise, read the length, then the string data
+	else {
 		uint32_t len = 0;
 		fread(&len, sizeof(uint32_t), 1, fp);
 		if(len <= 0) return ret;
@@ -104,8 +95,7 @@ val_t deserialize_value(FILE* fp)
 	return ret;
 }
 
-bool deserialize(const char* filename, vector_t** out)
-{
+bool deserialize(const char* filename, vector_t** out) {
 	FILE* fp = fopen(filename, "rb");
 	if(!fp) return false;
 
@@ -114,14 +104,13 @@ bool deserialize(const char* filename, vector_t** out)
 	fread(&magic, sizeof(uint32_t), 1, fp);
 	fread(&codes, sizeof(uint32_t), 1, fp);
 
-	if(magic != 0xACCE55)
-	{
+	if(magic != 0xACCE55) {
 		fclose(fp);
 		return false;
 	}
 
-	for(int i = 0; i < codes; i++)
-	{
+	// Read the instructions
+	for(int i = 0; i < codes; i++) {
 		instruction_t* ins = malloc(sizeof(*ins));
 		ins->v1 = NULL_VAL;
 		ins->v2 = NULL_VAL;
