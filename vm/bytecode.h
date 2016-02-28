@@ -58,18 +58,18 @@ typedef enum {
 	// Float
 	OP_FADD					= 0x16,
 	OP_FSUB					= 0x17,
-	OP_FMUL,
-	OP_FDIV,
-	OP_FMINUS,
-	OP_F2I,
+	OP_FMUL					= 0x18,
+	OP_FDIV					= 0x19,
+	OP_FMINUS				= 0x1a,
+	OP_F2I					= 0x1b,
 
 	// Boolean
-	OP_NOT,
-	OP_B2I,
+	OP_NOT					= 0x1c,
+	OP_B2I					= 0x1d,
 
 	// Special
-	OP_SYSCALL,
-	OP_INVOKE,
+	OP_SYSCALL				= 0x1e,
+	OP_INVOKE				= 0x1f,
 	OP_INVOKEVIRTUAL,
 	OP_RESERVE,
 	OP_RET,
