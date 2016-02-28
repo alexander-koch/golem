@@ -1,6 +1,22 @@
 #!/usr/bin/env python
+# @author Alexander Koch 2016
+
 import sys
 import struct
+
+# File format description (GVM)
+#
+# ---- (header)
+# uint32_t [magic	] 0xACCE55 (Access)
+# uint32_t [num_codes] number of instructions
+# ---- (instruction)
+# uint8_t  [opcode   ] operation
+# uint8_t  [args	 ] argument count
+# value*   [values   ] argument values
+# ---- (value)
+# uint8_t  [tag	  ] type tag
+# void*	[data	 ] direct read as val_t, for objects special condition
+# ----
 
 def writeValue(bytecode, arg):
 	if arg.isdigit():
@@ -9,21 +25,24 @@ def writeValue(bytecode, arg):
 
 	elif arg == "true" or arg == "false":
 		bytecode += b'\x02'
-		# TODO: append
+		bval = (arg == "true")
+		# TODO: convert to 64-bit NaN-boolean value
 	else:
 		bytecode += b'\x03'
-		# TODO: append
+		# TODO: append string data
 
 	return bytecode
 
 def main():
-	print("Opening file: "+sys.argv[1])
-
+	# Create the initial array
 	bytecode = bytearray()
 	bytecode_count = 0
+
+	# Write the header
 	bytecode += b'\x55\xCE\xAC\x00'
 	bytecode += b'\x00\x00\x00\x00'
 
+	# Begin decoding the file
 	with open(sys.argv[1],'r') as f:
 		for linenum, line in enumerate(f):
 			# Remove comments
@@ -34,22 +53,22 @@ def main():
 			if line == "":
 				continue
 
+			# Split into tokens
 			tokens = line.split(" ",1)
 			args = []
 			if len(tokens) > 1:
 				args = tokens[1].split(",")
-
-			bytecode_count = bytecode_count + 1
 
 			# Get the opcode
 			opcode = tokens[0]
 			if opcode[len(opcode)-1] == ',':
 				opcode = opcode[0:-1]
 
+			bytecode_count = bytecode_count + 1
+
 			# Format:
 			# Opcode
 			# Args
-
 			if opcode == "hlt":
 				bytecode += b'\x00'
 				bytecode += b'\x00'
@@ -95,6 +114,14 @@ def main():
 				bytecode += b'\x09'
 				bytecode += b'\x00'
 
+			elif opcode == "isub":
+				bytecode += b'\x0a'
+				bytecode += b'\x00'
+
+			elif opcode == "imul":
+				bytecode += b'\x0b'
+				bytecode += b'\x00'
+
 			elif opcode == "syscall":
 				bytecode += b'\x1E'
 				bytecode += b'\x01'
@@ -106,6 +133,7 @@ def main():
 			print(tokens)
 			print(args)
 
+	# Set the number of bytecodes and write
 	bytecode[4:8] = struct.pack("<i", bytecode_count)
 	with open("out.gvm", 'wb') as f:
 		f.write(bytecode)
