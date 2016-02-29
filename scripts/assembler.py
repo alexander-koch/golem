@@ -18,6 +18,26 @@ import struct
 # void*	[data	 ] direct read as val_t, for objects special condition
 # ----
 
+# Opcode definition
+# Tuple: first=opcode, second=args
+opcodes = {
+	'hlt': (b'\x00', b'\x00'),
+	'push': (b'\x01', b'\x01'),
+	'pop': (b'\x02', b'\x00'),
+	'store': (b'\x03', b'\x01'),
+	'load': (b'\x04', b'\x01'),
+	'gstore': (b'\x05', b'\x01'),
+	'gload': (b'\x06', b'\x01'),
+	'ldarg0': (b'\x07', b'\x00'),
+	'setarg0': (b'\x08', b'\x00'),
+	'iadd': (b'\x09', b'\x00'),
+	'isub': (b'\x0A', b'\x00'),
+	'imul': (b'\x0B', b'\x00'),
+	'idiv': (b'\x0C', b'\x00'),
+	'mod': (b'\x0D', b'\x00'),
+	'syscall': (b'\x1E', b'\x01')
+}
+
 def writeValue(bytecode, arg):
 	if arg.isdigit():
 		bytecode += b'\x01'
@@ -64,74 +84,19 @@ def main():
 			if opcode[len(opcode)-1] == ',':
 				opcode = opcode[0:-1]
 
-			bytecode_count = bytecode_count + 1
+			if opcode in opcodes:
+				ituple = opcodes[opcode]
+				bytecode += ituple[0]
+				bytecode += ituple[1]
+				if ituple[1] == b'\x01':
+					bytecode = writeValue(bytecode, args[0])
+				elif ituple[1] == b'\x02':
+					bytecode = writeValue(bytecode, args[0])
+					bytecode = writeValue(bytecode, args[1])
 
-			# Format:
-			# Opcode
-			# Args
-			if opcode == "hlt":
-				bytecode += b'\x00'
-				bytecode += b'\x00'
-
-			elif opcode == "push":
-				bytecode += b'\x01'
-				bytecode += b'\x01'
-				bytecode = writeValue(bytecode, args[0])
-
-			elif opcode == "pop":
-				bytecode += b'\x02'
-				bytecode += b'\x00'
-
-			elif opcode == "store":
-				bytecode += b'\x03'
-				bytecode += b'\x01'
-				bytecode = writeValue(bytecode, args[0])
-
-			elif opcode == "load":
-				bytecode += b'\x04'
-				bytecode += b'\x01'
-				bytecode = writeValue(bytecode, args[0])
-
-			elif opcode == "gstore":
-				bytecode += b'\x05'
-				bytecode += b'\x01'
-				bytecode = writeValue(bytecode, args[0])
-
-			elif opcode == "gload":
-				bytecode += b'\x06'
-				bytecode += b'\x01'
-				bytecode = writeValue(bytecode, args[0])
-
-			elif opcode == "ldarg0":
-				bytecode += b'\x07'
-				bytecode += b'\x00'
-
-			elif opcode == "setarg0":
-				bytecode += b'\x08'
-				bytecode += b'\x00'
-
-			elif opcode == "iadd":
-				bytecode += b'\x09'
-				bytecode += b'\x00'
-
-			elif opcode == "isub":
-				bytecode += b'\x0a'
-				bytecode += b'\x00'
-
-			elif opcode == "imul":
-				bytecode += b'\x0b'
-				bytecode += b'\x00'
-
-			elif opcode == "syscall":
-				bytecode += b'\x1E'
-				bytecode += b'\x01'
-				bytecode = writeValue(bytecode, args[0])
-
+				bytecode_count = bytecode_count + 1
 			else:
-				print("Opcode: "+opcode+" is not defined")
-
-			print(tokens)
-			print(args)
+				print("Opcode: "+opcode+" does not exist.")
 
 	# Set the number of bytecodes and write
 	bytecode[4:8] = struct.pack("<i", bytecode_count)
