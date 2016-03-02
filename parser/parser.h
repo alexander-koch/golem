@@ -39,8 +39,7 @@
 //
 // parser_free(&parser);
 
-typedef struct parser_t
-{
+typedef struct parser_t {
     const char* name;
     token_t* buffer;
     size_t num_tokens;

@@ -21,8 +21,7 @@
 
 // All valid datatypes: void, bool, char, int, float, custom types.
 // Using byte-flags.
-typedef enum
-{
+typedef enum {
     DATA_NULL = 1 << 1,// 0x1,
     DATA_BOOL = 1 << 2, //0x2,
     DATA_INT = 1 << 3, //0x4,
@@ -40,8 +39,7 @@ typedef enum
 // Internal datatype representation
 // Stores one type and an ID for classes; standard value for an id is 0.
 // Integers and other types that aren't classes may not have any other value but zero.
-typedef struct datatype_t
-{
+typedef struct datatype_t {
     type_t type;
     unsigned long id;
 } datatype_t;
@@ -55,8 +53,7 @@ typedef struct ast_s ast_t;
 // @Getter
 // @Setter
 // @Unused
-typedef enum
-{
+typedef enum {
     ANN_GETTER = 1 << 1,
     ANN_SETTER = 1 << 2,
     ANN_UNUSED = 1 << 3
@@ -86,8 +83,7 @@ typedef enum
 // AST_RETURN     -> stores a return statement
 // AST_TOPLEVEL   -> stores a list of ASTs
 // AST_ANNOTATION -> stores an annotation
-typedef enum
-{
+typedef enum {
     AST_NULL,
     AST_IDENT,
     AST_FLOAT,
@@ -113,29 +109,25 @@ typedef enum
 } ast_class_t;
 
 // Condition struct
-typedef struct
-{
+typedef struct {
     ast_t* cond;
     list_t* body;
 } ast_cond_t;
 
 // Field index struct
-typedef struct
-{
+typedef struct {
     ast_t* key;
     ast_t* expr;
 } ast_field_t;
 
 // Anonymous function struct (lambda)
-typedef struct
-{
+typedef struct {
     list_t* formals;
     list_t* body;
 } ast_lambda_t;
 
 // Function struct (inherits lambda)
-typedef struct
-{
+typedef struct {
     char* name;
     ast_lambda_t impl;
     datatype_t rettype;
@@ -143,8 +135,7 @@ typedef struct
 } ast_func_t;
 
 // Declaration struct
-typedef struct
-{
+typedef struct {
     char* name;
     bool mutate;
     ast_t* initializer;
@@ -152,8 +143,7 @@ typedef struct
 } ast_decl_t;
 
 // Class struct
-typedef struct
-{
+typedef struct {
     char* name;
     list_t* body;
     list_t* formals;
@@ -161,12 +151,10 @@ typedef struct
 } ast_struct_t;
 
 // Structure of an AST-node
-struct ast_s
-{
+struct ast_s {
     ast_class_t class;
     location_t location;
-    union
-    {
+    union {
         char* ident;
         char* string;
         char* import;
@@ -185,27 +173,23 @@ struct ast_s
         ast_struct_t classstmt;
         annotation_t annotation;
 
-        struct
-        {
+        struct {
             list_t* elements;
             datatype_t type;
         } array;
 
-        struct
-        {
+        struct {
             token_type_t op;
             ast_t* left;
             ast_t* right;
         } binary;
 
-        struct
-        {
+        struct {
             token_type_t op;
             ast_t* expr;
         } unary;
 
-        struct
-        {
+        struct {
             ast_t* callee;
             list_t* args;
         } call;

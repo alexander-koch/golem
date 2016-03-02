@@ -190,6 +190,7 @@ void ast_free(ast_t* ast) {
 			}
 			list_iterator_free(iter);
 			list_free(ast->call.args);
+			break;
 		}
 		default: break;
 	}
