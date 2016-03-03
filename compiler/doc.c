@@ -65,9 +65,8 @@ void doc_val(FILE* fp, val_t val)
 
 void doc_generate(const char* filename)
 {
-	size_t len = 0;
-	char* source = readFile(filename, &len);
-	if(!source && len == 0) return;
+	char* source = readFile(filename);
+	if(!source) return;
 
 	// Create a new file
 	FILE* fp = fopen("doc.html", "wb");

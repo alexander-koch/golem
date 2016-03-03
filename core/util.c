@@ -1,5 +1,7 @@
 #include "util.h"
 
+//static char* rootDirectory = 0;
+
 char* strdup(const char* str)
 {
     size_t len = strlen(str) + 1;
@@ -84,20 +86,44 @@ unsigned long djb2(unsigned char *str)
     return hash;
 }
 
-char* readFile(const char* filename, size_t* len)
+char* readFile(const char* path)
 {
-    *len = 0;
-    FILE* file = fopen(filename, "rb");
+    FILE* file = fopen(path, "rb");
     if(!file) return 0;
+
+    // Get the size of the file
     fseek(file, 0, SEEK_END);
-    size_t size = ftell(file);
+    size_t fileSize = ftell(file);
     rewind(file);
-    char* source = (char*)malloc(size+1);
-    fread(source, sizeof(char), size, file);
-    source[size] = '\0';
+
+    char* buffer = (char*)malloc(fileSize + 1);
+    if(!buffer) {
+        printf("Could not read file \"%s\".\n", path);
+        fclose(file);
+        return 0;
+    }
+
+    size_t bytes = fread(buffer, sizeof(char), fileSize, file);
+    if(bytes < fileSize) {
+        printf("Could not read file \"%s\".\n", path);
+        fclose(file);
+        return 0;
+    }
+
+    buffer[bytes] = '\0';
     fclose(file);
-    *len = size;
-    return source;
+    return buffer;
+}
+
+char* getDirectory(const char* path) {
+    char* root = 0;
+    const char* lastSlash = strrchr(path, '/');
+    if(lastSlash != 0) {
+        root = (char*)malloc(lastSlash - path + 2);
+        memcpy(root, path, lastSlash - path + 1);
+        root[lastSlash - path + 1] = '\0';
+    }
+    return root;
 }
 
 char* replaceExt(char* filename, const char* ext, size_t len)

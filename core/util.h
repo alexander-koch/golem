@@ -26,8 +26,9 @@ char* strf(const char* fmt, ...);
 unsigned long djb2(unsigned char* str);
 
 // File reading methods
-char* readFile(const char* filename, size_t* len);
+char* readFile(const char* path);
 char* replaceExt(char* filename, const char* ext, size_t len);
+char* getDirectory(const char* path);
 
 // Memory
 void memset64(void* dest, uint64_t value, uintptr_t size);

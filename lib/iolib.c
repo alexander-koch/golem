@@ -5,22 +5,12 @@
 
 val_t io_readFile(vm_t* vm)
 {
-	size_t size = 0;
-	char* filename = AS_STRING(pop(vm));
-
-	FILE* file = fopen(filename, "rb");
-	if(!file) return STRING_VAL("");
-	fseek(file, 0, SEEK_END);
-	size = ftell(file);
-	rewind(file);
-	char* source = (char*)malloc(size+1);
-	if(!source) return STRING_VAL("");
-
-	fread(source, sizeof(char), size, file);
-	source[size] = '\0';
-	fclose(file);
-
-	return STRING_NOCOPY_VAL(source);
+	char* path = AS_STRING(pop(vm));
+	char* buffer = readFile(path);
+	if(!buffer) {
+		return STRING_VAL("");
+	}
+	return STRING_NOCOPY_VAL(buffer);
 }
 
 val_t io_writeFile(vm_t* vm)

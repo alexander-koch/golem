@@ -2254,10 +2254,8 @@ datatype_t eval_import(compiler_t* compiler, ast_t* node)
 		parser_init(subparser, (const char*)node->import);
 		list_push(compiler->parsers, subparser);
 
-		size_t len = 0;
-		char* source = readFile(node->import, &len);
-		if(source && len > 0)
-		{
+		char* source = readFile(node->import);
+		if(source) {
 		    ast_t* root = parser_run(subparser, source);
 		    if(!root || parser_error(subparser))
 		    {
@@ -2425,10 +2423,8 @@ vector_t* compile_buffer(const char* source, const char* name)
 // Compiles a file into an instruction set
 vector_t* compile_file(const char* filename)
 {
-	size_t len = 0;
-	char* source = readFile(filename, &len);
-	if(!source || len == 0)
-	{
+	char* source = readFile(filename);
+	if(!source) {
 		printf("File '%s' does not exist\n", filename);
 		return 0;
 	}

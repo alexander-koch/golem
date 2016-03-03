@@ -62,16 +62,15 @@ int main(int argc, char** argv) {
         }
         else if(!strcmp(argv[1], "--ast")) {
             // Generate ast.dot graphviz file
-            char* filename = argv[2];
-            size_t len = 0;
-        	char* source = readFile(filename, &len);
-            if(!source || !len) {
-                printf("File '%s' does not exist\n", filename);
+            char* path = argv[2];
+        	char* source = readFile(path);
+            if(!source) {
+                printf("File '%s' does not exist\n", path);
                 return 1;
             }
 
             parser_t parser;
-            parser_init(&parser, filename);
+            parser_init(&parser, path);
             ast_t* root = parser_run(&parser, source);
             if(root) {
                 graphviz_build(root);
