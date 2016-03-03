@@ -668,6 +668,13 @@ datatype_t parse_datatype(parser_t* parser) {
  */
 list_t* parse_formals(parser_t* parser) {
     list_t* formals = list_new();
+
+    token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
+    if(!lparen) {
+        parser_throw(parser, "Missing left parenthesis");
+        return formals;
+    }
+
     while(!match_type(parser, TOKEN_RPAREN)) {
 
         // Mutable parameter
@@ -965,11 +972,9 @@ ast_t* parse_fn_declaration(parser_t* parser, location_t loc) {
     ast_t* node = ast_class_create(AST_DECLFUNC, loc);
     parser->cursor++; // function keyword
 
-    // TOKEN_WORD, '('
+    // Identifier
     token_t* ident = accept_token_type(parser, TOKEN_WORD);
-    token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
-
-    if(ident && lparen) {
+    if(ident) {
         node->funcdecl.name = ident->value;
         node->funcdecl.impl.formals = parse_formals(parser);
         node->funcdecl.rettype = datatype_new(DATA_NULL);
@@ -1091,10 +1096,9 @@ ast_t* parse_class_declaration(parser_t* parser, location_t loc) {
     ast_t* node = ast_class_create(AST_CLASS, loc);
     parser->cursor++;
 
+    // Identifier
     token_t* ident = accept_token_type(parser, TOKEN_WORD);
-    token_t* lparen = accept_token_type(parser, TOKEN_LPAREN);
-
-    if(ident && lparen) {
+    if(ident) {
         node->classstmt.name = ident->value;
         node->classstmt.formals = parse_formals(parser);
         node->classstmt.body = parse_block(parser);
