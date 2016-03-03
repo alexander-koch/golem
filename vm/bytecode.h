@@ -165,9 +165,12 @@ void emit_array_merge(vector_t* buffer, size_t sz);
 void emit_dynlib(vector_t* buffer, char* name);
 
 /**
+ * Functions that return a pointer.
  * Jumps return a value pointer.
  * Modify it, if you want to change the address afterwards.
+ * Same applies to the class field count for emit_class.
  */
+val_t* emit_class(vector_t* buffer, int fields);
 val_t* emit_jmp(vector_t* buffer, int address);
 val_t* emit_jmpf(vector_t* buffer, int address);
 

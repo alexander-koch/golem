@@ -48,12 +48,10 @@
 
 typedef uint64_t val_t;
 
-// TODO: Make this dynamic
-#define CLASS_FIELDS_SIZE 32
-
 // Class subtype
 typedef struct obj_class_t {
-	val_t fields[CLASS_FIELDS_SIZE];
+	val_t* fields;
+	size_t field_count;
 } obj_class_t;
 
 typedef struct obj_array_t {
@@ -82,7 +80,7 @@ obj_t* obj_string_const_new(const char* str);
 obj_t* obj_string_new(char* str);
 obj_t* obj_string_nocopy_new(char* str);
 obj_t* obj_array_new(val_t* data, size_t length);
-obj_t* obj_class_new();
+obj_t* obj_class_new(int fields);
 void obj_free(obj_t* obj);
 
 // Util

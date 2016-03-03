@@ -58,8 +58,7 @@ void vm_clear(vm_t* vm);
 #define VM_ASSERT(x, msg) \
 	if(!(x)) { vm_throw(vm, msg); goto *dispatch_table[OP_HLT]; }
 
-void vm_throw(vm_t* vm, const char* format, ...)
-{
+void vm_throw(vm_t* vm, const char* format, ...) {
     printf("=> Exception thrown: ");
     va_list argptr;
     va_start(argptr, format);
@@ -71,31 +70,23 @@ void vm_throw(vm_t* vm, const char* format, ...)
 	vm->pc = vm->errjmp;
 }
 
-void mark(val_t v)
-{
-	if(IS_OBJ(v))
-	{
+void mark(val_t v) {
+	if(IS_OBJ(v)) {
 		obj_t* obj = AS_OBJ(v);
-		if(!obj->marked)
-		{
+		if(!obj->marked) {
 			obj->marked = 1;
 
-			switch(obj->type)
-			{
-				case OBJ_CLASS:
-				{
+			switch(obj->type) {
+				case OBJ_CLASS: {
 					obj_class_t* cls = obj->data;
-					for(int i = 0; i < CLASS_FIELDS_SIZE; i++)
-					{
+					for(int i = 0; i < cls->field_count; i++) {
 						mark(cls->fields[i]);
 					}
 					break;
 				}
-				case OBJ_ARRAY:
-				{
+				case OBJ_ARRAY: {
 					obj_array_t* arr = obj->data;
-					for(int i = 0; i < arr->len; i++)
-					{
+					for(int i = 0; i < arr->len; i++) {
 						mark(arr->data[i]);
 					}
 					break;
@@ -106,41 +97,33 @@ void mark(val_t v)
 	}
 }
 
-void markAll(vm_t* vm)
-{
-	for(int i = 0; i < vm->sp; i++)
-	{
+void markAll(vm_t* vm) {
+	for(int i = 0; i < vm->sp; i++) {
 		mark(vm->stack[i]);
 	}
-	for(int i = 0; i < LOCALS_SIZE; i++)
-	{
+	for(int i = 0; i < LOCALS_SIZE; i++) {
 		mark(vm->locals[i]);
 	}
 }
 
-void sweep(vm_t* vm)
-{
+void sweep(vm_t* vm) {
 	obj_t** val = &vm->firstVal;
-	while(*val)
-	{
-		if(!(*val)->marked)
-		{
+	while(*val) {
+		if(!(*val)->marked) {
 			obj_t* unreached = *val;
 			*val = unreached->next;
 			obj_free(unreached);
 			unreached = 0;
 			vm->numObjects--;
 		}
-		else
-		{
+		else {
 			(*val)->marked = 0;
 			val = &(*val)->next;
 		}
 	}
 }
 
-void gc(vm_t* vm)
-{
+void gc(vm_t* vm) {
 // Garbage day!
 #ifdef TRACE
 	printf("Collecting garbage...\n");
@@ -159,10 +142,8 @@ void gc(vm_t* vm)
 #endif
 }
 
-void push(vm_t* vm, val_t val)
-{
-	if(vm->sp >= STACK_SIZE)
-	{
+void push(vm_t* vm, val_t val) {
+	if(vm->sp >= STACK_SIZE) {
 		vm_throw(vm, "Stack overflow");
 		return;
 	}
@@ -170,8 +151,7 @@ void push(vm_t* vm, val_t val)
 	vm->stack[vm->sp++] = val;
 }
 
-val_t pop(vm_t* vm)
-{
+val_t pop(vm_t* vm) {
 	val_t v = vm->stack[--vm->sp];
 	vm->stack[vm->sp] = 0;
 	return v;
@@ -179,10 +159,8 @@ val_t pop(vm_t* vm)
 
 void val_append(vm_t* vm, val_t v1);
 
-void obj_append(vm_t* vm, obj_t* obj)
-{
-	if(vm->numObjects >= vm->maxObjects)
-	{
+void obj_append(vm_t* vm, obj_t* obj) {
+	if(vm->numObjects >= vm->maxObjects) {
 		gc(vm);
 	}
 
@@ -192,20 +170,17 @@ void obj_append(vm_t* vm, obj_t* obj)
 	vm->numObjects++;
 
 	// If the objects are containers, check their content
-	switch(obj->type)
-	{
-		case OBJ_ARRAY:
-		{
+	switch(obj->type) {
+		case OBJ_ARRAY: {
 			obj_array_t* arr = obj->data;
 			for(size_t i = arr->len; i != 0; i--) {
 				val_append(vm, arr->data[i-1]);
 			}
 			break;
 		}
-		case OBJ_CLASS:
-		{
+		case OBJ_CLASS: {
 			obj_class_t* cls = obj->data;
-			for(size_t i = 0; i < CLASS_FIELDS_SIZE; i++) {
+			for(size_t i = 0; i < cls->field_count; i++) {
 				val_append(vm, cls->fields[i]);
 			}
 			break;
@@ -215,10 +190,8 @@ void obj_append(vm_t* vm, obj_t* obj)
 }
 
 // Append a value to the GC system
-void val_append(vm_t* vm, val_t v1)
-{
-	if(IS_OBJ(v1))
-	{
+void val_append(vm_t* vm, val_t v1) {
+	if(IS_OBJ(v1)) {
 		obj_append(vm, AS_OBJ(v1));
 	}
 }
@@ -1149,7 +1122,9 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	}
 	code_class:
 	{
-		obj_t* obj = obj_class_new();
+		int fields = AS_INT32(instr->v1);
+
+		obj_t* obj = obj_class_new(fields);
 		push(vm, OBJ_VAL(obj));
 		obj_append(vm, obj);
 		DISPATCH();

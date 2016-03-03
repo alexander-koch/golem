@@ -73,11 +73,11 @@ obj_t* obj_copy(obj_t* obj)
             obj_class_t* cls = obj->data;
 
             // Create a new class, and get the internal struct
-            obj_t* clsObj = obj_class_new();
+            obj_t* clsObj = obj_class_new(cls->field_count);
             obj_class_t* newCls = clsObj->data;
 
             // Copy all the fields
-            for(size_t i = 0; i < CLASS_FIELDS_SIZE; i++) {
+            for(size_t i = 0; i < newCls->field_count; i++) {
                 newCls->fields[i] = val_copy(cls->fields[i]);
             }
 
@@ -149,15 +149,15 @@ obj_t* obj_array_new(val_t* data, size_t length)
     return obj;
 }
 
-obj_t* obj_class_new()
+obj_t* obj_class_new(int fields)
 {
     obj_t* obj = obj_new();
     obj->type = OBJ_CLASS;
 
+    // Class data
     obj_class_t* cls = malloc(sizeof(*cls));
-    for(size_t i = 0; i < CLASS_FIELDS_SIZE; i++) {
-        cls->fields[i] = NULL_VAL;
-    }
+    cls->fields = calloc(sizeof(val_t), fields);
+    cls->field_count = fields;
 
     obj->data = cls;
     return obj;
@@ -181,6 +181,7 @@ void obj_free(obj_t* obj)
         }
         case OBJ_CLASS:
         {
+            free(((obj_class_t*)obj->data)->fields);
             free(obj->data);
             break;
         }

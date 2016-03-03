@@ -332,17 +332,21 @@ void emit_dynlib(vector_t* buffer, char* name)
 
 #define GEN_JMP_REF() (val_t*)&((instruction_t*)vector_top(buffer))->v1
 
+val_t* emit_class(vector_t* buffer, int fields)
+{
+	insert_v1(buffer, OP_CLASS, INT32_VAL(fields));
+	return GEN_JMP_REF();
+}
+
 val_t* emit_jmp(vector_t* buffer, int address)
 {
-	val_t val = INT32_VAL(address);
-	insert_v1(buffer, OP_JMP, val);
+	insert_v1(buffer, OP_JMP, INT32_VAL(address));
 	return GEN_JMP_REF();
 }
 
 val_t* emit_jmpf(vector_t* buffer, int address)
 {
-	val_t val = INT32_VAL(address);
-	insert_v1(buffer, OP_JMPF, val);
+	insert_v1(buffer, OP_JMPF, INT32_VAL(address));
 	return GEN_JMP_REF();
 }
 

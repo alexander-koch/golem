@@ -1992,8 +1992,7 @@ datatype_t eval_annotation(compiler_t* compiler, ast_t* node);
 
 // Eval.class(node)
 // Concept compilation of a class structure (WIP)
-datatype_t eval_class(compiler_t* compiler, ast_t* node)
-{
+datatype_t eval_class(compiler_t* compiler, ast_t* node) {
 	// Approach:
 	// Convert the constructor to a function that returns a 'class'-object value
 	// Class declaration is the main function, instantiating the classes values and functions.
@@ -2015,8 +2014,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 
 	// Test if symbol exists
 	void* tmp = 0;
-	if(hashmap_get(compiler->scope->classes, name, &tmp) != HMAP_MISSING)
-	{
+	if(hashmap_get(compiler->scope->classes, name, &tmp) != HMAP_MISSING) {
 		compiler_throw(compiler, node, "Class already exists");
 		return datatype_new(DATA_NULL);
 	}
@@ -2025,7 +2023,10 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 	symbol_t* symbol = symbol_new(compiler, node, byte_address, dt);
 	hashmap_set(compiler->scope->classes, name, symbol);
 	hashmap_set(compiler->scope->symbols, name, symbol);
-	emit_op(compiler->buffer, OP_CLASS);
+
+	// Create a class with zero fields
+	val_t* fields = emit_class(compiler->buffer, 0);
+	int field_count = 0;
 
 	// Create a new scope
 	push_scope(compiler, node);
@@ -2057,6 +2058,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 		}
 		else if(sub->class == AST_DECLVAR)
 		{
+			field_count++;
 			size_t addr = compiler->scope->address;
 			compiler_eval(compiler, sub);
 
@@ -2235,6 +2237,9 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node)
 	// Set the beggining byte address; end
 	byte_address = vector_size(compiler->buffer);
 	*addr = INT32_VAL(byte_address);
+
+	// Set the class fields count
+	*fields = INT32_VAL(field_count);
 
 	return datatype_new(DATA_NULL);
 }
