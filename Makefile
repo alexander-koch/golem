@@ -3,6 +3,7 @@
 CC := gcc
 MODULE_RELEASE := golem
 MODULE_DEBUG := golem-debug
+MODULE_IR := golem-ir
 INC := -I.
 
 # Linux:
@@ -30,8 +31,7 @@ GFLAGS := #-DTRACE #-DTRACE_STEP #-DNO_AST
 CFLAGS := -std=c99 -Wall -Wno-unused-function -Wno-unused-parameter $(GFLAGS)
 
 # All files for the compiler
-FILES := main.c \
-		core/util.c \
+FILES := core/util.c \
 		adt/queue.c \
 		adt/stack.c \
 		adt/list.c \
@@ -53,13 +53,19 @@ FILES := main.c \
 		lib/mathlib.c \
 		lib/iolib.c
 
-# Debugging version (default)
+all: debug release ir
+
+# Debug version
 debug:
-	$(CC) -O2 $(CFLAGS) $(INC) $(FILES) -g -o $(MODULE_DEBUG)
+	$(CC) -O2 $(CFLAGS) main.c $(INC) $(FILES) -g -o $(MODULE_DEBUG)
 
 # Final release version
 release:
-	$(CC) -O3 -fno-gcse -fno-crossjumping $(CFLAGS) -DNO_IR -DNO_MEMINFO -DNO_AST $(INC) $(FILES) -o $(MODULE_RELEASE)
+	$(CC) -O3 -fno-gcse -fno-crossjumping $(CFLAGS) -DNO_IR -DNO_MEMINFO -DNO_AST main.c $(INC) $(FILES) -o $(MODULE_RELEASE)
+
+# Immediate representation tool / print .gvm bytecode
+ir:
+	$(CC) -O3 $(CFLAGS) -DNO_MEMINFO ir.c  $(INC) $(FILES) -o $(MODULE_IR)
 
 # Graphviz *.dot to *.svg
 dot:
