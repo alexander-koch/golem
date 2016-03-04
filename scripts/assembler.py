@@ -7,18 +7,29 @@ import struct
 # File format description (GVM)
 #
 # ---- (header)
-# uint32_t [magic	] 0xACCE55 (Access)
+# uint32_t [magic	 ] 0xACCE55 (Access)
 # uint32_t [num_codes] number of instructions
 # ---- (instruction)
 # uint8_t  [opcode   ] operation
 # uint8_t  [args	 ] argument count
 # value*   [values   ] argument values
 # ---- (value)
-# uint8_t  [tag	  ] type tag
-# void*	[data	 ] direct read as val_t, for objects special condition
+# uint8_t  [tag		 ] type tag
+# void*	   [data	 ] direct read as val_t, for objects special condition
 # ----
 
-# Opcode definition
+# Introduction:
+# Label -> name, ':';
+# Instruction -> opcode, {',', value}
+# Program -> {Label | Instruction}
+#
+# Use call to invoke a function / label
+# Don't use invoke, invokevirtual, etc. manually
+# unless you know what you are doing.
+#
+# Also don't forget to write hlt at the end or your program.
+
+# Opcode definition:
 # Tuple: first=opcode, second=args
 opcodes = {
 	'hlt': (b'\x00', b'\x00'),
@@ -55,13 +66,15 @@ opcodes = {
 	'invoke': (b'\x1F', b'\x02'),
 	'invokevirtual': (b'\x20', b'\x02'),
 	'reserve': (b'\x21', b'\x01'),
-	'ret': (b'\x22', b'\x00')
+	'ret': (b'\x22', b'\x00'),
+	'retvirtual': (b'\x23', b'\x00'),
+	'jmp': (b'\x24', b'\x01')
 }
 
 def check_int(s):
-    if s[0] in ('-', '+'):
-    	return s[1:].isdigit()
-    return s.isdigit()
+	if s[0] in ('-', '+'):
+		return s[1:].isdigit()
+	return s.isdigit()
 
 def writeValue(bytecode, arg):
 	if check_int(arg):
@@ -144,6 +157,20 @@ def main():
 					argc = int(args[1])
 					bytecode += b'\x01'
 					bytecode += struct.pack("<q", argc)
+					bytecode_count = bytecode_count + 1
+				continue
+
+			# Test for jump
+			if opcode == "jmp":
+				label = args[0]
+				if label in labels:
+					# jump
+					bytecode += b'\x24'
+					bytecode += b'\x01'
+
+					# Arg1
+					bytecode += b'\x01'
+					bytecode += struct.pack("<q", labels[label])
 					bytecode_count = bytecode_count + 1
 				continue
 
