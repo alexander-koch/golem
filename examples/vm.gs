@@ -2,27 +2,26 @@
 using core
 
 # Instructions
+let OP_HLT = 0
 let OP_PUSH = 1
 let OP_POP = 2
 let OP_ADD = 3
 let OP_PRNT = 4
-let OP_HLT = 5
 
 let program = [OP_PUSH, 5, OP_PUSH, 3, OP_ADD, OP_PRNT, OP_HLT]
 
 let mut stack = [0,0,0,0,0,0,0,0,0]
-let mut sp = 0
+let mut sp = -1
 let mut pc = 0
 
 func push(val:int) {
-	stack[sp] := val
 	sp := sp + 1
+	stack[sp] := val
 }
 
 func pop() -> int {
-	sp := sp - 1
 	let val = stack[sp]
-	stack[sp] := 0
+	sp := sp - 1
 	return val
 }
 
