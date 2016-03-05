@@ -33,9 +33,9 @@ static gvm_c_function system_methods[] = {
 	core_parseFloat,	// 4
 	core_break,			// 5
 	core_clock,			// 6
-	core_sysarg,		// 8
+	core_sysarg,		// 7
 
-	math_abs,			// 9
+	math_abs,			// 8
 	math_sin,			// 9
 	math_cos,			// 10
 	math_tan,			// 11

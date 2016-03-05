@@ -1507,22 +1507,12 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 	return datatype_new(DATA_NULL);
 }
 
-bool is_ident(char* str) {
-	if(str[0] == '_' || isalpha(str[0])) {
-		for(int i = 1; i < strlen(str); i++) {
-			if(str[i] != '_' && !isalpha(str[i])) return false;
-		}
-	}
-
-	return true;
-}
-
 // Helper function
 bool append_interpolated(compiler_t* compiler, char* buffer) {
 	if(strlen(buffer) == 0) return true;
 
-	if(!is_ident(buffer)) {
-		printf("Cannot interpolate string '%s', aborting.\n", buffer);
+	if(buffer[0] != '_' && !isalpha(buffer[0])) {
+		printf("Expected an identifer at $'%s', aborting.\n", buffer);
 		return false;
 	}
 
@@ -1574,7 +1564,7 @@ void interpolate_string(compiler_t* compiler, char* str) {
 		}
 
 		// Ending suspected?
-		if(!isalpha(*c) && *c != '_' && reading_ident == 1) {
+		if(!isalnum(*c) && *c != '_' && reading_ident == 1) {
 			buffer[bp] = '\0';
 			append_interpolated(compiler, buffer);
 
