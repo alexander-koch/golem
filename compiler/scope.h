@@ -41,6 +41,7 @@ typedef struct scope_t {
 	list_t* subscopes;
 	int address;
 	int flag;
+	bool virtual;
 } scope_t;
 
 scope_t* scope_new();

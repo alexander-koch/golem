@@ -248,6 +248,26 @@ void push_scope(compiler_t* compiler, ast_t* node) {
 	compiler->scope->address = 0;
 }
 
+void push_scope_virtual(compiler_t* compiler, ast_t* node) {
+	// Create scope
+	scope_t* scope = scope_new();
+	scope->super = compiler->scope;
+	scope->node = node;
+	scope->address = scope->super->address;
+	scope->virtual = true;
+
+	// Register new scope in parent
+	list_push(compiler->scope->subscopes, scope);
+
+	// Set child active scope
+	compiler->scope = scope;
+}
+
+void pop_scope_virtual(compiler_t* compiler) {
+	scope_t* super = compiler->scope->super;
+	compiler->scope = super;
+}
+
 /**
  * pop_scope:
  * Move from current scope to the parent scope (super scope).
@@ -315,7 +335,7 @@ symbol_t* symbol_get_ext(scope_t* scope, char* ident, int* depth) {
 
 	// If there is a super scope, search in that
 	if(scope->super) {
-		(*depth)++;
+		if(!scope->virtual)(*depth)++;
 		return symbol_get_ext(scope->super, ident, depth);
 	}
 	return 0;
@@ -1740,9 +1760,9 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
 		}
 
 		// Eval execution block code
-		// push_scope_virtual(compiler, node);
+		push_scope_virtual(compiler, node);
 		eval_block(compiler, subnode->ifclause.body);
-		// pop_scope_virtual(compiler);
+		pop_scope_virtual(compiler);
 
 		// Optimization:
 		// If not an else statement and more ifclauses than one
@@ -1788,12 +1808,9 @@ datatype_t eval_while(compiler_t* compiler, ast_t* node)
 	compiler_eval(compiler, node->whilestmt.cond);
 	val_t* instr = emit_jmpf(compiler->buffer, 0);
 
-	// upval, 1, 0 ?
-
-	// TODO: Wrap into scope
-	//push_scope_virtual(compiler, node);
+	push_scope_virtual(compiler, node);
 	eval_block(compiler, node->whilestmt.body);
-	//pop_scope_virtual(compiler);
+	pop_scope_virtual(compiler);
 
 	emit_jmp(compiler->buffer, start);
 	*instr = INT32_VAL(vector_size(compiler->buffer));

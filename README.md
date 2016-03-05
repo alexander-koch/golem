@@ -34,10 +34,6 @@ More features for the debug-version can be enabled/disabled in the Makefile.
 
 #### Main tasks
 
-##### Serious issues
-
-- [ ] (Intermediate) While and if loops don't provide scopes => (Working on it.)
-
 ##### Tasks
 
 - [ ] (Advanced) Standard libraries and external classes, DLL loading => (Working on it.)
@@ -49,6 +45,7 @@ More features for the debug-version can be enabled/disabled in the Makefile.
 
 ##### Done
 
+- [x] (Intermediate) While and if loops don't provide scopes => (Done.)
 - [x] (Easy) Add a few benchmarks => (Done.)
 - [x] (Intermediate) Implement computed gotos to gain 15%-20% more speed => (Done.)
 - [x] (Intermediate) Standard operators for internal classes => (Done.)

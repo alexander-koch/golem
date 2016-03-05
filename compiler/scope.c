@@ -14,6 +14,7 @@ scope_t* scope_new()
 	scope->address = 0;
 	scope->node = 0;
 	scope->flag = 0;
+	scope->virtual = false;
 	return scope;
 }
 
