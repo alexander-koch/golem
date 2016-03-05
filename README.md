@@ -10,19 +10,19 @@ Golem is a statically typed, object-oriented programming language.
 - Explicit mutable declaration
 - Statically, strong-typed
 - Automatic type inference
-- Strings as arrays of characters, not a datatype
+- Strings as arrays of characters, no extra type
 - **NULL** is not possible to create or use
 - Fast, garbage collected bytecode vm
 
 # Installing
 
 Golem is written in C99, and has been tested to run on Linux and Windows.
-To build it, a Makefile is used, just type
+To build it, a Makefile is used.
 
 	$ make release
 	$ golem your/file/here.gs
 
-to build the release version. If you are a developer and you want to improve Golem,
+If you are a developer and you want to improve Golem,
 you can use the debug version, which prints out the abstract syntax tree, the bytecode and additional information.
 
 	$ make debug
@@ -80,15 +80,15 @@ More features for the debug-version can be enabled/disabled in the Makefile.
 
 ### Variables
 
-Each variable is immutable by default. They are declared using the 'let' keyword and
-because of the type-inference, there is no type declaration needed.
+A variable is declared using the `let` keyword and is set to immutable by default.
+Because of the type-inference, there is no type declaration needed.
 Example:
 ```rust
 	let x = 5
 ```
 
-Variables can be modified, if they are declared using the 'mut' (mutable) keyword.
-When modifiying a variable, the re-assignment operator ':=' is used.
+Variables can be modified, if they are declared using the `mut` (mutable) keyword.
+When modifiying a variable, the re-assignment operator `:=` is used.
 ```rust
 	let mut x = 5
 x := x + 1
@@ -96,11 +96,12 @@ x := x + 1
 
 Although you can change the value of the variable, you can **NOT** change its type.
 The following types can be used:
-
-	int -> e.g. 2, 4, 512, 128, 65535
-	float -> e.g. 3.14, 6.28, 0.2, 0.25
-	char -> "a", "b", "c", "d", "e", "f"
-	bool -> "true", "false"
+```c
+	int: 2, 4, 512, 128, 65535, ...
+float: 3.14, 6.28, 0.2, 0.25, ...
+char: "a", "b", "c", "d", "e", "f", ...
+bool: "true", "false"
+```
 
 With classes you can also use custom types.
 Arrays are also permitted.
@@ -109,9 +110,8 @@ Arrays are also permitted.
 
 Arrays are defined using two brackets, in which the content is placed and seperated by commas.
 An array can only be of one datatype and cannot be replaced or modified if it is immutable.
-For character arrays, a string initializer can be used (type char[]).
+For character arrays, a string initializer can be used (type `char[]`).
 
-Integer array:
 ```rust
 	let arr = [1,2,3,4,5]
 let str = "Hello World" // Same as ["H", "E", "L", ...]
@@ -142,8 +142,8 @@ This would create an empty, mutable integer-array.
 
 ### Functions
 
-Functions are declared using the 'func' keyword.
-After that you have to declare the parameters with their type and finally a return type using the 'arrow' notation.
+Functions are declared using the `func` keyword.
+Then you have to declare the parameters with their type and finally a return type using the 'arrow' notation.
 For code blocks the 'egyptian'-style brackets are used.
 For void functions, you don't have to use the arrow, it is optional.
 
@@ -153,7 +153,7 @@ For void functions, you don't have to use the arrow, it is optional.
 }
 ```
 
-Parameters are always immutable, if the 'mut' keyword is not set.
+Parameters are always immutable, if the `mut` keyword is not set.
 
 ```go
 	func main(mut arg0:char[], arg1:int, arg2:float) -> float {
@@ -210,8 +210,7 @@ Example: (assuming variable 'number' is declared as an integer):
 	println("Your number isn't 5 or 3. You should feel bad.")
 }
 ```
-For equality the '='-operator is used (not the double-equal '==' as in other programming languages).
-
+For equality the `=`-operator is used (not the double-equal `==` as in other programming languages).
 
 While loops:
 ```rust
@@ -219,7 +218,6 @@ While loops:
 	number := number + 1
 }
 ```
-
 
 For future implementations, for loops should also be an option, but they are currently not implemented.
 For loops (Ideas):
@@ -317,49 +315,6 @@ class.getX()
 #Syntactic sugar
 class[getX]()
 ```
-
-# Curently supported
-
-### AST
-
-- variable declaration (immutable/mutable)
-- function declaration
-- if statements
-- while loop
-- function calls
-- library imports
-- array declaration
-- subscripts
-- expressions with precedence
-- classes
-- annotations
-
-### Langugage-based
-
-- variable and function declaration
-- types int, char, float, bool, (void), custom classes
-- function calls, recursion
-- arrays
-- system internal functions, e.g. println + getline
-- annotations
-- relatively fast bytecode vm
-- compiler error reports
-- string interpolation
-
-# Useful stuff / internet ressources
-
-* [Ducklang programming language design](http://ducklang.org/designing-a-programming-language-i)
-* [A Walk in x86_64 Assembly Land](http://www.codejury.com/a-walk-in-x64-land/)
-* [Simple scripting language part 5](http://www.incubatorgames.com/20110621/simple-scripting-language-part-5/)
-* [Fastest bytecode interpreter (Contest)](http://byteworm.com/2010/11/21/the-fastest-vm-bytecode-interpreter/)
-* [Virtual machine by Terence Parr](https://www.youtube.com/watch?v=OjaAToVkoTw)
-* [Robert Nystrom's Garbage Collector Explanation](http://journal.stuffwithstuff.com/2013/12/08/babys-first-garbage-collector/) @munificent
-* [Simple virtual machine](http://bartoszsypytkowski.com/simple-virtual-machine/)
-* [Functions and stack frames](https://en.wikibooks.org/wiki/X86_Disassembly/Functions_and_Stack_Frames)
-* [Lambda lifting](https://en.wikipedia.org/wiki/Lambda_lifting)
-* [Call stack](https://en.wikipedia.org/wiki/Call_stack#Structure)
-* [Nested function - implementation](https://en.wikipedia.org/wiki/Nested_function#Implementation)
-* [Computed gotos](http://eli.thegreenplace.net/2012/07/12/computed-goto-for-efficient-dispatch-tables)
 
 # Licence
 Copyright (c) Alexander Koch 2016 All Rights Reserved.

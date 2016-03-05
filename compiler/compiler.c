@@ -1573,7 +1573,7 @@ void interpolate_string(compiler_t* compiler, char* str) {
 			continue;
 		}
 
-		// Ending subspected?
+		// Ending suspected?
 		if(!isalpha(*c) && *c != '_' && reading_ident == 1) {
 			buffer[bp] = '\0';
 			append_interpolated(compiler, buffer);
