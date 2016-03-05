@@ -1055,41 +1055,39 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
 		compiler_throw(compiler, node, "Too few arguments for function '%s'. Expected: %d", call->ident, paramc);
 		return false;
 	}
-	else
+
+	if(paramc > 0)
 	{
-		if(paramc > 0)
+		// Valid, test parameter types
+		list_iterator_t* iter = list_iterator_create(formals);
+		list_iterator_t* args_iter = list_iterator_create(node->call.args);
+		int i = 1;
+		while(!list_iterator_end(iter))
 		{
-			// Valid, test parameter types
-			list_iterator_t* iter = list_iterator_create(formals);
-			list_iterator_t* args_iter = list_iterator_create(node->call.args);
-			int i = 1;
-			while(!list_iterator_end(iter))
+			// Get the datatypes
+			ast_t* param = list_iterator_next(iter);
+			datatype_t argType = compiler_eval(compiler, list_iterator_next(args_iter));
+			datatype_t paramType = param->vardecl.type;
+
+			// Do template test
+			if((paramType.type & DATA_GENERIC) == DATA_GENERIC)
 			{
-				// Get the datatypes
-				ast_t* param = list_iterator_next(iter);
-				datatype_t argType = compiler_eval(compiler, list_iterator_next(args_iter));
-				datatype_t paramType = param->vardecl.type;
-
-				// Do template test
-				if((paramType.type & DATA_GENERIC) == DATA_GENERIC)
-				{
-					type_t tp = paramType.type & ~DATA_GENERIC;
-					if((argType.type & tp) == tp) continue;
-				}
-
-				// Test datatypes
-				if(!datatype_match(argType, paramType))
-				{
-					compiler_throw(compiler, node,
-						"Parameter %d has the wrong type.\nFound: %s, expected: %s",
-						i, datatype2str(argType), datatype2str(paramType));
-					break;
-				}
-				i++;
+				type_t tp = paramType.type & ~DATA_GENERIC;
+				if((argType.type & tp) == tp) continue;
 			}
-			list_iterator_free(args_iter);
-			list_iterator_free(iter);
+
+			// Test datatypes
+			if(!datatype_match(argType, paramType))
+			{
+				compiler_throw(compiler, node,
+					"Parameter %d has the wrong type.\nFound: %s, expected: %s",
+					i, datatype2str(argType), datatype2str(paramType));
+				break;
+			}
+			i++;
 		}
+		list_iterator_free(args_iter);
+		list_iterator_free(iter);
 	}
 
 	// Emit invocation
@@ -1509,10 +1507,11 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node)
 	return datatype_new(DATA_NULL);
 }
 
-// TODO: Improve this
 bool is_ident(char* str) {
-	for(int i = 0; i < strlen(str); i++) {
-		if(!isalpha(str[i])) return false;
+	if(str[0] == '_' || isalpha(str[0])) {
+		for(int i = 1; i < strlen(str); i++) {
+			if(str[i] != '_' && !isalpha(str[i])) return false;
+		}
 	}
 
 	return true;
@@ -1520,14 +1519,16 @@ bool is_ident(char* str) {
 
 // Helper function
 bool append_interpolated(compiler_t* compiler, char* buffer) {
+	if(strlen(buffer) == 0) return true;
+
 	if(!is_ident(buffer)) {
-		printf(":%s: Cannot interpolate string, aborting.\n", buffer);
+		printf("Cannot interpolate string '%s', aborting.\n", buffer);
 		return false;
 	}
 
 	symbol_t* symbol = symbol_get(compiler->scope, buffer);
 	if(!symbol) {
-		printf("Symbol does not exist!\n");
+		printf("Symbol '%s' does not exist!\n", buffer);
 		return false;
 	}
 
@@ -1573,7 +1574,7 @@ void interpolate_string(compiler_t* compiler, char* str) {
 		}
 
 		// Ending subspected?
-		if(!isalpha(*c) && reading_ident == 1) {
+		if(!isalpha(*c) && *c != '_' && reading_ident == 1) {
 			buffer[bp] = '\0';
 			append_interpolated(compiler, buffer);
 
