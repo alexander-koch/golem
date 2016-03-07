@@ -2195,11 +2195,11 @@ vector_t* compile_buffer(const char* source, const char* name)
 	ast_t* root = parser_run(compiler.parser, source);
 	if(root)
 	{
-		#ifndef NO_AST
+#ifndef NO_AST
 		printf("Abstract syntax tree '%s':\n", compiler.parser->name);
 		ast_dump(root, 0);
 		putchar('\n');
-		#endif
+#endif
 
 		// Evaluate AST
 		// Add final HALT instruction to end

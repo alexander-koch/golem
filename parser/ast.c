@@ -203,9 +203,9 @@ void ast_free(ast_t* ast) {
  * Prints the abstract syntax tree.
  */
 void ast_dump(ast_t* node, int level) {
+#ifndef NO_AST
 	if(!node) return;
 
-	if(level > 0) printf("  ");
 	for(int i = 0; i < level; i++) printf("  ");
 
 	switch(node->class) {
@@ -418,4 +418,5 @@ void ast_dump(ast_t* node, int level) {
 		}
 		default: break;
 	}
+#endif
 }
