@@ -18,213 +18,6 @@ void compiler_throw(compiler_t* compiler, ast_t* node, const char* format, ...) 
     putchar('\n');
 }
 
-/**
- * compiler_dump:
- * 'Dumps' the node to the console.
- * Prints the abstract syntax tree.
- */
-void compiler_dump(ast_t* node, int level) {
-	if(!node) return;
-
-	if(level > 0) printf("  ");
-	for(int i = 0; i < level; i++) putchar('#');
-
-	switch(node->class) {
-		case AST_TOPLEVEL: {
-			list_iterator_t* iter = list_iterator_create(node->toplevel);
-			while(!list_iterator_end(iter)) {
-				ast_t* next = list_iterator_next(iter);
-				compiler_dump(next, level+1);
-				putchar('\n');
-			}
-			list_iterator_free(iter);
-			break;
-		}
-		case AST_ANNOTATION: {
-			printf(":annotation<%d>", (int)node->annotation);
-			break;
-		}
-		case AST_DECLVAR: {
-			printf(":decl %s->%s<", node->vardecl.name, datatype2str(node->vardecl.type));
-			compiler_dump(node->vardecl.initializer, 0);
-			putchar('>');
-			break;
-		}
-		case AST_DECLFUNC: {
-			printf(":func<%s::(", node->funcdecl.name);
-
-			list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.formals);
-			while(!list_iterator_end(iter)) {
-				ast_t* param = list_iterator_next(iter);
-				printf("%s: %s->%lu", param->vardecl.name, datatype2str(param->vardecl.type), param->vardecl.type.id);
-
-				if(!list_iterator_end(iter)) {
-					printf(", ");
-				}
-			}
-			printf(") => ret: %s->%lu>\n", datatype2str(node->funcdecl.rettype),node->funcdecl.rettype.id);
-
-			list_iterator_free(iter);
-			iter = list_iterator_create(node->funcdecl.impl.body);
-			while(!list_iterator_end(iter)) {
-				ast_t* next = list_iterator_next(iter);
-				compiler_dump(next, level+1);
-				putchar('\n');
-			}
-			list_iterator_free(iter);
-			break;
-		}
-		case AST_IDENT: {
-			printf(":ident = %s", node->ident);
-			break;
-		}
-		case AST_FLOAT: {
-			printf(":num = %f", node->f);
-			break;
-		}
-		case AST_INT: {
-			printf(":num = %d", node->i);
-			break;
-		}
-		case AST_STRING: {
-			printf(":str = '%s'", node->string);
-			break;
-		}
-		case AST_CHAR: {
-			printf(":char = '%c'", node->ch);
-			break;
-		}
-		case AST_BOOL: {
-			printf(":bool = '%s'", node->b == true ? "true" : "false");
-			break;
-		}
-		case AST_BINARY: {
-			printf(":bin<");
-			compiler_dump(node->binary.left, 0);
-			compiler_dump(node->binary.right, 0);
-			printf(":op = %s>", tok2str(node->binary.op));
-			break;
-		}
-		case AST_UNARY: {
-			printf(":unary<%s, ", tok2str(node->unary.op));
-			compiler_dump(node->unary.expr, 0);
-			putchar('>');
-			break;
-		}
-		case AST_SUBSCRIPT: {
-			printf(":subscript<(key)");
-			compiler_dump(node->subscript.key, 0);
-			printf("; (expr)");
-			compiler_dump(node->subscript.expr, 0);
-			putchar('>');
-			break;
-		}
-		case AST_IF: {
-			printf(":if<>\n");
-			list_iterator_t* iter = list_iterator_create(node->ifstmt);
-			while(!list_iterator_end(iter)) {
-				ast_t* next = list_iterator_next(iter);
-				compiler_dump(next, level+1);
-				putchar('\n');
-			}
-			list_iterator_free(iter);
-			break;
-		}
-		case AST_IFCLAUSE: {
-			if(node->ifclause.cond != 0) {
-				printf(":ifclause<");
-				compiler_dump(node->ifclause.cond, 0);
-				putchar('>');
-			}
-			else {
-				printf(":else<>");
-			}
-
-			if(list_size(node->ifclause.body) > 0) {
-				putchar('\n');
-				list_iterator_t* iter = list_iterator_create(node->ifclause.body);
-				while(!list_iterator_end(iter)) {
-					ast_t* next = list_iterator_next(iter);
-					compiler_dump(next, level+1);
-					putchar('\n');
-				}
-				list_iterator_free(iter);
-			}
-			break;
-		}
-		case AST_WHILE: {
-			printf(":while<");
-			compiler_dump(node->whilestmt.cond, 0);
-			printf(">\n");
-
-			list_iterator_t* iter = list_iterator_create(node->whilestmt.body);
-			while(!list_iterator_end(iter)) {
-				ast_t* next = list_iterator_next(iter);
-				compiler_dump(next, level+1);
-				putchar('\n');
-			}
-			list_iterator_free(iter);
-			break;
-		}
-		case AST_IMPORT: {
-			printf(":import<%s>", node->import);
-			break;
-		}
-		case AST_ARRAY: {
-			printf(":array<");
-			list_iterator_t* iter = list_iterator_create(node->array.elements);
-
-			while(!list_iterator_end(iter)) {
-				compiler_dump(list_iterator_next(iter), 0);
-			}
-			list_iterator_free(iter);
-			putchar('>');
-			break;
-		}
-		case AST_CLASS: {
-			printf(":class<%s->%lu>\n", node->classstmt.name, djb2((unsigned char*)node->classstmt.name));
-
-			list_iterator_t* iter = list_iterator_create(node->classstmt.formals);
-			while(!list_iterator_end(iter)) {
-				ast_t* next = list_iterator_next(iter);
-				compiler_dump(next, level+1);
-				putchar('\n');
-			}
-			list_iterator_free(iter);
-
-			iter = list_iterator_create(node->classstmt.body);
-			while(!list_iterator_end(iter)) {
-				ast_t* next = list_iterator_next(iter);
-				compiler_dump(next, level+1);
-				putchar('\n');
-			}
-			list_iterator_free(iter);
-			break;
-		}
-		case AST_RETURN: {
-			printf(":return<");
-			compiler_dump(node->returnstmt, 0);
-			putchar('>');
-			break;
-		}
-		case AST_CALL: {
-			printf(":call<");
-			compiler_dump(node->call.callee, 0);
-
-			/*list_iterator_t* iter = list_iterator_create(node->call.args);
-			while(!list_iterator_end(iter))
-			{
-				ast_t* next = list_iterator_next(iter);
-				compiler_dump(next, level);
-			}
-			list_iterator_free(iter);*/
-			putchar('>');
-			break;
-		}
-		default: break;
-	}
-}
-
 datatype_t compiler_eval(compiler_t* compiler, ast_t* node);
 
 /**
@@ -2120,7 +1913,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
 					// Dump the syntax tree
 #ifndef NO_AST
 					printf("Abstract syntax tree GET '%s'\n", name);
-					compiler_dump(fn, 1);
+					ast_dump(fn, 1);
 					printf("\n");
 #endif
 
@@ -2201,7 +1994,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
 
 #ifndef NO_AST
 					printf("Abstract syntax tree SET '%s'\n", name);
-					compiler_dump(fn, 1);
+					ast_dump(fn, 1);
 					printf("\n");
 #endif
 
@@ -2279,7 +2072,7 @@ datatype_t eval_import(compiler_t* compiler, ast_t* node)
 
 #ifndef NO_AST
 			printf("Abstract syntax tree '%s':\n", compiler->parser->name);
-			compiler_dump(root, 0);
+			ast_dump(root, 0);
 			putchar('\n');
 #endif
 
@@ -2404,7 +2197,7 @@ vector_t* compile_buffer(const char* source, const char* name)
 	{
 		#ifndef NO_AST
 		printf("Abstract syntax tree '%s':\n", compiler.parser->name);
-		compiler_dump(root, 0);
+		ast_dump(root, 0);
 		putchar('\n');
 		#endif
 

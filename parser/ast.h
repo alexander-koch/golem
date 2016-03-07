@@ -204,4 +204,6 @@ ast_t* ast_class_create(ast_class_t class, location_t location);
 const char* ast_classname(ast_class_t class);
 void ast_free(ast_t* ast);
 
+void ast_dump(ast_t* node, int level);
+
 #endif
