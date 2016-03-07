@@ -370,6 +370,7 @@ void ast_dump(ast_t* node, int level) {
 			list_iterator_t* iter = list_iterator_create(node->array.elements);
 			while(!list_iterator_end(iter)) {
 				ast_dump(list_iterator_next(iter), level+1);
+				if(!list_iterator_end(iter)) putchar('\n');
 			}
 			list_iterator_free(iter);
 			putchar(')');
