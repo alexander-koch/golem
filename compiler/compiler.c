@@ -771,27 +771,24 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 	return datatype_new(DATA_NULL);
 }
 
-// Eval.ident(node)
-// This function evaluates an occuring symbol and loads its content.
-datatype_t eval_ident(compiler_t* compiler, ast_t* node)
-{
+/**
+ * eval_ident:
+ * This function evaluates an occuring symbol and loads its content.
+ */
+datatype_t eval_ident(compiler_t* compiler, ast_t* node) {
 	int depth = 0;
 	symbol_t* ptr = symbol_get_ext(compiler->scope, node->ident, &depth);
-	if(ptr)
-	{
-		if(ptr->node->class == AST_DECLVAR)
-		{
+	if(ptr) {
+		if(ptr->node->class == AST_DECLVAR) {
 			// If it is a field of a class
-			if(ptr->ref)
-			{
+			if(ptr->ref) {
 				// ldarg0
 				// getfield <addr>
 
 				symbol_t* classRef = ptr->ref;
 				ast_t* classNode = classRef->node;
 				void* val = 0;
-				if(hashmap_get(classNode->classstmt.fields, node->ident, &val) == HMAP_MISSING)
-				{
+				if(hashmap_get(classNode->classstmt.fields, node->ident, &val) == HMAP_MISSING) {
 					compiler_throw(compiler, node, "No such class field");
 					return datatype_new(DATA_NULL);
 				}
@@ -804,23 +801,19 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 			}
 
 			// If it is a class constructor parameter
-			if(ptr->isClassParam)
-			{
+			if(ptr->isClassParam) {
 				// Depth must be zero, otherwise out of scope
-				if(depth != 0)
-				{
+				if(depth != 0) {
 					compiler_throw(compiler, node, "Trying to access a constructor parameter");
 					return datatype_new(DATA_NULL);
 				}
 			}
 
 			// If local or global, otherwise search in upper scope
-			if(depth == 0 || ptr->global)
-			{
+			if(depth == 0 || ptr->global) {
 				emit_load(compiler->buffer, ptr->address, ptr->global);
 			}
-			else
-			{
+			else {
 				emit_load_upval(compiler->buffer, depth, ptr->address);
 			}
 		}
@@ -831,67 +824,60 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node)
 	return datatype_new(DATA_NULL);
 }
 
-// Eval.compareAndCall(func, node, address)
-// @param func Function declaration node
-// @param node Node that causes the call
-// @param address Address to call, if the function is internal
-// -----
-// Helper function for eval_call
-// Checks the given values and compares them with the function parameters.
-// If they match, the bytecode is emitted.
-bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int address)
-{
+/**
+ * eval_compare_and_call:
+ * @param func Function declaration node
+ * @param node Node that causes the call
+ * @param address Address to call, if the function is internal
+ *
+ * Helper function for eval_call
+ * Checks the given values and compares them with the function parameters.
+ * If they match, the bytecode is emitted.
+ */
+bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int address) {
 	size_t argc = list_size(node->call.args);
 	ast_t* call = node->call.callee;
 
 	list_t* formals = 0;
 	bool external = false;
-	if(func->class == AST_DECLFUNC)
-	{
+	if(func->class == AST_DECLFUNC) {
 		formals = func->funcdecl.impl.formals;
 		external = func->funcdecl.external;
 	}
-	else if(func->class == AST_CLASS)
-	{
+	else if(func->class == AST_CLASS) {
 		formals = func->classstmt.formals;
 	}
 	size_t paramc = list_size(formals);
 
 	// Param checking
-	if(argc > paramc)
-	{
+	if(argc > paramc) {
 		compiler_throw(compiler, node, "Too many arguments for function '%s'. Expected: %d", call->ident, paramc);
 		return false;
 	}
-	else if(argc < paramc)
-	{
+	else if(argc < paramc) {
 		compiler_throw(compiler, node, "Too few arguments for function '%s'. Expected: %d", call->ident, paramc);
 		return false;
 	}
 
-	if(paramc > 0)
-	{
+	if(paramc > 0) {
 		// Valid, test parameter types
 		list_iterator_t* iter = list_iterator_create(formals);
 		list_iterator_t* args_iter = list_iterator_create(node->call.args);
 		int i = 1;
-		while(!list_iterator_end(iter))
-		{
+		while(!list_iterator_end(iter)) {
 			// Get the datatypes
 			ast_t* param = list_iterator_next(iter);
 			datatype_t argType = compiler_eval(compiler, list_iterator_next(args_iter));
 			datatype_t paramType = param->vardecl.type;
 
 			// Do template test
-			if((paramType.type & DATA_GENERIC) == DATA_GENERIC)
-			{
+			if((paramType.type & DATA_GENERIC) == DATA_GENERIC) {
 				type_t tp = paramType.type & ~DATA_GENERIC;
 				if((argType.type & tp) == tp) continue;
 			}
 
 			// Test datatypes
-			if(!datatype_match(argType, paramType))
-			{
+			if(!datatype_match(argType, paramType)) {
 				compiler_throw(compiler, node,
 					"Parameter %d has the wrong type.\nFound: %s, expected: %s",
 					i, datatype2str(argType), datatype2str(paramType));
@@ -904,12 +890,10 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
 	}
 
 	// Emit invocation
-	if(external)
-	{
+	if(external) {
 		emit_syscall(compiler->buffer, func->funcdecl.external-1);
 	}
-	else
-	{
+	else {
 		// Reserve some memory
 		emit_reserve(compiler->buffer, compiler->scope->address);
 		emit_invoke(compiler->buffer, address, argc);
@@ -1168,16 +1152,17 @@ datatype_t eval_class_call(compiler_t* compiler, ast_t* node, datatype_t dt)
 	symbol_t* func = (symbol_t*)val;
 	if(eval_compare_and_call(compiler, func->node, node, func->address))
 	{
-		// Get the last instruction (invoke)
-		// and increase the arguments by one
+		// Get the last instruction (invoke) and convert it to invokevirtual
 		instruction_t* ins = vector_top(compiler->buffer);
 		ins->op = OP_INVOKEVIRTUAL;
 
+		// Class is on top, reassign it
 		symbol_t* sym = symbol_get(compiler->scope, expr->vardecl.name);
 		if(sym)
 		{
 			symbol_replace(compiler, sym);
 		}
+		// Else replace
 		else
 		{
 			emit_pop(compiler->buffer);
