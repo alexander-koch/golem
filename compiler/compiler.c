@@ -2074,10 +2074,9 @@ datatype_t eval_import(compiler_t* compiler, ast_t* node)
 	}
 
 	// Dynamic library checking
-	if(!strcmp(node->import, "core") || !strcmp(node->import, "io") || !strcmp(node->import, "math")) {
-		// Nothing to do
-	}
-	else {
+	if(strcmp(node->import, "core") != 0 && strcmp(node->import, "io") != 0 &&
+		strcmp(node->import, "math") != 0) {
+
 		printf("WARNING: Dynamic libraries are not supported (for %s)\n", node->import);
 #ifdef USE_DYNLIB_FEATURE
 		// 1. Create the formatted name for lib. e.g. png -> libpng.dll
