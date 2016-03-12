@@ -32,8 +32,6 @@ CFLAGS := -std=c99 -Wall -Wno-unused-function -Wno-unused-parameter $(GFLAGS)
 
 # All files for the compiler
 FILES := core/util.c \
-		adt/queue.c \
-		adt/stack.c \
 		adt/list.c \
 		adt/vector.c \
 		adt/hashmap.c \
