@@ -794,6 +794,11 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node) {
 				}
 
 				ptr = (symbol_t*)val;
+                
+                if(compiler->scope->node->class == AST_CLASS) {
+                    compiler_throw(compiler, node, "Accessing class fields within the constructor is not permitted");
+                    return datatype_new(DATA_NULL);
+                }
 
 				emit_op(compiler->buffer, OP_LDARG0);
 				emit_class_getfield(compiler->buffer, ptr->address);
