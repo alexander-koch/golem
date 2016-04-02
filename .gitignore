@@ -1,0 +1,11 @@
+# Executables
+*.exe
+*.out
+
+# Shared objects
+*.dll
+*.so
+
+# Object files and assembly
+*.o
+*.asm
