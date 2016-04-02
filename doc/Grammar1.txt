@@ -1,0 +1,187 @@
+Lexical grammar
+
+G = (N,T,P,S)
+N = {
+	TOKEN_NEWLINE,
+	TOKEN_SPACE,
+	TOKEN_WORD,
+	TOKEN_STRING,
+	TOKEN_INT,
+	TOKEN_FLOAT,
+	TOKEN_BOOL,
+	TOKEN_LPAREN,
+	TOKEN_RPAREN,
+	TOKEN_LBRACE,
+	TOKEN_RBRACE,
+	TOKEN_LBRACKET,
+	TOKEN_RBRACKET,
+	TOKEN_COMMA,
+	TOKEN_SEMICOLON,
+	TOKEN_ADD,
+	TOKEN_SUB,
+	TOKEN_MUL,
+	TOKEN_DIV,
+	TOKEN_MOD,
+	TOKEN_EQUAL,
+	TOKEN_ASSIGN,
+	TOKEN_NEQUAL,
+	TOKEN_NOT,
+	TOKEN_DOT,
+	TOKEN_BITLSHIFT,
+	TOKEN_BITRSHIFT,
+	TOKEN_LEQUAL,
+	TOKEN_GEQUAL,
+	TOKEN_LESS,
+	TOKEN_GREATER,
+	TOKEN_AND,
+	TOKEN_OR,
+	TOKEN_BITAND,
+	TOKEN_BITOR,
+	TOKEN_BITXOR,
+	TOKEN_BITNOT,
+	TOKEN_DOUBLECOLON,
+	TOKEN_COLON,
+	TOKEN_ARROW,
+	TOKEN_AT,
+	alpha,
+	alpha_numeric,
+	comment,
+	special,
+	digit,
+	punctuation,
+	word_begin,
+	word,
+	text,
+	token
+}
+P = {
+	token -> TOKEN_NEWLINE
+				| TOKEN_SPACE
+				| TOKEN_WORD
+				| TOKEN_STRING
+				| TOKEN_INT
+				| TOKEN_FLOAT
+				| TOKEN_BOOL
+				| TOKEN_LPAREN
+				| TOKEN_RPAREN
+				| TOKEN_LBRACE
+				| TOKEN_RBRACE
+				| TOKEN_LBRACKET
+				| TOKEN_RBRACKET
+				| TOKEN_COMMA
+				| TOKEN_SEMICOLON
+				| TOKEN_ADD
+				| TOKEN_SUB
+				| TOKEN_MUL
+				| TOKEN_DIV
+				| TOKEN_MOD
+				| TOKEN_EQUAL
+				| TOKEN_ASSIGN
+				| TOKEN_NEQUAL
+				| TOKEN_NOT
+				| TOKEN_DOT
+				| TOKEN_BITLSHIFT
+				| TOKEN_BITRSHIFT
+				| TOKEN_LEQUAL
+				| TOKEN_GEQUAL
+				| TOKEN_LESS
+				| TOKEN_GREATER
+				| TOKEN_AND
+				| TOKEN_OR
+				| TOKEN_BITAND
+				| TOKEN_BITOR
+				| TOKEN_BITXOR
+				| TOKEN_BITNOT
+				| TOKEN_DOUBLECOLON
+				| TOKEN_COLON
+				| TOKEN_ARROW
+				| TOKEN_AT
+
+	TOKEN_NEWLINE -> '\n'
+				|'\r\n'
+				| '\n\r'
+	TOKEN_SPACE -> ' '
+				| '\t'
+				| '\0'
+				| '\n'
+				| '\v'
+				| '\f'
+				| '\r'
+				| comment
+
+	special -> '@'
+				| '-'
+				| '*'
+				| '/'
+				| '%'
+				| '='
+				| '!'
+				| '?'
+				| ':'
+				| '.'
+				| ','
+				| ';'
+				| '<'
+				| '>'
+				| '&'
+				| '|'
+				| '^'
+				| '~'
+				| '$'
+				| '('
+				| ')'
+				| '['
+				| ']'
+				| '{'
+				| '}'
+
+	comment -> '#' space text
+	alpha -> 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm' | 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z'
+				| 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z'
+	digit -> '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+	alpha_numeric -> alpha | digit
+
+	punctuation -> special | '->' | ':=' | '!=' | '<<' | '>>' | '>=' | '&&' | '||' | '::'
+	word_begin -> (alpha | '_')
+	word -> (alphanumeric | '_') word | (alphanumeric | '_')
+	text -> (word | space | newline | special) text
+
+	TOKEN_INT -> digit | TOKEN_INT
+	TOKEN_FLOAT -> TOKEN_INT '.' TOKEN_INT
+	TOKEN_WORD -> word_begin | word_begin word
+	TOKEN_BOOL -> 'true' | 'false'
+	TOKEN_STRING -> '"' text '"'
+	TOKEN_LPAREN -> '('
+	TOKEN_RPAREN -> ')'
+	TOKEN_LBRACE -> '{'
+	TOKEN_RBRACE -> '}'
+	TOKEN_LBRACKET -> '['
+	TOKEN_RBRACKET -> ']'
+	TOKEN_COMMA -> ','
+	TOKEN_SEMICOLON -> ';'
+	TOKEN_ADD -> '+'
+	TOKEN_SUB -> '-'
+	TOKEN_MUL -> '*'
+	TOKEN_DIV -> '/'
+	TOKEN_MOD -> '%'
+	TOKEN_EQUAL -> '='
+	TOKEN_ASSIGN -> ':='
+	TOKEN_NEQUAL -> '!='
+	TOKEN_NOT -> '!'
+	TOKEN_DOT -> '.'
+	TOKEN_BITLSHIFT -> '<<'
+	TOKEN_BITRSHIFT -> '>>'
+	TOKEN_LEQUAL -> '<='
+	TOKEN_GEQUAL -> '>='
+	TOKEN_LESS -> '<'
+	TOKEN_GREATER -> '>'
+	TOKEN_AND -> '&&'
+	TOKEN_OR -> '||'
+	TOKEN_BITAND -> '&'
+	TOKEN_BITOR -> '|'
+	TOKEN_BITXOR -> '^'
+	TOKEN_BITNOT -> '~'
+	TOKEN_DOUBLECOLON -> '::'
+	TOKEN_COLON -> ':'
+	TOKEN_ARROW -> '@'
+}

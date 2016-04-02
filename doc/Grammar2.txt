@@ -1,0 +1,50 @@
+Language Grammar
+
+G = (N,T,P,S)
+T = [...]
+N = {
+	Newline,
+	Statement,
+	Expression,
+	Program,
+
+	Import,
+	Declaration,
+	Function,
+	If,
+	While,
+	Class,
+	Return,
+	Annotation,
+}
+S = Program
+P = {
+	Program = {Statement | Newline};
+	Newline = TOKEN_NEWLINE;
+	Statement = (Import | Variable | Function | If | While | Class | Return | Annotation | Expression);
+
+	Import = "using", (TOKEN_WORD | TOKEN_STRING), Newline;
+	Variable = "let", ["mut"], TOKEN_WORD, "=", Expression, Newline;
+
+	Function = "func", TOKEN_WORD, Formals, (("->", Datatype, Block) | Block), Newline;
+	Formals = "(", [formal, {",", formal}], ")";
+	Formal = ["mut"], TOKEN_WORD, ":", Datatype;
+	Datatype = (("int" | "char" | "bool" | "float" | TOKEN_WORD), ["[]"]) | "void";
+	Block = "{", Newline, {Statement}, "}";
+
+	If = "if", Expression, Block, {ElseIf}, [Else];
+	ElseIf = "else", "if", Expression, Block;
+	Else = "else", Block;
+
+	While = "while", Expression, Block, Newline;
+	Class = "type", TOKEN_WORD, Formals, Block;
+
+	Return = "return", [Expression], Newline;
+	Annotation = "@", ("Getter" | "Setter" | "Unused"), Newline;
+
+	Expression = Expression_primary, {Operator, Expression_primary};
+	Expression_primary = Literal | TOKEN_WORD | ("(", Expression, ")") | Unary | Call | Subscript | Subscript_sugar;
+
+	Literal = Float | Integer | String | Boolean | Array;
+	Array = "[", ((Expression, {",", Expression}) | ("::", Datatype)), "]";
+}
