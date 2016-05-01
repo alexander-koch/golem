@@ -117,12 +117,12 @@ void parser_throw(parser_t* parser, const char* format, ...) {
     parser->error = 1;
     location_t loc = get_location(parser);
 
-    fprintf(stdout, "%s:%d:%d (Syntax): ", parser->name, loc.line, loc.column);
+    printf("%s:%d:%d (Syntax): ", parser->name, loc.line, loc.column);
     va_list argptr;
     va_start(argptr, format);
-    vfprintf(stdout, format, argptr);
+    vprintf(format, argptr);
     va_end(argptr);
-    fprintf(stdout, "\n");
+    putchar('\n');
 }
 
 // Parsing Functions
@@ -414,7 +414,7 @@ ast_t* parse_array(parser_t* parser) {
             break;
         }
         else {
-            accept_token(parser);
+            parser->cursor++;
         }
         skip_newline(parser);
     }

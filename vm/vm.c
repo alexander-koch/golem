@@ -197,29 +197,24 @@ void val_append(vm_t* vm, val_t v1) {
 }
 
 // Push and register in GC, if v1 is a ptr
-void vm_register(vm_t* vm, val_t v1)
-{
+void vm_register(vm_t* vm, val_t v1) {
 	push(vm, v1);
 	val_append(vm, v1);
 }
 
 // Just prints out instruction codes
-void vm_print_code(vm_t* vm, vector_t* buffer)
-{
+void vm_print_code(vm_t* vm, vector_t* buffer) {
 	vm->pc = 0;
 	printf("\nImmediate code:\n");
 
 	instruction_t* instr = vector_get(buffer, vm->pc);
-	while(instr->op != OP_HLT)
-	{
+	while(instr->op != OP_HLT) {
 		printf("  %.2d: %s", vm->pc, op2str(instr->op));
-		if(instr->v1 != NULL_VAL)
-		{
+		if(instr->v1 != NULL_VAL) {
 			printf(", ");
 			val_print(instr->v1);
 		}
-		if(instr->v2 != NULL_VAL)
-		{
+		if(instr->v2 != NULL_VAL) {
 			printf(", ");
 			val_print(instr->v2);
 		}
@@ -231,8 +226,7 @@ void vm_print_code(vm_t* vm, vector_t* buffer)
 	vm->pc = 0;
 }
 
-void reserve(vm_t* vm, size_t args)
-{
+void reserve(vm_t* vm, size_t args) {
 	// 1. Increase the reserve size by one
 	// 2. Move content from vm->sp-i to vm->sp+vm->reserve-i, just move by reserve
 	// 3. Store the value of reserved entries at the end vm->sp+vm->reserve-args-1
@@ -247,8 +241,7 @@ void reserve(vm_t* vm, size_t args)
 	vm->sp += vm->reserve;
 }
 
-void revert_reserve(vm_t* vm)
-{
+void revert_reserve(vm_t* vm) {
 	// 1. Get the reserve value N.
 	// 2. Pop N times.
 
@@ -258,16 +251,13 @@ void revert_reserve(vm_t* vm)
 	}
 }
 
-void vm_trace_print(vm_t* vm, instruction_t* instr)
-{
+void vm_trace_print(vm_t* vm, instruction_t* instr) {
 	printf("  %.2d (SP:%.2d, FP:%.2d): %s", vm->pc, vm->sp, vm->fp, op2str(instr->op));
-	if(instr->v1 != NULL_VAL)
-	{
+	if(instr->v1 != NULL_VAL) {
 		printf(", ");
 		val_print(instr->v1);
 	}
-	if(instr->v2 != NULL_VAL)
-	{
+	if(instr->v2 != NULL_VAL) {
 		printf(", ");
 		val_print(instr->v2);
 	}
@@ -276,8 +266,7 @@ void vm_trace_print(vm_t* vm, instruction_t* instr)
 	//int begin = vm->sp - 8;
 	//if(begin < 0) begin = 0;
 
-	for(int i = 0; i < vm->sp; i++)
-	{
+	for(int i = 0; i < vm->sp; i++) {
 		val_print(vm->stack[i]);
 		if(i < vm->sp-1) printf(", ");
 	}
@@ -287,8 +276,7 @@ void vm_trace_print(vm_t* vm, instruction_t* instr)
 	printf("OBJECTS: %d\n", vm->numObjects);
 
 	char c = getchar();
-	if(c == 'c')
-	{
+	if(c == 'c') {
 		gc(vm);
 	}
 #endif
@@ -297,25 +285,21 @@ void vm_trace_print(vm_t* vm, instruction_t* instr)
 // Fast, optimized version for vm_register.
 // Use if value needs to be copied and pushed onto the stack.
 void vm_copy(vm_t* vm, val_t val) {
-	if(IS_OBJ(val))
-	{
+	if(IS_OBJ(val)) {
 		obj_t* obj = AS_OBJ(val);
 		obj_t* newObj = COPY_OBJ(obj);
 
 		push(vm, OBJ_VAL(newObj));
 		obj_append(vm, newObj);
 	}
-	else
-	{
+	else {
 		push(vm, val);
 	}
 }
 
 // Processes a buffer instruction based on instruction / program counter (pc).
-void vm_exec(vm_t* vm, vector_t* buffer)
-{
-	static void* dispatch_table[] =
-	{
+void vm_exec(vm_t* vm, vector_t* buffer) {
+	static void* dispatch_table[] = {
 		&&code_hlt,
 		&&code_push,
 		&&code_pop,
@@ -407,218 +391,183 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	// Dispatch and run
 	DISPATCH();
 	code_hlt: return;
-	code_push:
-	{
+	code_push: {
 		vm_copy(vm, instr->v1);
 		DISPATCH();
 	}
-	code_pop:
-	{
+	code_pop: {
 		pop(vm);
 		DISPATCH();
 	}
-	code_store:
-	{
+	code_store: {
 		int offset = AS_INT32(instr->v1);
-		if(offset < 0)
-		{
+		if(offset < 0) {
 			vm->stack[vm->fp+offset] = pop(vm);
 		}
-		else
-		{
+		else {
 			vm->locals[vm->fp+offset] = pop(vm);
 		}
 		DISPATCH();
 	}
-	code_load:
-	{
+	code_load: {
 		int offset = AS_INT32(instr->v1);
-		if(offset < 0)
-		{
+		if(offset < 0) {
 			val_t v = vm->stack[vm->fp+offset];
 			vm_copy(vm, v);
 		}
-		else
-		{
+		else {
 			val_t v = vm->locals[vm->fp+offset];
 			vm_copy(vm, v);
 		}
 		DISPATCH();
 	}
-	code_gstore:
-	{
+	code_gstore: {
 		int offset = AS_INT32(instr->v1);
 		vm->locals[offset] = pop(vm);
 		DISPATCH();
 	}
-	code_gload:
-	{
+	code_gload: {
 		int offset = AS_INT32(instr->v1);
 		val_t v = vm->locals[offset];
 		vm_copy(vm, v);
 		DISPATCH();
 	}
-	code_ldarg0:
-	{
+	code_ldarg0: {
 		int args = AS_INT32(vm->stack[vm->fp-3]);
 		vm_copy(vm, vm->stack[vm->fp-args-4]);
 		DISPATCH();
 	}
-	code_setarg0:
-	{
+	code_setarg0: {
 		int args = AS_INT32(vm->stack[vm->fp-3]);
 		vm->stack[vm->fp-args-4] = pop(vm);
 		DISPATCH();
 	}
-	code_iadd:
-	{
+	code_iadd: {
 		int v2 = AS_INT32(pop(vm));
 		int v1 = AS_INT32(pop(vm));
 		push(vm, INT32_VAL(v1 + v2));
 		DISPATCH();
 	}
-	code_isub:
-	{
+	code_isub: {
 		int v2 = AS_INT32(pop(vm));
 		int v1 = AS_INT32(pop(vm));
 		push(vm, INT32_VAL(v1 - v2));
 		DISPATCH();
 	}
-	code_imul:
-	{
+	code_imul: {
 		int v2 = AS_INT32(pop(vm));
 		int v1 = AS_INT32(pop(vm));
 		push(vm, INT32_VAL(v1 * v2));
 		DISPATCH();
 	}
-	code_idiv:
-	{
+	code_idiv: {
 		int v2 = AS_INT32(pop(vm));
 		int v1 = AS_INT32(pop(vm));
 		push(vm, INT32_VAL(v1 / v2));
 		DISPATCH();
 	}
-	code_mod:
-	{
+	code_mod: {
 		int v2 = AS_INT32(pop(vm));
 		int v1 = AS_INT32(pop(vm));
 		push(vm, INT32_VAL(v1 % v2));
 		DISPATCH();
 	}
-	code_bitl:
-	{
+	code_bitl: {
 		int v2 = AS_INT32(pop(vm));
 		int v1 = AS_INT32(pop(vm));
 		push(vm, INT32_VAL(v1 << v2));
 		DISPATCH();
 	}
-	code_bitr:
-	{
+	code_bitr: {
 		int v2 = AS_INT32(pop(vm));
 		int v1 = AS_INT32(pop(vm));
 		push(vm, INT32_VAL(v1 >> v2));
 		DISPATCH();
 	}
-	code_bitand:
-	{
+	code_bitand: {
 		int v2 = AS_INT32(pop(vm));
 		int v1 = AS_INT32(pop(vm));
 		push(vm, INT32_VAL(v1 & v2));
 		DISPATCH();
 	}
-	code_bitor:
-	{
+	code_bitor: {
 		int v2 = AS_INT32(pop(vm));
 		int v1 = AS_INT32(pop(vm));
 		push(vm, INT32_VAL(v1 | v2));
 		DISPATCH();
 	}
-	code_bitxor:
-	{
+	code_bitxor: {
 		int v2 = AS_INT32(pop(vm));
 		int v1 = AS_INT32(pop(vm));
 		push(vm, INT32_VAL(v1 ^ v2));
 		DISPATCH();
 	}
-	code_bitnot:
-	{
+	code_bitnot: {
 		int v1 = AS_INT32(pop(vm));
 		push(vm, INT32_VAL(~v1));
 		DISPATCH();
 	}
-	code_iminus:
-	{
+	code_iminus: {
 		int v1 = AS_INT32(pop(vm));
 		push(vm, INT32_VAL(-v1));
 		DISPATCH();
 	}
-	code_i2f:
-	{
+	code_i2f: {
 		int v1 = AS_INT32(pop(vm));
 		push(vm, NUM_VAL(v1));
 		DISPATCH();
 	}
-	code_fadd:
-	{
+	code_fadd: {
 		double v2 = AS_NUM(pop(vm));
 		double v1 = AS_NUM(pop(vm));
 		push(vm, NUM_VAL(v1 + v2));
 		DISPATCH();
 	}
-	code_fsub:
-	{
+	code_fsub: {
 		double v2 = AS_NUM(pop(vm));
 		double v1 = AS_NUM(pop(vm));
 		push(vm, NUM_VAL(v1 - v2));
 		DISPATCH();
 	}
-	code_fmul:
-	{
+	code_fmul: {
 		double v2 = AS_NUM(pop(vm));
 		double v1 = AS_NUM(pop(vm));
 		push(vm, NUM_VAL(v1 * v2));
 		DISPATCH();
 	}
-	code_fdiv:
-	{
+	code_fdiv: {
 		double v2 = AS_NUM(pop(vm));
 		double v1 = AS_NUM(pop(vm));
 		push(vm, NUM_VAL(v1 / v2));
 		DISPATCH();
 	}
-	code_fminus:
-	{
+	code_fminus: {
 		double v1 = AS_NUM(pop(vm));
 		push(vm, NUM_VAL(-v1));
 		DISPATCH();
 	}
-	code_f2i:
-	{
+	code_f2i: {
 		double v1 = AS_NUM(pop(vm));
 		push(vm, INT32_VAL((int)v1));
 		DISPATCH();
 	}
-	code_not:
-	{
+	code_not: {
 		bool b = AS_BOOL(pop(vm));
 		push(vm, BOOL_VAL(!b));
 		DISPATCH();
 	}
-	code_b2i:
-	{
+	code_b2i: {
 		bool b = AS_BOOL(pop(vm));
 		push(vm, INT32_VAL(b));
 		DISPATCH();
 	}
-	code_syscall:
-	{
+	code_syscall: {
 		int index = AS_INT32(instr->v1);
 		val_t ret = system_methods[index](vm);
 		vm_register(vm, ret);
 		DISPATCH();
 	}
-	code_invoke:
-	{
+	code_invoke: {
 		// Arguments already on the stack
 		int address = AS_INT32(instr->v1);
 		int args = AS_INT32(instr->v2);
@@ -650,11 +599,9 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 
 		vm->fp = vm->sp;
 		vm->pc = address;
-		// DISPATCH_RAW();
 		DISPATCH();
 	}
-	code_invokevirtual:
-	{
+	code_invokevirtual: {
 		int address = AS_INT32(instr->v1);
 		int args = AS_INT32(instr->v2);
 
@@ -665,21 +612,17 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		push(vm, INT32_VAL(vm->pc));
 		vm->fp = vm->sp;
 		vm->pc = address;
-		// DISPATCH_RAW();
 		DISPATCH();
 	}
-	code_reserve:
-	{
+	code_reserve: {
 		// Reserves some memory.
 		// Uses this before any function call to maintain stored values.
 		// Otherwise, if too many locals are saved in the last scope e.g. from 1 - 11,
 		// the new scope overwrites the old values for instance: fp at 5, overwrites 5 - 11.
-
 		vm->reserve = AS_INT32(instr->v1);
 		DISPATCH();
 	}
-	code_ret:
-	{
+	code_ret: {
 		// Returns to previous instruction pointer,
 		// and pushes the return value back on the stack.
 		// If you call this function make sure there is a return value on the stack.
@@ -696,8 +639,7 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		push(vm, ret);
 		DISPATCH();
 	}
-	code_retvirtual:
-	{
+	code_retvirtual: {
 		// Returns from a virtual class function
 		val_t ret = pop(vm);
 
@@ -714,29 +656,24 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		push(vm, clazz);
 		DISPATCH();
 	}
-	code_jmp:
-	{
+	code_jmp: {
 		vm->pc = AS_INT32(instr->v1);
 		DISPATCH();
 	}
-	code_jmpf:
-	{
+	code_jmpf: {
 		bool result = AS_BOOL(pop(vm));
-		if(!result)
-		{
+		if(!result) {
 			vm->pc = AS_INT32(instr->v1);
 		}
 		DISPATCH();
 	}
-	code_arr:
-	{
+	code_arr: {
 		// Reverse list fetching and inserting.
 		// Copying is not needed, because array consumes all the objects.
 		// The objects already have to be a copy.
 		size_t elsz = AS_INT32(instr->v1);
 		val_t* arr = malloc(sizeof(val_t) * elsz);
-		for(int i = elsz; i > 0; i--)
-		{
+		for(int i = elsz; i > 0; i--) {
 			// Get index object
 			val_t val = vm->stack[vm->sp - i];
 			arr[elsz - i] = COPY_VAL(val);		// <-- vm_register causes all sub objects also to be appended, therefore error
@@ -749,13 +686,11 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		obj_append(vm, obj);
 		DISPATCH();
 	}
-	code_str:
-	{
+	code_str: {
 		size_t elsz = AS_INT32(instr->v1);
 		char *str = malloc(sizeof(char) * (elsz+1));
 
-		for(int i = elsz; i > 0; i--)
-		{
+		for(int i = elsz; i > 0; i--) {
 			val_t val = vm->stack[vm->sp - i];
 			str[elsz - i] = (char)AS_INT32(val);
 			vm->stack[vm->sp - i] = 0;
@@ -767,8 +702,7 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		obj_append(vm, obj);
 		DISPATCH();
 	}
-	code_ldlib:
-	{
+	code_ldlib: {
 #ifdef USE_DYNLIB_FEATURE
 		// Instr. ldlib "somelib.dll"
 		// 1. Test if library is loaded
@@ -786,127 +720,109 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 #endif
 		DISPATCH();
 	}
-	code_tostr:
-	{
+	code_tostr: {
 		val_t val = pop(vm);
 		char* str = val_tostr(val);
 		vm_register(vm, STRING_NOCOPY_VAL(str));
 		DISPATCH();
 	}
-	code_beq:
-	{
+	code_beq: {
 		bool b2 = AS_BOOL(pop(vm));
 		bool b1 = AS_BOOL(pop(vm));
 		push(vm, BOOL_VAL(b1 == b2));
 		DISPATCH();
 	}
-	code_ieq:
-	{
+	code_ieq: {
 		int v2 = AS_INT32(pop(vm));
 		int v1 = AS_INT32(pop(vm));
 		push(vm, BOOL_VAL(v1 == v2));
 		DISPATCH();
 	}
-	code_feq:
-	{
+	code_feq: {
 		double v2 = AS_NUM(pop(vm));
 		double v1 = AS_NUM(pop(vm));
 		push(vm, BOOL_VAL(v1 == v2));
 		DISPATCH();
 	}
-	code_bne:
-	{
+	code_bne: {
 		bool b2 = AS_BOOL(pop(vm));
 		bool b1 = AS_BOOL(pop(vm));
 		push(vm, BOOL_VAL(b1 != b2));
 		DISPATCH();
 	}
-	code_ine:
-	{
+	code_ine: {
 		int v2 = AS_INT32(pop(vm));
 		int v1 = AS_INT32(pop(vm));
 		push(vm, BOOL_VAL(v1 != v2));
 		DISPATCH();
 	}
-	code_fne:
-	{
+	code_fne: {
 		double v2 = AS_NUM(pop(vm));
 		double v1 = AS_NUM(pop(vm));
 		push(vm, BOOL_VAL(v1 != v2));
 		DISPATCH();
 	}
-	code_ilt:
-	{
+	code_ilt: {
 		int v2 = AS_INT32(pop(vm));
 		int v1 = AS_INT32(pop(vm));
 		push(vm, BOOL_VAL(v1 < v2));
 		DISPATCH();
 	}
-	code_igt:
-	{
+	code_igt: {
 		int v2 = AS_INT32(pop(vm));
 		int v1 = AS_INT32(pop(vm));
 		push(vm, BOOL_VAL(v1 > v2));
 		DISPATCH();
 	}
-	code_ile:
-	{
+	code_ile: {
 		int v2 = AS_INT32(pop(vm));
 		int v1 = AS_INT32(pop(vm));
 		push(vm, BOOL_VAL(v1 <= v2));
 		DISPATCH();
 	}
-	code_ige:
-	{
+	code_ige: {
 		int v2 = AS_INT32(pop(vm));
 		int v1 = AS_INT32(pop(vm));
 		push(vm, BOOL_VAL(v1 >= v2));
 		DISPATCH();
 	}
-	code_flt:
-	{
+	code_flt: {
 		double v2 = AS_NUM(pop(vm));
 		double v1 = AS_NUM(pop(vm));
 		push(vm, BOOL_VAL(v1 < v2));
 		DISPATCH();
 	}
-	code_fgt:
-	{
+	code_fgt: {
 		double v2 = AS_NUM(pop(vm));
 		double v1 = AS_NUM(pop(vm));
 		push(vm, BOOL_VAL(v1 > v2));
 		DISPATCH();
 	}
-	code_fle:
-	{
+	code_fle: {
 		double v2 = AS_NUM(pop(vm));
 		double v1 = AS_NUM(pop(vm));
 		push(vm, BOOL_VAL(v1 <= v2));
 		DISPATCH();
 	}
-	code_fge:
-	{
+	code_fge: {
 		double v2 = AS_NUM(pop(vm));
 		double v1 = AS_NUM(pop(vm));
 		push(vm, BOOL_VAL(v1 >= v2));
 		DISPATCH();
 	}
-	code_band:
-	{
+	code_band: {
 		bool b2 = AS_BOOL(pop(vm));
 		bool b1 = AS_BOOL(pop(vm));
 		push(vm, BOOL_VAL(b1 && b2));
 		DISPATCH();
 	}
-	code_bor:
-	{
+	code_bor: {
 		bool b2 = AS_BOOL(pop(vm));
 		bool b1 = AS_BOOL(pop(vm));
 		push(vm, BOOL_VAL(b1 || b2));
 		DISPATCH();
 	}
-	code_getsub:
-	{
+	code_getsub: {
 		// Stack:
 		// | object |
 		// | key 	|
@@ -915,22 +831,18 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		val_t obj = pop(vm);
 		int idx = AS_INT32(key);
 
-		if(IS_STRING(obj))
-		{
+		if(IS_STRING(obj)) {
 			char* str = AS_STRING(obj);
 			// VM_ASSERT(idx >= 0 && idx < strlen(str), "Array index out of bounds");
 			push(vm, INT32_VAL(str[idx]));
-		}
-		else
-		{
+		} else {
 			obj_array_t* arr = AS_ARRAY(obj);
 			// VM_ASSERT(idx >= 0 && idx < arr->len, "Array index out of bounds");
 			vm_copy(vm, arr->data[idx]);
 		}
 		DISPATCH();
 	}
-	code_setsub:
-	{
+	code_setsub: {
 		// Stack:
 		// | value	|
 		// | object |
@@ -941,16 +853,14 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		val_t val = pop(vm);
 		int idx = AS_INT32(key);
 
-		if(IS_STRING(obj))
-		{
+		if(IS_STRING(obj)) {
 			obj = COPY_VAL(obj);
 			char* data = AS_STRING(obj);
 			// VM_ASSERT(idx >= 0 && idx < strlen(data), "Array index out of bounds");
 			data[idx] = (char)AS_INT32(val);
 			vm_register(vm, obj);
 		}
-		else
-		{
+		else {
 			// Copy the whole array
 			// Upload the new array
 			obj = COPY_VAL(obj);
@@ -966,29 +876,23 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		}
 		DISPATCH();
 	}
-	code_len:
-	{
+	code_len: {
 		val_t obj = pop(vm);
 
-		if(IS_STRING(obj))
-		{
+		if(IS_STRING(obj)) {
 			char* data = AS_STRING(obj);
 			push(vm, INT32_VAL(strlen(data)-1));
-		}
-		else
-		{
+		} else {
 			obj_array_t* arr = AS_ARRAY(obj);
 			push(vm, INT32_VAL(arr->len));
 		}
 		DISPATCH();
 	}
-	code_append:
-	{
+	code_append: {
 		val_t val = pop(vm);
 		val_t obj = pop(vm);
 
-		if(IS_STRING(obj))
-		{
+		if(IS_STRING(obj)) {
 			// Simple string concatenation
 			char* str1 = AS_STRING(obj);
 			char* str2 = AS_STRING(val);
@@ -1001,9 +905,7 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 			obj_t* obj_ptr = obj_string_nocopy_new(data);
 			push(vm, OBJ_VAL(obj_ptr));
 			obj_append(vm, obj_ptr);
-		}
-		else
-		{
+		} else {
 			// Get the two array
 			// Allocate a new val_t array
 			// Upload it into a obj_t form
@@ -1015,12 +917,10 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 			val_t* arr3 = malloc(sizeof(val_t) * len);
 
 			size_t i;
-			for(i = 0; i < arr1->len; i++)
-			{
+			for(i = 0; i < arr1->len; i++) {
 				arr3[i] = val_copy(arr1->data[i]);
 			}
-			for(i = 0; i < arr2->len; i++)
-			{
+			for(i = 0; i < arr2->len; i++) {
 				arr3[i+arr1->len] = val_copy(arr2->data[i]);
 			}
 
@@ -1030,14 +930,12 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		}
 		DISPATCH();
 	}
-	code_cons:
-	{
+	code_cons: {
 		// Construct a new value on top
 		val_t val = pop(vm);
 		val_t obj = pop(vm);
 
-		if(IS_STRING(obj))
-		{
+		if(IS_STRING(obj)) {
 			// Allocate len + 2 => one for the char and one for the trailing zero
 			char* str = AS_STRING(obj);
 			size_t len = strlen(str);
@@ -1050,9 +948,7 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 			obj_t* obj_ptr = obj_string_nocopy_new(newStr);
 			push(vm, OBJ_VAL(obj_ptr));
 			obj_append(vm, obj_ptr);
-		}
-		else
-		{
+		} else {
 			// Copy the whole array
 			obj = COPY_VAL(obj);
 
@@ -1071,15 +967,13 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		}
 		DISPATCH();
 	}
-	code_upval:
-	{
+	code_upval: {
 		int scopes = AS_INT32(instr->v1);
 		int offset = AS_INT32(instr->v2);
 		int fp = vm->fp;
 		int sp = vm->sp;
 
-		for(int i = 0; i < scopes; i++)
-		{
+		for(int i = 0; i < scopes; i++) {
 			vm->fp = AS_INT32(vm->stack[vm->fp - 2]);
 		}
 		vm->sp = vm->fp;
@@ -1091,8 +985,7 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		vm_copy(vm, val);
 		DISPATCH();
 	}
-	code_upstore:
-	{
+	code_upstore: {
 		val_t newVal = pop(vm);
 
 		int scopes = AS_INT32(instr->v1);
@@ -1101,18 +994,14 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		int fp = vm->fp;
 		int sp = vm->sp;
 
-		for(int i = 0; i < scopes; i++)
-		{
+		for(int i = 0; i < scopes; i++) {
 			vm->fp = AS_INT32(vm->stack[vm->fp - 2]);
 		}
 		vm->sp = vm->fp;
 
-		if(offset < 0)
-		{
+		if(offset < 0) {
 			vm->stack[vm->fp+offset] = newVal;
-		}
-		else
-		{
+		} else {
 			vm->locals[vm->fp+offset] = newVal;
 		}
 
@@ -1120,17 +1009,13 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		vm->fp = fp;
 		DISPATCH();
 	}
-	code_class:
-	{
-		int fields = AS_INT32(instr->v1);
-
-		obj_t* obj = obj_class_new(fields);
+	code_class: {
+		obj_t* obj = obj_class_new(AS_INT32(instr->v1));
 		push(vm, OBJ_VAL(obj));
 		obj_append(vm, obj);
 		DISPATCH();
 	}
-	code_setfield:
-	{
+	code_setfield: {
 		// Stack
 		// ---
 		// value
@@ -1146,8 +1031,7 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 		push(vm, class);
 		DISPATCH();
 	}
-	code_getfield:
-	{
+	code_getfield: {
 		// Copy val to keep class internal value alive
 		int index = AS_INT32(instr->v1);
 		val_t class = pop(vm);
@@ -1164,8 +1048,7 @@ void vm_exec(vm_t* vm, vector_t* buffer)
 	}
 }
 
-void vm_clear(vm_t* vm)
-{
+void vm_clear(vm_t* vm) {
 	// Move stack pointer to zero, -> clears all elements by gc
 	// Discard the rest
 	// Nullify the locals
@@ -1178,14 +1061,12 @@ void vm_clear(vm_t* vm)
 	vm->argv = 0;
 }
 
-void vm_run(vm_t* vm, vector_t* buffer)
-{
+void vm_run(vm_t* vm, vector_t* buffer) {
 	vm_run_args(vm, buffer, 0, 0);
 }
 
 // Execute a buffer
-void vm_run_args(vm_t* vm, vector_t* buffer, int argc, char** argv)
-{
+void vm_run_args(vm_t* vm, vector_t* buffer, int argc, char** argv) {
 	vm->argc = argc;
 	vm->argv = argv;
 	vm->maxObjects = 8;

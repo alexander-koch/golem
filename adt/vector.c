@@ -4,10 +4,10 @@ vector_t* vector_new() {
 	vector_t* vector = malloc(sizeof(*vector));
 	vector->capacity = VECTOR_CAPACITY;
 	vector->size = 0;
-	vector->data = (void**)malloc(sizeof(void*) * vector->capacity);
-	memset(vector->data, 0, sizeof(void*) * vector->capacity);
+	vector->data = malloc(sizeof(void*) * vector->capacity);
 	return vector;
 }
+
 void vector_push(vector_t* vector, void* data) {
 	if(vector->size == vector->capacity) {
 		vector->capacity += VECTOR_CAPACITY;
@@ -15,15 +15,12 @@ void vector_push(vector_t* vector, void* data) {
 		assert(vector->data != 0);
 	}
 
-	vector->data[vector->size] = data;
-	vector->size++;
+	vector->data[vector->size++] = data;
 }
 
 void* vector_pop(vector_t* vector) {
-	vector->size--;
-	void* data = vector->data[vector->size];
-
-	if(vector->size == vector->capacity-VECTOR_CAPACITY) {
+	void* data = vector->data[vector->size--];
+	if(vector->size == vector->capacity - VECTOR_CAPACITY) {
 		vector->capacity -= VECTOR_CAPACITY;
 		vector->data = realloc(vector->data, sizeof(void*) * vector->capacity);
 		assert(vector->data != 0);

@@ -1,9 +1,7 @@
 #include "lexer.h"
 
-const char* tok2str(token_type_t type)
-{
-    switch(type)
-    {
+const char* tok2str(token_type_t type) {
+    switch(type) {
         case TOKEN_NEWLINE: return "<newline>";
         case TOKEN_SPACE: return "<space>";
         case TOKEN_WORD: return "<word>";
@@ -48,25 +46,21 @@ const char* tok2str(token_type_t type)
     }
 }
 
-void lex_error(lexer_t* lexer, const char* err)
-{
+void lex_error(lexer_t* lexer, const char* err) {
     lexer->error = 1;
     printf("%s:%d:%d (Lexis): %s\n", lexer->name, lexer->location.line, lexer->location.column, err);
 }
 
 #define RESERVED_ENTRY(w, t) {w, sizeof(w) - 1, t}
 
-typedef struct
-{
+typedef struct {
     const char* str;
     size_t len;
     token_type_t type;
 } Reserved;
 
-int is_special(char c)
-{
-    switch(c)
-    {
+int is_special(char c) {
+    switch(c) {
         case '@':
         case '+':
         case '-':
@@ -97,8 +91,7 @@ int is_special(char c)
     }
 }
 
-void lex_skip_space(lexer_t* lexer)
-{
+void lex_skip_space(lexer_t* lexer) {
     if(lexer->cursor[0] == '#') {
         while(lexer->cursor[0] != '\n' && lexer->cursor[0] != '\r') {
             lexer->cursor++;
@@ -110,66 +103,52 @@ void lex_skip_space(lexer_t* lexer)
     }
 }
 
-int is_word_start(char c)
-{
+int is_word_start(char c) {
     return isalpha(c) || c == '_';
 }
 
-int is_word(char c)
-{
+int is_word(char c) {
     return isalnum(c) || c == '_';
 }
 
-int is_newline(lexer_t* lexer)
-{
+int is_newline(lexer_t* lexer) {
     return lexer->cursor[0] == '\r' || lexer->cursor[0] == '\n';
 }
 
-int is_space(lexer_t* lexer)
-{
+int is_space(lexer_t* lexer) {
     return isspace(lexer->cursor[0]) || lexer->cursor[0] == '#';
 }
 
-int is_punct(lexer_t* lexer)
-{
+int is_punct(lexer_t* lexer) {
     return is_special(lexer->cursor[0]);
 }
 
-int is_number(lexer_t* lexer)
-{
+int is_number(lexer_t* lexer) {
     return isdigit(lexer->cursor[0]);
 }
 
-int is_word_begin(lexer_t* lexer)
-{
+int is_word_begin(lexer_t* lexer) {
     return is_word_start(lexer->cursor[0]);
 }
 
-int is_string_begin(lexer_t* lexer)
-{
+int is_string_begin(lexer_t* lexer) {
     return lexer->cursor[0] == '"';
 }
 
-int is_eof(lexer_t* lexer)
-{
+int is_eof(lexer_t* lexer) {
     return lexer->cursor[0] == 0;
 }
 
-int lex_newline(lexer_t* lexer, token_t* token)
-{
-    if(lexer->cursor[0] == '\n')
-    {
-        if(lexer->cursor[1] == '\r')
-        {
+int lex_newline(lexer_t* lexer, token_t* token) {
+    if(lexer->cursor[0] == '\n') {
+        if(lexer->cursor[1] == '\r') {
             lexer->cursor++;
         }
         lexer->location.line++;
         lexer->lastline = lexer->cursor++;
     }
-    else if(lexer->cursor[0] == '\r')
-    {
-        if(lexer->cursor[1] == '\n')
-        {
+    else if(lexer->cursor[0] == '\r') {
+        if(lexer->cursor[1] == '\n') {
             lexer->cursor++;
         }
         lexer->location.line++;
@@ -181,18 +160,15 @@ int lex_newline(lexer_t* lexer, token_t* token)
     return 1;
 }
 
-int lex_space(lexer_t* lexer, token_t* token)
-{
+int lex_space(lexer_t* lexer, token_t* token) {
     lex_skip_space(lexer);
     token->type = TOKEN_SPACE;
     token->value = 0;
     return 1;
 }
 
-int lex_op(lexer_t* lexer, token_t* token)
-{
-    static const Reserved ops[] =
-    {
+int lex_op(lexer_t* lexer, token_t* token) {
+    static const Reserved ops[] = {
         RESERVED_ENTRY("(", TOKEN_LPAREN),
         RESERVED_ENTRY(")", TOKEN_RPAREN),
         RESERVED_ENTRY("[", TOKEN_LBRACKET),
@@ -230,10 +206,8 @@ int lex_op(lexer_t* lexer, token_t* token)
     };
 
     size_t i;
-    for(i = 0; i < sizeof(ops)/sizeof(ops[0]); i++)
-    {
-        if(strncmp(lexer->cursor, ops[i].str, ops[i].len) == 0)
-        {
+    for(i = 0; i < sizeof(ops)/sizeof(ops[0]); i++) {
+        if(strncmp(lexer->cursor, ops[i].str, ops[i].len) == 0) {
             token->type = ops[i].type;
             token->value = strndup(lexer->cursor, ops[i].len);
             lexer->cursor += ops[i].len;
@@ -243,14 +217,12 @@ int lex_op(lexer_t* lexer, token_t* token)
     return 0;
 }
 
-int lex_num(lexer_t* lexer, token_t* token)
-{
+int lex_num(lexer_t* lexer, token_t* token) {
     int is_float = 0;
     const char* end = lexer->cursor;
     while(isdigit(end[0])) end++;
 
-    if(end[0] == '.' && isdigit(end[1]))
-    {
+    if(end[0] == '.' && isdigit(end[1])) {
         is_float = 1;
         end++;
 
@@ -263,8 +235,7 @@ int lex_num(lexer_t* lexer, token_t* token)
     return 1;
 }
 
-int lex_word(lexer_t* lexer, token_t* token)
-{
+int lex_word(lexer_t* lexer, token_t* token) {
     const char* end = lexer->cursor;
     while(is_word(end[0])) end++;
 
@@ -272,38 +243,30 @@ int lex_word(lexer_t* lexer, token_t* token)
     token->value = strndup(lexer->cursor, end - lexer->cursor);
     lexer->cursor = end;
 
-    if(!strcmp(token->value, "true") || !strcmp(token->value, "false"))
-    {
+    if(!strcmp(token->value, "true") || !strcmp(token->value, "false")) {
         token->type = TOKEN_BOOL;
     }
-
     return 1;
 }
 
-int lex_string(lexer_t* lexer, token_t* token)
-{
+int lex_string(lexer_t* lexer, token_t* token) {
     lexer->cursor++;
     bytebuffer_t buffer;
     bytebuffer_init(&buffer);
 
-    while(lexer->cursor[0] != '"')
-    {
-        switch(lexer->cursor[0])
-        {
+    while(lexer->cursor[0] != '"') {
+        switch(lexer->cursor[0]) {
             case 0:
                 lex_error(lexer, "Never ending string");
                 return 0;
             case '\n':
-            case '\r':
-            {
+            case '\r': {
                 lex_error(lexer, "Strings may not contain newlines");
                 return 0;
             }
-            case '\\':
-            {
+            case '\\': {
                 lexer->cursor++;
-                switch(lexer->cursor[0])
-                {
+                switch(lexer->cursor[0]) {
                     case '"':
                         bytebuffer_write(&buffer, '"');
                         break;
@@ -329,8 +292,7 @@ int lex_string(lexer_t* lexer, token_t* token)
                         bytebuffer_write(&buffer, '\f');
                         break;
                     case '0':
-                    default:
-                    {
+                    default: {
                         lex_error(lexer, "Invalid escape character");
                         bytebuffer_clear(&buffer);
                         return 0;
@@ -339,8 +301,7 @@ int lex_string(lexer_t* lexer, token_t* token)
                 lexer->cursor++;
                 break;
             }
-            default:
-            {
+            default: {
                 bytebuffer_write(&buffer, lexer->cursor[0]);
                 lexer->cursor++;
                 break;

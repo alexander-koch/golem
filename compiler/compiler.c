@@ -121,7 +121,6 @@ symbol_t* symbol_new(compiler_t* compiler, ast_t* node, int address, datatype_t 
  * Depth returns the number of scopes it had to go upwards.
  */
 symbol_t* symbol_get_ext(scope_t* scope, char* ident, int* depth) {
-
 	// If found, return
 	void* val = hashmap_find(scope->symbols, ident);
 	if(val) return val;
@@ -202,7 +201,6 @@ bool symbol_exists(compiler_t* compiler, ast_t* node, char* ident) {
  * Tries to get the symbol, and emits a store operation based on the depth
  */
 void symbol_replace(compiler_t* compiler, symbol_t* symbol) {
-
 	// Get the depth
 	int depth = 0;
 	symbol_get_ext(compiler->scope, symbol->node->vardecl.name, &depth);
@@ -794,7 +792,7 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node) {
 				}
 
 				ptr = (symbol_t*)val;
-                
+
                 if(compiler->scope->node->class == AST_CLASS) {
                     compiler_throw(compiler, node, "Accessing class fields within the constructor is not permitted");
                     return datatype_new(DATA_NULL);
@@ -1720,47 +1718,38 @@ datatype_t eval_unary(compiler_t* compiler, ast_t* node)
 	// 1. F / I / B -> float / integer / boolean
 	// 2. U -> unary
 
-	switch(type.type)
-	{
-		case DATA_INT:
-		{
+	switch(type.type) {
+		case DATA_INT: {
 			// SUB, BITNOT
-			if(node->unary.op == TOKEN_NOT)
-			{
+			if(node->unary.op == TOKEN_NOT) {
 				compiler_throw(compiler, node, "Logical negation can only be used with objects of type boolean");
 			}
-			else if(node->unary.op == TOKEN_SUB)
-			{
+			else if(node->unary.op == TOKEN_SUB) {
 				emit_op(compiler->buffer, OP_IMINUS);
 			}
-			else // Can only be Bitnot
-			{
+			else {
+				// Can only be Bitnot
 				emit_op(compiler->buffer, OP_BITNOT);
 			}
 			break;
 		}
-		case DATA_FLOAT:
-		{
+		case DATA_FLOAT: {
 			// SUB
 
-			if(node->unary.op == TOKEN_BITNOT || node->unary.op == TOKEN_NOT)
-			{
+			if(node->unary.op == TOKEN_BITNOT || node->unary.op == TOKEN_NOT) {
 				compiler_throw(compiler, node, "Bit operations / logical negation can only be used with objects of type int");
 			}
-			else // Can only be float negation
-			{
+			else {
+				// Can only be float negation
 				emit_op(compiler->buffer, OP_FMINUS);
 			}
 			break;
 		}
-		case DATA_BOOL:
-		{
-			if(node->unary.op != TOKEN_NOT)
-			{
+		case DATA_BOOL: {
+			if(node->unary.op != TOKEN_NOT) {
 				compiler_throw(compiler, node, "Arithmetic operations cannot be applied on objects of type boolean");
 			}
-			else
-			{
+			else {
 				emit_op(compiler->buffer, OP_NOT);
 			}
 			break;
@@ -1769,8 +1758,7 @@ datatype_t eval_unary(compiler_t* compiler, ast_t* node)
 		case DATA_CHAR:
 		case DATA_VOID:
 		case DATA_NULL:
-		default:
-		{
+		default: {
 			compiler_throw(compiler, node, "Invalid unary instruction, only applicable to numbers or booleans");
 			break;
 		}
@@ -2099,25 +2087,20 @@ datatype_t eval_import(compiler_t* compiler, ast_t* node)
 	return datatype_new(DATA_NULL);
 }
 
-datatype_t eval_annotation(compiler_t* compiler, ast_t* node)
-{
+datatype_t eval_annotation(compiler_t* compiler, ast_t* node) {
 	// Test if flag is already set
-	if((compiler->scope->flag & node->annotation) == node->annotation)
-	{
+	if((compiler->scope->flag & node->annotation) == node->annotation) {
 		compiler_throw(compiler, node, "Annotation flag is already set");
 		return datatype_new(DATA_NULL);
 	}
 
-	if(node->annotation != ANN_UNUSED)
-	{
-		if(!compiler->scope->node)
-		{
+	if(node->annotation != ANN_UNUSED) {
+		if(!compiler->scope->node) {
 			compiler_throw(compiler, node, "Annotations can only be used within classes");
 			return datatype_new(DATA_NULL);
 		}
 
-		if(compiler->scope->node->class != AST_CLASS)
-		{
+		if(compiler->scope->node->class != AST_CLASS) {
 			compiler_throw(compiler, node, "Annotations can only be used within classes");
 			return datatype_new(DATA_NULL);
 		}
@@ -2130,8 +2113,7 @@ datatype_t eval_annotation(compiler_t* compiler, ast_t* node)
 
 // Compiler.eval(node)
 // Evaluates a node according to its class.
-datatype_t compiler_eval(compiler_t* compiler, ast_t* node)
-{
+datatype_t compiler_eval(compiler_t* compiler, ast_t* node) {
 	if(compiler->error) return datatype_new(DATA_NULL);
 
 #ifdef DB_EVAL
@@ -2168,8 +2150,7 @@ datatype_t compiler_eval(compiler_t* compiler, ast_t* node)
 
 // Compiler.compileBuffer(string code)
 // Compiles code into bytecode instructions
-vector_t* compile_buffer(const char* source, const char* name)
-{
+vector_t* compile_buffer(const char* source, const char* name) {
 	compiler_t compiler;
 	compiler.parser = malloc(sizeof(parser_t));
 	compiler.parsers = list_new();
@@ -2182,8 +2163,7 @@ vector_t* compile_buffer(const char* source, const char* name)
 	// Run the parser
 	parser_init(compiler.parser, name);
 	ast_t* root = parser_run(compiler.parser, source);
-	if(root)
-	{
+	if(root) {
 #ifndef NO_AST
 		printf("Abstract syntax tree '%s':\n", compiler.parser->name);
 		ast_dump(root, 0);
@@ -2211,8 +2191,7 @@ vector_t* compile_buffer(const char* source, const char* name)
 
 // Compiler.compileFile(string filename)
 // Compiles a file into an instruction set
-vector_t* compile_file(const char* filename)
-{
+vector_t* compile_file(const char* filename) {
 	char* source = readFile(filename);
 	if(!source) {
 		printf("File '%s' does not exist\n", filename);
@@ -2227,8 +2206,7 @@ vector_t* compile_file(const char* filename)
 
 // Compiler.clear()
 // Clears the current instruction buffer of the compiler
-void compiler_clear(compiler_t* compiler)
-{
+void compiler_clear(compiler_t* compiler) {
 	// Free Scope and parsers
 	list_iterator_t* iter = list_iterator_create(compiler->parsers);
 	while(!list_iterator_end(iter))

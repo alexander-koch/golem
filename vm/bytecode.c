@@ -1,9 +1,7 @@
 #include "bytecode.h"
 
-const char* op2str(opcode_t code)
-{
-	switch(code)
-	{
+const char* op2str(opcode_t code) {
+	switch(code) {
 		case OP_HLT: return "hlt";
 		case OP_PUSH: return "push";
 		case OP_POP: return "pop";
@@ -85,8 +83,7 @@ const char* op2str(opcode_t code)
 	}
 }
 
-instruction_t* instruction_new(opcode_t op)
-{
+instruction_t* instruction_new(opcode_t op) {
 	instruction_t* ins = malloc(sizeof(*ins));
 	ins->op = op;
 	ins->v1 = NULL_VAL;
@@ -94,20 +91,17 @@ instruction_t* instruction_new(opcode_t op)
 	return ins;
 }
 
-void insert(vector_t* buffer, opcode_t op)
-{
+void insert(vector_t* buffer, opcode_t op) {
 	vector_push(buffer, instruction_new(op));
 }
 
-void insert_v1(vector_t* buffer, opcode_t op, val_t v1)
-{
+void insert_v1(vector_t* buffer, opcode_t op, val_t v1) {
 	instruction_t* ins = instruction_new(op);
 	ins->v1 = v1;
 	vector_push(buffer, ins);
 }
 
-void insert_v2(vector_t* buffer, opcode_t op, val_t v1, val_t v2)
-{
+void insert_v2(vector_t* buffer, opcode_t op, val_t v1, val_t v2) {
 	instruction_t* ins = instruction_new(op);
 	ins->v1 = v1;
 	ins->v2 = v2;
@@ -116,43 +110,36 @@ void insert_v2(vector_t* buffer, opcode_t op, val_t v1, val_t v2)
 
 // Main functions
 
-void emit_bool(vector_t* buffer, bool b)
-{
+void emit_bool(vector_t* buffer, bool b) {
 	val_t val = BOOL_VAL(b);
 	insert_v1(buffer, OP_PUSH, val);
 }
 
-void emit_int(vector_t* buffer, int v)
-{
+void emit_int(vector_t* buffer, int v) {
 	val_t val = INT32_VAL(v);
 	insert_v1(buffer, OP_PUSH, val);
 }
 
-void emit_float(vector_t* buffer, double f)
-{
+void emit_float(vector_t* buffer, double f) {
 	val_t val = NUM_VAL(f);
 	insert_v1(buffer, OP_PUSH, val);
 }
 
-void emit_string(vector_t* buffer, char* str)
-{
+void emit_string(vector_t* buffer, char* str) {
 	val_t val = STRING_VAL(str);
 	insert_v1(buffer, OP_PUSH, val);
 }
 
-void emit_char(vector_t* buffer, char c)
-{
+void emit_char(vector_t* buffer, char c) {
 	val_t val = INT32_VAL(c);
 	insert_v1(buffer, OP_PUSH, val);
 }
 
-void emit_pop(vector_t* buffer)
-{
+void emit_pop(vector_t* buffer) {
 	insert(buffer, OP_POP);
 }
 
-void emit_op(vector_t* buffer, opcode_t op)
-{
+void emit_op(vector_t* buffer, opcode_t op) {
 	insert(buffer, op);
 }
 
@@ -161,31 +148,25 @@ void emit_op(vector_t* buffer, opcode_t op)
  * datatype_t specifies the datatype for the operation.
  * If the cast fails, -1 is returned.
  */
-opcode_t getOp(token_type_t tok, datatype_t dt)
-{
+opcode_t getOp(token_type_t tok, datatype_t dt) {
 	type_t type = dt.type;
-	switch(tok)
-	{
-		case TOKEN_ADD:
-		{
+	switch(tok) {
+		case TOKEN_ADD: {
 			if(type == DATA_INT) return OP_IADD;
 			if(type == DATA_FLOAT) return OP_FADD;
 			return -1;
 		}
-		case TOKEN_SUB:
-		{
+		case TOKEN_SUB: {
 			if(type == DATA_INT) return OP_ISUB;
 			if(type == DATA_FLOAT) return OP_FSUB;
 			return -1;
 		}
-		case TOKEN_MUL:
-		{
+		case TOKEN_MUL: {
 			if(type == DATA_INT) return OP_IMUL;
 			if(type == DATA_FLOAT) return OP_FMUL;
 			return -1;
 		}
-		case TOKEN_DIV:
-		{
+		case TOKEN_DIV: {
 			if(type == DATA_INT) return OP_IDIV;
 			if(type == DATA_FLOAT) return OP_FDIV;
 			return -1;
@@ -197,48 +178,41 @@ opcode_t getOp(token_type_t tok, datatype_t dt)
 		case TOKEN_BITOR: return OP_BITOR;
 		case TOKEN_BITXOR: return OP_BITXOR;
 		case TOKEN_BITNOT: return OP_BITNOT;
-		case TOKEN_EQUAL:
-		{
+		case TOKEN_EQUAL: {
 			if(type == DATA_BOOL) return OP_BEQ;
 			if(type == DATA_INT || type == DATA_CHAR) return OP_IEQ;
 			if(type == DATA_FLOAT) return OP_FEQ;
 			return -1;
 		}
-		case TOKEN_NEQUAL:
-		{
+		case TOKEN_NEQUAL: {
 			if(type == DATA_BOOL) return OP_BNE;
 			if(type == DATA_INT || type == DATA_CHAR) return OP_INE;
 			if(type == DATA_FLOAT) return OP_FNE;
 			return -1;
 		}
-		case TOKEN_LESS:
-		{
+		case TOKEN_LESS: {
 			if(type == DATA_INT) return OP_ILT;
 			if(type == DATA_FLOAT) return OP_FLT;
 			return -1;
 		}
-		case TOKEN_GREATER:
-		{
+		case TOKEN_GREATER: {
 			if(type == DATA_INT) return OP_IGT;
 			if(type == DATA_FLOAT) return OP_FGT;
 			return -1;
 		}
-		case TOKEN_LEQUAL:
-		{
+		case TOKEN_LEQUAL: {
 			if(type == DATA_INT) return OP_ILE;
 			if(type == DATA_FLOAT) return OP_FLE;
 			return -1;
 		}
-		case TOKEN_GEQUAL:
-		{
+		case TOKEN_GEQUAL: {
 			if(type == DATA_INT) return OP_IGE;
 			if(type == DATA_FLOAT) return OP_FGE;
 			return -1;
 		}
 		case TOKEN_AND: return OP_BAND;
 		case TOKEN_OR: return OP_BOR;
-		default:
-		{
+		default: {
 			return -1;
 		}
 	}
@@ -248,110 +222,91 @@ opcode_t getOp(token_type_t tok, datatype_t dt)
  * Emit an operator based on a token and a datatype.
  * If the token cannot be casted into a opcode, false is returned.
  */
-bool emit_tok2op(vector_t* buffer, token_type_t tok, datatype_t type)
-{
+bool emit_tok2op(vector_t* buffer, token_type_t tok, datatype_t type) {
 	opcode_t op = getOp(tok, type);
 	emit_op(buffer, op);
 	return op == -1 ? false : true;
 }
 
-void emit_syscall(vector_t* buffer, size_t index)
-{
+void emit_syscall(vector_t* buffer, size_t index) {
 	val_t v1 = INT32_VAL(index);
 	insert_v1(buffer, OP_SYSCALL, v1);
 }
 
-void emit_invoke(vector_t* buffer, size_t address, size_t args)
-{
+void emit_invoke(vector_t* buffer, size_t address, size_t args) {
 	val_t v1 = INT32_VAL(address);
 	val_t v2 = INT32_VAL(args);
 	insert_v2(buffer, OP_INVOKE, v1, v2);
 }
 
-void emit_return(vector_t* buffer)
-{
+void emit_return(vector_t* buffer) {
 	insert(buffer, OP_RET);
 }
 
-void emit_store(vector_t* buffer, int address, bool global)
-{
+void emit_store(vector_t* buffer, int address, bool global) {
 	val_t val = INT32_VAL(address);
 	insert_v1(buffer, global? OP_GSTORE : OP_STORE, val);
 }
 
-void emit_load(vector_t* buffer, int address, bool global)
-{
+void emit_load(vector_t* buffer, int address, bool global) {
 	val_t val = INT32_VAL(address);
 	insert_v1(buffer, global? OP_GLOAD : OP_LOAD, val);
 }
 
-void emit_load_upval(vector_t* buffer, int depth, int address)
-{
+void emit_load_upval(vector_t* buffer, int depth, int address) {
 	insert_v2(buffer, OP_UPVAL, INT32_VAL(depth), INT32_VAL(address));
 }
 
-void emit_store_upval(vector_t* buffer, int depth, int address)
-{
+void emit_store_upval(vector_t* buffer, int depth, int address) {
 	insert_v2(buffer, OP_UPSTORE, INT32_VAL(depth), INT32_VAL(address));
 }
 
-void emit_class_setfield(vector_t* buffer, int address)
-{
+void emit_class_setfield(vector_t* buffer, int address) {
 	insert_v1(buffer, OP_SETFIELD, INT32_VAL(address));
 }
 
-void emit_class_getfield(vector_t* buffer, int address)
-{
+void emit_class_getfield(vector_t* buffer, int address) {
 	insert_v1(buffer, OP_GETFIELD, INT32_VAL(address));
 }
 
-void emit_lib_load(vector_t* buffer, char* name)
-{
+void emit_lib_load(vector_t* buffer, char* name) {
 	insert_v1(buffer, OP_LDLIB, STRING_VAL(name));
 }
 
-void emit_reserve(vector_t* buffer, size_t sz)
-{
+void emit_reserve(vector_t* buffer, size_t sz) {
 	insert_v1(buffer, OP_RESERVE, INT32_VAL(sz));
 }
 
-void emit_string_merge(vector_t* buffer, size_t sz)
-{
+void emit_string_merge(vector_t* buffer, size_t sz) {
 	insert_v1(buffer, OP_STR, INT32_VAL(sz));
 }
 
-void emit_array_merge(vector_t* buffer, size_t sz)
-{
+void emit_array_merge(vector_t* buffer, size_t sz) {
 	insert_v1(buffer, OP_ARR, INT32_VAL(sz));
 }
 
-void emit_dynlib(vector_t* buffer, char* name)
-{
+void emit_dynlib(vector_t* buffer, char* name) {
 	insert_v1(buffer, OP_LDLIB, STRING_VAL(name));
 }
 
 #define GEN_JMP_REF() (val_t*)&((instruction_t*)vector_top(buffer))->v1
 
-val_t* emit_class(vector_t* buffer, int fields)
-{
+val_t* emit_class(vector_t* buffer, int fields) {
 	insert_v1(buffer, OP_CLASS, INT32_VAL(fields));
 	return GEN_JMP_REF();
 }
 
-val_t* emit_jmp(vector_t* buffer, int address)
-{
+val_t* emit_jmp(vector_t* buffer, int address) {
 	insert_v1(buffer, OP_JMP, INT32_VAL(address));
 	return GEN_JMP_REF();
 }
 
-val_t* emit_jmpf(vector_t* buffer, int address)
-{
+val_t* emit_jmpf(vector_t* buffer, int address) {
 	insert_v1(buffer, OP_JMPF, INT32_VAL(address));
 	return GEN_JMP_REF();
 }
 
-void bytecode_buffer_free(vector_t* buffer)
-{
+void bytecode_buffer_free(vector_t* buffer) {
 	for(size_t i = 0; i < vector_size(buffer); i++) {
 		instruction_t* instr = vector_get(buffer, i);
 		if(instr->v1 != NULL_VAL) val_free(instr->v1);
