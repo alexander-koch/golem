@@ -5,9 +5,9 @@
 #include <core/mem.h>
 
 typedef struct {
-	uint8_t* data;
-	int count;
-	int capacity;
+    uint8_t* data;
+    int count;
+    int capacity;
 } bytebuffer_t;
 
 void bytebuffer_init(bytebuffer_t* buffer);

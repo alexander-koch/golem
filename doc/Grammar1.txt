@@ -146,7 +146,7 @@ P = {
 	word -> (alphanumeric | '_') word | (alphanumeric | '_')
 	text -> (word | space | newline | special) text
 
-	TOKEN_INT -> digit | TOKEN_INT
+	TOKEN_INT -> digit | digit TOKEN_INT
 	TOKEN_FLOAT -> TOKEN_INT '.' TOKEN_INT
 	TOKEN_WORD -> word_begin | word_begin word
 	TOKEN_BOOL -> 'true' | 'false'

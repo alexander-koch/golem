@@ -34,12 +34,12 @@
 // If all of the NaN bits are set, it's not a number. Otherwise, it is.
 // Also we need quiet NaNs, so the first Mantissa bit has to be set as well.
 //
-//			   v-- first Mantissa bit
+//               v-- first Mantissa bit
 // -[NaN      ]1---------------------------------------------------
 //
-// To distinguish between "true", "false" or "null" the first three bits are used
+// To distinguish between "true", "false" or "null" the second three bits are used.
 //
-//																vvv-- 3 bits
+//                                                             vvv-- 3 bits
 // -[NaN      ]1---------------------------------------------------
 //
 // Pointers can use the rest of the mantissa bits (51)
@@ -50,29 +50,29 @@ typedef uint64_t val_t;
 
 // Class subtype
 typedef struct obj_class_t {
-	val_t* fields;
-	size_t field_count;
+    val_t* fields;
+    size_t field_count;
 } obj_class_t;
 
 typedef struct obj_array_t {
-	val_t* data;
-	size_t len;
+    val_t* data;
+    size_t len;
 } obj_array_t;
 
 // Object types
 typedef enum obj_type_t {
-	OBJ_NULL,
-	OBJ_STRING,
-	OBJ_ARRAY,
-	OBJ_CLASS
+    OBJ_NULL,
+    OBJ_STRING,
+    OBJ_ARRAY,
+    OBJ_CLASS
 } obj_type_t;
 
 // Object definition
 typedef struct obj_t {
-	obj_type_t type;
-	void* data;
-	unsigned char marked;
-	struct obj_t* next;
+    obj_type_t type;
+    void* data;
+    unsigned char marked;
+    struct obj_t* next;
 } obj_t;
 
 obj_t* obj_new();

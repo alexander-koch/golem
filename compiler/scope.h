@@ -23,25 +23,25 @@
  * Class    => name + functions + attributes / variables
  */
 typedef struct symbol_t {
-	ast_t* node;
-	int address;
-	datatype_t type;
-	bool global;
-	bool isClassParam;
-	struct symbol_t* ref;
-	int arraySize;
+    ast_t* node;
+    int address;
+    datatype_t type;
+    bool global;
+    bool isClassParam;
+    struct symbol_t* ref;
+    int arraySize;
 } symbol_t;
 
 // Scope: contains symbols
 typedef struct scope_t {
-	ast_t* node;
-	hashmap_t* symbols;
-	hashmap_t* classes;
-	struct scope_t* super;
-	list_t* subscopes;
-	int address;
-	int flag;
-	bool virtual;
+    ast_t* node;
+    hashmap_t* symbols;
+    hashmap_t* classes;
+    struct scope_t* super;
+    list_t* subscopes;
+    int address;
+    int flag;
+    bool virtual;
 } scope_t;
 
 scope_t* scope_new();

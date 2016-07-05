@@ -21,15 +21,15 @@
 typedef int (*HashForeachFunc)(void* data, void* arg);
 
 typedef struct bucket_t {
-	char* key;
-	bool use;
-	void* data;
+    char* key;
+    bool use;
+    void* data;
 } bucket_t;
 
 typedef struct hashmap_t {
-	size_t table_size;
-	size_t size;
-	bucket_t* data;
+    size_t table_size;
+    size_t size;
+    bucket_t* data;
 } hashmap_t;
 
 hashmap_t* hashmap_new();
@@ -42,8 +42,8 @@ void hashmap_free(hashmap_t* hashmap);
 
 // Hashmap iteration
 typedef struct hashmap_iterator_t {
-	hashmap_t* hmap;
-	size_t idx;
+    hashmap_t* hmap;
+    size_t idx;
 } hashmap_iterator_t;
 
 hashmap_iterator_t* hashmap_iterator_create(hashmap_t* hashmap);

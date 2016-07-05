@@ -12,18 +12,18 @@
 #include <core/mem.h>
 
 typedef struct list_node_t {
-	struct list_node_t* next;
-	void* val;
+    struct list_node_t* next;
+    void* val;
 } list_node_t;
 
 typedef struct list_t {
-	size_t size;
-	list_node_t* head;
-	list_node_t* tail;
+    size_t size;
+    list_node_t* head;
+    list_node_t* tail;
 } list_t;
 
 typedef struct list_iterator_t {
-	list_node_t* ptr;
+    list_node_t* ptr;
 } list_iterator_t;
 
 list_t* list_new();

@@ -1,4 +1,7 @@
-/** Copyright (c) 2015-2016 Alexander Koch All Rights Reserved. **/
+/**
+ * Copyright (c) 2015-2016
+ * @author Alexander Koch
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +21,7 @@
 
 void print_info() {
     printf("Golem compiler\n");
-    printf("Copyright (c) Alexander Koch 2016\nAll Rights Reserved.\n\n");
+    printf("Copyright (c) Alexander Koch 2016\n\n");
     printf("Usage:\n");
     printf("  golem <file>       (Run a file)\n");
     printf("  golem -r <file>    (Run a *.gvm file)\n");
@@ -63,7 +66,7 @@ int main(int argc, char** argv) {
         else if(!strcmp(argv[1], "--ast")) {
             // Generate ast.dot graphviz file
             char* path = argv[2];
-        	char* source = readFile(path);
+            char* source = readFile(path);
             if(!source) {
                 printf("File '%s' does not exist\n", path);
                 return 1;

@@ -19,14 +19,13 @@
 #include <compiler/scope.h>
 #include <lib/native.h>
 
-typedef struct compiler_t
-{
-	parser_t* parser;
-	list_t* parsers;
-	vector_t* buffer;
-	scope_t* scope;
-	bool error;
-	int depth;
+typedef struct compiler_t {
+    parser_t* parser;
+    list_t* parsers;
+    vector_t* buffer;
+    scope_t* scope;
+    bool error;
+    int depth;
 } compiler_t;
 
 vector_t* compile_buffer(const char* source, const char* name);

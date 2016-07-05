@@ -176,8 +176,8 @@ ldarg0 and setarg0. On virtual return the class has to be reassigned to it's ori
 
 # Example compilation
 
-```rust
-    using core
+```
+using core
 
 let mut x = 5
 x := x + 5
