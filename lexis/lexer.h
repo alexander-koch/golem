@@ -75,7 +75,18 @@ typedef enum {
     TOKEN_DOUBLECOLON, // '::'
     TOKEN_COLON,     // ':'
     TOKEN_ARROW,     // '->'
-    TOKEN_AT         // '@'
+    TOKEN_AT,        // '@'
+
+    // Keywords
+    TOKEN_USING,
+    TOKEN_LET,
+    TOKEN_MUT,
+    TOKEN_FUNC,
+    TOKEN_IF,
+    TOKEN_ELSE,
+    TOKEN_WHILE,
+    TOKEN_TYPE,
+    TOKEN_RETURN,
 } token_type_t;
 
 typedef struct {
@@ -84,7 +95,7 @@ typedef struct {
     char* value;
 } token_t;
 
-const char* tok2str(token_type_t type);
+const char* token_string(token_type_t type);
 
 token_t* lexer_scan(const char* name, const char* src, size_t* numTokens);
 void lexer_print_tokens(token_t* tokens, size_t n);

@@ -1,48 +1,57 @@
 #include "lexer.h"
 
-const char* tok2str(token_type_t type) {
+const char* token_string(token_type_t type) {
     switch(type) {
-        case TOKEN_NEWLINE: return "<newline>";
-        case TOKEN_SPACE: return "<space>";
-        case TOKEN_WORD: return "<word>";
-        case TOKEN_STRING: return "<string>";
-        case TOKEN_INT: return "<int>";
-        case TOKEN_FLOAT: return "<float>";
-        case TOKEN_BOOL: return "<bool>";
-        case TOKEN_LPAREN: return "<lparen>";
-        case TOKEN_RPAREN: return "<rparen>";
-        case TOKEN_LBRACE: return "<lbrace>";
-        case TOKEN_RBRACE: return "<rbrace>";
-        case TOKEN_LBRACKET: return "<lbracket>";
-        case TOKEN_RBRACKET: return "<rbracket>";
-        case TOKEN_COMMA: return "<comma>";
-        case TOKEN_SEMICOLON: return "<semicolon>";
-        case TOKEN_ADD: return "<add>";
-        case TOKEN_SUB: return "<sub>";
-        case TOKEN_MUL: return "<mul>";
-        case TOKEN_DIV: return "<div>";
-        case TOKEN_MOD: return "<mod>";
-        case TOKEN_EQUAL: return "<equal>";
-        case TOKEN_ASSIGN: return "<assign>";
-        case TOKEN_NEQUAL: return "<nequal>";
-        case TOKEN_NOT: return "<not>";
-        case TOKEN_DOT: return "<dot>";
-        case TOKEN_BITLSHIFT: return ">bitlshift>";
-        case TOKEN_BITRSHIFT: return "<bitrshift>";
-        case TOKEN_LEQUAL: return "<lequal>";
-        case TOKEN_GEQUAL: return "<gequal>";
-        case TOKEN_LESS: return "<less>";
-        case TOKEN_GREATER: return "<greater>";
-        case TOKEN_AND: return "<and>";
-        case TOKEN_OR: return "<or>";
-        case TOKEN_BITAND: return "<bitand>";
-        case TOKEN_BITOR: return "<bitor>";
-        case TOKEN_BITXOR: return "<bitxor>";
-        case TOKEN_BITNOT: return "<bitnot>";
-        case TOKEN_DOUBLECOLON: return "<double_colon>";
-        case TOKEN_COLON: return "<colon>";
-        case TOKEN_ARROW: return "<arrow>";
-        default: return "<null>";
+        case TOKEN_NEWLINE: return "newline";
+        case TOKEN_SPACE: return "space";
+        case TOKEN_WORD: return "word";
+        case TOKEN_STRING: return "string";
+        case TOKEN_INT: return "int";
+        case TOKEN_FLOAT: return "float";
+        case TOKEN_BOOL: return "bool";
+        case TOKEN_LPAREN: return "(";
+        case TOKEN_RPAREN: return ")";
+        case TOKEN_LBRACE: return "{";
+        case TOKEN_RBRACE: return "}";
+        case TOKEN_LBRACKET: return "[";
+        case TOKEN_RBRACKET: return "]";
+        case TOKEN_COMMA: return ",";
+        case TOKEN_SEMICOLON: return ";";
+        case TOKEN_ADD: return "+";
+        case TOKEN_SUB: return "-";
+        case TOKEN_MUL: return "*";
+        case TOKEN_DIV: return "/";
+        case TOKEN_MOD: return "%";
+        case TOKEN_EQUAL: return "=";
+        case TOKEN_ASSIGN: return ":=";
+        case TOKEN_NEQUAL: return "!=";
+        case TOKEN_NOT: return "!";
+        case TOKEN_DOT: return ".";
+        case TOKEN_BITLSHIFT: return "<<";
+        case TOKEN_BITRSHIFT: return ">>";
+        case TOKEN_LEQUAL: return "<=";
+        case TOKEN_GEQUAL: return ">=";
+        case TOKEN_LESS: return "<";
+        case TOKEN_GREATER: return ">";
+        case TOKEN_AND: return "&&";
+        case TOKEN_OR: return "||";
+        case TOKEN_BITAND: return "&>";
+        case TOKEN_BITOR: return "|";
+        case TOKEN_BITXOR: return "^";
+        case TOKEN_BITNOT: return "~";
+        case TOKEN_DOUBLECOLON: return "::";
+        case TOKEN_COLON: return ":";
+        case TOKEN_ARROW: return "->";
+        case TOKEN_USING: return "using";
+        case TOKEN_LET: return "let";
+        case TOKEN_MUT: return "mut";
+        case TOKEN_FUNC: return "func";
+        case TOKEN_IF: return "if";
+        case TOKEN_ELSE: return "else";
+        case TOKEN_WHILE: return "while";
+        case TOKEN_TYPE: return "type";
+        case TOKEN_RETURN: return "return";
+        default: return "undefined";
     }
 }
 
@@ -58,6 +67,18 @@ typedef struct {
     size_t len;
     token_type_t type;
 } Reserved;
+
+token_type_t keywords[] = {
+    TOKEN_USING,
+    TOKEN_LET,
+    TOKEN_MUT,
+    TOKEN_FUNC,
+    TOKEN_IF,
+    TOKEN_ELSE,
+    TOKEN_WHILE,
+    TOKEN_TYPE,
+    TOKEN_RETURN,
+};
 
 int is_special(char c) {
     switch(c) {
@@ -146,8 +167,7 @@ int lex_newline(lexer_t* lexer, token_t* token) {
         }
         lexer->location.line++;
         lexer->lastline = lexer->cursor++;
-    }
-    else if(lexer->cursor[0] == '\r') {
+    } else if(lexer->cursor[0] == '\r') {
         if(lexer->cursor[1] == '\n') {
             lexer->cursor++;
         }
@@ -246,6 +266,14 @@ int lex_word(lexer_t* lexer, token_t* token) {
     if(!strcmp(token->value, "true") || !strcmp(token->value, "false")) {
         token->type = TOKEN_BOOL;
     }
+
+    // Parse the keywords
+    for(unsigned i = 0; i < sizeof(keywords)/sizeof(token_type_t); i++) {
+        if(!strcmp(token->value, token_string(keywords[i]))) {
+            token->type = keywords[i];
+        }
+    }
+
     return 1;
 }
 

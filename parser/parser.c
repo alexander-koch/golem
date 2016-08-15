@@ -1,15 +1,5 @@
 #include "parser.h"
 
-#define KEYWORD_IMPORT "using"
-#define KEYWORD_DECLARATION "let"
-#define KEYWORD_MUTATE "mut"
-#define KEYWORD_FUNCTION "func"
-#define KEYWORD_IF "if"
-#define KEYWORD_ELSE "else"
-#define KEYWORD_WHILE "while"
-#define KEYWORD_CLASS "type"
-#define KEYWORD_RETURN "return"
-
 // Forward declaration of main parsing methods
 ast_t* parse_import_declaration(parser_t* parser, location_t loc);
 ast_t* parse_var_declaration(parser_t* parser, location_t loc);
@@ -50,35 +40,18 @@ location_t get_location(parser_t* parser) {
     return current_token(parser)->location;
 }
 
-// Test if the current token matches a given string
-bool match_string(parser_t* parser, const char* token) {
-    if(parser_end(parser) || !token) return false;
-    if(!parser->buffer[parser->cursor].value) return false;
-    return !strcmp(parser->buffer[parser->cursor].value, token);
-}
-
 // Test if the current token matches a given type
 bool match_type(parser_t* parser, token_type_t type) {
     return current_token(parser)->type == type;
 }
 
-bool match_next(parser_t* parser, const char* token) {
+bool match_next(parser_t* parser, token_type_t type) {
     if(parser_end(parser) || parser->cursor+1 >= parser->num_tokens) return false;
-    char* val = parser->buffer[parser->cursor+1].value;
-    return (val != NULL) ? !strcmp(val, token) : false;
+    return parser->buffer[parser->cursor+1].type == type;
 }
 
 token_t* accept_token(parser_t* parser) {
     return &parser->buffer[parser->cursor++];
-}
-
-token_t* accept_token_string(parser_t* parser, const char* str) {
-    if(parser_end(parser)) return 0;
-
-    if(match_string(parser, str)) {
-        return accept_token(parser);
-    }
-    return 0;
 }
 
 token_t* accept_token_type(parser_t* parser, token_type_t type) {
@@ -86,10 +59,10 @@ token_t* accept_token_type(parser_t* parser, token_type_t type) {
 
     if(parser->buffer[parser->cursor].type == type) {
         return accept_token(parser);
-    }
-    else {
+    } else {
         token_type_t tp = parser->buffer[parser->cursor].type;
-        parser_throw(parser, "Invalid syntax token '%s'. Expected '%s'", tok2str(tp), tok2str(type));
+        parser_throw(parser, "Invalid syntax token '%s'. Expected '%s'",
+            token_string(tp), token_string(type));
     }
     return 0;
 }
@@ -199,24 +172,21 @@ ast_t* parse_call(parser_t* parser, ast_t* node) {
         list_push(class->call.args, expr);
         if(match_type(parser, TOKEN_COMMA)) {
             parser->cursor++;
-        }
-        else {
+        } else {
             break;
         }
     }
 
     if(!match_type(parser, TOKEN_RPAREN)) {
         parser_throw(parser, "Expected closing parenthesis");
-    }
-    else {
+    } else {
         parser->cursor++;
     }
 
     if(match_type(parser, TOKEN_DOT)) {
         parser->cursor++;
         return parse_subscript_sugar(parser, class);
-    }
-    else if(match_type(parser, TOKEN_LBRACKET)) {
+    } else if(match_type(parser, TOKEN_LBRACKET)) {
         parser->cursor++;
         return parse_subscript(parser, class);
     }
@@ -254,12 +224,10 @@ ast_t* parse_subscript(parser_t* parser, ast_t* node) {
     if(match_type(parser, TOKEN_LPAREN)) {
         parser->cursor++;
         return parse_call(parser, ast);
-    }
-    else if(match_type(parser, TOKEN_LBRACKET)) {
+    } else if(match_type(parser, TOKEN_LBRACKET)) {
         parser->cursor++;
         return parse_subscript(parser, ast);
-    }
-    else if(match_type(parser, TOKEN_DOT)) {
+    } else if(match_type(parser, TOKEN_DOT)) {
         parser->cursor++;
         return parse_subscript_sugar(parser, ast);
     }
@@ -301,12 +269,10 @@ ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node) {
     if(match_type(parser, TOKEN_LPAREN)) {
         parser->cursor++;
         return parse_call(parser, ast);
-    }
-    else if(match_type(parser, TOKEN_LBRACKET)) {
+    } else if(match_type(parser, TOKEN_LBRACKET)) {
         parser->cursor++;
         return parse_subscript(parser, ast);
-    }
-    else if(match_type(parser, TOKEN_DOT)) {
+    } else if(match_type(parser, TOKEN_DOT)) {
         parser->cursor++;
         return parse_subscript_sugar(parser, ast);
     }
@@ -342,8 +308,7 @@ ast_t* parse_simpleliteral(parser_t* parser) {
         node->class = AST_STRING;
         node->string = accept_token(parser)->value;
 
-        if(strlen(node->string) == 1)
-        {
+        if(strlen(node->string) == 1) {
             node->class = AST_CHAR;
             node->ch = node->string[0];
         }
@@ -394,8 +359,7 @@ ast_t* parse_array(parser_t* parser) {
 
         if(!match_type(parser, TOKEN_RBRACKET)) {
             parser_throw(parser, "Expected closing bracket");
-        }
-        else {
+        } else {
             accept_token(parser);
         }
         return ast;
@@ -412,8 +376,7 @@ ast_t* parse_array(parser_t* parser) {
         skip_newline(parser);
         if(!match_type(parser, TOKEN_COMMA)) {
             break;
-        }
-        else {
+        } else {
             parser->cursor++;
         }
         skip_newline(parser);
@@ -439,11 +402,9 @@ ast_t* parse_array(parser_t* parser) {
 ast_t* parse_literal(parser_t* parser) {
     if(match_simple(parser)) {
         return parse_simpleliteral(parser);
-    }
-    else if(match_type(parser, TOKEN_LBRACKET)) {
+    } else if(match_type(parser, TOKEN_LBRACKET)) {
         return parse_array(parser);
-    }
-    else {
+    } else {
         parser_throw(parser, "Could not parse literal");
     }
     return 0;
@@ -482,8 +443,7 @@ ast_t* parse_expression_primary(parser_t* parser) {
 
         if(!match_type(parser, TOKEN_RPAREN)) {
             parser_throw(parser, "Expected closing parenthesis");
-        }
-        else {
+        } else {
             accept_token(parser);
         }
     }
@@ -619,20 +579,15 @@ datatype_t parse_datatype(parser_t* parser) {
 
     if(!strcmp(v, "int")) {
         type = datatype_new(DATA_INT);
-    }
-    else if(!strcmp(v, "float")) {
+    } else if(!strcmp(v, "float")) {
         type = datatype_new(DATA_FLOAT);
-    }
-    else if(!strcmp(v, "char")) {
+    } else if(!strcmp(v, "char")) {
         type = datatype_new(DATA_CHAR);
-    }
-    else if(!strcmp(v, "bool")) {
+    } else if(!strcmp(v, "bool")) {
         type = datatype_new(DATA_BOOL);
-    }
-    else if(!strcmp(v, "void")) {
+    } else if(!strcmp(v, "void")) {
         type = datatype_new(DATA_VOID);
-    }
-    else {
+    } else {
         type.type = DATA_CLASS;
         type.id = djb2((unsigned char*)v);
     }
@@ -676,10 +631,9 @@ list_t* parse_formals(parser_t* parser) {
     }
 
     while(!match_type(parser, TOKEN_RPAREN)) {
-
         // Mutable parameter
         bool mutable = false;
-        if(match_string(parser, "mut")) {
+        if(match_type(parser, TOKEN_MUT)) {
             parser->cursor++;
             mutable = true;
         }
@@ -705,8 +659,7 @@ list_t* parse_formals(parser_t* parser) {
         if(!match_type(parser, TOKEN_COMMA) && !match_type(parser, TOKEN_RPAREN)) {
             parser_throw(parser, "Expected seperator");
             return formals;
-        }
-        else if(match_type(parser, TOKEN_COMMA)) {
+        } else if(match_type(parser, TOKEN_COMMA)) {
             parser->cursor++;
         }
     }
@@ -773,8 +726,7 @@ void test_newline(parser_t* parser) {
     if(!parser->error) {
         if(!match_type(parser, TOKEN_NEWLINE)) {
             parser_throw(parser, "Invalid statement (Newline missing?)");
-        }
-        else {
+        } else {
             parser->cursor++;
         }
     }
@@ -794,22 +746,22 @@ ast_t* parse_stmt(parser_t* parser) {
 
     // Look-up-table
     static const struct {
-        const char* token;
+        token_type_t ty;
         ast_t* (*fn)(parser_t*, location_t);
     } parsers[] = {
-        {KEYWORD_IMPORT, parse_import_declaration},
-        {KEYWORD_DECLARATION, parse_var_declaration},
-        {KEYWORD_FUNCTION, parse_fn_declaration},
-        {KEYWORD_IF, parse_if_declaration},
-        {KEYWORD_WHILE, parse_while_declaration},
-        {KEYWORD_CLASS, parse_class_declaration},
-        {KEYWORD_RETURN, parse_return_declaration}
+        {TOKEN_USING, parse_import_declaration},
+        {TOKEN_LET, parse_var_declaration},
+        {TOKEN_FUNC, parse_fn_declaration},
+        {TOKEN_IF, parse_if_declaration},
+        {TOKEN_WHILE, parse_while_declaration},
+        {TOKEN_TYPE, parse_class_declaration},
+        {TOKEN_RETURN, parse_return_declaration}
     };
 
     // Test for a statement
     // If there is a statement, test for a newline
     for(size_t i = 0; i < sizeof(parsers)/sizeof(parsers[0]); i++) {
-        if(match_string(parser, parsers[i].token)) {
+        if(match_type(parser, parsers[i].ty)) {
             ast_t* node = parsers[i].fn(parser, pos);
             test_newline(parser);
             return node;
@@ -824,7 +776,7 @@ ast_t* parse_stmt(parser_t* parser) {
     }
 
     // Error testing
-    if(match_string(parser, KEYWORD_ELSE)) {
+    if(match_type(parser, TOKEN_ELSE)) {
         parser_throw(parser, "If-clause error: No beginning if-statement / Else-if out of if-chain");
         return 0;
     }
@@ -902,11 +854,9 @@ ast_t* parse_import_declaration(parser_t* parser, location_t loc) {
         // Built-in core library
         if(!strcmp(node->import, "core")) {
             core_gen_signatures(parser->top->toplevel);
-        }
-        else if(!strcmp(node->import, "math")) {
+        } else if(!strcmp(node->import, "math")) {
             math_gen_signatures(parser->top->toplevel);
-        }
-        else if(!strcmp(node->import, "io")) {
+        } else if(!strcmp(node->import, "io")) {
             io_gen_signatures(parser->top->toplevel);
         }
     // External file handling
@@ -933,7 +883,7 @@ ast_t* parse_var_declaration(parser_t* parser, location_t loc) {
 
     // Test for the 'mutable'-keyword
     bool mutate = false;
-    if(match_string(parser, KEYWORD_MUTATE)) {
+    if(match_type(parser, TOKEN_MUT)) {
         parser->cursor++;
         mutate = true;
     }
@@ -951,8 +901,7 @@ ast_t* parse_var_declaration(parser_t* parser, location_t loc) {
         if(!node->vardecl.initializer) {
             parser_throw(parser, "Invalid or missing variable initializer");
         }
-    }
-    else {
+    } else {
         parser_throw(parser, "Malformed variable declaration");
         node->class = AST_NULL;
     }
@@ -1027,20 +976,16 @@ ast_t* parse_if_declaration(parser_t* parser, location_t loc) {
     node->ifstmt = list_new();
 
     // if (if / else if) do
-    while(match_string(parser, KEYWORD_IF)
-        || (match_string(parser, KEYWORD_ELSE)
-        && match_next(parser, KEYWORD_IF)))
-    {
+    while(match_type(parser, TOKEN_IF)
+        || (match_type(parser, TOKEN_ELSE)
+        && match_next(parser, TOKEN_IF))) {
         // create a subclause and skip tokens
         ast_t* clause = ast_class_create(AST_IFCLAUSE, get_location(parser));
-        if(match_string(parser, KEYWORD_IF))
-        {
-            accept_token_string(parser, KEYWORD_IF);
-        }
-        else
-        {
-            accept_token_string(parser, KEYWORD_ELSE);
-            accept_token_string(parser, KEYWORD_IF);
+        if(match_type(parser, TOKEN_IF)) {
+            accept_token_type(parser, TOKEN_IF);
+        } else {
+            accept_token_type(parser, TOKEN_ELSE);
+            accept_token_type(parser, TOKEN_IF);
         }
 
         clause->ifclause.cond = parse_expression(parser);
@@ -1048,14 +993,13 @@ ast_t* parse_if_declaration(parser_t* parser, location_t loc) {
         list_push(node->ifstmt, clause);
     }
 
-    if(match_string(parser, KEYWORD_ELSE)) {
+    if(match_type(parser, TOKEN_ELSE)) {
         ast_t* clause = ast_class_create(AST_IFCLAUSE, get_location(parser));
-        token_t* elsetok = accept_token_string(parser, KEYWORD_ELSE);
+        token_t* elsetok = accept_token_type(parser, TOKEN_ELSE);
         if(elsetok) {
             clause->ifclause.cond = 0;
             clause->ifclause.body = parse_block(parser);
-        }
-        else {
+        } else {
             parser_throw(parser, "Else statement without else keyword");
             free(clause);
             return node;
@@ -1146,18 +1090,14 @@ ast_t* parse_annotation_declaration(parser_t* parser, location_t loc) {
         char* str = content->value;
         if(!strcmp(str, "Getter")) {
             node->annotation = ANN_GETTER;
-        }
-        else if(!strcmp(str, "Setter")) {
+        } else if(!strcmp(str, "Setter")) {
             node->annotation = ANN_SETTER;
-        }
-        else if(!strcmp(str, "Unused")) {
+        } else if(!strcmp(str, "Unused")) {
             node->annotation = ANN_UNUSED;
-        }
-        else {
+        } else {
             parser_throw(parser, "Unknown annotation type");
         }
-    }
-    else {
+    } else {
         parser_throw(parser, "Malformed annotation");
     }
 

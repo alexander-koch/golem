@@ -1,91 +1,75 @@
 #include "graphviz.h"
 
-void graphviz_mnemonic(graphviz_t* state)
-{
-    for(size_t i = 0; i < state->mnemonic; i++)
-    {
+void graphviz_mnemonic(graphviz_t* state) {
+    for(size_t i = 0; i < state->mnemonic; i++) {
         fprintf(state->fp, " ");
     }
 }
 
-void graphviz_mnemonic_inc(graphviz_t* state)
-{
+void graphviz_mnemonic_inc(graphviz_t* state) {
     state->mnemonic += 4;
 }
 
-void graphviz_mnemonic_dec(graphviz_t* state)
-{
+void graphviz_mnemonic_dec(graphviz_t* state) {
     state->mnemonic -= 4;
 }
 
-int graphviz_get_id(graphviz_t* state)
-{
+int graphviz_get_id(graphviz_t* state) {
     return state->id++;
 }
 
-void graphviz_connection(graphviz_t* state, int v1, int v2)
-{
+void graphviz_connection(graphviz_t* state, int v1, int v2) {
     graphviz_mnemonic(state);
     fprintf(state->fp, "node%d -> node%d\n", v1, v2);
 }
 
-int graphviz_eval(graphviz_t* state, ast_t* node)
-{
-    switch(node->class)
-    {
+int graphviz_eval(graphviz_t* state, ast_t* node) {
+    switch(node->class) {
         case AST_NULL: return 0;
-        case AST_IDENT:
-        {
+        case AST_IDENT: {
             int this = graphviz_get_id(state);
             graphviz_mnemonic(state);
             fprintf(state->fp, "node%d [label=\"IDENT %s\"]\n", this, node->ident);
             return this;
         }
-        case AST_FLOAT:
-        {
+        case AST_FLOAT: {
             int this = graphviz_get_id(state);
             graphviz_mnemonic(state);
             fprintf(state->fp, "node%d [label=\"FLOAT %f\"]\n", this, (float)node->f);
             return this;
         }
-        case AST_INT:
-        {
+        case AST_INT: {
             int this = graphviz_get_id(state);
             graphviz_mnemonic(state);
             fprintf(state->fp, "node%d [label=\"INT %d\"]\n", this, (int)node->i);
             return this;
         }
-        case AST_BOOL:
-        {
+        case AST_BOOL: {
             int this = graphviz_get_id(state);
             graphviz_mnemonic(state);
             fprintf(state->fp, "node%d [label=\"BOOL %s\"]\n", this, node->b ? "true" : "false");
             return this;
         }
-        case AST_STRING:
-        {
+        case AST_STRING: {
             int this = graphviz_get_id(state);
             graphviz_mnemonic(state);
             fprintf(state->fp, "node%d [label=\"STRING %s\"]\n", this, node->string);
             return this;
         }
-        case AST_CHAR:
-        {
+        case AST_CHAR: {
             int this = graphviz_get_id(state);
             graphviz_mnemonic(state);
             fprintf(state->fp, "node%d [label=\"CHAR %c\"]\n", this, node->ch);
             return this;
         }
-        case AST_ARRAY:
-        {
+        case AST_ARRAY: {
             int this = graphviz_get_id(state);
 
             graphviz_mnemonic(state);
             fprintf(state->fp, "node%d [label=\"ARRAY\"]\n", this);
 
             list_iterator_t* iter = list_iterator_create(node->array.elements);
-            while(!list_iterator_end(iter))
-            {
+            while(!list_iterator_end(iter)) {
                 ast_t* next = list_iterator_next(iter);
                 int other = graphviz_eval(state, next);
                 graphviz_connection(state, this, other);
@@ -93,11 +77,11 @@ int graphviz_eval(graphviz_t* state, ast_t* node)
             list_iterator_free(iter);
             return this;
         }
-        case AST_BINARY:
-        {
+        case AST_BINARY: {
             int this = graphviz_get_id(state);
             graphviz_mnemonic(state);
-            fprintf(state->fp, "node%d [label=\"BINARY %s\"]\n", this, tok2str(node->binary.op));
+            fprintf(state->fp, "node%d [label=\"BINARY %s\"]\n",
+                this, token_string(node->binary.op));
 
             int leftId = graphviz_eval(state, node->binary.left);
             int rightId = graphviz_eval(state, node->binary.right);
@@ -105,17 +89,16 @@ int graphviz_eval(graphviz_t* state, ast_t* node)
             graphviz_connection(state, this, rightId);
             return this;
         }
-        case AST_UNARY:
-        {
+        case AST_UNARY: {
             int this = graphviz_get_id(state);
             graphviz_mnemonic(state);
-            fprintf(state->fp, "node%d [label=\"UNARY %s\"]\n", this, tok2str(node->unary.op));
+            fprintf(state->fp, "node%d [label=\"UNARY %s\"]\n",
+                this, token_string(node->unary.op));
             int other = graphviz_eval(state, node->unary.expr);
             graphviz_connection(state, this, other);
             return this;
         }
-        case AST_SUBSCRIPT:
-        {
+        case AST_SUBSCRIPT: {
             int this = graphviz_get_id(state);
             graphviz_mnemonic(state);
             fprintf(state->fp, "node%d [label=\"SUBSCRIPT (K/EXPR)\"]\n", this);
@@ -127,8 +110,7 @@ int graphviz_eval(graphviz_t* state, ast_t* node)
             graphviz_connection(state, this, exprId);
             return this;
         }
-        case AST_CALL:
-        {
+        case AST_CALL: {
             int this = graphviz_get_id(state);
             graphviz_mnemonic(state);
             fprintf(state->fp, "node%d [label=\"CALL\"]\n", this);
@@ -142,8 +124,7 @@ int graphviz_eval(graphviz_t* state, ast_t* node)
             fprintf(state->fp, "node%d [label=\"ARGS\"]\n", args);
 
             list_iterator_t* iter = list_iterator_create(node->call.args);
-            while(!list_iterator_end(iter))
-            {
+            while(!list_iterator_end(iter)) {
                 ast_t* next = list_iterator_next(iter);
                 other = graphviz_eval(state, next);
                 graphviz_connection(state, args, other);
@@ -153,8 +134,7 @@ int graphviz_eval(graphviz_t* state, ast_t* node)
             graphviz_connection(state, this, args);
             return this;
         }
-        case AST_DECLVAR:
-        {
+        case AST_DECLVAR: {
             int this = graphviz_get_id(state);
 
             char* name = node->vardecl.name;
@@ -165,16 +145,14 @@ int graphviz_eval(graphviz_t* state, ast_t* node)
             graphviz_mnemonic(state);
             fprintf(state->fp, "node%d [label=\"DECLVAR %s\\nmutate:%s\\ntype:%s\", shape=\"record\"]\n", this, name, mutate?"true":"false", datatype2str(type));
 
-            if(initializer)
-            {
+            if(initializer) {
                 int other = graphviz_eval(state, initializer);
                 graphviz_connection(state, this, other);
             }
 
             return this;
         }
-        case AST_DECLFUNC:
-        {
+        case AST_DECLFUNC: {
             int this = graphviz_get_id(state);
             char* name = node->funcdecl.name;
             datatype_t ret = node->funcdecl.rettype;

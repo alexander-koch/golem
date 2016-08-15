@@ -285,7 +285,7 @@ void ast_dump(ast_t* node, int level) {
             break;
         }
         case AST_BINARY: {
-            printf("(bin op=%s\n", tok2str(node->binary.op));
+            printf("(bin op=%s\n", token_string(node->binary.op));
             ast_dump(node->binary.left, level+1);
             putchar('\n');
             ast_dump(node->binary.right, level+1);
@@ -293,7 +293,7 @@ void ast_dump(ast_t* node, int level) {
             break;
         }
         case AST_UNARY: {
-            printf("(unary<%s, ", tok2str(node->unary.op));
+            printf("(unary<%s, ", token_string(node->unary.op));
             ast_dump(node->unary.expr, 0);
             putchar(')');
             break;

@@ -735,17 +735,17 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
         // Emit node op-codes
         datatype_t lhs_type = compiler_eval(compiler, lhs);
         datatype_t rhs_type = compiler_eval(compiler, rhs);
-        if(!datatype_match(lhs_type, rhs_type))
-        {
-            compiler_throw(compiler, node, "Cannot perform operation '%s' on the types '%s' and '%s'", tok2str(op), datatype2str(lhs_type), datatype2str(rhs_type));
+        if(!datatype_match(lhs_type, rhs_type)) {
+            compiler_throw(compiler, node, "Cannot perform operation '%s' on the types '%s' and '%s'",
+                token_string(op), datatype2str(lhs_type), datatype2str(rhs_type));
             return datatype_new(DATA_NULL);
         }
 
         // Emit operator and test if allowed
         bool valid = emit_tok2op(compiler->buffer, op, lhs_type);
-        if(!valid)
-        {
-            compiler_throw(compiler, node, "Cannot perform operation '%s' on the types '%s' and '%s'", tok2str(op), datatype2str(lhs_type), datatype2str(rhs_type));
+        if(!valid) {
+            compiler_throw(compiler, node, "Cannot perform operation '%s' on the types '%s' and '%s'",
+                token_string(op), datatype2str(lhs_type), datatype2str(rhs_type));
             return datatype_new(DATA_NULL);
         }
 
@@ -1758,8 +1758,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
     // Treat each parameter as a local variable, with no type or value
     list_iterator_t* iter = list_iterator_create(node->classstmt.formals);
     int i = -(list_size(node->classstmt.formals) + 3);
-    while(!list_iterator_end(iter))
-    {
+    while(!list_iterator_end(iter)) {
         // Create parameter in symbols list
         ast_t* param = list_iterator_next(iter);
 
@@ -1776,20 +1775,17 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
     while(!list_iterator_end(iter))
     {
         ast_t* sub = list_iterator_next(iter);
-        if(sub->class == AST_ANNOTATION)
-        {
+        if(sub->class == AST_ANNOTATION) {
             eval_annotation(compiler, sub);
         }
-        else if(sub->class == AST_DECLVAR)
-        {
+        else if(sub->class == AST_DECLVAR) {
             field_count++;
             size_t addr = compiler->scope->address;
             compiler_eval(compiler, sub);
 
             // Get the symbol, check if valid
             symbol_t* sym = symbol_get(compiler->scope, sub->vardecl.name);
-            if(sym)
-            {
+            if(sym) {
                 emit_load(compiler->buffer, addr, false);
                 sym->ref = symbol;
                 hashmap_set(node->classstmt.fields, sub->vardecl.name, sym);
