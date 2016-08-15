@@ -100,7 +100,7 @@ int hashmap_hash(hashmap_t* hmap, char* key) {
 }
 
 int hashmap_rehash(hashmap_t* hmap) {
-     bucket_t* temp = malloc(2 * hmap->table_size * sizeof(bucket_t));
+    bucket_t* temp = malloc(2 * hmap->table_size * sizeof(bucket_t));
     if(!temp) return HMAP_MEM;
 
     bucket_t* curr = hmap->data;
@@ -138,10 +138,8 @@ hashmap_t* hashmap_new() {
 
 int hashmap_set(hashmap_t* hashmap, char* key, void* value) {
     int index = hashmap_hash(hashmap, key);
-    while(index == HMAP_FULL)
-    {
-        if(hashmap_rehash(hashmap) == HMAP_MEM)
-        {
+    while(index == HMAP_FULL) {
+        if(hashmap_rehash(hashmap) == HMAP_MEM) {
             return HMAP_MEM;
         }
         index = hashmap_hash(hashmap, key);
@@ -156,12 +154,9 @@ int hashmap_set(hashmap_t* hashmap, char* key, void* value) {
 
 int hashmap_get(hashmap_t* hashmap, char* key, void** value) {
     unsigned int curr = hashmap_hash_int(hashmap, key);
-    for(int i = 0; i < MAX_CHAIN_LENGTH; i++)
-    {
-        if(hashmap->data[curr].use)
-        {
-            if(!strcmp(hashmap->data[curr].key, key))
-            {
+    for(int i = 0; i < MAX_CHAIN_LENGTH; i++) {
+        if(hashmap->data[curr].use) {
+            if(!strcmp(hashmap->data[curr].key, key)) {
                 *value = (hashmap->data[curr].data);
                 return HMAP_OK;
             }
@@ -179,8 +174,7 @@ void* hashmap_find(hashmap_t* hashmap, char* key) {
     int err = hashmap_get(hashmap, key, &val);
     if(err == HMAP_OK) {
         return val;
-    }
-    else {
+    } else {
         return 0;
     }
 }

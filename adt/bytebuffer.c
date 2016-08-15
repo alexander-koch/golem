@@ -20,8 +20,7 @@ void bytebuffer_fill(bytebuffer_t* buffer, uint8_t data, int count) {
 
         if(buffer->capacity == 0) {
             buffer->data = malloc(sizeof(uint8_t) * capacity);
-        }
-        else {
+        } else {
             buffer->data = realloc(buffer->data, sizeof(uint8_t) * capacity);
         }
         buffer->capacity = capacity;

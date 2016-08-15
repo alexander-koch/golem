@@ -98,8 +98,7 @@ list_iterator_t* list_iterator_create(list_t* list) {
     if(!iter) return iter;
     if(list) {
         iter->ptr = list->head;
-    }
-    else {
+    } else {
         iter->ptr = 0;
     }
     return iter;

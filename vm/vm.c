@@ -620,6 +620,7 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         // Otherwise, if too many locals are saved in the last scope e.g. from 1 - 11,
         // the new scope overwrites the old values for instance: fp at 5, overwrites 5 - 11.
         vm->reserve = AS_INT32(instr->v1);
+        //vm->sp += AS_INT32(instr->v1);
         DISPATCH();
     }
     code_ret: {

@@ -41,8 +41,7 @@ int main(int argc, char** argv) {
             vm_run_args(&vm, buffer, argc, argv);
             bytecode_buffer_free(buffer);
         }
-    }
-    else if(argc == 3) {
+    } else if(argc == 3) {
         if(!strcmp(argv[1], "-c")) {
             // Compile to bytecode
             vector_t* buffer = compile_file(argv[2]);
@@ -54,16 +53,14 @@ int main(int argc, char** argv) {
                 free(out);
                 bytecode_buffer_free(buffer);
             }
-        }
-        else if(!strcmp(argv[1], "-r")) {
+        } else if(!strcmp(argv[1], "-r")) {
             // Run compiled bytecode file
             vector_t* buffer = vector_new();
             if(deserialize(argv[2], &buffer)) {
                 vm_run_args(&vm, buffer, argc, argv);
             }
             bytecode_buffer_free(buffer);
-        }
-        else if(!strcmp(argv[1], "--ast")) {
+        } else if(!strcmp(argv[1], "--ast")) {
             // Generate ast.dot graphviz file
             char* path = argv[2];
             char* source = readFile(path);
@@ -81,17 +78,14 @@ int main(int argc, char** argv) {
             ast_free(parser.top);
             parser_free(&parser);
             free(source);
-        }
-        else if(!strcmp(argv[1], "--doc")) {
+        } else if(!strcmp(argv[1], "--doc")) {
             // Generate HTML-doc
             doc_generate(argv[2]);
-        }
-        else {
+        } else {
             printf("Flag: '%s' is invalid\n\n", argv[1]);
             return 1;
         }
-    }
-    else {
+    } else {
         print_info();
     }
 

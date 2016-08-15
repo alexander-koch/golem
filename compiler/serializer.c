@@ -4,22 +4,18 @@ bool serialize_value(FILE* fp, val_t val) {
     uint8_t tag;
     if(IS_NUM(val)) {
         tag = TAG_NUM;
-    }
-    else if(IS_BOOL(val)) {
+    } else if(IS_BOOL(val)) {
         tag = TAG_BOOL;
-    }
-    else if(IS_STRING(val)) {
+    } else if(IS_STRING(val)) {
         tag = TAG_STR;
-    }
-    else {
+    } else {
         return false;
     }
 
     fwrite((const void*)&tag, sizeof(uint8_t), 1, fp);
     if(tag != TAG_STR) {
         fwrite((val_t*)&val, sizeof(val_t), 1, fp);
-    }
-    else {
+    } else {
         char* str = AS_STRING(val);
         uint32_t len = strlen(str);
 

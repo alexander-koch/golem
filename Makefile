@@ -1,5 +1,5 @@
 # Makefile for the golem programming language
-# @Author Alexander Koch 2015
+# @Author Alexander Koch 2016
 CC := gcc
 MODULE_RELEASE := golem
 MODULE_DEBUG := golem-debug

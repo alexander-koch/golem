@@ -9,9 +9,8 @@ const char* datatype2str(datatype_t type) {
         case DATA_CHAR: return "char";
         case DATA_CLASS: return "type";
         case DATA_VOID: return "void";
-        case DATA_ARRAY: return "null-array";
+        case DATA_ARRAY: return "undefined[]";
         case DATA_GENERIC: return "generic";
-        case DATA_LAMBDA: return "lambda";
         default: {
             if((type.type & DATA_ARRAY) == DATA_ARRAY) {
                 int subtype = type.type & ~DATA_ARRAY;
@@ -27,7 +26,7 @@ const char* datatype2str(datatype_t type) {
                 }
             }
 
-            return "null";
+            return "undefined";
         }
     }
 }

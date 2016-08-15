@@ -133,7 +133,8 @@ int is_word(char c) {
 }
 
 int is_newline(lexer_t* lexer) {
-    return lexer->cursor[0] == '\r' || lexer->cursor[0] == '\n';
+    return (lexer->cursor[0] == '\r' && lexer->cursor[1] == '\n')
+        || lexer->cursor[0] == '\n';
 }
 
 int is_space(lexer_t* lexer) {
@@ -161,16 +162,11 @@ int is_eof(lexer_t* lexer) {
 }
 
 int lex_newline(lexer_t* lexer, token_t* token) {
+    if(lexer->cursor[0] == '\r') {
+        lexer->cursor++;
+    }
+
     if(lexer->cursor[0] == '\n') {
-        if(lexer->cursor[1] == '\r') {
-            lexer->cursor++;
-        }
-        lexer->location.line++;
-        lexer->lastline = lexer->cursor++;
-    } else if(lexer->cursor[0] == '\r') {
-        if(lexer->cursor[1] == '\n') {
-            lexer->cursor++;
-        }
         lexer->location.line++;
         lexer->lastline = lexer->cursor++;
     }

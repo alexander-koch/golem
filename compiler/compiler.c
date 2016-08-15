@@ -262,7 +262,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node) {
 
     // Register a symbol for the function, save the bytecode address
     int byte_address = vector_size(compiler->buffer);
-    symbol_t* fnSymbol = symbol_new(compiler, node, byte_address, datatype_new(DATA_LAMBDA));
+    symbol_t* fnSymbol = symbol_new(compiler, node, byte_address, datatype_new(DATA_NULL));
     hashmap_set(compiler->scope->symbols, node->funcdecl.name, fnSymbol);
 
     // Create a new scope and create the parameter-variables.
@@ -272,7 +272,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node) {
     int i = -(list_size(node->funcdecl.impl.formals) + 3);
     while(!list_iterator_end(iter)) {
         // Create parameter in symbols list
-         ast_t* param = list_iterator_next(iter);
+        ast_t* param = list_iterator_next(iter);
 
         if(symbol_exists(compiler, param, param->vardecl.name)) return datatype_new(DATA_NULL);
         symbol_t* symbol = symbol_new(compiler, param, i, param->vardecl.type);
@@ -296,8 +296,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node) {
             if(sub->returnstmt && node->funcdecl.rettype.type == DATA_VOID) {
                 compiler_throw(compiler, node, "Functions with type void do not return a value");
                 break;
-            }
-            else if(!sub->returnstmt && node->funcdecl.rettype.type != DATA_VOID) {
+            } else if(!sub->returnstmt && node->funcdecl.rettype.type != DATA_VOID) {
                 compiler_throw(compiler, node, "Return statement without a value");
                 break;
             }
@@ -316,12 +315,10 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node) {
         ast_t* refNode = 0;
         if(scope_is_class(compiler->scope, AST_CLASS, &refNode)) {
             emit_op(compiler->buffer, OP_RETVIRTUAL);
-        }
-        else {
+        } else {
             emit_return(compiler->buffer);
         }
-    }
-    else {
+    } else {
         if(!hasReturn) {
             compiler_throw(compiler, node, "Warning: Function without return statement");
         }
@@ -331,7 +328,7 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node) {
     byte_address = vector_size(compiler->buffer);
     *addr = INT32_VAL(byte_address);
 
-    return datatype_new(DATA_LAMBDA);
+    return datatype_new(DATA_NULL);
 }
 
 /**
@@ -358,13 +355,8 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node) {
     if(vartype.type == DATA_VOID) {
         compiler_throw(compiler, node, "Variable initializer is of type VOID");
         return datatype_new(DATA_NULL);
-    }
-    else if(vartype.type == DATA_NULL) {
+    } else if(vartype.type == DATA_NULL) {
         compiler_throw(compiler, node, "Variable initializer is NULL");
-        return datatype_new(DATA_NULL);
-    }
-    else if(vartype.type == DATA_LAMBDA) {
-        compiler_throw(compiler, node, "Trying to assign a function to a value (Currently not supported)");
         return datatype_new(DATA_NULL);
     }
 
@@ -452,8 +444,7 @@ datatype_t eval_bool(compiler_t* compiler, ast_t* node) {
 // Example:
 // bin(a, b, +) -> a + b
 // bin(a, bin(b, c, *), +) -> a + (b * c)
-datatype_t eval_binary(compiler_t* compiler, ast_t* node)
-{
+datatype_t eval_binary(compiler_t* compiler, ast_t* node) {
     ast_t* lhs = node->binary.left;
     ast_t* rhs = node->binary.right;
     token_type_t op = node->binary.op;
@@ -557,23 +548,17 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
     }
 
     // Assignment operator: special case
-    if(op == TOKEN_ASSIGN)
-    {
-        if(lhs->class == AST_IDENT)
-        {
+    if(op == TOKEN_ASSIGN) {
+        if(lhs->class == AST_IDENT) {
             symbol_t* symbol = symbol_get(compiler->scope, lhs->ident);
-            if(symbol)
-            {
-                if(symbol->node->class == AST_DECLVAR)
-                {
-                    if(!symbol->node->vardecl.mutate)
-                    {
+            if(symbol) {
+                if(symbol->node->class == AST_DECLVAR) {
+                    if(!symbol->node->vardecl.mutate) {
                         compiler_throw(compiler, node, "Invalid statement, trying to modifiy an immutable variable");
                         return datatype_new(DATA_NULL);
                     }
 
-                    if(symbol->ref)
-                    {
+                    if(symbol->ref) {
                         // ldarg0
                         // <...>
                         // setfield
@@ -584,14 +569,12 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
                     }
 
                     datatype_t dt = compiler_eval(compiler, rhs);
-                    if(!datatype_match(dt, symbol->node->vardecl.type))
-                    {
+                    if(!datatype_match(dt, symbol->node->vardecl.type)) {
                         compiler_throw(compiler, node, "Warning: Change of types is not permitted");
                         return datatype_new(DATA_NULL);
                     }
 
-                    if(symbol->ref)
-                    {
+                    if(symbol->ref) {
                         // Class field load from class
                         symbol_t* classRef = symbol->ref;
                         ast_t* classNode = classRef->node;
@@ -608,18 +591,14 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
                     }
 
                     symbol_replace(compiler, symbol);
-                }
-                else
-                {
+                } else {
                     // Left-hand side must be a variable
                     // Example 5 = 4 does not make any sense
                     // Also you can't replace a function <- function is stored in a variable
                     compiler_throw(compiler, node, "Left hand side value must be a variable");
                     return datatype_new(DATA_NULL);
                 }
-            }
-            else
-            {
+            } else {
                 // If the symbol is not found, throw an error
                 compiler_throw(compiler, node, "Warning: Implicit declaration of field '%s'", lhs->ident);
                 return datatype_new(DATA_NULL);
@@ -627,44 +606,32 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
         }
         // If it's not an identifier
         // e.g.: myArray[5] := 28
-        else if(lhs->class == AST_SUBSCRIPT)
-        {
+        else if(lhs->class == AST_SUBSCRIPT) {
             // Subscript: expr, key: myArray[key]
             // expr must be an identifier
             ast_t* expr = lhs->subscript.expr;
             ast_t* key = lhs->subscript.key;
 
-            if(expr->class != AST_IDENT)
-            {
+            if(expr->class != AST_IDENT) {
                 // [1,2,3,4][0] := 4
                 // not permitted
                 compiler_throw(compiler, node, "Warning: Identifier for index access expected");
-            }
-            else
-            {
+            } else {
                 symbol_t* symbol = symbol_get(compiler->scope, expr->ident);
-                if(symbol)
-                {
+                if(symbol) {
                     ast_t* symNode = symbol->node;
-                    if(symNode->class != AST_DECLVAR)
-                    {
+                    if(symNode->class != AST_DECLVAR) {
                         compiler_throw(compiler, node, "Subscripts are only allowed for variables");
-                    }
-                    else
-                    {
-                        if(!symNode->vardecl.mutate)
-                        {
+                    } else {
+                        if(!symNode->vardecl.mutate) {
                             compiler_throw(compiler, node, "The field '%s' is immutable", expr->ident);
-                        }
-                        else
-                        {
+                        } else {
                             // Example:
                             // let var = "Hello World"
                             // var[0] = "B"
 
                             // If it is a class, reload for modifying
-                            if(symbol->ref)
-                            {
+                            if(symbol->ref) {
                                 emit_op(compiler->buffer, OP_LDARG0);
                             }
 
@@ -674,8 +641,7 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
                             datatype_t lhsType = compiler_eval(compiler, expr);
                             datatype_t arrType = datatype_new(lhsType.type & ~DATA_ARRAY);
 
-                            if(!datatype_match(arrType, rhsType))
-                            {
+                            if(!datatype_match(arrType, rhsType)) {
                                 compiler_throw(compiler, node, "Assignment value has the wrong type");
                                 return datatype_new(DATA_NULL);
                             }
@@ -689,8 +655,7 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
                             //emit_store(compiler->buffer, symbol->address, symbol->global);
 
                             // If it is a class field, we have to reassign it to the actual field / class
-                            if(symbol->ref)
-                            {
+                            if(symbol->ref) {
                                 // Emit setfield
                                 symbol_t* classRef = symbol->ref;
                                 ast_t* classNode = classRef->node;
@@ -703,32 +668,24 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node)
 
                                 emit_class_setfield(compiler->buffer, symbol->address);
                                 emit_op(compiler->buffer, OP_SETARG0);
-                            }
-                            else
-                            {
+                            } else {
                                 symbol_replace(compiler, symbol);
                             }
 
                         }
                     }
-                }
-                else
-                {
+                } else {
                     compiler_throw(compiler, node, "Warning: Implicit declaration of field '%s'", expr->ident);
                 }
             }
             return datatype_new(DATA_NULL);
-        }
-        else
-        {
+        } else {
             // Example: [1,2,3] := 5
             // Completely invalid!
             compiler_throw(compiler, node, "Unknown assignment operation");
             return datatype_new(DATA_NULL);
         }
-    }
-    else
-    {
+    } else {
         // Simple binary instruction
         // Can be evaluated easier.
 
@@ -813,8 +770,7 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node) {
             // If local or global, otherwise search in upper scope
             if(depth == 0 || ptr->global) {
                 emit_load(compiler->buffer, ptr->address, ptr->global);
-            }
-            else {
+            } else {
                 emit_load_upval(compiler->buffer, depth, ptr->address);
             }
         }
@@ -844,8 +800,7 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
     if(func->class == AST_DECLFUNC) {
         formals = func->funcdecl.impl.formals;
         external = func->funcdecl.external;
-    }
-    else if(func->class == AST_CLASS) {
+    } else if(func->class == AST_CLASS) {
         formals = func->classstmt.formals;
     }
     size_t paramc = list_size(formals);
@@ -854,8 +809,7 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
     if(argc > paramc) {
         compiler_throw(compiler, node, "Too many arguments for function '%s'. Expected: %d", call->ident, paramc);
         return false;
-    }
-    else if(argc < paramc) {
+    } else if(argc < paramc) {
         compiler_throw(compiler, node, "Too few arguments for function '%s'. Expected: %d", call->ident, paramc);
         return false;
     }
@@ -893,8 +847,7 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
     // Emit invocation
     if(external) {
         emit_syscall(compiler->buffer, func->funcdecl.external-1);
-    }
-    else {
+    } else {
         // Reserve some memory
         emit_reserve(compiler->buffer, compiler->scope->address);
         emit_invoke(compiler->buffer, address, argc);
@@ -915,8 +868,7 @@ datatype_t eval_bool_func(compiler_t* compiler, ast_t* node, datatype_t dt) {
     if(!strcmp(key->ident, "to_i")) {
         emit_op(compiler->buffer, OP_B2I);
         return datatype_new(DATA_INT);
-    }
-    else if(!strcmp(key->ident, "to_str")) {
+    } else if(!strcmp(key->ident, "to_str")) {
         emit_op(compiler->buffer, OP_TOSTR);
         return datatype_new(DATA_STRING);
     }
@@ -937,21 +889,17 @@ datatype_t eval_int32_func(compiler_t* compiler, ast_t* node, datatype_t dt) {
         // only int32 can be turned into a float
         emit_op(compiler->buffer, OP_I2F);
         return datatype_new(DATA_FLOAT);
-    }
-    else if(!strcmp(key->ident, "to_c") && dt.type == DATA_INT) {
+    } else if(!strcmp(key->ident, "to_c") && dt.type == DATA_INT) {
         // no conversion needed, internally it is the same type
         // so just trick the compiler and return char
         return datatype_new(DATA_CHAR);
-    }
-    else if(!strcmp(key->ident, "to_i") && dt.type == DATA_CHAR) {
+    } else if(!strcmp(key->ident, "to_i") && dt.type == DATA_CHAR) {
         return datatype_new(DATA_INT);
-    }
-    else if(!strcmp(key->ident, "to_str")) {
+    } else if(!strcmp(key->ident, "to_str")) {
         // basically everything can be converted to a string
         emit_op(compiler->buffer, OP_TOSTR);
         return datatype_new(DATA_STRING);
-    }
-    else {
+    } else {
         compiler_throw(compiler, node, "No such function");
     }
 
@@ -971,17 +919,14 @@ datatype_t eval_float_func(compiler_t* compiler, ast_t* node, datatype_t dt) {
         // only doubles can be converted to integers
         emit_op(compiler->buffer, OP_F2I);
         return datatype_new(DATA_INT);
-    }
-    else if(!strcmp(key->ident, "to_c")) {
+    } else if(!strcmp(key->ident, "to_c")) {
         // Same function, just different 'type'
         emit_op(compiler->buffer, OP_F2I);
         return datatype_new(DATA_CHAR);
-    }
-    else if(!strcmp(key->ident, "to_str")) {
+    } else if(!strcmp(key->ident, "to_str")) {
         emit_op(compiler->buffer, OP_TOSTR);
         return datatype_new(DATA_STRING);
-    }
-    else {
+    } else {
         compiler_throw(compiler, node, "No such function");
     }
 
@@ -1010,8 +955,7 @@ datatype_t eval_array_func(compiler_t* compiler, ast_t* node, datatype_t dt) {
         // Length operation
         emit_op(compiler->buffer, OP_LEN);
         return datatype_new(DATA_INT);
-    }
-    else if(!strcmp(key->ident, "empty")) {
+    } else if(!strcmp(key->ident, "empty")) {
         ASSERT_ZERO_ARGS()
 
         // empty? = (len <= 0)
@@ -1019,8 +963,7 @@ datatype_t eval_array_func(compiler_t* compiler, ast_t* node, datatype_t dt) {
         emit_int(compiler->buffer, 0);
         emit_op(compiler->buffer, OP_ILE);
         return datatype_new(DATA_BOOL);
-    }
-    else if(!strcmp(key->ident, "append")) {
+    } else if(!strcmp(key->ident, "append")) {
         if(ls != 1) {
             compiler_throw(compiler, node, "Expected one argument of type array");
             return datatype_new(DATA_NULL);
@@ -1035,8 +978,7 @@ datatype_t eval_array_func(compiler_t* compiler, ast_t* node, datatype_t dt) {
 
         emit_op(compiler->buffer, OP_APPEND);
         return dt;
-    }
-    else if(!strcmp(key->ident, "cons")) {
+    } else if(!strcmp(key->ident, "cons")) {
         if(ls != 1) {
             compiler_throw(compiler, node, "Expected one argument");
             return datatype_new(DATA_NULL);
@@ -1090,8 +1032,7 @@ datatype_t eval_array_func(compiler_t* compiler, ast_t* node, datatype_t dt) {
 
         emit_op(compiler->buffer, OP_GETSUB);
         return subtype;
-    }
-    else {
+    } else {
         compiler_throw(compiler, node, "Invalid array operation");
     }
     return datatype_new(DATA_NULL);
@@ -1127,12 +1068,11 @@ datatype_t eval_class_call(compiler_t* compiler, ast_t* node, datatype_t dt) {
         ins->op = OP_INVOKEVIRTUAL;
 
         // Class is on top, reassign it
+        // Else replace
         symbol_t* sym = symbol_get(compiler->scope, expr->vardecl.name);
         if(sym) {
             symbol_replace(compiler, sym);
-        }
-        // Else replace
-        else {
+        } else {
             emit_pop(compiler->buffer);
         }
 
@@ -1159,22 +1099,18 @@ datatype_t eval_datatype_call(compiler_t* compiler, ast_t* node, datatype_t dt) 
     // Evaluate accordingly
     if(dt.type == DATA_CLASS) {
         return eval_class_call(compiler, node, dt);
-    }
-    else {
+    } else {
         if((dt.type & DATA_ARRAY) == DATA_ARRAY) {
             return eval_array_func(compiler, node, dt);
         }
         // DATA_INT and DATA_CHAR are internally both int32->types
         else if(dt.type == DATA_INT || dt.type == DATA_CHAR) {
             return eval_int32_func(compiler, node, dt);
-        }
-        else if(dt.type == DATA_BOOL) {
+        } else if(dt.type == DATA_BOOL) {
             return eval_bool_func(compiler, node, dt);
-        }
-        else if(dt.type == DATA_FLOAT) {
+        } else if(dt.type == DATA_FLOAT) {
             return eval_float_func(compiler, node, dt);
-        }
-        else {
+        } else {
             compiler_throw(compiler, node, "Unsupported operation");
         }
     }
@@ -1198,8 +1134,7 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node) {
                     symbol = symbol->ref;
                     ast_t* class = symbol->node;
                     void* val = 0;
-                    if(hashmap_get(class->classstmt.fields, call->ident, &val) == HMAP_MISSING)
-                    {
+                    if(hashmap_get(class->classstmt.fields, call->ident, &val) == HMAP_MISSING) {
                         compiler_throw(compiler, node, "Function does not exists in class");
                         return datatype_new(DATA_NULL);
                     }
@@ -1221,14 +1156,12 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node) {
 
                     return symbol->node->funcdecl.rettype;
                 }
-            }
-            else if(symbol->node->class == AST_CLASS) {
+            } else if(symbol->node->class == AST_CLASS) {
                 // Class constructor call
                 if(eval_compare_and_call(compiler, symbol->node, node, symbol->address)) {
                     return symbol->type;
                 }
-            }
-            else {
+            } else {
                 compiler_throw(compiler, node, "Identifier '%s' is not a function", call->ident);
             }
 
@@ -1236,18 +1169,15 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node) {
         }
 
         compiler_throw(compiler, node, "Implicit declaration of function '%s'", call->ident);
-    }
-    else if(call->class == AST_SUBSCRIPT) {
+    } else if(call->class == AST_SUBSCRIPT) {
         // Calling a class function
 
         // Evaluate the lhs
         ast_t* expr = call->subscript.expr;
         datatype_t dt = compiler_eval(compiler, expr);
         return eval_datatype_call(compiler, node, dt);
-    }
-    else {
-        // lamdba(x,y,z)- > void { body} (6,2,3) will never occur due to parsing (maybe in future versions)
-        compiler_throw(compiler, node, "Callee has to be an identifier or a lambda");
+    } else {
+        compiler_throw(compiler, node, "Callee has to be an identifier or a subscript");
     }
 
     return datatype_new(DATA_NULL);
@@ -1272,11 +1202,9 @@ bool append_interpolated(compiler_t* compiler, char* buffer) {
     datatype_t dt = eval_ident(compiler, symbol->node);
     if(dt.type == DATA_STRING) {
         emit_op(compiler->buffer, OP_APPEND);
-    }
-    else if(dt.type == DATA_CHAR) {
+    } else if(dt.type == DATA_CHAR) {
         emit_op(compiler->buffer, OP_CONS);
-    }
-    else {
+    } else {
         emit_op(compiler->buffer, OP_TOSTR);
         emit_op(compiler->buffer, OP_APPEND);
     }
@@ -1340,8 +1268,7 @@ void interpolate_string(compiler_t* compiler, char* str) {
         if(string_on_stack) {
             emit_op(compiler->buffer, OP_APPEND);
         }
-    }
-    else {
+    } else {
         // Check if there is any string left
         if(start != c) {
             memset(content, 0, 96 * sizeof(char));
@@ -1353,45 +1280,38 @@ void interpolate_string(compiler_t* compiler, char* str) {
     }
 }
 
-datatype_t eval_string(compiler_t* compiler, ast_t* node)
-{
+datatype_t eval_string(compiler_t* compiler, ast_t* node) {
     char* str = node->string;
     if(strchr(str, '$')) {
         interpolate_string(compiler, str);
-    }
-    else {
+    } else {
         emit_string(compiler->buffer, str);
     }
 
     return datatype_new(DATA_STRING);
 }
 
-datatype_t eval_char(compiler_t* compiler, ast_t* node)
-{
+datatype_t eval_char(compiler_t* compiler, ast_t* node) {
     emit_char(compiler->buffer, node->ch);
     return datatype_new(DATA_CHAR);
 }
 
-datatype_t eval_array(compiler_t* compiler, ast_t* node)
-{
+datatype_t eval_array(compiler_t* compiler, ast_t* node) {
     datatype_t dt = node->array.type;
     size_t ls = list_size(node->array.elements);
     list_iterator_t* iter = list_iterator_create(node->array.elements);
 
-    if(ls > 0)
-    {
+    if(ls > 0) {
         dt = compiler_eval(compiler, list_iterator_next(iter));
         node->array.type = dt;
     }
 
-    if(dt.type == DATA_VOID || dt.type == DATA_NULL)
-    {
+    if(dt.type == DATA_VOID || dt.type == DATA_NULL) {
         list_iterator_free(iter);
         compiler_throw(compiler, node, "Invalid: Array is composed of NULL elements");
         return datatype_new(DATA_NULL);
     }
-    else if((dt.type & DATA_ARRAY) == DATA_ARRAY)
-    {
+    else if((dt.type & DATA_ARRAY) == DATA_ARRAY) {
         list_iterator_free(iter);
         compiler_throw(compiler, node, "Multidimensional arrays are not permitted");
         return datatype_new(DATA_NULL);
@@ -1402,18 +1322,15 @@ datatype_t eval_array(compiler_t* compiler, ast_t* node)
     // The index is mainly used for debugging reasons.
     // We already evaluated one element, so set the index to 2
     size_t idx = 2;
-    while(!list_iterator_end(iter))
-    {
+    while(!list_iterator_end(iter)) {
         datatype_t tmp = compiler_eval(compiler, list_iterator_next(iter));
-        if(!datatype_match(tmp, dt))
-        {
+        if(!datatype_match(tmp, dt)) {
             compiler_throw(compiler, node, "An array can only hold one type of elements (@element %d)", idx);
             list_iterator_free(iter);
             return datatype_new(DATA_NULL);
         }
 
-        if(tmp.type == DATA_NULL)
-        {
+        if(tmp.type == DATA_NULL) {
             compiler_throw(compiler, node, "Invalid array. (@element %d is NULL)", idx);
             list_iterator_free(iter);
             return tmp;
@@ -1423,8 +1340,7 @@ datatype_t eval_array(compiler_t* compiler, ast_t* node)
     list_iterator_free(iter);
 
     // Merge string
-    if(dt.type == DATA_CHAR)
-    {
+    if(dt.type == DATA_CHAR) {
         // Merge this to a string
         emit_string_merge(compiler->buffer, ls);
         return datatype_new(DATA_STRING);
@@ -1465,21 +1381,18 @@ datatype_t eval_array(compiler_t* compiler, ast_t* node)
 // 09: push 3
 // 10: ieq
 // 11: jmpf ..        <-- jump to condition 3 and so on
-datatype_t eval_if(compiler_t* compiler, ast_t* node)
-{
+datatype_t eval_if(compiler_t* compiler, ast_t* node) {
     // Eval the sub-ifclauses
     list_t* jmps = list_new();
     list_iterator_t* iter = list_iterator_create(node->ifstmt);
-    while(!list_iterator_end(iter))
-    {
+    while(!list_iterator_end(iter)) {
         // Get sub-ifclause
         ast_t* subnode = list_iterator_next(iter);
 
         // Jump #1 - declaration
         // Test if not an else-statement
         val_t* instr = 0;
-        if(subnode->ifclause.cond)
-        {
+        if(subnode->ifclause.cond) {
             // Eval the condition and generate an if-false jump
             compiler_eval(compiler, subnode->ifclause.cond);
             instr = emit_jmpf(compiler->buffer, 0);
@@ -1501,8 +1414,7 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
         // If not an else statement
         // Generate jump to next clause
         // (set the previously generated jump)
-        if(subnode->ifclause.cond)
-        {
+        if(subnode->ifclause.cond) {
             *instr = INT32_VAL(vector_size(compiler->buffer));
         }
     }
@@ -1511,8 +1423,7 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
 
     // Set the jump points to end after whole if block
     iter = list_iterator_create(jmps);
-    while(!list_iterator_end(iter))
-    {
+    while(!list_iterator_end(iter)) {
         val_t* pos = list_iterator_next(iter);
         *pos = INT32_VAL(vector_size(compiler->buffer));
     }
@@ -1528,8 +1439,7 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node)
 // 02: jmpf 5
 // 03: <instruction block>
 // 04: jmp 1
-datatype_t eval_while(compiler_t* compiler, ast_t* node)
-{
+datatype_t eval_while(compiler_t* compiler, ast_t* node) {
     size_t start = vector_size(compiler->buffer);
     compiler_eval(compiler, node->whilestmt.cond);
     val_t* instr = emit_jmpf(compiler->buffer, 0);
@@ -1545,33 +1455,26 @@ datatype_t eval_while(compiler_t* compiler, ast_t* node)
 
 // Eval.return(node)
 // Simply compiles the return data and emits the bytecode
-datatype_t eval_return(compiler_t* compiler, ast_t* node)
-{
+datatype_t eval_return(compiler_t* compiler, ast_t* node) {
     datatype_t dt = datatype_new(DATA_VOID);
-    if(node->returnstmt)
-    {
+    if(node->returnstmt) {
         dt = compiler_eval(compiler, node->returnstmt);
     }
 
     ast_t* refNode = 0;
-    if(!scope_is_class(compiler->scope, AST_DECLFUNC, &refNode))
-    {
+    if(!scope_is_class(compiler->scope, AST_DECLFUNC, &refNode)) {
         compiler_throw(compiler, node, "Return statement is not within a function");
         return datatype_new(DATA_NULL);
     }
 
-    if(!datatype_match(refNode->funcdecl.rettype, dt))
-    {
+    if(!datatype_match(refNode->funcdecl.rettype, dt)) {
         compiler_throw(compiler, node, "Return value doesn't match the return type");
         return datatype_new(DATA_NULL);
     }
 
-    if(scope_is_class(compiler->scope, AST_CLASS, &refNode))
-    {
+    if(scope_is_class(compiler->scope, AST_CLASS, &refNode)) {
         emit_op(compiler->buffer, OP_RETVIRTUAL);
-    }
-    else
-    {
+    } else {
         emit_return(compiler->buffer);
     }
 
@@ -1581,27 +1484,23 @@ datatype_t eval_return(compiler_t* compiler, ast_t* node)
 // Eval.subscript(node)
 // Compiles a subscript node.
 // Currently only allowed for strings and arrays.
-datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
-{
+datatype_t eval_subscript(compiler_t* compiler, ast_t* node) {
     ast_t* expr = node->subscript.expr;
     ast_t* key = node->subscript.key;
     datatype_t exprType = compiler_eval(compiler, expr);
 
-    if(exprType.type == DATA_CLASS)
-    {
+    if(exprType.type == DATA_CLASS) {
         compiler_throw(compiler, node, "Field access of classes is not permitted");
         return datatype_new(DATA_NULL);
     }
 
     datatype_t keyType = compiler_eval(compiler, key);
-    if(keyType.type != DATA_INT)
-    {
+    if(keyType.type != DATA_INT) {
         compiler_throw(compiler, node, "Key must be of type integer");
         return datatype_new(DATA_NULL);
     }
 
-    if((exprType.type & DATA_ARRAY) == DATA_ARRAY)
-    {
+    if((exprType.type & DATA_ARRAY) == DATA_ARRAY) {
         // INDEX: Hack:#2-#3
         // Simplified testing if index is out of bounds
         // May not work for functions returning an array
@@ -1639,11 +1538,10 @@ datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
         // We got an array and want to access an element.
         // Remove the array flag to get the return type.
         emit_op(compiler->buffer, OP_GETSUB);
-         datatype_t ret = datatype_new(exprType.type & ~DATA_ARRAY);
+        datatype_t ret = datatype_new(exprType.type & ~DATA_ARRAY);
         ret.id = exprType.id;
         return ret;
-    }
-    else {
+    } else {
         compiler_throw(compiler, node, "Invalid subscript operation");
         return datatype_new(DATA_NULL);
     }
@@ -1653,8 +1551,7 @@ datatype_t eval_subscript(compiler_t* compiler, ast_t* node)
 
 // Eval.unary(node)
 // Compiles prefix operators.
-datatype_t eval_unary(compiler_t* compiler, ast_t* node)
-{
+datatype_t eval_unary(compiler_t* compiler, ast_t* node) {
     datatype_t type = compiler_eval(compiler, node->unary.expr);
     if(node->unary.op == TOKEN_ADD) return type;
 
@@ -1668,13 +1565,8 @@ datatype_t eval_unary(compiler_t* compiler, ast_t* node)
             // SUB, BITNOT
             if(node->unary.op == TOKEN_NOT) {
                 compiler_throw(compiler, node, "Logical negation can only be used with objects of type boolean");
-            }
-            else if(node->unary.op == TOKEN_SUB) {
-                emit_op(compiler->buffer, OP_IMINUS);
-            }
-            else {
-                // Can only be Bitnot
-                emit_op(compiler->buffer, OP_BITNOT);
+            } else {
+                emit_op(compiler->buffer, node->unary.op == TOKEN_SUB ? OP_IMINUS : OP_BITNOT);
             }
             break;
         }
@@ -1683,8 +1575,7 @@ datatype_t eval_unary(compiler_t* compiler, ast_t* node)
 
             if(node->unary.op == TOKEN_BITNOT || node->unary.op == TOKEN_NOT) {
                 compiler_throw(compiler, node, "Bit operations / logical negation can only be used with objects of type int");
-            }
-            else {
+            } else {
                 // Can only be float negation
                 emit_op(compiler->buffer, OP_FMINUS);
             }
@@ -1693,8 +1584,7 @@ datatype_t eval_unary(compiler_t* compiler, ast_t* node)
         case DATA_BOOL: {
             if(node->unary.op != TOKEN_NOT) {
                 compiler_throw(compiler, node, "Arithmetic operations cannot be applied on objects of type boolean");
-            }
-            else {
+            } else {
                 emit_op(compiler->buffer, OP_NOT);
             }
             break;
@@ -1772,13 +1662,11 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
 
     // Iterate through body, emit the variables
     iter = list_iterator_create(body);
-    while(!list_iterator_end(iter))
-    {
+    while(!list_iterator_end(iter)) {
         ast_t* sub = list_iterator_next(iter);
         if(sub->class == AST_ANNOTATION) {
             eval_annotation(compiler, sub);
-        }
-        else if(sub->class == AST_DECLVAR) {
+        } else if(sub->class == AST_DECLVAR) {
             field_count++;
             size_t addr = compiler->scope->address;
             compiler_eval(compiler, sub);
@@ -1792,8 +1680,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
                 emit_class_setfield(compiler->buffer, compiler->scope->address-1);
 
                 // Check annotations at last, TODO: Wrap to a function
-                if(scope_requests(compiler->scope, ANN_GETTER))
-                {
+                if(scope_requests(compiler->scope, ANN_GETTER)) {
                     char* name = sub->vardecl.name;
                     datatype_t vartype = sub->vardecl.type;
 
@@ -1801,8 +1688,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
                     token_t* buffer = malloc(sizeof(token_t));
                     buffer[0].value = concat("get", name);
                     buffer[0].type = TOKEN_WORD;
-                    if(isalpha(buffer[0].value[3]))
-                    {
+                    if(isalpha(buffer[0].value[3])) {
                         buffer[0].value[3] = toupper(buffer[0].value[3]);
                     }
 
@@ -1853,10 +1739,8 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
                     hashmap_set(clazz->classstmt.fields, fn->funcdecl.name, funcSymbol);
                     funcSymbol->ref = clazzSymbol;
                 }
-                if(scope_requests(compiler->scope, ANN_SETTER))
-                {
-                    if(!sub->vardecl.mutate)
-                    {
+                if(scope_requests(compiler->scope, ANN_SETTER)) {
+                    if(!sub->vardecl.mutate) {
                         compiler_throw(compiler, sub, "Setters are only valid for mutable variables");
                         break;
                     }
@@ -1868,8 +1752,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
                     token_t* buffer = malloc(sizeof(token_t)*2);
                     buffer[0].value = concat("set", name);
                     buffer[0].type = TOKEN_WORD;
-                    if(isalpha(buffer[0].value[3]))
-                    {
+                    if(isalpha(buffer[0].value[3])) {
                         buffer[0].value[3] = toupper(buffer[0].value[3]);
                     }
                     buffer[1].value = strdup("p0");
@@ -1931,19 +1814,14 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
                 }
                 scope_unflag(compiler->scope);
             }
-        }
-        else if(sub->class == AST_DECLFUNC)
-        {
+        } else if(sub->class == AST_DECLFUNC) {
             compiler_eval(compiler, sub);
             symbol_t* sym = symbol_get(compiler->scope, sub->funcdecl.name);
-            if(sym)
-            {
+            if(sym) {
                 sym->ref = symbol;
                 hashmap_set(node->classstmt.fields, sub->funcdecl.name, sym);
             }
-        }
-        else
-        {
+        } else {
             compiler_throw(compiler, node, "Statements are not allowed as a direct field of a class");
             break;
         }
@@ -1960,15 +1838,12 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
 
     // Set the class fields count
     *fields = INT32_VAL(field_count);
-
     return datatype_new(DATA_NULL);
 }
 
-datatype_t eval_import(compiler_t* compiler, ast_t* node)
-{
+datatype_t eval_import(compiler_t* compiler, ast_t* node) {
     // TODO: Better checking
-    if(strstr(node->import, ".gs"))
-    {
+    if(strstr(node->import, ".gs")) {
         // Create a new subparser for new file
         parser_t* subparser = malloc(sizeof(parser_t));
         parser_init(subparser, (const char*)node->import);
@@ -1977,8 +1852,7 @@ datatype_t eval_import(compiler_t* compiler, ast_t* node)
         char* source = readFile(node->import);
         if(source) {
             ast_t* root = parser_run(subparser, source);
-            if(!root || parser_error(subparser))
-            {
+            if(!root || parser_error(subparser)) {
                 ast_free(root);
                 free(source);
                 compiler_throw(compiler, node, "Could not compile file '%s'", node->import);
@@ -1998,9 +1872,7 @@ datatype_t eval_import(compiler_t* compiler, ast_t* node)
             // Evaluate and swap back
             compiler_eval(compiler, root);
             compiler->parser = tmp;
-        }
-        else
-        {
+        } else {
             compiler_throw(compiler, node, "Could not read file named '%s'", node->import);
         }
         free(source);
@@ -2149,8 +2021,7 @@ vector_t* compile_file(const char* filename) {
 void compiler_clear(compiler_t* compiler) {
     // Free Scope and parsers
     list_iterator_t* iter = list_iterator_create(compiler->parsers);
-    while(!list_iterator_end(iter))
-    {
+    while(!list_iterator_end(iter)) {
         parser_t* parser = list_iterator_next(iter);
         parser_free(parser);
         ast_free(parser->top);

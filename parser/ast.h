@@ -31,7 +31,6 @@ typedef enum {
     DATA_VOID = 1 << 7, //0x40,
     DATA_ARRAY = 1 << 8, // 0x80
     DATA_GENERIC = 1 << 9,
-    DATA_LAMBDA = 1 << 10
     #define DATA_STRING (DATA_ARRAY | DATA_CHAR)
 } type_t;
 
