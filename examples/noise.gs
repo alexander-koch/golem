@@ -2,7 +2,6 @@
 # Original version by Ken Perlin.
 # Ported from Rosetta Code Go-example.
 # @author Alexander Koch 2015
-
 using core
 using math
 using io

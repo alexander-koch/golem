@@ -11,7 +11,6 @@ class Toggle(object):
         self.bool = not self.bool
         return self.bool
 
-
 def main():
     start = time.clock()
 

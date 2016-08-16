@@ -5,7 +5,6 @@
 # Das Programm fragt nach zwei Eingaben für den AND-Operator.
 # Eingabemöglichkeiten sind jeweils -1.0 oder 1.0.
 # Die entsprechende Antwort wird ausgegeben.
-
 using core
 using math
 

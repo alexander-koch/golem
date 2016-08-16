@@ -4,80 +4,66 @@
 #include <core/util.h>
 #include <vm/vm.h>
 
-val_t math_abs(vm_t* vm)
-{
-	double v1 = fabs(AS_NUM(pop(vm)));
-	return NUM_VAL(v1);
+void math_abs(vm_t* vm) {
+	double v1 = fabs(AS_NUM(vm_pop(vm)));
+	vm_push(vm, NUM_VAL(v1));
 }
 
-val_t math_sin(vm_t* vm)
-{
-	double v1 = sin(AS_NUM(pop(vm)));
-	return NUM_VAL(v1);
+void math_sin(vm_t* vm) {
+	double v1 = sin(AS_NUM(vm_pop(vm)));
+    vm_push(vm, NUM_VAL(v1));
 }
 
-val_t math_cos(vm_t* vm)
-{
-	double v1 = cos(AS_NUM(pop(vm)));
-	return NUM_VAL(v1);
+void math_cos(vm_t* vm) {
+	double v1 = cos(AS_NUM(vm_pop(vm)));
+	vm_push(vm, NUM_VAL(v1));
+}
+void math_tan(vm_t* vm) {
+	double v1 = tan(AS_NUM(vm_pop(vm)));
+	vm_push(vm, NUM_VAL(v1));
 }
 
-val_t math_tan(vm_t* vm)
-{
-	double v1 = tan(AS_NUM(pop(vm)));
-	return NUM_VAL(v1);
+void math_sqrt(vm_t* vm) {
+	double v1 = sqrt(AS_NUM(vm_pop(vm)));
+	vm_push(vm, NUM_VAL(v1));
 }
 
-val_t math_sqrt(vm_t* vm)
-{
-	double v1 = sqrt(AS_NUM(pop(vm)));
-	return NUM_VAL(v1);
+void math_floor(vm_t* vm) {
+	double v1 = floor(AS_NUM(vm_pop(vm)));
+	vm_push(vm, NUM_VAL(v1));
 }
 
-val_t math_floor(vm_t* vm)
-{
-	double v1 = floor(AS_NUM(pop(vm)));
-	return NUM_VAL(v1);
+void math_ceil(vm_t* vm) {
+	double v1 = ceil(AS_NUM(vm_pop(vm)));
+	vm_push(vm, NUM_VAL(v1));
 }
 
-val_t math_ceil(vm_t* vm)
-{
-	double v1 = ceil(AS_NUM(pop(vm)));
-	return NUM_VAL(v1);
+void math_pow(vm_t* vm) {
+	int v2 = AS_NUM(vm_pop(vm));
+	int v1 = AS_NUM(vm_pop(vm));
+	vm_push(vm, NUM_VAL(pow(v1, v2)));
 }
 
-val_t math_pow(vm_t* vm)
-{
-	int v2 = AS_NUM(pop(vm));
-	int v1 = AS_NUM(pop(vm));
-	return NUM_VAL(pow(v1, v2));
+void math_sinh(vm_t* vm) {
+	double v1 = AS_NUM(vm_pop(vm));
+	vm_push(vm, NUM_VAL(sinh(v1)));
 }
 
-val_t math_sinh(vm_t* vm)
-{
-	double v1 = AS_NUM(pop(vm));
-	return NUM_VAL(sinh(v1));
+void math_cosh(vm_t* vm) {
+	double v1 = AS_NUM(vm_pop(vm));
+	vm_push(vm, NUM_VAL(cosh(v1)));
 }
 
-val_t math_cosh(vm_t* vm)
-{
-	double v1 = AS_NUM(pop(vm));
-	return NUM_VAL(cosh(v1));
+void math_tanh(vm_t* vm) {
+	double v1 = AS_NUM(vm_pop(vm));
+	vm_push(vm, NUM_VAL(tanh(v1)));
 }
 
-val_t math_tanh(vm_t* vm)
-{
-	double v1 = AS_NUM(pop(vm));
-	return NUM_VAL(tanh(v1));
+void math_prng(vm_t* vm) {
+	vm_push(vm, NUM_VAL(prng()));
 }
 
-val_t math_prng(vm_t* vm)
-{
-	return NUM_VAL(prng());
-}
-
-int math_gen_signatures(list_t* toplevel)
-{
+int math_gen_signatures(list_t* toplevel) {
 	signature_new();
 	require_func();
 

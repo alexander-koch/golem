@@ -3,32 +3,26 @@
 #include <vm/vm.h>
 #include <core/util.h>
 
-val_t io_readFile(vm_t* vm)
-{
-	char* path = AS_STRING(pop(vm));
+void io_readFile(vm_t* vm) {
+	char* path = AS_STRING(vm_pop(vm));
 	char* buffer = readFile(path);
-	if(!buffer) {
-		return STRING_VAL("");
-	}
-	return STRING_NOCOPY_VAL(buffer);
+    vm_register(vm, (!buffer) ? STRING_VAL("") : STRING_NOCOPY_VAL(buffer));
 }
 
-val_t io_writeFile(vm_t* vm)
-{
-	char* mode = AS_STRING(pop(vm));
-	char* content = AS_STRING(pop(vm));
-	char* filename = AS_STRING(pop(vm));
+void io_writeFile(vm_t* vm) {
+	char* mode = AS_STRING(vm_pop(vm));
+	char* content = AS_STRING(vm_pop(vm));
+	char* filename = AS_STRING(vm_pop(vm));
 
 	FILE* fp = fopen(filename, mode);
-	if(!fp) return NULL_VAL;
-
-	fprintf(fp, "%s", content);
-	fclose(fp);
-	return NULL_VAL;
+	if(fp) {
+        fprintf(fp, "%s", content);
+    	fclose(fp);
+    }
+	vm_push(vm, NULL_VAL);
 }
 
-int io_gen_signatures(list_t* toplevel)
-{
+int io_gen_signatures(list_t* toplevel) {
 	signature_new();
 	require_func();
 

@@ -1,30 +1,30 @@
 #include "vm.h"
 
-void gc(vm_t* vm);
+void vm_gc(vm_t* vm);
 
-extern val_t core_print(vm_t* vm);
-extern val_t core_println(vm_t* vm);
-extern val_t core_getline(vm_t* vm);
-extern val_t core_parseFloat(vm_t* vm);
-extern val_t core_break(vm_t* vm);
-extern val_t core_clock(vm_t* vm);
-extern val_t core_sysarg(vm_t* vm);
+extern void core_print(vm_t* vm);
+extern void core_println(vm_t* vm);
+extern void core_getline(vm_t* vm);
+extern void core_parseFloat(vm_t* vm);
+extern void core_break(vm_t* vm);
+extern void core_clock(vm_t* vm);
+extern void core_sysarg(vm_t* vm);
 
-extern val_t math_abs(vm_t* vm);
-extern val_t math_sin(vm_t* vm);
-extern val_t math_cos(vm_t* vm);
-extern val_t math_tan(vm_t* vm);
-extern val_t math_sqrt(vm_t* vm);
-extern val_t math_floor(vm_t* vm);
-extern val_t math_ceil(vm_t* vm);
-extern val_t math_pow(vm_t* vm);
-extern val_t math_sinh(vm_t* vm);
-extern val_t math_cosh(vm_t* vm);
-extern val_t math_tanh(vm_t* vm);
-extern val_t math_prng(vm_t* vm);
+extern void math_abs(vm_t* vm);
+extern void math_sin(vm_t* vm);
+extern void math_cos(vm_t* vm);
+extern void math_tan(vm_t* vm);
+extern void math_sqrt(vm_t* vm);
+extern void math_floor(vm_t* vm);
+extern void math_ceil(vm_t* vm);
+extern void math_pow(vm_t* vm);
+extern void math_sinh(vm_t* vm);
+extern void math_cosh(vm_t* vm);
+extern void math_tanh(vm_t* vm);
+extern void math_prng(vm_t* vm);
 
-extern val_t io_readFile(vm_t* vm);
-extern val_t io_writeFile(vm_t* vm);
+extern void io_readFile(vm_t* vm);
+extern void io_writeFile(vm_t* vm);
 
 static gvm_c_function system_methods[] = {
     core_print,            // 1
@@ -123,7 +123,7 @@ void sweep(vm_t* vm) {
     }
 }
 
-void gc(vm_t* vm) {
+void vm_gc(vm_t* vm) {
 // Garbage day!
 #ifdef TRACE
     printf("Collecting garbage...\n");
@@ -142,7 +142,7 @@ void gc(vm_t* vm) {
 #endif
 }
 
-void push(vm_t* vm, val_t val) {
+void vm_push(vm_t* vm, val_t val) {
     if(vm->sp >= STACK_SIZE) {
         vm_throw(vm, "Stack overflow");
         return;
@@ -151,7 +151,7 @@ void push(vm_t* vm, val_t val) {
     vm->stack[vm->sp++] = val;
 }
 
-val_t pop(vm_t* vm) {
+val_t vm_pop(vm_t* vm) {
     val_t v = vm->stack[--vm->sp];
     vm->stack[vm->sp] = 0;
     return v;
@@ -161,7 +161,7 @@ void val_append(vm_t* vm, val_t v1);
 
 void obj_append(vm_t* vm, obj_t* obj) {
     if(vm->numObjects >= vm->maxObjects) {
-        gc(vm);
+        vm_gc(vm);
     }
 
     obj->marked = 0;
@@ -198,7 +198,7 @@ void val_append(vm_t* vm, val_t v1) {
 
 // Push and register in GC, if v1 is a ptr
 void vm_register(vm_t* vm, val_t v1) {
-    push(vm, v1);
+    vm_push(vm, v1);
     val_append(vm, v1);
 }
 
@@ -245,9 +245,9 @@ void revert_reserve(vm_t* vm) {
     // 1. Get the reserve value N.
     // 2. Pop N times.
 
-    int undo = AS_INT32(pop(vm));
+    int undo = AS_INT32(vm_pop(vm));
     for(int i = 0; i < undo; i++) {
-        pop(vm);
+        vm_pop(vm);
     }
 }
 
@@ -277,7 +277,7 @@ void vm_trace_print(vm_t* vm, instruction_t* instr) {
 
     char c = getchar();
     if(c == 'c') {
-        gc(vm);
+        vm_gc(vm);
     }
 #endif
 }
@@ -289,11 +289,10 @@ void vm_copy(vm_t* vm, val_t val) {
         obj_t* obj = AS_OBJ(val);
         obj_t* newObj = COPY_OBJ(obj);
 
-        push(vm, OBJ_VAL(newObj));
+        vm_push(vm, OBJ_VAL(newObj));
         obj_append(vm, newObj);
-    }
-    else {
-        push(vm, val);
+    } else {
+        vm_push(vm, val);
     }
 }
 
@@ -396,16 +395,16 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         DISPATCH();
     }
     code_pop: {
-        pop(vm);
+        vm_pop(vm);
         DISPATCH();
     }
     code_store: {
         int offset = AS_INT32(instr->v1);
         if(offset < 0) {
-            vm->stack[vm->fp+offset] = pop(vm);
+            vm->stack[vm->fp+offset] = vm_pop(vm);
         }
         else {
-            vm->locals[vm->fp+offset] = pop(vm);
+            vm->locals[vm->fp+offset] = vm_pop(vm);
         }
         DISPATCH();
     }
@@ -423,7 +422,7 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
     }
     code_gstore: {
         int offset = AS_INT32(instr->v1);
-        vm->locals[offset] = pop(vm);
+        vm->locals[offset] = vm_pop(vm);
         DISPATCH();
     }
     code_gload: {
@@ -439,132 +438,131 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
     }
     code_setarg0: {
         int args = AS_INT32(vm->stack[vm->fp-3]);
-        vm->stack[vm->fp-args-4] = pop(vm);
+        vm->stack[vm->fp-args-4] = vm_pop(vm);
         DISPATCH();
     }
     code_iadd: {
-        int v2 = AS_INT32(pop(vm));
-        int v1 = AS_INT32(pop(vm));
-        push(vm, INT32_VAL(v1 + v2));
+        int v2 = AS_INT32(vm_pop(vm));
+        int v1 = AS_INT32(vm_pop(vm));
+        vm_push(vm, INT32_VAL(v1 + v2));
         DISPATCH();
     }
     code_isub: {
-        int v2 = AS_INT32(pop(vm));
-        int v1 = AS_INT32(pop(vm));
-        push(vm, INT32_VAL(v1 - v2));
+        int v2 = AS_INT32(vm_pop(vm));
+        int v1 = AS_INT32(vm_pop(vm));
+        vm_push(vm, INT32_VAL(v1 - v2));
         DISPATCH();
     }
     code_imul: {
-        int v2 = AS_INT32(pop(vm));
-        int v1 = AS_INT32(pop(vm));
-        push(vm, INT32_VAL(v1 * v2));
+        int v2 = AS_INT32(vm_pop(vm));
+        int v1 = AS_INT32(vm_pop(vm));
+        vm_push(vm, INT32_VAL(v1 * v2));
         DISPATCH();
     }
     code_idiv: {
-        int v2 = AS_INT32(pop(vm));
-        int v1 = AS_INT32(pop(vm));
-        push(vm, INT32_VAL(v1 / v2));
+        int v2 = AS_INT32(vm_pop(vm));
+        int v1 = AS_INT32(vm_pop(vm));
+        vm_push(vm, INT32_VAL(v1 / v2));
         DISPATCH();
     }
     code_mod: {
-        int v2 = AS_INT32(pop(vm));
-        int v1 = AS_INT32(pop(vm));
-        push(vm, INT32_VAL(v1 % v2));
+        int v2 = AS_INT32(vm_pop(vm));
+        int v1 = AS_INT32(vm_pop(vm));
+        vm_push(vm, INT32_VAL(v1 % v2));
         DISPATCH();
     }
     code_bitl: {
-        int v2 = AS_INT32(pop(vm));
-        int v1 = AS_INT32(pop(vm));
-        push(vm, INT32_VAL(v1 << v2));
+        int v2 = AS_INT32(vm_pop(vm));
+        int v1 = AS_INT32(vm_pop(vm));
+        vm_push(vm, INT32_VAL(v1 << v2));
         DISPATCH();
     }
     code_bitr: {
-        int v2 = AS_INT32(pop(vm));
-        int v1 = AS_INT32(pop(vm));
-        push(vm, INT32_VAL(v1 >> v2));
+        int v2 = AS_INT32(vm_pop(vm));
+        int v1 = AS_INT32(vm_pop(vm));
+        vm_push(vm, INT32_VAL(v1 >> v2));
         DISPATCH();
     }
     code_bitand: {
-        int v2 = AS_INT32(pop(vm));
-        int v1 = AS_INT32(pop(vm));
-        push(vm, INT32_VAL(v1 & v2));
+        int v2 = AS_INT32(vm_pop(vm));
+        int v1 = AS_INT32(vm_pop(vm));
+        vm_push(vm, INT32_VAL(v1 & v2));
         DISPATCH();
     }
     code_bitor: {
-        int v2 = AS_INT32(pop(vm));
-        int v1 = AS_INT32(pop(vm));
-        push(vm, INT32_VAL(v1 | v2));
+        int v2 = AS_INT32(vm_pop(vm));
+        int v1 = AS_INT32(vm_pop(vm));
+        vm_push(vm, INT32_VAL(v1 | v2));
         DISPATCH();
     }
     code_bitxor: {
-        int v2 = AS_INT32(pop(vm));
-        int v1 = AS_INT32(pop(vm));
-        push(vm, INT32_VAL(v1 ^ v2));
+        int v2 = AS_INT32(vm_pop(vm));
+        int v1 = AS_INT32(vm_pop(vm));
+        vm_push(vm, INT32_VAL(v1 ^ v2));
         DISPATCH();
     }
     code_bitnot: {
-        int v1 = AS_INT32(pop(vm));
-        push(vm, INT32_VAL(~v1));
+        int v1 = AS_INT32(vm_pop(vm));
+        vm_push(vm, INT32_VAL(~v1));
         DISPATCH();
     }
     code_iminus: {
-        int v1 = AS_INT32(pop(vm));
-        push(vm, INT32_VAL(-v1));
+        int v1 = AS_INT32(vm_pop(vm));
+        vm_push(vm, INT32_VAL(-v1));
         DISPATCH();
     }
     code_i2f: {
-        int v1 = AS_INT32(pop(vm));
-        push(vm, NUM_VAL(v1));
+        int v1 = AS_INT32(vm_pop(vm));
+        vm_push(vm, NUM_VAL(v1));
         DISPATCH();
     }
     code_fadd: {
-        double v2 = AS_NUM(pop(vm));
-        double v1 = AS_NUM(pop(vm));
-        push(vm, NUM_VAL(v1 + v2));
+        double v2 = AS_NUM(vm_pop(vm));
+        double v1 = AS_NUM(vm_pop(vm));
+        vm_push(vm, NUM_VAL(v1 + v2));
         DISPATCH();
     }
     code_fsub: {
-        double v2 = AS_NUM(pop(vm));
-        double v1 = AS_NUM(pop(vm));
-        push(vm, NUM_VAL(v1 - v2));
+        double v2 = AS_NUM(vm_pop(vm));
+        double v1 = AS_NUM(vm_pop(vm));
+        vm_push(vm, NUM_VAL(v1 - v2));
         DISPATCH();
     }
     code_fmul: {
-        double v2 = AS_NUM(pop(vm));
-        double v1 = AS_NUM(pop(vm));
-        push(vm, NUM_VAL(v1 * v2));
+        double v2 = AS_NUM(vm_pop(vm));
+        double v1 = AS_NUM(vm_pop(vm));
+        vm_push(vm, NUM_VAL(v1 * v2));
         DISPATCH();
     }
     code_fdiv: {
-        double v2 = AS_NUM(pop(vm));
-        double v1 = AS_NUM(pop(vm));
-        push(vm, NUM_VAL(v1 / v2));
+        double v2 = AS_NUM(vm_pop(vm));
+        double v1 = AS_NUM(vm_pop(vm));
+        vm_push(vm, NUM_VAL(v1 / v2));
         DISPATCH();
     }
     code_fminus: {
-        double v1 = AS_NUM(pop(vm));
-        push(vm, NUM_VAL(-v1));
+        double v1 = AS_NUM(vm_pop(vm));
+        vm_push(vm, NUM_VAL(-v1));
         DISPATCH();
     }
     code_f2i: {
-        double v1 = AS_NUM(pop(vm));
-        push(vm, INT32_VAL((int)v1));
+        double v1 = AS_NUM(vm_pop(vm));
+        vm_push(vm, INT32_VAL((int)v1));
         DISPATCH();
     }
     code_not: {
-        bool b = AS_BOOL(pop(vm));
-        push(vm, BOOL_VAL(!b));
+        bool b = AS_BOOL(vm_pop(vm));
+        vm_push(vm, BOOL_VAL(!b));
         DISPATCH();
     }
     code_b2i: {
-        bool b = AS_BOOL(pop(vm));
-        push(vm, INT32_VAL(b));
+        bool b = AS_BOOL(vm_pop(vm));
+        vm_push(vm, INT32_VAL(b));
         DISPATCH();
     }
     code_syscall: {
         int index = AS_INT32(instr->v1);
-        val_t ret = system_methods[index](vm);
-        vm_register(vm, ret);
+        system_methods[index](vm);
         DISPATCH();
     }
     code_invoke: {
@@ -580,9 +578,9 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         // ...  +2
         reserve(vm, args);
 
-        push(vm, INT32_VAL(args));
-        push(vm, INT32_VAL(vm->fp));
-        push(vm, INT32_VAL(vm->pc));
+        vm_push(vm, INT32_VAL(args));
+        vm_push(vm, INT32_VAL(vm->fp));
+        vm_push(vm, INT32_VAL(vm->pc));
 
         // |   STACK_BOTTOM      |
         // |...                  |
@@ -607,9 +605,9 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
 
         //if(args > 0) reserve(vm, args+1);
         reserve(vm, args+1);
-        push(vm, INT32_VAL(args));
-        push(vm, INT32_VAL(vm->fp));
-        push(vm, INT32_VAL(vm->pc));
+        vm_push(vm, INT32_VAL(args));
+        vm_push(vm, INT32_VAL(vm->fp));
+        vm_push(vm, INT32_VAL(vm->pc));
         vm->fp = vm->sp;
         vm->pc = address;
         DISPATCH();
@@ -627,34 +625,34 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         // Returns to previous instruction pointer,
         // and pushes the return value back on the stack.
         // If you call this function make sure there is a return value on the stack.
-        val_t ret = pop(vm);
+        val_t ret = vm_pop(vm);
 
         vm->sp = vm->fp;
-        vm->pc = AS_INT32(pop(vm));
-        vm->fp = AS_INT32(pop(vm));
-        size_t args = AS_INT32(pop(vm));
+        vm->pc = AS_INT32(vm_pop(vm));
+        vm->fp = AS_INT32(vm_pop(vm));
+        size_t args = AS_INT32(vm_pop(vm));
 
         vm->sp -= args;
         revert_reserve(vm);
 
-        push(vm, ret);
+        vm_push(vm, ret);
         DISPATCH();
     }
     code_retvirtual: {
         // Returns from a virtual class function
-        val_t ret = pop(vm);
+        val_t ret = vm_pop(vm);
 
         vm->sp = vm->fp;
-        vm->pc = AS_INT32(pop(vm));
-        vm->fp = AS_INT32(pop(vm));
-        size_t args = AS_INT32(pop(vm));
+        vm->pc = AS_INT32(vm_pop(vm));
+        vm->fp = AS_INT32(vm_pop(vm));
+        size_t args = AS_INT32(vm_pop(vm));
 
         vm->sp -= args;
-        val_t clazz = pop(vm);
+        val_t clazz = vm_pop(vm);
         revert_reserve(vm);
 
-        push(vm, ret);
-        push(vm, clazz);
+        vm_push(vm, ret);
+        vm_push(vm, clazz);
         DISPATCH();
     }
     code_jmp: {
@@ -662,7 +660,7 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         DISPATCH();
     }
     code_jmpf: {
-        bool result = AS_BOOL(pop(vm));
+        bool result = AS_BOOL(vm_pop(vm));
         if(!result) {
             vm->pc = AS_INT32(instr->v1);
         }
@@ -683,7 +681,7 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         vm->sp -= elsz;
 
         obj_t* obj = obj_array_new(arr, elsz);
-        push(vm, OBJ_VAL(obj));
+        vm_push(vm, OBJ_VAL(obj));
         obj_append(vm, obj);
         DISPATCH();
     }
@@ -699,7 +697,7 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         vm->sp -= elsz;
         str[elsz] = '\0';
         obj_t* obj = obj_string_nocopy_new(str);
-        push(vm, OBJ_VAL(obj));
+        vm_push(vm, OBJ_VAL(obj));
         obj_append(vm, obj);
         DISPATCH();
     }
@@ -722,105 +720,105 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         DISPATCH();
     }
     code_tostr: {
-        val_t val = pop(vm);
+        val_t val = vm_pop(vm);
         char* str = val_tostr(val);
         vm_register(vm, STRING_NOCOPY_VAL(str));
         DISPATCH();
     }
     code_beq: {
-        bool b2 = AS_BOOL(pop(vm));
-        bool b1 = AS_BOOL(pop(vm));
-        push(vm, BOOL_VAL(b1 == b2));
+        bool b2 = AS_BOOL(vm_pop(vm));
+        bool b1 = AS_BOOL(vm_pop(vm));
+        vm_push(vm, BOOL_VAL(b1 == b2));
         DISPATCH();
     }
     code_ieq: {
-        int v2 = AS_INT32(pop(vm));
-        int v1 = AS_INT32(pop(vm));
-        push(vm, BOOL_VAL(v1 == v2));
+        int v2 = AS_INT32(vm_pop(vm));
+        int v1 = AS_INT32(vm_pop(vm));
+        vm_push(vm, BOOL_VAL(v1 == v2));
         DISPATCH();
     }
     code_feq: {
-        double v2 = AS_NUM(pop(vm));
-        double v1 = AS_NUM(pop(vm));
-        push(vm, BOOL_VAL(v1 == v2));
+        double v2 = AS_NUM(vm_pop(vm));
+        double v1 = AS_NUM(vm_pop(vm));
+        vm_push(vm, BOOL_VAL(v1 == v2));
         DISPATCH();
     }
     code_bne: {
-        bool b2 = AS_BOOL(pop(vm));
-        bool b1 = AS_BOOL(pop(vm));
-        push(vm, BOOL_VAL(b1 != b2));
+        bool b2 = AS_BOOL(vm_pop(vm));
+        bool b1 = AS_BOOL(vm_pop(vm));
+        vm_push(vm, BOOL_VAL(b1 != b2));
         DISPATCH();
     }
     code_ine: {
-        int v2 = AS_INT32(pop(vm));
-        int v1 = AS_INT32(pop(vm));
-        push(vm, BOOL_VAL(v1 != v2));
+        int v2 = AS_INT32(vm_pop(vm));
+        int v1 = AS_INT32(vm_pop(vm));
+        vm_push(vm, BOOL_VAL(v1 != v2));
         DISPATCH();
     }
     code_fne: {
-        double v2 = AS_NUM(pop(vm));
-        double v1 = AS_NUM(pop(vm));
-        push(vm, BOOL_VAL(v1 != v2));
+        double v2 = AS_NUM(vm_pop(vm));
+        double v1 = AS_NUM(vm_pop(vm));
+        vm_push(vm, BOOL_VAL(v1 != v2));
         DISPATCH();
     }
     code_ilt: {
-        int v2 = AS_INT32(pop(vm));
-        int v1 = AS_INT32(pop(vm));
-        push(vm, BOOL_VAL(v1 < v2));
+        int v2 = AS_INT32(vm_pop(vm));
+        int v1 = AS_INT32(vm_pop(vm));
+        vm_push(vm, BOOL_VAL(v1 < v2));
         DISPATCH();
     }
     code_igt: {
-        int v2 = AS_INT32(pop(vm));
-        int v1 = AS_INT32(pop(vm));
-        push(vm, BOOL_VAL(v1 > v2));
+        int v2 = AS_INT32(vm_pop(vm));
+        int v1 = AS_INT32(vm_pop(vm));
+        vm_push(vm, BOOL_VAL(v1 > v2));
         DISPATCH();
     }
     code_ile: {
-        int v2 = AS_INT32(pop(vm));
-        int v1 = AS_INT32(pop(vm));
-        push(vm, BOOL_VAL(v1 <= v2));
+        int v2 = AS_INT32(vm_pop(vm));
+        int v1 = AS_INT32(vm_pop(vm));
+        vm_push(vm, BOOL_VAL(v1 <= v2));
         DISPATCH();
     }
     code_ige: {
-        int v2 = AS_INT32(pop(vm));
-        int v1 = AS_INT32(pop(vm));
-        push(vm, BOOL_VAL(v1 >= v2));
+        int v2 = AS_INT32(vm_pop(vm));
+        int v1 = AS_INT32(vm_pop(vm));
+        vm_push(vm, BOOL_VAL(v1 >= v2));
         DISPATCH();
     }
     code_flt: {
-        double v2 = AS_NUM(pop(vm));
-        double v1 = AS_NUM(pop(vm));
-        push(vm, BOOL_VAL(v1 < v2));
+        double v2 = AS_NUM(vm_pop(vm));
+        double v1 = AS_NUM(vm_pop(vm));
+        vm_push(vm, BOOL_VAL(v1 < v2));
         DISPATCH();
     }
     code_fgt: {
-        double v2 = AS_NUM(pop(vm));
-        double v1 = AS_NUM(pop(vm));
-        push(vm, BOOL_VAL(v1 > v2));
+        double v2 = AS_NUM(vm_pop(vm));
+        double v1 = AS_NUM(vm_pop(vm));
+        vm_push(vm, BOOL_VAL(v1 > v2));
         DISPATCH();
     }
     code_fle: {
-        double v2 = AS_NUM(pop(vm));
-        double v1 = AS_NUM(pop(vm));
-        push(vm, BOOL_VAL(v1 <= v2));
+        double v2 = AS_NUM(vm_pop(vm));
+        double v1 = AS_NUM(vm_pop(vm));
+        vm_push(vm, BOOL_VAL(v1 <= v2));
         DISPATCH();
     }
     code_fge: {
-        double v2 = AS_NUM(pop(vm));
-        double v1 = AS_NUM(pop(vm));
-        push(vm, BOOL_VAL(v1 >= v2));
+        double v2 = AS_NUM(vm_pop(vm));
+        double v1 = AS_NUM(vm_pop(vm));
+        vm_push(vm, BOOL_VAL(v1 >= v2));
         DISPATCH();
     }
     code_band: {
-        bool b2 = AS_BOOL(pop(vm));
-        bool b1 = AS_BOOL(pop(vm));
-        push(vm, BOOL_VAL(b1 && b2));
+        bool b2 = AS_BOOL(vm_pop(vm));
+        bool b1 = AS_BOOL(vm_pop(vm));
+        vm_push(vm, BOOL_VAL(b1 && b2));
         DISPATCH();
     }
     code_bor: {
-        bool b2 = AS_BOOL(pop(vm));
-        bool b1 = AS_BOOL(pop(vm));
-        push(vm, BOOL_VAL(b1 || b2));
+        bool b2 = AS_BOOL(vm_pop(vm));
+        bool b1 = AS_BOOL(vm_pop(vm));
+        vm_push(vm, BOOL_VAL(b1 || b2));
         DISPATCH();
     }
     code_getsub: {
@@ -828,14 +826,14 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         // | object |
         // | key     |
         // | getsub |
-        val_t key = pop(vm);
-        val_t obj = pop(vm);
+        val_t key = vm_pop(vm);
+        val_t obj = vm_pop(vm);
         int idx = AS_INT32(key);
 
         if(IS_STRING(obj)) {
             char* str = AS_STRING(obj);
             // VM_ASSERT(idx >= 0 && idx < strlen(str), "Array index out of bounds");
-            push(vm, INT32_VAL(str[idx]));
+            vm_push(vm, INT32_VAL(str[idx]));
         } else {
             obj_array_t* arr = AS_ARRAY(obj);
             // VM_ASSERT(idx >= 0 && idx < arr->len, "Array index out of bounds");
@@ -849,9 +847,9 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         // | object  |
         // | key     |
         // | setsub  |
-        val_t key = pop(vm);
-        val_t obj = pop(vm);
-        val_t val = pop(vm);
+        val_t key = vm_pop(vm);
+        val_t obj = vm_pop(vm);
+        val_t val = vm_pop(vm);
         int idx = AS_INT32(key);
 
         if(IS_STRING(obj)) {
@@ -878,20 +876,20 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         DISPATCH();
     }
     code_len: {
-        val_t obj = pop(vm);
+        val_t obj = vm_pop(vm);
 
         if(IS_STRING(obj)) {
             char* data = AS_STRING(obj);
-            push(vm, INT32_VAL(strlen(data)-1));
+            vm_push(vm, INT32_VAL(strlen(data)-1));
         } else {
             obj_array_t* arr = AS_ARRAY(obj);
-            push(vm, INT32_VAL(arr->len));
+            vm_push(vm, INT32_VAL(arr->len));
         }
         DISPATCH();
     }
     code_append: {
-        val_t val = pop(vm);
-        val_t obj = pop(vm);
+        val_t val = vm_pop(vm);
+        val_t obj = vm_pop(vm);
 
         if(IS_STRING(obj)) {
             // Simple string concatenation
@@ -904,7 +902,7 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
             strcat(data, str2);
 
             obj_t* obj_ptr = obj_string_nocopy_new(data);
-            push(vm, OBJ_VAL(obj_ptr));
+            vm_push(vm, OBJ_VAL(obj_ptr));
             obj_append(vm, obj_ptr);
         } else {
             // Get the two array
@@ -926,15 +924,15 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
             }
 
             obj_t* newObj = obj_array_new(arr3, len);
-            push(vm, OBJ_VAL(newObj));
+            vm_push(vm, OBJ_VAL(newObj));
             obj_append(vm, newObj);
         }
         DISPATCH();
     }
     code_cons: {
         // Construct a new value on top
-        val_t val = pop(vm);
-        val_t obj = pop(vm);
+        val_t val = vm_pop(vm);
+        val_t obj = vm_pop(vm);
 
         if(IS_STRING(obj)) {
             // Allocate len + 2 => one for the char and one for the trailing zero
@@ -947,7 +945,7 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
             newStr[len+1] = '\0';
 
             obj_t* obj_ptr = obj_string_nocopy_new(newStr);
-            push(vm, OBJ_VAL(obj_ptr));
+            vm_push(vm, OBJ_VAL(obj_ptr));
             obj_append(vm, obj_ptr);
         } else {
             // Copy the whole array
@@ -963,7 +961,7 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
             arr->data[arr->len-1] = COPY_VAL(val);
 
             //vm_register(vm, obj);
-            push(vm, obj);
+            vm_push(vm, obj);
             obj_append(vm, AS_OBJ(obj));
         }
         DISPATCH();
@@ -987,7 +985,7 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         DISPATCH();
     }
     code_upstore: {
-        val_t newVal = pop(vm);
+        val_t newVal = vm_pop(vm);
 
         int scopes = AS_INT32(instr->v1);
         int offset = AS_INT32(instr->v2);
@@ -1012,7 +1010,7 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
     }
     code_class: {
         obj_t* obj = obj_class_new(AS_INT32(instr->v1));
-        push(vm, OBJ_VAL(obj));
+        vm_push(vm, OBJ_VAL(obj));
         obj_append(vm, obj);
         DISPATCH();
     }
@@ -1023,19 +1021,19 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         // class
 
         int index = AS_INT32(instr->v1);
-        val_t val = pop(vm);
-        val_t class = pop(vm);
+        val_t val = vm_pop(vm);
+        val_t class = vm_pop(vm);
 
         obj_class_t* cls = AS_CLASS(class);
         cls->fields[index] = val;
 
-        push(vm, class);
+        vm_push(vm, class);
         DISPATCH();
     }
     code_getfield: {
         // Copy val to keep class internal value alive
         int index = AS_INT32(instr->v1);
-        val_t class = pop(vm);
+        val_t class = vm_pop(vm);
 
         obj_class_t* cls = AS_CLASS(class);
         val_t val = cls->fields[index];
@@ -1056,7 +1054,7 @@ void vm_clear(vm_t* vm) {
     memset64(vm->locals, NULL_VAL, sizeof(val_t) * LOCALS_SIZE);
 
     vm->sp = 0;
-    gc(vm);
+    vm_gc(vm);
 
     vm->argc = 0;
     vm->argv = 0;

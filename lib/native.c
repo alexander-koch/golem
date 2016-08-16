@@ -3,18 +3,15 @@
 #if defined(_WIN32)
 #include <windows.h>
 
-void* dl_load(char* path)
-{
+void* dl_load(char* path) {
 	return LoadLibraryExA(path, 0, 0);
 }
 
-void* dl_sym(void* lib, char* name)
-{
+void* dl_sym(void* lib, char* name) {
 	return GetProcAddress((HMODULE)lib, name);
 }
 
-void dl_unload(void* lib)
-{
+void dl_unload(void* lib) {
 	FreeLibrary((HMODULE)lib);
 }
 
@@ -38,14 +35,12 @@ void dl_unload(void* lib)
 */
 #endif
 
-char* createSystemLibraryName(char* libName)
-{
+char* createSystemLibraryName(char* libName) {
 	char buf[256];
     int len = snprintf(buf, sizeof(buf), OS_SHARED_LIB_FORMAT_STR, libName);
     if(len >= (int) sizeof(buf)) {
         return 0;
-	}
-    else {
+	} else {
         return strdup(buf);
 	}
 }

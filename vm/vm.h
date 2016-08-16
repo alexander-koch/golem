@@ -61,13 +61,15 @@ typedef struct {
 } vm_t;
 
 // Internal function
-typedef val_t (*gvm_c_function)(vm_t*);
+typedef void (*gvm_c_function)(vm_t*);
 
 // Methods
 void vm_run(vm_t* vm, vector_t* buffer);
 void vm_run_args(vm_t* vm, vector_t* buffer, int argc, char** argv);
 
-void push(vm_t* vm, val_t val);
-val_t pop(vm_t* vm);
+void vm_register(vm_t* vm, val_t val);
+void vm_push(vm_t* vm, val_t val);
+val_t vm_pop(vm_t* vm);
+void vm_gc(vm_t* vm);
 
 #endif

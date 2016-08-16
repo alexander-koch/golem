@@ -25,7 +25,7 @@ func pop() -> int {
 	return val
 }
 
-func fetch(ip:int) -> int{
+func fetch(ip:int) -> int {
 	return program[ip]
 }
 

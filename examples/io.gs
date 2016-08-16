@@ -1,6 +1,5 @@
 # Example of the file API.
 # Copyright (c) Alexander Koch 2015
-
 using core
 using io
 

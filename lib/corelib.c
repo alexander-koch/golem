@@ -4,57 +4,51 @@
 #include <time.h>
 extern float strtof(const char* str, char** endptr);
 
-val_t core_print(vm_t* vm)
-{
-	val_print(pop(vm));
-	return NULL_VAL;
+void core_print(vm_t* vm) {
+	val_print(vm_pop(vm));
+	vm_push(vm, NULL_VAL);
 }
 
-val_t core_println(vm_t* vm)
-{
-	core_print(vm);
+void core_println(vm_t* vm) {
+	val_print(vm_pop(vm));
 	putchar('\n');
-	return NULL_VAL;
+    vm_push(vm, NULL_VAL);
 }
 
-val_t core_getline(vm_t* vm)
-{
+void core_getline(vm_t* vm) {
 	// Get input to buffer
 	char buf[512];
 	fgets(buf, sizeof(buf), stdin);
-	return STRING_VAL(buf);
+    vm_register(vm, STRING_VAL(buf));
 }
 
-val_t core_parseFloat(vm_t* vm)
-{
-	char* str = AS_STRING(pop(vm));
-	return NUM_VAL(strtof(str, 0));
+void core_parseFloat(vm_t* vm) {
+	char* str = AS_STRING(vm_pop(vm));
+	vm_push(vm, NUM_VAL(strtof(str, 0)));
 }
 
-val_t core_break(vm_t* vm)
-{
+void core_break(vm_t* vm) {
 	getchar();
-	return NULL_VAL;
+	vm_push(vm, NULL_VAL);
 }
 
-val_t core_clock(vm_t* vm)
-{
+void core_clock(vm_t* vm) {
 	double clocktime = (double)clock() / (double)CLOCKS_PER_SEC;
-	return NUM_VAL(clocktime);
+    vm_push(vm, NUM_VAL(clocktime));
 }
 
-val_t core_sysarg(vm_t* vm)
-{
-	int idx = AS_INT32(pop(vm));
+void core_sysarg(vm_t* vm) {
+	int idx = AS_INT32(vm_pop(vm));
+    val_t val;
 	if(idx >= vm->argc || idx < 0) {
-		return STRING_VAL("");
-	}
-
-	return STRING_VAL(vm->argv[idx]);
+	    val = STRING_VAL("");
+	} else {
+        val = STRING_VAL(vm->argv[idx]);
+    }
+    vm_register(vm, val);
 }
 
-int core_gen_signatures(list_t* toplevel)
-{
+int core_gen_signatures(list_t* toplevel) {
 	signature_new();
 	require_func();
 
