@@ -39,7 +39,7 @@ const char* op2str(opcode_t code) {
 
         case OP_SYSCALL: return "syscall";
         case OP_INVOKE: return "invoke";
-        case OP_INVOKEVIRTUAL: return "invokevirutal";
+        case OP_INVOKEVIRTUAL: return "invokevirtual";
         case OP_RESERVE: return "reserve";
         case OP_RET: return "ret";
         case OP_RETVIRTUAL: return "retvirtual";
@@ -61,7 +61,6 @@ const char* op2str(opcode_t code) {
         case OP_IGT: return "igt";
         case OP_ILE: return "ile";
         case OP_IGE: return "ige";
-
         case OP_FLT: return "flt";
         case OP_FGT: return "fgt";
         case OP_FLE: return "fle";
@@ -79,7 +78,7 @@ const char* op2str(opcode_t code) {
         case OP_CLASS: return "class";
         case OP_SETFIELD: return "setfield";
         case OP_GETFIELD: return "getfield";
-        default: return "unknown";
+        default: return "undefined";
     }
 }
 

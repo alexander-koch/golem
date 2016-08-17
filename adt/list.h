@@ -37,6 +37,7 @@ size_t list_size(list_t* list);
 void list_free(list_t* list);
 
 list_iterator_t* list_iterator_create(list_t* list);
+void list_iterator_reset(list_iterator_t* iter, list_t* list);
 void* list_iterator_next(list_iterator_t* iter);
 int list_iterator_end(list_iterator_t* iter);
 void list_iterator_free(list_iterator_t* iter);

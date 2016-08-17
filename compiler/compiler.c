@@ -279,10 +279,9 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node) {
         hashmap_set(compiler->scope->symbols, param->vardecl.name, symbol);
         i++;
     }
-    list_iterator_free(iter);
 
     // Body analysis
-    iter = list_iterator_create(node->funcdecl.impl.body);
+    list_iterator_reset(iter, node->funcdecl.impl.body);
     bool hasReturn = false;
     while(!list_iterator_end(iter)) {
         ast_t* sub = list_iterator_next(iter);
@@ -1419,10 +1418,8 @@ datatype_t eval_if(compiler_t* compiler, ast_t* node) {
         }
     }
 
-    list_iterator_free(iter);
-
     // Set the jump points to end after whole if block
-    iter = list_iterator_create(jmps);
+    list_iterator_reset(iter, jmps);
     while(!list_iterator_end(iter)) {
         val_t* pos = list_iterator_next(iter);
         *pos = INT32_VAL(vector_size(compiler->buffer));
@@ -1658,10 +1655,9 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
         hashmap_set(compiler->scope->symbols, param->vardecl.name, paramSym);
         i++;
     }
-    list_iterator_free(iter);
 
     // Iterate through body, emit the variables
-    iter = list_iterator_create(body);
+    list_iterator_reset(iter, body);
     while(!list_iterator_end(iter)) {
         ast_t* sub = list_iterator_next(iter);
         if(sub->class == AST_ANNOTATION) {

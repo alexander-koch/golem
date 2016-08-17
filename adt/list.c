@@ -104,6 +104,10 @@ list_iterator_t* list_iterator_create(list_t* list) {
     return iter;
 }
 
+void list_iterator_reset(list_iterator_t* iter, list_t* list) {
+    iter->ptr = list->head;
+}
+
 void* list_iterator_next(list_iterator_t* iter) {
     list_node_t* ptr = iter->ptr;
     iter->ptr = ptr->next;

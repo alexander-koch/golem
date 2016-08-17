@@ -90,10 +90,9 @@ void ast_free(ast_t* ast) {
             while(!list_iterator_end(iter)) {
                 ast_free(list_iterator_next(iter));
             }
-            list_iterator_free(iter);
             list_free(ast->funcdecl.impl.body);
 
-            iter = list_iterator_create(ast->funcdecl.impl.formals);
+            list_iterator_reset(iter, ast->funcdecl.impl.formals);
             while(!list_iterator_end(iter)) {
                 ast_t* param = list_iterator_next(iter);
                 ast_free(param);
@@ -163,10 +162,9 @@ void ast_free(ast_t* ast) {
             while(!list_iterator_end(iter)) {
                 ast_free(list_iterator_next(iter));
             }
-            list_iterator_free(iter);
             list_free(ast->classstmt.body);
 
-            iter = list_iterator_create(ast->classstmt.formals);
+            list_iterator_reset(iter, ast->classstmt.formals);
             while(!list_iterator_end(iter)) {
                 ast_free(list_iterator_next(iter));
             }
@@ -244,18 +242,17 @@ void ast_dump(ast_t* node, int level) {
                 }
             }
             putchar('}');
-            list_iterator_free(iter);
 
             if(node->funcdecl.impl.body) {
                 putchar('\n');
-                iter = list_iterator_create(node->funcdecl.impl.body);
+                list_iterator_reset(iter, node->funcdecl.impl.body);
                 while(!list_iterator_end(iter)) {
                     ast_t* next = list_iterator_next(iter);
                     ast_dump(next, level+1);
                     if(!list_iterator_end(iter)) putchar('\n');
                 }
-                list_iterator_free(iter);
             }
+            list_iterator_free(iter);
             putchar(')');
             break;
         }
@@ -384,9 +381,8 @@ void ast_dump(ast_t* node, int level) {
                 ast_dump(next, level+1);
                 putchar('\n');
             }
-            list_iterator_free(iter);
 
-            iter = list_iterator_create(node->classstmt.body);
+            list_iterator_reset(iter, node->classstmt.body);
             while(!list_iterator_end(iter)) {
                 ast_t* next = list_iterator_next(iter);
                 ast_dump(next, level+1);
