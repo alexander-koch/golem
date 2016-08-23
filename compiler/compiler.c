@@ -99,7 +99,7 @@ bool scope_is_class(scope_t* scope, ast_class_t class, ast_t** node) {
  * @type Datatype
  * @global If GSTORE or STORE is used (scope level is equal to zero)
  * @isClassParam Self-explanatory
- * @ref Referenced by a class (hold the class symbol)
+ * @owner Class owner
  * @arraySize Array size of the symbol (if it is of type array)
  */
 symbol_t* symbol_new(compiler_t* compiler, ast_t* node, int address, datatype_t type) {
@@ -109,26 +109,26 @@ symbol_t* symbol_new(compiler_t* compiler, ast_t* node, int address, datatype_t 
     symbol->type = type;
     symbol->global = (compiler->depth == 0);
     symbol->isClassParam = false;
-    symbol->ref = 0;
+    symbol->owner = 0;
     symbol->arraySize = -1;
     return symbol;
 }
 
 /**
- * symbol_get_ext:
+ * symbol_get_recursive:
  * Tries to find a symbol by the given identifier.
  * Returns the symbol if found, otherwise NULL.
  * Depth returns the number of scopes it had to go upwards.
  */
-symbol_t* symbol_get_ext(scope_t* scope, char* ident, int* depth) {
+symbol_t* symbol_get_recursive(scope_t* scope, char* ident, int* depth) {
     // If found, return
     void* val = hashmap_find(scope->symbols, ident);
     if(val) return val;
 
     // If there is a super scope, search in that
     if(scope->super) {
-        if(!scope->virtual)(*depth)++;
-        return symbol_get_ext(scope->super, ident, depth);
+        if(!scope->virtual) (*depth)++;
+        return symbol_get_recursive(scope->super, ident, depth);
     }
     return 0;
 }
@@ -157,8 +157,8 @@ symbol_t* symbol_get(scope_t* scope, char* ident) {
  */
 static symbol_t* tmp = 0;
 int cmpId(void* val, void* arg) {
-    unsigned long* id = arg;
     symbol_t* symbol = val;
+    unsigned long* id = arg;
     if(symbol->type.id == *id) {
         tmp = symbol;
         return 1;
@@ -203,7 +203,7 @@ bool symbol_exists(compiler_t* compiler, ast_t* node, char* ident) {
 void symbol_replace(compiler_t* compiler, symbol_t* symbol) {
     // Get the depth
     int depth = 0;
-    symbol_get_ext(compiler->scope, symbol->node->vardecl.name, &depth);
+    symbol_get_recursive(compiler->scope, symbol->node->vardecl.name, &depth);
 
     // Global?
     if(depth == 0 || symbol->global) {
@@ -557,7 +557,7 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node) {
                         return datatype_new(DATA_NULL);
                     }
 
-                    if(symbol->ref) {
+                    if(symbol->owner) {
                         // ldarg0
                         // <...>
                         // setfield
@@ -573,11 +573,9 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node) {
                         return datatype_new(DATA_NULL);
                     }
 
-                    if(symbol->ref) {
+                    if(symbol->owner) {
                         // Class field load from class
-                        symbol_t* classRef = symbol->ref;
-                        ast_t* classNode = classRef->node;
-
+                        ast_t* classNode = symbol->owner->node;
                         symbol_t* symbol = hashmap_find(classNode->classstmt.fields, lhs->ident);
                         if(!symbol) {
                             compiler_throw(compiler, node, "No such class field");
@@ -630,7 +628,7 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node) {
                             // var[0] = "B"
 
                             // If it is a class, reload for modifying
-                            if(symbol->ref) {
+                            if(symbol->owner) {
                                 emit_op(compiler->buffer, OP_LDARG0);
                             }
 
@@ -654,11 +652,9 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node) {
                             //emit_store(compiler->buffer, symbol->address, symbol->global);
 
                             // If it is a class field, we have to reassign it to the actual field / class
-                            if(symbol->ref) {
+                            if(symbol->owner) {
                                 // Emit setfield
-                                symbol_t* classRef = symbol->ref;
-                                ast_t* classNode = classRef->node;
-
+                                ast_t* classNode = symbol->owner->node;
                                 symbol_t* symbol = hashmap_find(classNode->classstmt.fields, expr->ident);
                                 if(!symbol) {
                                     compiler_throw(compiler, node, "No such class field");
@@ -729,16 +725,15 @@ datatype_t eval_binary(compiler_t* compiler, ast_t* node) {
  */
 datatype_t eval_ident(compiler_t* compiler, ast_t* node) {
     int depth = 0;
-    symbol_t* ptr = symbol_get_ext(compiler->scope, node->ident, &depth);
+    symbol_t* ptr = symbol_get_recursive(compiler->scope, node->ident, &depth);
     if(ptr) {
         if(ptr->node->class == AST_DECLVAR) {
             // If it is a field of a class
-            if(ptr->ref) {
+            if(ptr->owner) {
                 // ldarg0
                 // getfield <addr>
 
-                symbol_t* classRef = ptr->ref;
-                ast_t* classNode = classRef->node;
+                ast_t* classNode = ptr->owner->node;
                 void* val = 0;
                 if(hashmap_get(classNode->classstmt.fields, node->ident, &val) == HMAP_MISSING) {
                     compiler_throw(compiler, node, "No such class field");
@@ -746,7 +741,6 @@ datatype_t eval_ident(compiler_t* compiler, ast_t* node) {
                 }
 
                 ptr = (symbol_t*)val;
-
                 if(compiler->scope->node->class == AST_CLASS) {
                     compiler_throw(compiler, node, "Accessing class fields within the constructor is not permitted");
                     return datatype_new(DATA_NULL);
@@ -1128,10 +1122,8 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node) {
         if(symbol) {
             if(symbol->node->class == AST_DECLFUNC) {
                 bool isClass = false;
-                if(symbol->ref) {
-                    // Suspect class function
-                    symbol = symbol->ref;
-                    ast_t* class = symbol->node;
+                if(symbol->owner) {
+                    ast_t* class = symbol->owner->node;
                     void* val = 0;
                     if(hashmap_get(class->classstmt.fields, call->ident, &val) == HMAP_MISSING) {
                         compiler_throw(compiler, node, "Function does not exists in class");
@@ -1671,7 +1663,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
             symbol_t* sym = symbol_get(compiler->scope, sub->vardecl.name);
             if(sym) {
                 emit_load(compiler->buffer, addr, false);
-                sym->ref = symbol;
+                sym->owner = symbol;
                 hashmap_set(node->classstmt.fields, sub->vardecl.name, sym);
                 emit_class_setfield(compiler->buffer, compiler->scope->address-1);
 
@@ -1733,7 +1725,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
 
                     // Assign as a class field
                     hashmap_set(clazz->classstmt.fields, fn->funcdecl.name, funcSymbol);
-                    funcSymbol->ref = clazzSymbol;
+                    funcSymbol->owner = clazzSymbol;
                 }
                 if(scope_requests(compiler->scope, ANN_SETTER)) {
                     if(!sub->vardecl.mutate) {
@@ -1806,7 +1798,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
 
                     // Assign as a class field
                     hashmap_set(clazz->classstmt.fields, fn->funcdecl.name, funcSymbol);
-                    funcSymbol->ref = clazzSymbol;
+                    funcSymbol->owner = clazzSymbol;
                 }
                 scope_unflag(compiler->scope);
             }
@@ -1814,7 +1806,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
             compiler_eval(compiler, sub);
             symbol_t* sym = symbol_get(compiler->scope, sub->funcdecl.name);
             if(sym) {
-                sym->ref = symbol;
+                sym->owner = symbol;
                 hashmap_set(node->classstmt.fields, sub->funcdecl.name, sym);
             }
         } else {

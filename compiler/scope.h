@@ -28,7 +28,7 @@ typedef struct symbol_t {
     datatype_t type;
     bool global;
     bool isClassParam;
-    struct symbol_t* ref;
+    struct symbol_t* owner;
     int arraySize;
 } symbol_t;
 
