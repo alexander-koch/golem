@@ -33,7 +33,6 @@
  * @pc Program counter
  * @fp Frame pointer
  * @sp Stack pointer
- * @reserve Space reserve info
  * @firstVal Current reference for GC
  * @numObject Counted objects by GC
  * @maxObjects Count of objects when GC is triggered
@@ -48,7 +47,6 @@ typedef struct {
 	int pc;
 	int fp;
 	int sp;
-	int reserve;
 
 	// Gargabe collection
 	obj_t* firstVal;

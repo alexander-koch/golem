@@ -152,9 +152,7 @@ void vm_push(vm_t* vm, val_t val) {
 }
 
 val_t vm_pop(vm_t* vm) {
-    val_t v = vm->stack[--vm->sp];
-    vm->stack[vm->sp] = 0;
-    return v;
+    return vm->stack[--vm->sp];
 }
 
 void val_append(vm_t* vm, val_t v1);
@@ -224,31 +222,6 @@ void vm_print_code(vm_t* vm, vector_t* buffer) {
         instr = vector_get(buffer, vm->pc);
     }
     vm->pc = 0;
-}
-
-void reserve(vm_t* vm, size_t args) {
-    // 1. Increase the reserve size by one
-    // 2. Move content from vm->sp-i to vm->sp+vm->reserve-i, just move by reserve
-    // 3. Store the value of reserved entries at the end vm->sp+vm->reserve-args-1
-    // 4. Increase stack pointer by vm->reserve
-
-    vm->reserve += 1;
-    for(int i = 1; i <= args; i++) {
-        vm->stack[vm->sp+vm->reserve-i] = vm->stack[vm->sp-i];
-    }
-    vm->stack[vm->sp+vm->reserve-args-1] = INT32_VAL(vm->reserve-1);
-
-    vm->sp += vm->reserve;
-}
-
-void revert_reserve(vm_t* vm) {
-    // 1. Get the reserve value N.
-    // 2. Pop N times.
-
-    int undo = AS_INT32(vm_pop(vm));
-    for(int i = 0; i < undo; i++) {
-        vm_pop(vm);
-    }
 }
 
 void vm_trace_print(vm_t* vm, instruction_t* instr) {
@@ -376,7 +349,7 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
     instruction_t* instr = 0;
 
 #ifndef TRACE
-    #define FETCH() instr = buffer->data[vm->pc++];
+    #define FETCH() instr = buffer->data[vm->pc++]
 #else
     #define FETCH() instr = buffer->data[vm->pc++]; \
         vm_trace_print(vm, instr)
@@ -573,10 +546,9 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         // Arg0 -3
         // Arg1 -2
         // Arg2 -1
-        // sp (args=3) (reserve=2)
+        // sp (args=3)
         // ...  +1
         // ...  +2
-        reserve(vm, args);
 
         vm_push(vm, INT32_VAL(args));
         vm_push(vm, INT32_VAL(vm->fp));
@@ -603,8 +575,6 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         int address = AS_INT32(instr->v1);
         int args = AS_INT32(instr->v2);
 
-        //if(args > 0) reserve(vm, args+1);
-        reserve(vm, args+1);
         vm_push(vm, INT32_VAL(args));
         vm_push(vm, INT32_VAL(vm->fp));
         vm_push(vm, INT32_VAL(vm->pc));
@@ -613,12 +583,7 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         DISPATCH();
     }
     code_reserve: {
-        // Reserves some memory.
-        // Uses this before any function call to maintain stored values.
-        // Otherwise, if too many locals are saved in the last scope e.g. from 1 - 11,
-        // the new scope overwrites the old values for instance: fp at 5, overwrites 5 - 11.
-        vm->reserve = AS_INT32(instr->v1);
-        //vm->sp += AS_INT32(instr->v1);
+        vm->sp += AS_INT32(instr->v1);
         DISPATCH();
     }
     code_ret: {
@@ -630,10 +595,7 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         vm->sp = vm->fp;
         vm->pc = AS_INT32(vm_pop(vm));
         vm->fp = AS_INT32(vm_pop(vm));
-        size_t args = AS_INT32(vm_pop(vm));
-
-        vm->sp -= args;
-        revert_reserve(vm);
+        vm->sp -= AS_INT32(vm_pop(vm));
 
         vm_push(vm, ret);
         DISPATCH();
@@ -645,11 +607,8 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         vm->sp = vm->fp;
         vm->pc = AS_INT32(vm_pop(vm));
         vm->fp = AS_INT32(vm_pop(vm));
-        size_t args = AS_INT32(vm_pop(vm));
-
-        vm->sp -= args;
+        vm->sp -= AS_INT32(vm_pop(vm));
         val_t clazz = vm_pop(vm);
-        revert_reserve(vm);
 
         vm_push(vm, ret);
         vm_push(vm, clazz);

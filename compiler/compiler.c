@@ -224,6 +224,18 @@ void symbol_replace(compiler_t* compiler, symbol_t* symbol) {
 datatype_t eval_block(compiler_t* compiler, list_t* block) {
     datatype_t ret = datatype_new(DATA_NULL);
     list_iterator_t* iter = list_iterator_create(block);
+
+    size_t space = 0;
+    while(!list_iterator_end(iter)) {
+        ast_t* node = list_iterator_next(iter);
+        if(node->class == AST_DECLVAR) {
+            space++;
+        }
+    }
+    if(space > 0) emit_reserve(compiler->buffer, space);
+
+    // Compile block
+    list_iterator_reset(iter, block);
     while(!list_iterator_end(iter)) {
         // Evaluate each list item.
         ret = compiler_eval(compiler, list_iterator_next(iter));
@@ -300,10 +312,12 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node) {
                 break;
             }
         }
-        compiler_eval(compiler, sub);
     }
 
     list_iterator_free(iter);
+
+    // Compile and end
+    eval_block(compiler, node->funcdecl.impl.body);
     pop_scope(compiler);
 
     // Handle void return
@@ -841,8 +855,6 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
     if(external) {
         emit_syscall(compiler->buffer, func->funcdecl.external-1);
     } else {
-        // Reserve some memory
-        emit_reserve(compiler->buffer, compiler->scope->address);
         emit_invoke(compiler->buffer, address, argc);
     }
 
