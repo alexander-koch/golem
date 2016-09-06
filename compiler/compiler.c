@@ -351,14 +351,14 @@ datatype_t eval_declfunc(compiler_t* compiler, ast_t* node) {
  * and the current available address.
  * The return value is NULL.
  */
-datatype_t eval_declvar(compiler_t* compiler, ast_t* node) {
+datatype_t eval_declvar(compiler_t* compiler, ast_t* node, bool emit) {
     // First check the unused annotation
     if(scope_requests(compiler->scope, ANN_UNUSED)) {
         scope_unflag(compiler->scope);
         return datatype_new(DATA_NULL);
     }
 
-    // Check if already in existance
+    // Check if already in existence
     if(symbol_exists(compiler, node, node->vardecl.name)) return datatype_new(DATA_NULL);
 
     // First eval initializer to get type
@@ -413,7 +413,7 @@ datatype_t eval_declvar(compiler_t* compiler, ast_t* node) {
     }
 
     // Emit bytecode
-    emit_store(compiler->buffer, symbol->address, symbol->global);
+    if(emit) emit_store(compiler->buffer, symbol->address, symbol->global);
 
     // Debug variables if flag is set
 #ifdef DB_VARS
@@ -1068,9 +1068,6 @@ datatype_t eval_class_call(compiler_t* compiler, ast_t* node, datatype_t dt) {
     // Retrive the field
     symbol_t* func = (symbol_t*)val;
     if(eval_compare_and_call(compiler, func->node, node, func->address)) {
-        // Get the last instruction (invoke) and convert it to invokevirtual
-        instruction_t* ins = vector_top(compiler->buffer);
-        ins->op = OP_INVOKEVIRTUAL;
 
         // Class is on top, reassign it
         // Else replace
@@ -1151,9 +1148,6 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node) {
                 if(eval_compare_and_call(compiler, symbol->node, node, symbol->address)) {
                     // Convert to class-method-call
                     if(isClass) {
-                        // Move stack down if function call within class
-                        instruction_t* ins = vector_top(compiler->buffer);
-                        ins->op = OP_INVOKEVIRTUAL;
                         emit_op(compiler->buffer, OP_SETARG0);
                     }
 
@@ -1668,13 +1662,11 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
             eval_annotation(compiler, sub);
         } else if(sub->class == AST_DECLVAR) {
             field_count++;
-            size_t addr = compiler->scope->address;
-            compiler_eval(compiler, sub);
+            eval_declvar(compiler, sub, false);
 
             // Get the symbol, check if valid
             symbol_t* sym = symbol_get(compiler->scope, sub->vardecl.name);
             if(sym) {
-                emit_load(compiler->buffer, addr, false);
                 sym->owner = symbol;
                 hashmap_set(node->classstmt.fields, sub->vardecl.name, sym);
                 emit_class_setfield(compiler->buffer, compiler->scope->address-1);
@@ -1815,7 +1807,7 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
                 scope_unflag(compiler->scope);
             }
         } else if(sub->class == AST_DECLFUNC) {
-            compiler_eval(compiler, sub);
+            eval_declfunc(compiler, sub);
             symbol_t* sym = symbol_get(compiler->scope, sub->funcdecl.name);
             if(sym) {
                 sym->owner = symbol;
@@ -1935,7 +1927,7 @@ datatype_t compiler_eval(compiler_t* compiler, ast_t* node) {
 
     switch(node->class) {
         case AST_TOPLEVEL: return eval_block(compiler, node->toplevel);
-        case AST_DECLVAR: return eval_declvar(compiler, node);
+        case AST_DECLVAR: return eval_declvar(compiler, node, true);
         case AST_DECLFUNC: return eval_declfunc(compiler, node);
         case AST_RETURN: return eval_return(compiler, node);
         case AST_FLOAT: return eval_number(compiler, node);

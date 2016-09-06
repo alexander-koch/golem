@@ -23,7 +23,7 @@ For comparison the old VM implementation is used.
 
 | Benchmark    | Golem    | Python 2.7 | Ruby    | Lua     | C (unoptimized) | Java
 |---           |---       |---         |---      |---      |---				 |---
-| fib          | ~0.297s  | ~0.758s    | ~0.296s | ~0.328s | ~0.013			 | ~0.08516s
+| fib          | ~0.243s  | ~0.758s    | ~0.296s | ~0.328s | ~0.013			 | ~0.08516s
 | bubble       | ~0.002s  | ~0.003s    | ~0.002s | ~0.002s | n/a			 | n/a
 
 # Bytecode Instruction Set
@@ -77,7 +77,6 @@ For comparison the old VM implementation is used.
 |---                  |---
 |syscall x            | invokes an internal known method at internal-index x, pushes a return value (similar to asm int-instruction)
 |invoke x,y           | invoke method at address x with y args, push return value
-|invokevirtual x,y    | invokes a virtual class method, at address x with y args, and saves a class in the stack frame
 |reserve x            | reserves x memory for function calls, to keep values in VRAM
 |ret                  | returns from function to last instruction pointer
 |retvirtual           | returns from a virtual class function

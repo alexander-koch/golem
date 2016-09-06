@@ -39,7 +39,6 @@ const char* op2str(opcode_t code) {
 
         case OP_SYSCALL: return "syscall";
         case OP_INVOKE: return "invoke";
-        case OP_INVOKEVIRTUAL: return "invokevirtual";
         case OP_RESERVE: return "reserve";
         case OP_RET: return "ret";
         case OP_RETVIRTUAL: return "retvirtual";
@@ -243,13 +242,11 @@ void emit_return(vector_t* buffer) {
 }
 
 void emit_store(vector_t* buffer, int address, bool global) {
-    val_t val = INT32_VAL(address);
-    insert_v1(buffer, global? OP_GSTORE : OP_STORE, val);
+    insert_v1(buffer, global ? OP_GSTORE : OP_STORE, INT32_VAL(address));
 }
 
 void emit_load(vector_t* buffer, int address, bool global) {
-    val_t val = INT32_VAL(address);
-    insert_v1(buffer, global? OP_GLOAD : OP_LOAD, val);
+    insert_v1(buffer, global ? OP_GLOAD : OP_LOAD, INT32_VAL(address));
 }
 
 void emit_load_upval(vector_t* buffer, int depth, int address) {

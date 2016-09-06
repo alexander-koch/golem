@@ -23,13 +23,11 @@
 #include <lib/native.h>
 
 #define STACK_SIZE 512
-#define LOCALS_SIZE 512
 
 /**
  * vm_t - VM definition
  *
  * @stack General purpose Stack / RAM
- * @locals Storage for local variables relative to the frame pointer
  * @pc Program counter
  * @fp Frame pointer
  * @sp Stack pointer
@@ -43,7 +41,6 @@
 typedef struct {
 	// Stack
 	val_t stack[STACK_SIZE];
-	val_t locals[LOCALS_SIZE];
 	int pc;
 	int fp;
 	int sp;

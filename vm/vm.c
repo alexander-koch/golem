@@ -101,9 +101,6 @@ void markAll(vm_t* vm) {
     for(int i = 0; i < vm->sp; i++) {
         mark(vm->stack[i]);
     }
-    for(int i = 0; i < LOCALS_SIZE; i++) {
-        mark(vm->locals[i]);
-    }
 }
 
 void sweep(vm_t* vm) {
@@ -304,7 +301,6 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         &&code_b2i,
         &&code_syscall,
         &&code_invoke,
-        &&code_invokevirtual,
         &&code_reserve,
         &&code_ret,
         &&code_retvirtual,
@@ -373,35 +369,22 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
     }
     code_store: {
         int offset = AS_INT32(instr->v1);
-        if(offset < 0) {
-            vm->stack[vm->fp+offset] = vm_pop(vm);
-        }
-        else {
-            vm->locals[vm->fp+offset] = vm_pop(vm);
-        }
+        vm->stack[vm->fp+offset] = vm_pop(vm);
         DISPATCH();
     }
     code_load: {
         int offset = AS_INT32(instr->v1);
-        if(offset < 0) {
-            val_t v = vm->stack[vm->fp+offset];
-            vm_copy(vm, v);
-        }
-        else {
-            val_t v = vm->locals[vm->fp+offset];
-            vm_copy(vm, v);
-        }
+        vm_copy(vm, vm->stack[vm->fp+offset]);
         DISPATCH();
     }
     code_gstore: {
         int offset = AS_INT32(instr->v1);
-        vm->locals[offset] = vm_pop(vm);
+        vm->stack[offset] = vm_pop(vm);
         DISPATCH();
     }
     code_gload: {
         int offset = AS_INT32(instr->v1);
-        val_t v = vm->locals[offset];
-        vm_copy(vm, v);
+        vm_copy(vm, vm->stack[offset]);
         DISPATCH();
     }
     code_ldarg0: {
@@ -567,17 +550,6 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         // |...                +1|
         // |    STACK_TOP        |
 
-        vm->fp = vm->sp;
-        vm->pc = address;
-        DISPATCH();
-    }
-    code_invokevirtual: {
-        int address = AS_INT32(instr->v1);
-        int args = AS_INT32(instr->v2);
-
-        vm_push(vm, INT32_VAL(args));
-        vm_push(vm, INT32_VAL(vm->fp));
-        vm_push(vm, INT32_VAL(vm->pc));
         vm->fp = vm->sp;
         vm->pc = address;
         DISPATCH();
@@ -936,7 +908,7 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
         }
         vm->sp = vm->fp;
 
-        val_t val = (offset < 0) ? vm->stack[vm->fp+offset] : vm->locals[vm->fp+offset];
+        val_t val = vm->stack[vm->fp+offset];
         vm->sp = sp;
         vm->fp = fp;
 
@@ -956,12 +928,7 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
             vm->fp = AS_INT32(vm->stack[vm->fp - 2]);
         }
         vm->sp = vm->fp;
-
-        if(offset < 0) {
-            vm->stack[vm->fp+offset] = newVal;
-        } else {
-            vm->locals[vm->fp+offset] = newVal;
-        }
+        vm->stack[vm->fp+offset] = newVal;
 
         vm->sp = sp;
         vm->fp = fp;
@@ -1006,15 +973,12 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
     }
 }
 
+// Clears the VM
+// Moves the stack pointer to zero
+// => clears all elements by GC.
 void vm_clear(vm_t* vm) {
-    // Move stack pointer to zero, -> clears all elements by gc
-    // Discard the rest
-    // Nullify the locals
-    memset64(vm->locals, NULL_VAL, sizeof(val_t) * LOCALS_SIZE);
-
     vm->sp = 0;
     vm_gc(vm);
-
     vm->argc = 0;
     vm->argv = 0;
 }
