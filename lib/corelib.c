@@ -1,8 +1,22 @@
+// Core standard library
 
 #include "libdef.h"
 #include <vm/vm.h>
 #include <time.h>
 extern float strtof(const char* str, char** endptr);
+
+int corelib_fn_count = 7;
+
+/**
+ * function list:
+ * 01 print
+ * 02 println
+ * 03 getline
+ * 04 parseFloat
+ * 05 break
+ * 06 clock
+ * 07 sysarg
+ */
 
 void core_print(vm_t* vm) {
 	val_print(vm_pop(vm));

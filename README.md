@@ -20,19 +20,12 @@ Golem is written in C99, and has been tested to run on Linux and Windows.
 To build it, a Makefile is used.
 
 ```sh
-$ make release
+$ make
 $ golem your/file/here.gs
 ```
 
-If you are a developer and you want to improve Golem,
-you can use the debug version, which prints out the abstract syntax tree, the bytecode and additional information.
-
-```
-$ make debug
-§ golem-debug your/file/here.gs
-```
-
-More features for the debug-version can be enabled/disabled in the Makefile.
+This will generate the compiler and the IR viewer.
+More features and a debug version can be enabled/disabled in the Makefile.
 
 # Syntax
 

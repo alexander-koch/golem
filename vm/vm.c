@@ -10,46 +10,60 @@ extern void core_break(vm_t* vm);
 extern void core_clock(vm_t* vm);
 extern void core_sysarg(vm_t* vm);
 
-extern void math_abs(vm_t* vm);
 extern void math_sin(vm_t* vm);
 extern void math_cos(vm_t* vm);
 extern void math_tan(vm_t* vm);
-extern void math_sqrt(vm_t* vm);
-extern void math_floor(vm_t* vm);
-extern void math_ceil(vm_t* vm);
-extern void math_pow(vm_t* vm);
+extern void math_asin(vm_t* vm);
+extern void math_acos(vm_t* vm);
+extern void math_atan(vm_t* vm);
+extern void math_atan2(vm_t* vm);
 extern void math_sinh(vm_t* vm);
 extern void math_cosh(vm_t* vm);
 extern void math_tanh(vm_t* vm);
+extern void math_exp(vm_t* vm);
+extern void math_ln(vm_t* vm);
+extern void math_log(vm_t* vm);
+extern void math_pow(vm_t* vm);
+extern void math_sqrt(vm_t* vm);
+extern void math_ceil(vm_t* vm);
+extern void math_floor(vm_t* vm);
+extern void math_abs(vm_t* vm);
 extern void math_prng(vm_t* vm);
 
 extern void io_readFile(vm_t* vm);
 extern void io_writeFile(vm_t* vm);
 
 static gvm_c_function system_methods[] = {
-    core_print,            // 1
-    core_println,          // 2
-    core_getline,          // 3
-    core_parseFloat,       // 4
-    core_break,            // 5
-    core_clock,            // 6
-    core_sysarg,           // 7
+    core_print,            // 01
+    core_println,          // 02
+    core_getline,          // 03
+    core_parseFloat,       // 04
+    core_break,            // 05
+    core_clock,            // 06
+    core_sysarg,           // 07
 
-    math_abs,              // 8
-    math_sin,              // 9
-    math_cos,              // 10
-    math_tan,              // 11
-    math_sqrt,             // 12
-    math_floor,            // 13
-    math_ceil,             // 14
-    math_pow,              // 15
-    math_sinh,             // 16
-    math_cosh,             // 17
-    math_tanh,             // 18
-    math_prng,             // 19
+    math_sin,              // 08
+    math_cos,              // 09
+    math_tan,              // 10
+    math_asin,             // 11
+    math_acos,             // 12
+    math_atan,             // 13
+    math_atan2,            // 14
+    math_sinh,             // 15
+    math_cosh,             // 16
+    math_tanh,             // 17
+    math_exp,              // 18
+    math_ln,               // 19
+    math_log,              // 20
+    math_pow,              // 21
+    math_sqrt,             // 22
+    math_ceil,             // 23
+    math_floor,            // 24
+    math_abs,              // 25
+    math_prng,             // 26
 
-    io_readFile,           // 20
-    io_writeFile,          // 21
+    io_readFile,           // 27
+    io_writeFile,          // 28
     0
 };
 

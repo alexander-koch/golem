@@ -1,7 +1,18 @@
+// IO standard library
 
 #include "libdef.h"
 #include <vm/vm.h>
 #include <core/util.h>
+
+extern int corelib_fn_count;
+extern int mathlib_fn_count;
+#define INDEX(idx) (corelib_fn_count + mathlib_fn_count + idx)
+
+/**
+ * function list:
+ * 01 readFile
+ * 02 writeFile
+ */
 
 void io_readFile(vm_t* vm) {
 	char* path = AS_STRING(vm_pop(vm));
@@ -27,12 +38,12 @@ int io_gen_signatures(list_t* toplevel) {
 	require_func();
 
 	// readFile(str:char[]) -> char[]
-	function_new("readFile", DATA_STRING, 20);
+	function_new("readFile", DATA_STRING, INDEX(1));
 	function_add_param(0, DATA_STRING);
 	function_upload(toplevel);
 
 	// writeFile(name:char[], content:char[], mode:char[]) -> void
-	function_new("writeFile", DATA_VOID, 21);
+	function_new("writeFile", DATA_VOID, INDEX(2));
 	function_add_param(0, DATA_STRING);
 	function_add_param(0, DATA_STRING);
 	function_add_param(0, DATA_STRING);

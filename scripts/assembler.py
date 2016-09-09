@@ -24,9 +24,6 @@ import struct
 # Program -> {Label | Instruction}
 #
 # Use call to invoke a function / label
-# Don't use invoke, invokevirtual, etc. manually
-# unless you know what you are doing.
-#
 # Also don't forget to write hlt at the end or your program.
 
 # Opcode definition:
@@ -64,11 +61,10 @@ opcodes = {
 	'b2i': (b'\x1D', b'\x00'),
 	'syscall': (b'\x1E', b'\x01'),
 	'invoke': (b'\x1F', b'\x02'),
-	'invokevirtual': (b'\x20', b'\x02'),
-	'reserve': (b'\x21', b'\x01'),
-	'ret': (b'\x22', b'\x00'),
-	'retvirtual': (b'\x23', b'\x00'),
-	'jmp': (b'\x24', b'\x01')
+	'reserve': (b'\x20', b'\x01'),
+	'ret': (b'\x21', b'\x00'),
+	'retvirtual': (b'\x22', b'\x00'),
+	'jmp': (b'\x23', b'\x01')
 }
 
 def check_int(s):

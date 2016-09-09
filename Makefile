@@ -28,7 +28,7 @@ GFLAGS := #-DTRACE #-DTRACE_STEP #-DNO_AST
 #   -DDB_EVAL    <-- Debugs every ast evaluation
 
 # C - compiler flags :: use c99
-CFLAGS := -std=c99 -Wall -Wno-unused-function -Wno-unused-parameter $(GFLAGS)
+CFLAGS := -std=c99 -Wall -Wno-unused-function -Wno-unused-parameter -lm $(GFLAGS)
 
 # All files for the compiler
 FILES := core/util.c \
@@ -51,7 +51,7 @@ FILES := core/util.c \
 		lib/mathlib.c \
 		lib/iolib.c
 
-all: debug release ir
+all: release ir
 
 # Debug version
 debug:
