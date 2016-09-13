@@ -29,13 +29,13 @@ void* vector_pop(vector_t* vector) {
 }
 
 void* vector_top(vector_t* vector) {
-    assert(vector->size-1 >= 0);
+    assert(vector->size > 0);
     return vector->data[vector->size-1];
 }
 
 void vector_set(vector_t* vector, size_t index, void* data) {
     if(index >= vector->size) {
-        for(int i = vector->size; i < index; i++) {
+        for(size_t i = vector->size; i < index; i++) {
             vector_push(vector, 0);
         }
 

@@ -10,11 +10,11 @@ int main(int argc, char **argv) {
 
 	vector_t* buffer = vector_new();
 	if(deserialize(argv[1], &buffer)) {
-		for(int i = 0; i < vector_size(buffer); i++) {
+		for(size_t i = 0; i < vector_size(buffer); i++) {
 			instruction_t* instr = vector_get(buffer, i);
 
 			// Print
-			printf("%.2d: %s", i, op2str(instr->op));
+			printf("%.2u: %s", (unsigned int)i, op2str(instr->op));
 			if(instr->v1 != NULL_VAL) {
 				printf(", ");
 				val_print(instr->v1);

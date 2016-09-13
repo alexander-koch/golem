@@ -93,14 +93,14 @@ void mark(val_t v) {
             switch(obj->type) {
                 case OBJ_CLASS: {
                     obj_class_t* cls = obj->data;
-                    for(int i = 0; i < cls->field_count; i++) {
+                    for(unsigned int i = 0; i < cls->field_count; i++) {
                         mark(cls->fields[i]);
                     }
                     break;
                 }
                 case OBJ_ARRAY: {
                     obj_array_t* arr = obj->data;
-                    for(int i = 0; i < arr->len; i++) {
+                    for(size_t i = 0; i < arr->len; i++) {
                         mark(arr->data[i]);
                     }
                     break;

@@ -7,7 +7,6 @@
 #ifndef list_h
 #define list_h
 
-#include <stddef.h>
 #include <assert.h>
 #include <core/mem.h>
 
@@ -17,7 +16,7 @@ typedef struct list_node_t {
 } list_node_t;
 
 typedef struct list_t {
-    size_t size;
+    unsigned int size;
     list_node_t* head;
     list_node_t* tail;
 } list_t;
@@ -33,8 +32,8 @@ void list_push_front(list_t* list, void* val);
 void* list_pop(list_t* list);
 void* list_pop_back(list_t* list);
 void list_append(list_t* l1, list_t* l2);
-void* list_get(list_t* list, size_t index);
-size_t list_size(list_t* list);
+void* list_get(list_t* list, unsigned int index);
+unsigned int list_size(list_t* list);
 void list_free(list_t* list);
 
 list_iterator_t* list_iterator_create(list_t* list);

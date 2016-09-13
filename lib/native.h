@@ -2,6 +2,7 @@
 #define native_h
 
 #include <stdio.h>
+#include <core/util.h>
 
 #if defined(_WIN32)
 #define OS_SHARED_LIB_FORMAT_STR "lib%s.dll"

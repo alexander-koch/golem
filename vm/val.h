@@ -51,7 +51,7 @@ typedef uint64_t val_t;
 // Class subtype
 typedef struct obj_class_t {
     val_t* fields;
-    size_t field_count;
+    unsigned int field_count;
 } obj_class_t;
 
 typedef struct obj_array_t {

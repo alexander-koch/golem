@@ -20,8 +20,7 @@ void list_push(list_t* list, void* val) {
 
     if(list->head == 0) {
         list->head = node;
-    }
-    else {
+    } else {
         list->tail->next = node;
     }
     list->tail = node;
@@ -73,18 +72,16 @@ void list_append(list_t* l1, list_t* l2) {
     list_free(l2);
 }
 
-void* list_get(list_t* list, size_t index) {
+void* list_get(list_t* list, unsigned int index) {
     list_node_t* node = list->head;
-    int i;
-    for(i = 1; i <= index; i++) {
-        assert(node);
+    for(unsigned i = 1; i <= index; i++) {
         node = node->next;
     }
 
     return node->val;
 }
 
-size_t list_size(list_t* list) {
+unsigned int list_size(list_t* list) {
     return list->size;
 }
 

@@ -1,7 +1,7 @@
 #include "graphviz.h"
 
 void graphviz_mnemonic(graphviz_t* state) {
-    for(size_t i = 0; i < state->mnemonic; i++) {
+    for(int i = 0; i < state->mnemonic; i++) {
         fprintf(state->fp, " ");
     }
 }

@@ -106,7 +106,7 @@ bool deserialize(const char* filename, vector_t** out) {
     }
 
     // Read the instructions
-    for(int i = 0; i < codes; i++) {
+    for(uint32_t i = 0; i < codes; i++) {
         instruction_t* ins = malloc(sizeof(*ins));
         ins->v1 = NULL_VAL;
         ins->v2 = NULL_VAL;

@@ -110,7 +110,7 @@ int hashmap_rehash(hashmap_t* hmap) {
     hmap->table_size = 2 * hmap->table_size;
     hmap->size = 0;
 
-    for(int i = 0; i < old_size; i++) {
+    for(size_t i = 0; i < old_size; i++) {
         if(!curr[i].use) continue;
 
         int status = hashmap_set(hmap, curr[i].key, curr[i].data);
@@ -176,7 +176,7 @@ void* hashmap_find(hashmap_t* hashmap, char* key) {
 
 int hashmap_foreach(hashmap_t* hashmap, HashForeachFunc func, void* arg) {
     int val;
-    for(int i = 0; i < hashmap->table_size; i++) {
+    for(size_t i = 0; i < hashmap->table_size; i++) {
         bucket_t* bucket = &hashmap->data[i];
         if(bucket && bucket->use) {
             val = (*func)(bucket->data, arg);

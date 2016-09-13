@@ -9,10 +9,12 @@ typedef union {
 
 
 // Integer
+// First 32 bits must be zero
+// TODO: endianness?
 bool val_is_int32(val_t val) {
     doublebits_t data;
     data.bits64 = val;
-    return data.bits32[0] >= 0 && data.bits32[1] == 0;
+    return data.bits32[1] == 0;
 }
 
 val_t val_of_int32(int i) {
