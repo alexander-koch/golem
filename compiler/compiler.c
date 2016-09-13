@@ -1676,36 +1676,25 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
                     char* name = sub->vardecl.name;
                     datatype_t vartype = sub->vardecl.type;
 
-                    // Create the function name
-                    token_t* buffer = malloc(sizeof(token_t));
-                    buffer[0].value = concat("get", name);
-                    buffer[0].type = TOKEN_WORD;
-                    if(isalpha(buffer[0].value[3])) {
-                        buffer[0].value[3] = toupper(buffer[0].value[3]);
+                    char* buffer = concat("get", name);
+                    if(isalpha(buffer[3])) {
+                        buffer[3] = toupper(buffer[3]);
                     }
 
-                    // Create a subparser
-                    parser_t* subparser = malloc(sizeof(*subparser));
-                    parser_init(subparser, (const char*)buffer[0].value);
-                    list_push(compiler->parsers, subparser);
-                    subparser->buffer = buffer;
-                    subparser->num_tokens = 1;
-
                     // Generate the ASTs
-                    ast_t *fn = ast_class_create(AST_DECLFUNC, node->location);
-                    fn->funcdecl.name = buffer[0].value;
+                    ast_t* fn = ast_class_create(AST_DECLFUNC, node->location);
+                    fn->funcdecl.name = buffer;
                     fn->funcdecl.impl.formals = list_new();
                     fn->funcdecl.impl.body = list_new();
                     fn->funcdecl.rettype = vartype;
-                    fn->funcdecl.external = false;
+                    fn->funcdecl.external = 0;
+                    fn->funcdecl.dynamic = true;
 
                     ast_t* ret = ast_class_create(AST_RETURN, node->location);
                     ret->returnstmt = ast_class_create(AST_IDENT, node->location);
                     ret->returnstmt->ident = name;
                     list_push(fn->funcdecl.impl.body, ret);
-
-                    // Upload to parser
-                    subparser->top = fn;
+                    list_push_front(node->classstmt.body, fn);
 
                     // Dump the syntax tree
 #ifndef NO_AST
@@ -1740,34 +1729,24 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
                     char* name = sub->vardecl.name;
                     datatype_t vartype = sub->vardecl.type;
 
-                    // Reserve two tokens
-                    token_t* buffer = malloc(sizeof(token_t)*2);
-                    buffer[0].value = concat("set", name);
-                    buffer[0].type = TOKEN_WORD;
-                    if(isalpha(buffer[0].value[3])) {
-                        buffer[0].value[3] = toupper(buffer[0].value[3]);
+                    char* fn_name = concat("set", name);
+                    if(isalpha(fn_name[3])) {
+                        fn_name[3] = toupper(fn_name[3]);
                     }
-                    buffer[1].value = strdup("p0");
-                    buffer[1].type = TOKEN_WORD;
-
-                    // Create a subparser
-                    parser_t* subparser = malloc(sizeof(*subparser));
-                    parser_init(subparser, (const char*)buffer[0].value);
-                    list_push(compiler->parsers, subparser);
-                    subparser->buffer = buffer;
-                    subparser->num_tokens = 2;
+                    char* param_name = "p0";
 
                     // Generate the ASTs
                     ast_t *fn = ast_class_create(AST_DECLFUNC, node->location);
-                    fn->funcdecl.name = buffer[0].value;
+                    fn->funcdecl.name = fn_name;
                     fn->funcdecl.impl.formals = list_new();
                     fn->funcdecl.impl.body = list_new();
                     fn->funcdecl.rettype = datatype_new(DATA_VOID);
-                    fn->funcdecl.external = false;
+                    fn->funcdecl.external = 0;
+                    fn->funcdecl.dynamic = true;
 
                     // Create parameter p0
                     ast_t* p0 = ast_class_create(AST_DECLVAR, node->location);
-                    p0->vardecl.name = buffer[1].value;
+                    p0->vardecl.name = param_name;
                     p0->vardecl.type = vartype;
                     p0->vardecl.mutate = false;
                     list_push(fn->funcdecl.impl.formals, p0);
@@ -1777,14 +1756,12 @@ datatype_t eval_class(compiler_t* compiler, ast_t* node) {
                     ast_t* lhs = ast_class_create(AST_IDENT, node->location);
                     ast_t* rhs = ast_class_create(AST_IDENT, node->location);
                     lhs->ident = name;
-                    rhs->ident = buffer[1].value;
+                    rhs->ident = param_name;
                     bin->binary.left = lhs;
                     bin->binary.right = rhs;
                     bin->binary.op = TOKEN_ASSIGN;
                     list_push(fn->funcdecl.impl.body, bin);
-
-                    // Upload to parser
-                    subparser->top = fn;
+                    list_push_front(node->classstmt.body, fn);
 
 #ifndef NO_AST
                     printf("Abstract syntax tree SET '%s'\n", name);

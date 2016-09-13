@@ -100,7 +100,7 @@ void ast_free(ast_t* ast) {
             list_iterator_free(iter);
             list_free(ast->funcdecl.impl.formals);
 
-            if(ast->funcdecl.external) {
+            if(ast->funcdecl.external || ast->funcdecl.dynamic) {
                 free(ast->funcdecl.name);
             }
             break;

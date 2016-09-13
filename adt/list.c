@@ -28,6 +28,15 @@ void list_push(list_t* list, void* val) {
     list->size++;
 }
 
+void list_push_front(list_t* list, void* val) {
+    list_node_t* node = malloc(sizeof(list_node_t));
+    node->val = val;
+    node->next = list->head;
+
+    list->head = node;
+    list->size++;
+}
+
 void* list_pop(list_t* list) {
     assert(list->head != 0);
     list_node_t* rem = list->head;

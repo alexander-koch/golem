@@ -131,6 +131,7 @@ typedef struct {
     ast_lambda_t impl;
     datatype_t rettype;
     int external;   // external syscall index, true if external (index > 0)
+    int dynamic;    // function name is dynamically allocated
 } ast_func_t;
 
 // Declaration struct
