@@ -1,21 +1,17 @@
 # Makefile for the golem programming language
 # @Author Alexander Koch 2016
 CC := gcc
-MODULE_RELEASE := golem
-MODULE_DEBUG := golem-debug
+MODULE_EXEC := golem
 MODULE_IR := golem-ir
 INC := -I.
 
+# Run `make DEBUG=1` to build the debug version
+
 # Linux:
-# To build on linux, add -lm at the end.
-# Also _msize is not available, so set the
-# -DNO_MEMINFO flag to disable the memory usage tracker.
+# _msize is not available, set the -DNO_MEMINFO flag
+# to disable the memory usage tracker.
 
-# Golem flags
-# Add flags explained below for debugging features
-GFLAGS := #-DTRACE #-DTRACE_STEP #-DNO_AST
-
-# GFLAGS / Options:
+# Golem flags / Options:
 # Disable:
 #   -DNO_AST     <-- Prints out the abstract syntax tree
 #   -DNO_IR	     <-- Prints out immediate representation (bytecode)
@@ -28,42 +24,44 @@ GFLAGS := #-DTRACE #-DTRACE_STEP #-DNO_AST
 #   -DDB_EVAL    <-- Debugs every ast evaluation
 
 # C - compiler flags :: use c99
-CFLAGS := -std=c99 -Wall -Wextra -Wno-unused-function -Wno-unused-parameter -lm $(GFLAGS)
+CFLAGS := -std=c99 -Wall -Wextra -Wno-unused-function -Wno-unused-parameter -lm
+
+DEBUG ?= 0
+ifeq ($(DEBUG), 1)
+	CFLAGS += -O2 -g
+	MODULE_EXEC = golem-debug
+else
+	CFLAGS += -O3 -fno-gcse -fno-crossjumping -DNO_IR -DNO_MEMINFO -DNO_AST
+endif
 
 # All files for the compiler
-FILES := core/util.c \
+FILES := adt/bytebuffer.c \
+		adt/hashmap.c \
 		adt/list.c \
 		adt/vector.c \
-		adt/hashmap.c \
-		adt/bytebuffer.c \
+		compiler/compiler.c \
+		compiler/doc.c \
+		compiler/graphviz.c \
+		compiler/scope.c \
+		compiler/serializer.c \
+		core/util.c \
 		lexis/lexer.c \
+		lib/corelib.c \
+		lib/iolib.c \
+		lib/mathlib.c \
 		parser/ast.c \
 		parser/parser.c \
-		compiler/serializer.c \
-		compiler/compiler.c \
-		compiler/scope.c \
-		compiler/graphviz.c \
-		compiler/doc.c \
-		vm/val.c \
 		vm/bytecode.c \
-		vm/vm.c \
-		lib/corelib.c \
-		lib/mathlib.c \
-		lib/iolib.c
+		vm/val.c \
+		vm/vm.c
 
-all: release ir
-
-# Debug version
-debug:
-	$(CC) -O2 $(CFLAGS) main.c $(INC) $(FILES) -g -o $(MODULE_DEBUG)
-
-# Final release version
-release:
-	$(CC) -O3 -fno-gcse -fno-crossjumping $(CFLAGS) -DNO_IR -DNO_MEMINFO -DNO_AST main.c $(INC) $(FILES) -o $(MODULE_RELEASE)
+# Main executable
+all:
+	$(CC) $(CFLAGS) main.c $(INC) $(FILES) -o $(MODULE_EXEC)
 
 # Immediate representation tool / print .gvm bytecode
 ir:
-	$(CC) -O3 $(CFLAGS) -DNO_MEMINFO ir.c  $(INC) $(FILES) -o $(MODULE_IR)
+	$(CC) -O3 $(CFLAGS) -DNO_MEMINFO ir.c $(INC) $(FILES) -o $(MODULE_IR)
 
 # Graphviz *.dot to *.svg
 dot:

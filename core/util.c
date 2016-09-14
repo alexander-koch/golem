@@ -2,6 +2,7 @@
 
 //static char* rootDirectory = 0;
 
+#if defined(__GNUC__) && !defined(__llvm__)
 char* strdup(const char* str) {
     size_t len = strlen(str) + 1;
     char *copy = malloc(len);
@@ -20,6 +21,7 @@ char* strndup(const char* str, size_t n) {
     *p = 0;
     return r;
 }
+#endif
 
 char* concat(char* s1, char* s2) {
     char *result = malloc(strlen(s1) + strlen(s2) + 1);
@@ -143,7 +145,7 @@ void memset64(void* dest, uint64_t value, uintptr_t size) {
 static uint32_t seed = 5489UL;
 static const uint32_t A[2] = { 0, 0x9908b0df };
 static uint32_t y[N];
-static int index = N+1;
+static int index0 = N+1;
 
 void seed_prng(const uint32_t seed_value) {
     seed = seed_value;
@@ -151,7 +153,7 @@ void seed_prng(const uint32_t seed_value) {
 
 uint32_t mt() {
     uint32_t e;
-    if(index > N) {
+    if(index0 > N) {
         int i;
         y[0] = seed;
 
@@ -159,7 +161,7 @@ uint32_t mt() {
             y[i] = (1812433253UL * (y[i-1] ^ (y[i-1] >> 30)) + i);
         }
     }
-    if(index >= N) {
+    if(index0 >= N) {
         int i;
         uint32_t h;
 
@@ -174,10 +176,10 @@ uint32_t mt() {
 
         h = (y[N-1] & HI) | (y[0] & LO);
         y[N-1] = y[M-1] ^ (h >> 1) ^ A[h & 1];
-        index = 0;
+        index0 = 0;
     }
 
-    e = y[index++];
+    e = y[index0++];
     e ^= (e >> 11);
     e ^= (e <<  7) & 0x9d2c5680;
     e ^= (e << 15) & 0xefc60000;

@@ -24,8 +24,10 @@ $ make
 $ golem your/file/here.gs
 ```
 
-This will generate the compiler and the IR viewer.
-More features and a debug version can be enabled/disabled in the Makefile.
+This will generate the compiler.
+Using `make DEBUG=1` will generate the debug version.
+To generate the immediate representation tool, run `make ir`. 
+More features can be enabled/disabled in the Makefile.
 
 # Syntax
 
