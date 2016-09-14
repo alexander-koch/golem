@@ -61,7 +61,7 @@ all:
 
 # Immediate representation tool / print .gvm bytecode
 ir:
-	$(CC) -O3 $(CFLAGS) -DNO_MEMINFO ir.c $(INC) $(FILES) -o $(MODULE_IR)
+	$(CC) -O3 $(CFLAGS) -DNO_MEMINFO tools/ir.c $(INC) $(FILES) -o $(MODULE_IR)
 
 # Graphviz *.dot to *.svg
 dot:
