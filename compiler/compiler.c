@@ -241,6 +241,14 @@ datatype_t eval_block(compiler_t* compiler, list_t* block) {
         ret = compiler_eval(compiler, list_iterator_next(iter));
     }
     list_iterator_free(iter);
+
+    // Free the allocated space
+    if(space > 0) {
+        instruction_t* instr = vector_top(compiler->buffer);
+        if(instr->op != OP_RET && instr->op != OP_RETVIRTUAL) {
+            emit_reserve(compiler->buffer, -space);
+        }
+    }
     return ret;
 }
 
@@ -861,6 +869,14 @@ bool eval_compare_and_call(compiler_t* compiler, ast_t* func, ast_t* node, int a
     return true;
 }
 
+// Call this after eval_compare_and_call to remove unneeded NULL values.
+datatype_t finish_call(compiler_t* compiler, datatype_t rettype) {
+    if(datatype_match(rettype, datatype_new(DATA_VOID))) {
+        emit_pop(compiler->buffer);
+    }
+    return rettype;
+}
+
 datatype_t eval_bool_func(compiler_t* compiler, ast_t* node, datatype_t dt) {
     ast_t* call = node->call.callee;
     ast_t* key = call->subscript.key;
@@ -1079,7 +1095,7 @@ datatype_t eval_class_call(compiler_t* compiler, ast_t* node, datatype_t dt) {
         }
 
         // Return the type
-        return func->node->funcdecl.rettype;
+        return finish_call(compiler, func->node->funcdecl.rettype);
     }
 
     return datatype_new(DATA_NULL);
@@ -1151,7 +1167,7 @@ datatype_t eval_call(compiler_t* compiler, ast_t* node) {
                         emit_op(compiler->buffer, OP_SETARG0);
                     }
 
-                    return symbol->node->funcdecl.rettype;
+                    return finish_call(compiler, symbol->node->funcdecl.rettype);
                 }
             } else if(symbol->node->class == AST_CLASS) {
                 // Class constructor call
