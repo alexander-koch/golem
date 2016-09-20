@@ -42,7 +42,6 @@ FILES := adt/bytebuffer.c \
 		adt/list.c \
 		adt/vector.c \
 		compiler/compiler.c \
-		compiler/doc.c \
 		compiler/graphviz.c \
 		compiler/scope.c \
 		compiler/serializer.c \

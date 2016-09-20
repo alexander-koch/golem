@@ -17,7 +17,6 @@
 #include <compiler/compiler.h>
 #include <compiler/serializer.h>
 #include <compiler/graphviz.h>
-#include <compiler/doc.h>
 
 void print_info() {
     printf("Golem compiler\n");
@@ -27,7 +26,6 @@ void print_info() {
     printf("  golem -r <file>    (Run a *.gvm file)\n");
     printf("  golem -c <file>    (Convert to bytecode file *.gvm)\n");
     printf("  golem --ast <file> (Convert generated AST to graph *.dot)\n");
-    printf("  golem --doc <file> (Create an HTML documentation)\n\n");
 }
 
 int main(int argc, char** argv) {
@@ -75,12 +73,8 @@ int main(int argc, char** argv) {
             if(root) {
                 graphviz_build(root);
             }
-            ast_free(parser.top);
             parser_free(&parser);
             free(source);
-        } else if(!strcmp(argv[1], "--doc")) {
-            // Generate HTML-doc
-            doc_generate(argv[2]);
         } else {
             printf("Flag: '%s' is invalid\n\n", argv[1]);
             return 1;

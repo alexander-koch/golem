@@ -74,6 +74,7 @@ void skip_newline(parser_t* parser) {
 }
 
 void parser_free(parser_t* parser) {
+    ast_free(parser->top);
     lexer_free_buffer(parser->buffer, parser->num_tokens);
 }
 

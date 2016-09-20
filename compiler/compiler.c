@@ -2009,7 +2009,6 @@ void compiler_clear(compiler_t* compiler) {
     while(!list_iterator_end(iter)) {
         parser_t* parser = list_iterator_next(iter);
         parser_free(parser);
-        ast_free(parser->top);
         free(parser);
     }
     list_iterator_free(iter);
