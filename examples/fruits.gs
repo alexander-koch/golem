@@ -2,7 +2,7 @@ using core
 
 # This is some comment
 
-type String(string:char[]) {
+type String(string: str) {
 	@Getter
 	@Setter
  	let mut content = string

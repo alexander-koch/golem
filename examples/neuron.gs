@@ -9,7 +9,7 @@ using core
 using math
 
 # Zufallsnummer in Bereich
-func rand(a:float, b:float) -> float {
+func rand(a: float, b: float) -> float {
 	return (b-a)*prng() + a
 }
 
@@ -19,7 +19,7 @@ type Neuron() {
 	let c = 0.1
 
 	# Erstellen
-	func create(n:int) {
+	func create(n: int) {
 		let mut i = 0
 		while i < n {
 			weights := weights.cons(rand(-1.0, 1.0))
@@ -28,7 +28,7 @@ type Neuron() {
 	}
 
 	# Eingaben verarbeiten
-	func feedForward(inputs:float[]) -> float {
+	func feedForward(inputs: float[]) -> float {
 		let mut sum = 0.0
 		let mut i = 0
 		while i < inputs.length() {
@@ -39,7 +39,7 @@ type Neuron() {
 	}
 
 	# Neuron trainieren
-	func train(inputs:float[], desired:float) {
+	func train(inputs: float[], desired: float) {
 		let guess = feedForward(inputs)
 		let error = desired - guess
 		let mut i = 0
@@ -68,8 +68,11 @@ while n < 10 {
 	n := n + 1
 }
 
+println("Enter two values:")
+print("V1: ")
 let v1 = parseFloat(getline())
+print("V2: ")
 let v2 = parseFloat(getline())
 let guess = neuron.feedForward([v1, v2, 1.0])
 let result = (guess > 0.0)
-println("Result: ".append(result.to_str()))
+println("Result: $result")

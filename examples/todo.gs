@@ -2,7 +2,7 @@
 # Copyright (c) Alexander Koch 2015
 using core
 
-type Task(_title:char[], _desc:char[], _done:bool) {
+type Task(_title: str, _desc: str, _done: bool) {
 	@Getter
 	let title = _title
 	@Getter
@@ -11,7 +11,7 @@ type Task(_title:char[], _desc:char[], _done:bool) {
 	let done = _done
 }
 
-type TodoList(tasks:Task[]) {
+type TodoList(tasks: Task[]) {
 	let taskList = tasks
 
 	func printTasks() {

@@ -2,7 +2,7 @@
 # Copyright (c) Alexander Koch 2016
 using core
 
-type Toggle(_state:bool) {
+type Toggle(_state: bool) {
 	let mut state = _state
 
 	func value() -> bool {
@@ -26,11 +26,7 @@ func main() {
 		i := i + 1
 	}
 
-	if val {
-		println("true")
-	} else {
-		println("false")
-	}
+    println(val)
 	let elapsed = clock() - t0
 	println("Elapsed: $elapsed")
 }

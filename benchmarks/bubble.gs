@@ -3,10 +3,10 @@
 using core
 
 # Bubblesort algorithm
-func bubblesort(mut list:int[]) -> int[] {
+func bubblesort(mut list: int[]) -> int[] {
 
 	# Nested helper function
-	func swap(i:int, j:int) {
+	func swap(i: int, j: int) {
 		let temp = list[i]
 		list[i] := list[j]
 		list[j] := temp

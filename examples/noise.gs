@@ -27,38 +27,38 @@ let permutation = [
 
 let p = permutation.append(permutation)
 
-func fade(t:float) -> float {
+func fade(t: float) -> float {
 	return t * t * t * (t * (t * 6.0 - 15.0) + 10.0)
 }
 
-func lerp(t:float, a:float, b:float) -> float {
+func lerp(t: float, a: float, b: float) -> float {
 	return a + t * (b-a)
 }
 
-func grad(hash:int, x:float, y:float, z:float) -> float {
+func grad(hash: int, x: float, y: float, z: float) -> float {
 	let h = hash & 15
 
-    if(h = 0 || h = 12) {
+    if h = 0 || h = 12 {
         return x + y
-	} else if(h = 1 || h = 14) {
+	} else if h = 1 || h = 14 {
         return y - x
-	} else if(h = 2) {
+	} else if h = 2 {
         return x - y
-	} else if(h = 3) {
+	} else if h = 3 {
         return -x - y
-	} else if(h = 4) {
+	} else if h = 4 {
         return x + z
-	} else if(h = 5) {
+	} else if h = 5 {
         return z - x
-	} else if(h = 6) {
+	} else if h = 6 {
         return x - z
-	} else if(h = 7) {
+	} else if h = 7 {
         return -x - z
-	} else if(h = 8) {
+	} else if h = 8 {
         return y + z
-    } else if(h = 9 || h = 13) {
+    } else if h = 9 || h = 13 {
         return z - y
-	} else if(h = 10) {
+	} else if h = 10 {
         return y - z
     } else {
     	return -y - z
@@ -66,7 +66,7 @@ func grad(hash:int, x:float, y:float, z:float) -> float {
 	return 0.0
 }
 
-func noise(mut px:float, mut py:float, mut pz:float) -> float {
+func noise(mut px: float, mut py: float, mut pz: float) -> float {
 	let X = floor(px).to_i() & 255
 	let Y = floor(py).to_i() & 255
 	let Z = floor(pz).to_i() & 255

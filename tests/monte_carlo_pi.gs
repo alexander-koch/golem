@@ -3,7 +3,7 @@
 using core
 using math
 
-type Point(px:float, py:float) {
+type Point(px: float, py: float) {
     let x = px
     let y = py
     func isInsideUnitCirle() -> bool {
@@ -11,7 +11,7 @@ type Point(px:float, py:float) {
     }
 }
 
-func generatePoints(count:int) -> Point[] {
+func generatePoints(count: int) -> Point[] {
     let mut list = [::Point]
     let mut i = 0
     while i < count {
@@ -23,10 +23,10 @@ func generatePoints(count:int) -> Point[] {
 
 # n: Number of iterations
 # batch: Number of points ber sample
-func computePi(n:int, batch:int) {
+func computePi(n: int, batch: int) {
 	let mut total = 0.0
 	let mut count = 0.0
-    
+
 	let mut k = 0
 	while k < n {
 		let points = generatePoints(batch)

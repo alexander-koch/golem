@@ -1,10 +1,10 @@
 using core
 
-func puts(str:char[]) {
+func puts(str: char[]) {
 	println(str)
 }
 
-func putc(ch:char) {
+func putc(ch: char) {
 	println(ch)
 }
 

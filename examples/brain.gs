@@ -8,7 +8,7 @@ let mut tape = [0]
 let mut idx = 0
 
 # Process an input character
-func process(c:char) {
+func process(c: char) {
 	if c = "+" {
 		tape[idx] := tape[idx] + 1
 	} else if c = "-" {
@@ -31,7 +31,7 @@ func process(c:char) {
 }
 
 # The interpreter
-func eval(filename:char[]) {
+func eval(filename: str) {
 	let file = readFile(filename)
 	let len = file.length()
 	if len = -1 {

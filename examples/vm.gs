@@ -14,7 +14,7 @@ let mut stack = [0,0,0,0,0,0,0,0,0]
 let mut sp = -1
 let mut pc = 0
 
-func push(val:int) {
+func push(val: int) {
 	sp := sp + 1
 	stack[sp] := val
 }
@@ -25,11 +25,11 @@ func pop() -> int {
 	return val
 }
 
-func fetch(ip:int) -> int {
+func fetch(ip: int) -> int {
 	return program[ip]
 }
 
-func execute(opcode:int) {
+func execute(opcode: int) {
 	if opcode = OP_PUSH {
 		pc := pc + 1
 		push(fetch(pc))

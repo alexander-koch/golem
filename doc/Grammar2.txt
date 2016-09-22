@@ -29,7 +29,7 @@ P = {
 	Function = "func", TOKEN_WORD, Formals, (("->", Datatype, Block) | Block), Newline;
 	Formals = "(", [formal, {",", formal}], ")";
 	Formal = ["mut"], TOKEN_WORD, ":", Datatype;
-	Datatype = (("int" | "char" | "bool" | "float" | TOKEN_WORD), ["[]"]) | "void";
+	Datatype = (("int" | "char" | "bool" | "float" | TOKEN_WORD), {"[]"}) | "void";
 	Block = "{", Newline, {Statement}, "}";
 
 	If = "if", Expression, Block, {ElseIf}, [Else];

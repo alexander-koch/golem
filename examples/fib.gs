@@ -2,7 +2,7 @@
 # Copyright (c) Alexander Koch 2015
 using core
 
-func fib(n:int) -> int {
+func fib(n: int) -> int {
 	if n < 2 {
 		return n
 	}

@@ -583,7 +583,7 @@ datatype_t* parse_datatype(parser_t* parser) {
         context_insert(parser->context, typestr->value, t);
     }
 
-    if(match_type(parser, TOKEN_LBRACKET)) {
+    while(match_type(parser, TOKEN_LBRACKET)) {
         parser->cursor++;
         token_t* rbrac = accept_token_type(parser, TOKEN_RBRACKET);
         if(!rbrac) {

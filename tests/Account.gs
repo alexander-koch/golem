@@ -1,10 +1,10 @@
 using core
 
-type Account(_balance:int) {
+type Account(_balance: int) {
 	@Getter
 	let mut balance = _balance
 
-	func withdraw(amount:int) {
+	func withdraw(amount: int) {
 		balance := balance - amount
 	}
 }

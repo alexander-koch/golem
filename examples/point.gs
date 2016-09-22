@@ -3,14 +3,14 @@
 using core
 using math
 
-type Point(xp:float, yp:float) {
+type Point(xp: float, yp: float) {
 	@Getter
 	let x = xp
 
 	@Getter
 	let y = yp
 
-	func distanceTo(other:Point) -> float {
+	func distanceTo(other: Point) -> float {
 		let dx = x - other.getX()
     	let dy = y - other.getY()
     	return sqrt(dx * dx + dy * dy)
