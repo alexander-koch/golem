@@ -14,13 +14,14 @@ ast_t* parse_stmt(parser_t* parser);
 ast_t* parse_expression(parser_t* parser);
 void test_newline(parser_t* parser);
 
-void parser_init(parser_t* parser, const char* name) {
+void parser_init(parser_t* parser, context_t* context, const char* name) {
     parser->name = name;
     parser->buffer = 0;
     parser->num_tokens = 0;
     parser->cursor = 0;
     parser->error = false;
     parser->top = 0;
+    parser->context = context;
 }
 
 // helper functions begin
@@ -144,7 +145,7 @@ int parse_precedence(token_type_t type) {
 
 ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node);
 ast_t* parse_subscript(parser_t* parser, ast_t* node);
-datatype_t parse_datatype(parser_t* parser);
+datatype_t* parse_datatype(parser_t* parser);
 
 /**
  * parse_call:
@@ -342,7 +343,7 @@ ast_t* parse_simpleliteral(parser_t* parser) {
 ast_t* parse_array(parser_t* parser) {
     ast_t* ast = ast_class_create(AST_ARRAY, get_location(parser));
     ast->array.elements = list_new();
-    ast->array.type = datatype_new(DATA_NULL);
+    ast->array.type = context_null(parser->context);
 
     token_t* tmp = accept_token_type(parser, TOKEN_LBRACKET);
     if(!tmp) {
@@ -355,7 +356,7 @@ ast_t* parse_array(parser_t* parser) {
     // New Feature 'Doublecolon initializer': [::int] -> initializes array with zero elements of type int
     if(match_type(parser, TOKEN_DOUBLECOLON)) {
         accept_token(parser);
-        datatype_t dt = parse_datatype(parser);
+        datatype_t* dt = parse_datatype(parser);
         ast->array.type = dt;
 
         if(!match_type(parser, TOKEN_RBRACKET)) {
@@ -568,29 +569,18 @@ ast_t* parse_expression(parser_t* parser) {
  * basicType = "int" | "float" | "char" | "bool" | "void" | object;
  * datatype = basicType, ["[]"];
  */
-datatype_t parse_datatype(parser_t* parser) {
+datatype_t* parse_datatype(parser_t* parser) {
     token_t* typestr = accept_token_type(parser, TOKEN_WORD);
     if(!typestr) {
         parser_throw(parser, "Type must be an identifier, invalid");
-        return datatype_new(DATA_NULL);
+        return context_null(parser->context);
     }
 
-    datatype_t type = datatype_new(DATA_NULL);
-    char* v = typestr->value;
-
-    if(!strcmp(v, "int")) {
-        type = datatype_new(DATA_INT);
-    } else if(!strcmp(v, "float")) {
-        type = datatype_new(DATA_FLOAT);
-    } else if(!strcmp(v, "char")) {
-        type = datatype_new(DATA_CHAR);
-    } else if(!strcmp(v, "bool")) {
-        type = datatype_new(DATA_BOOL);
-    } else if(!strcmp(v, "void")) {
-        type = datatype_new(DATA_VOID);
-    } else {
-        type.type = DATA_CLASS;
-        type.id = djb2((unsigned char*)v);
+    datatype_t* t = context_get(parser->context, typestr->value);
+    if(!t) {
+        t = datatype_new(DATA_CLASS);
+        t->id = djb2((unsigned char*)typestr->value);
+        context_insert(parser->context, typestr->value, t);
     }
 
     if(match_type(parser, TOKEN_LBRACKET)) {
@@ -598,18 +588,22 @@ datatype_t parse_datatype(parser_t* parser) {
         token_t* rbrac = accept_token_type(parser, TOKEN_RBRACKET);
         if(!rbrac) {
             parser_throw(parser, "Expected closing bracket");
-            return datatype_new(DATA_NULL);
+            return context_null(parser->context);
         }
 
-        if(type.type == DATA_VOID) {
+        if(t->type == DATA_VOID) {
             parser_throw(parser, "Invalid: array of type void");
-            return datatype_new(DATA_NULL);
+            return context_null(parser->context);
         }
 
-        type.type |= DATA_ARRAY;
+        datatype_t dt;
+        dt.type = DATA_ARRAY;
+        dt.id = 0;
+        dt.subtype = t;
+        t = context_find_or_create(parser->context, &dt);
     }
 
-    return type;
+    return t;
 }
 
 /**
@@ -832,9 +826,9 @@ ast_t* parser_run(parser_t* parser, const char* content) {
 // Parsing subroutines
 //////------------------
 
-extern int core_gen_signatures(list_t* list);
-extern int math_gen_signatures(list_t* list);
-extern int io_gen_signatures(list_t* list);
+extern int core_gen_signatures(context_t* context, list_t* list);
+extern int math_gen_signatures(context_t* context, list_t* list);
+extern int io_gen_signatures(context_t* context, list_t* list);
 
 /**
  * parse_import:
@@ -854,11 +848,11 @@ ast_t* parse_import_declaration(parser_t* parser, location_t loc) {
 
         // Built-in core library
         if(!strcmp(node->import, "core")) {
-            core_gen_signatures(parser->top->toplevel);
+            core_gen_signatures(parser->context, parser->top->toplevel);
         } else if(!strcmp(node->import, "math")) {
-            math_gen_signatures(parser->top->toplevel);
+            math_gen_signatures(parser->context, parser->top->toplevel);
         } else if(!strcmp(node->import, "io")) {
-            io_gen_signatures(parser->top->toplevel);
+            io_gen_signatures(parser->context, parser->top->toplevel);
         }
     // External file handling
     } else if(match_type(parser, TOKEN_STRING)) {
@@ -898,6 +892,7 @@ ast_t* parse_var_declaration(parser_t* parser, location_t loc) {
         node->vardecl.name = ident->value;
         node->vardecl.mutate = mutate;
         node->vardecl.initializer = parse_expression(parser);
+        node->vardecl.type = context_null(parser->context);
 
         if(!node->vardecl.initializer) {
             parser_throw(parser, "Invalid or missing variable initializer");
@@ -927,7 +922,7 @@ ast_t* parse_fn_declaration(parser_t* parser, location_t loc) {
     if(ident) {
         node->funcdecl.name = ident->value;
         node->funcdecl.impl.formals = parse_formals(parser);
-        node->funcdecl.rettype = datatype_new(DATA_NULL);
+        node->funcdecl.rettype = context_null(parser->context);
         node->funcdecl.external = false;
 
         // Make arrow optional
@@ -935,7 +930,7 @@ ast_t* parse_fn_declaration(parser_t* parser, location_t loc) {
             // function is of type void
             // there is no datatype
 
-            node->funcdecl.rettype = datatype_new(DATA_VOID);
+            node->funcdecl.rettype = context_void(parser->context);
         } else if(match_type(parser, TOKEN_ARROW)) {
             parser->cursor++;
             node->funcdecl.rettype = parse_datatype(parser);

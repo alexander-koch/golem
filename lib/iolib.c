@@ -33,20 +33,23 @@ void io_writeFile(vm_t* vm) {
 	vm_push(vm, NULL_VAL);
 }
 
-int io_gen_signatures(list_t* toplevel) {
+int io_gen_signatures(context_t* context, list_t* toplevel) {
 	signature_new();
 	require_func();
 
+    datatype_t* void_type = context_get(context, "void");
+    datatype_t* string_type = context_get(context, "str");
+
 	// readFile(str:char[]) -> char[]
-	function_new("readFile", DATA_STRING, INDEX(1));
-	function_add_param(0, DATA_STRING);
+	function_new("readFile", string_type, INDEX(1));
+	function_add_param(0, string_type);
 	function_upload(toplevel);
 
 	// writeFile(name:char[], content:char[], mode:char[]) -> void
-	function_new("writeFile", DATA_VOID, INDEX(2));
-	function_add_param(0, DATA_STRING);
-	function_add_param(0, DATA_STRING);
-	function_add_param(0, DATA_STRING);
+	function_new("writeFile", void_type, INDEX(2));
+	function_add_param(0, string_type);
+	function_add_param(0, string_type);
+	function_add_param(0, string_type);
 	function_upload(toplevel);
 
 	/**
@@ -77,14 +80,14 @@ int io_gen_signatures(list_t* toplevel) {
 
 	// Class File(name:char[]) {
 	class_new("File");
-	class_add_param("name", DATA_STRING);
+	class_add_param("name", string_type);
 
 	// @Getter
 	annotation_new(ANN_GETTER);
 	annotation_upload(clazz->classstmt.body);
 
 	// let filename = name
-	variable_new("filename", DATA_STRING);
+	variable_new("filename", string_type);
 	var->vardecl.initializer = ast_class_create(AST_IDENT, loc);
 	var->vardecl.initializer->ident = "name";
 	variable_upload(clazz->classstmt.body);
@@ -94,7 +97,7 @@ int io_gen_signatures(list_t* toplevel) {
     func->funcdecl.name = "read";
     func->funcdecl.impl.formals = list_new();
     func->funcdecl.impl.body = list_new();
-    func->funcdecl.rettype = datatype_new(DATA_STRING);
+    func->funcdecl.rettype = string_type;
     func->funcdecl.external = 0;
 
 	// return<call<readFile, filename>>
@@ -121,10 +124,10 @@ int io_gen_signatures(list_t* toplevel) {
 	func->funcdecl.name = "write";
     func->funcdecl.impl.formals = list_new();
     func->funcdecl.impl.body = list_new();
-    func->funcdecl.rettype = datatype_new(DATA_VOID);
+    func->funcdecl.rettype = void_type;
     func->funcdecl.external = 0;
 
-	function_add_param("str", DATA_STRING);
+	function_add_param("str", string_type);
 	callFunc = ast_class_create(AST_CALL, loc);
 	callFunc->call.callee = ast_class_create(AST_IDENT, loc);
 	callFunc->call.callee->ident = "writeFile";

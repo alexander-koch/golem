@@ -62,40 +62,46 @@ void core_sysarg(vm_t* vm) {
     vm_register(vm, val);
 }
 
-int core_gen_signatures(list_t* toplevel) {
+int core_gen_signatures(context_t* context, list_t* toplevel) {
 	signature_new();
 	require_func();
 
+    datatype_t* void_type = context_get(context, "void");
+    datatype_t* float_type = context_get(context, "float");
+    datatype_t* int_type = context_get(context, "int");
+    datatype_t* generic_type = context_get(context, "generic");
+    datatype_t* string_type = context_get(context, "str");
+
 	// print(T) -> void
-	function_new("print", DATA_VOID, 1);
-	function_add_param(0, DATA_GENERIC);
+	function_new("print", void_type, 1);
+	function_add_param(0, generic_type);
 	function_upload(toplevel);
 
 	// println(T) -> void
-	function_new("println", DATA_VOID, 2);
-	function_add_param(0, DATA_GENERIC);
+	function_new("println", void_type, 2);
+	function_add_param(0, generic_type);
 	function_upload(toplevel);
 
 	// getline() -> char[]
-	function_new("getline", DATA_STRING, 3);
+	function_new("getline", string_type, 3);
 	function_upload(toplevel);
 
 	// parseFloat(str:char[]) -> float
-	function_new("parseFloat", DATA_FLOAT, 4);
-	function_add_param(0, DATA_STRING);
+	function_new("parseFloat", float_type, 4);
+	function_add_param(0, string_type);
 	function_upload(toplevel);
 
 	// break() -> void
-	function_new("break", DATA_VOID, 5);
+	function_new("break", void_type, 5);
 	function_upload(toplevel);
 
 	// clock() -> void
-	function_new("clock", DATA_FLOAT, 6);
+	function_new("clock", float_type, 6);
 	function_upload(toplevel);
 
 	// sysarg(idx:int) -> char[]
-	function_new("sysarg", DATA_STRING, 7);
-	function_add_param(0, DATA_INT);
+	function_new("sysarg", string_type, 7);
+	function_add_param(0, int_type);
 	function_upload(toplevel);
 
 	return 0;

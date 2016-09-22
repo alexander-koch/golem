@@ -25,7 +25,7 @@
 typedef struct symbol_t {
     ast_t* node;
     int address;
-    datatype_t type;
+    datatype_t* type;
     bool global;
     bool isClassParam;
     struct symbol_t* owner;

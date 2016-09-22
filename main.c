@@ -13,6 +13,7 @@
 #include <core/util.h>
 #include <parser/ast.h>
 #include <parser/parser.h>
+#include <parser/types.h>
 #include <vm/vm.h>
 #include <compiler/compiler.h>
 #include <compiler/serializer.h>
@@ -68,12 +69,14 @@ int main(int argc, char** argv) {
             }
 
             parser_t parser;
-            parser_init(&parser, path);
+            context_t* context = context_new();
+            parser_init(&parser, context, path);
             ast_t* root = parser_run(&parser, source);
             if(root) {
                 graphviz_build(root);
             }
             parser_free(&parser);
+            context_free(context);
             free(source);
         } else {
             printf("Flag: '%s' is invalid\n\n", argv[1]);

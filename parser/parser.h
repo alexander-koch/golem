@@ -16,6 +16,7 @@
 #include <core/mem.h>
 #include <lexis/lexer.h>
 #include <parser/ast.h>
+#include <parser/types.h>
 #include <adt/vector.h>
 
 // Parser structure
@@ -46,10 +47,11 @@ typedef struct parser_t {
     size_t cursor;
     bool error;
     ast_t* top;
+    context_t* context;
 } parser_t;
 
 // Parser functions
-void parser_init(parser_t* parser, const char* name);
+void parser_init(parser_t* parser, context_t* context, const char* name);
 ast_t* parser_run(parser_t* parser, const char* content);
 void parser_free(parser_t* parser);
 

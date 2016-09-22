@@ -1,36 +1,5 @@
 #include "ast.h"
 
-const char* datatype2str(datatype_t type) {
-    switch(type.type) {
-        case DATA_NULL: return "null";
-        case DATA_BOOL: return "bool";
-        case DATA_INT: return "int";
-        case DATA_FLOAT: return "float";
-        case DATA_CHAR: return "char";
-        case DATA_CLASS: return "type";
-        case DATA_VOID: return "void";
-        case DATA_ARRAY: return "undefined[]";
-        case DATA_GENERIC: return "generic";
-        default: {
-            if((type.type & DATA_ARRAY) == DATA_ARRAY) {
-                int subtype = type.type & ~DATA_ARRAY;
-                switch(subtype) {
-                    case DATA_CHAR: return "char[]";
-                    case DATA_INT: return "int[]";
-                    case DATA_BOOL: return "bool[]";
-                    case DATA_FLOAT: return "float[]";
-                    case DATA_CLASS: return "class[]";
-                    case DATA_VOID: return "void[]";
-                    case DATA_GENERIC: return "generic[]";
-                    default: return "null[]";
-                }
-            }
-
-            return "undefined";
-        }
-    }
-}
-
 ast_t* ast_class_create(ast_class_t class, location_t location) {
     ast_t* ast = calloc(1, sizeof(*ast));
     if(!ast) return ast;
@@ -221,7 +190,7 @@ void ast_dump(ast_t* node, int level) {
             break;
         }
         case AST_DECLVAR: {
-            printf("(var name='%s' type=%s ID=%lu", node->vardecl.name, datatype2str(node->vardecl.type), node->vardecl.type.id);
+            printf("(var name='%s' type=%s ID=%lu", node->vardecl.name, datatype_str(node->vardecl.type), node->vardecl.type->id);
             if(node->vardecl.initializer) {
                 putchar('\n');
                 ast_dump(node->vardecl.initializer, level+1);
@@ -230,12 +199,12 @@ void ast_dump(ast_t* node, int level) {
             break;
         }
         case AST_DECLFUNC: {
-            printf("(func name='%s' type=%s ID=%lu params = {", node->funcdecl.name, datatype2str(node->funcdecl.rettype), node->funcdecl.rettype.id);
+            printf("(func name='%s' type=%s ID=%lu params = {", node->funcdecl.name, datatype_str(node->funcdecl.rettype), node->funcdecl.rettype->id);
 
             list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.formals);
             while(!list_iterator_end(iter)) {
                 ast_t* param = list_iterator_next(iter);
-                printf("%s: %s->%lu", param->vardecl.name, datatype2str(param->vardecl.type), param->vardecl.type.id);
+                printf("%s: %s->%lu", param->vardecl.name, datatype_str(param->vardecl.type), param->vardecl.type->id);
 
                 if(!list_iterator_end(iter)) {
                     printf(", ");

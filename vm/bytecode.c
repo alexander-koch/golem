@@ -146,8 +146,8 @@ void emit_op(vector_t* buffer, opcode_t op) {
  * datatype_t specifies the datatype for the operation.
  * If the cast fails, -1 is returned.
  */
-int getOp(token_type_t tok, datatype_t dt) {
-    type_t type = dt.type;
+int getOp(token_type_t tok, datatype_t* dt) {
+    type_t type = dt->type;
     switch(tok) {
         case TOKEN_ADD: {
             if(type == DATA_INT) return OP_IADD;
@@ -220,7 +220,7 @@ int getOp(token_type_t tok, datatype_t dt) {
  * Emit an operator based on a token and a datatype.
  * If the token cannot be casted into a opcode, false is returned.
  */
-bool emit_tok2op(vector_t* buffer, token_type_t tok, datatype_t type) {
+bool emit_tok2op(vector_t* buffer, token_type_t tok, datatype_t* type) {
     int op = getOp(tok, type);
     emit_op(buffer, op);
     return op == -1 ? false : true;

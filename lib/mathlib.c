@@ -127,85 +127,87 @@ void math_prng(vm_t* vm) {
 	vm_push(vm, NUM_VAL(prng()));
 }
 
-int math_gen_signatures(list_t* toplevel) {
+int math_gen_signatures(context_t* context, list_t* toplevel) {
 	signature_new();
 	require_func();
 
-	function_new("sin", DATA_FLOAT, INDEX(1));
-	function_add_param(0, DATA_FLOAT);
+    datatype_t* float_type = context_get(context, "float");
+
+	function_new("sin", float_type, INDEX(1));
+	function_add_param(0, float_type);
 	function_upload(toplevel);
 
-	function_new("cos", DATA_FLOAT, INDEX(2));
-	function_add_param(0, DATA_FLOAT);
+	function_new("cos", float_type, INDEX(2));
+	function_add_param(0, float_type);
 	function_upload(toplevel);
 
-	function_new("tan", DATA_FLOAT, INDEX(3));
-	function_add_param(0, DATA_FLOAT);
+	function_new("tan", float_type, INDEX(3));
+	function_add_param(0, float_type);
 	function_upload(toplevel);
 
-    function_new("asin", DATA_FLOAT, INDEX(4));
-    function_add_param(0, DATA_FLOAT);
+    function_new("asin", float_type, INDEX(4));
+    function_add_param(0, float_type);
     function_upload(toplevel);
 
-    function_new("acos", DATA_FLOAT, INDEX(5));
-    function_add_param(0, DATA_FLOAT);
+    function_new("acos", float_type, INDEX(5));
+    function_add_param(0, float_type);
     function_upload(toplevel);
 
-    function_new("atan", DATA_FLOAT, INDEX(6));
-    function_add_param(0, DATA_FLOAT);
+    function_new("atan", float_type, INDEX(6));
+    function_add_param(0, float_type);
     function_upload(toplevel);
 
-    function_new("atan2", DATA_FLOAT, INDEX(7));
-    function_add_param(0, DATA_FLOAT);
-    function_add_param(0, DATA_FLOAT);
+    function_new("atan2", float_type, INDEX(7));
+    function_add_param(0, float_type);
+    function_add_param(0, float_type);
     function_upload(toplevel);
 
-    function_new("sinh", DATA_FLOAT, INDEX(8));
-	function_add_param(0, DATA_FLOAT);
+    function_new("sinh", float_type, INDEX(8));
+	function_add_param(0, float_type);
 	function_upload(toplevel);
 
-	function_new("cosh", DATA_FLOAT, INDEX(9));
-	function_add_param(0, DATA_FLOAT);
+	function_new("cosh", float_type, INDEX(9));
+	function_add_param(0, float_type);
 	function_upload(toplevel);
 
-	function_new("tanh", DATA_FLOAT, INDEX(10));
-	function_add_param(0, DATA_FLOAT);
+	function_new("tanh", float_type, INDEX(10));
+	function_add_param(0, float_type);
 	function_upload(toplevel);
 
-    function_new("exp", DATA_FLOAT, INDEX(11));
-    function_add_param(0, DATA_FLOAT);
+    function_new("exp", float_type, INDEX(11));
+    function_add_param(0, float_type);
     function_upload(toplevel);
 
-    function_new("ln", DATA_FLOAT, INDEX(12));
-    function_add_param(0, DATA_FLOAT);
+    function_new("ln", float_type, INDEX(12));
+    function_add_param(0, float_type);
     function_upload(toplevel);
 
-    function_new("log", DATA_FLOAT, INDEX(13));
-    function_add_param(0, DATA_FLOAT);
+    function_new("log", float_type, INDEX(13));
+    function_add_param(0, float_type);
     function_upload(toplevel);
 
-    function_new("pow", DATA_FLOAT, INDEX(14));
-	function_add_param(0, DATA_FLOAT);
-	function_add_param(0, DATA_FLOAT);
+    function_new("pow", float_type, INDEX(14));
+	function_add_param(0, float_type);
+	function_add_param(0, float_type);
 	function_upload(toplevel);
 
-	function_new("sqrt", DATA_FLOAT, INDEX(15));
-	function_add_param(0, DATA_FLOAT);
+	function_new("sqrt", float_type, INDEX(15));
+	function_add_param(0, float_type);
 	function_upload(toplevel);
 
-	function_new("ceil", DATA_FLOAT, INDEX(16));
-	function_add_param(0, DATA_FLOAT);
+	function_new("ceil", float_type, INDEX(16));
+	function_add_param(0, float_type);
 	function_upload(toplevel);
 
-    function_new("floor", DATA_FLOAT, INDEX(17));
-	function_add_param(0, DATA_FLOAT);
+    function_new("floor", float_type, INDEX(17));
+	function_add_param(0, float_type);
 	function_upload(toplevel);
 
-    function_new("abs", DATA_FLOAT, INDEX(18));
-    function_add_param(0, DATA_FLOAT);
+    function_new("abs", float_type, INDEX(18));
+    function_add_param(0, float_type);
     function_upload(toplevel);
 
-	function_new("prng", DATA_FLOAT, INDEX(19));
+	function_new("prng", float_type, INDEX(19));
 	function_upload(toplevel);
 
 	return 0;

@@ -19,6 +19,7 @@ Helper functions for standard libraries
 
 // Main stuff
 #include <parser/ast.h>
+#include <parser/types.h>
 #include <vm/val.h>
 
 #define signature_new() location_t loc = {0, 0}
@@ -54,7 +55,7 @@ class_upload()
 #define class_add_param(nm, dtype) \
     param = ast_class_create(AST_DECLVAR, loc); \
     param->vardecl.name = nm; \
-    param->vardecl.type = datatype_new(dtype); \
+    param->vardecl.type = dtype; \
     list_push(clazz->classstmt.formals, param)
 
 #define class_add_function() \
@@ -77,13 +78,13 @@ function_upload();
     func->funcdecl.name = strdup(nm); \
     func->funcdecl.impl.formals = list_new(); \
     func->funcdecl.impl.body = 0; \
-    func->funcdecl.rettype = datatype_new(rtype); \
+    func->funcdecl.rettype = rtype; \
     func->funcdecl.external = idx
 
 #define function_add_param(nm, dtype) \
     param = ast_class_create(AST_DECLVAR, loc); \
     param->vardecl.name = nm; \
-    param->vardecl.type = datatype_new(dtype); \
+    param->vardecl.type = dtype; \
     list_push(func->funcdecl.impl.formals, param)
 
 #define function_upload(ref) list_push(ref, func)
@@ -105,7 +106,7 @@ Variables
 #define variable_new(nm, dtype) \
     var = ast_class_create(AST_DECLVAR, loc); \
     var->vardecl.name = nm; \
-    var->vardecl.type = datatype_new(dtype)
+    var->vardecl.type = dtype
 
 #define variable_upload(ref) list_push(ref, var)
 

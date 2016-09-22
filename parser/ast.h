@@ -18,33 +18,7 @@
 #include <adt/list.h>
 #include <core/mem.h>
 #include <adt/hashmap.h>
-
-// All valid datatypes: void, bool, char, int, float, custom types.
-// Using byte-flags.
-typedef enum {
-    DATA_NULL = 1 << 1,// 0x1,
-    DATA_BOOL = 1 << 2, //0x2,
-    DATA_INT = 1 << 3, //0x4,
-    DATA_FLOAT = 1 << 4, //0x8,
-    DATA_CHAR = 1 << 5, //0x10,
-    DATA_CLASS = 1 << 6, //0x20,
-    DATA_VOID = 1 << 7, //0x40,
-    DATA_ARRAY = 1 << 8, // 0x80
-    DATA_GENERIC = 1 << 9,
-    #define DATA_STRING (DATA_ARRAY | DATA_CHAR)
-} type_t;
-
-// datatype_t
-// Internal datatype representation
-// Stores one type and an ID for classes; standard value for an id is 0.
-// Integers and other types that aren't classes may not have any other value but zero.
-typedef struct datatype_t {
-    type_t type;
-    unsigned long id;
-} datatype_t;
-
-#define datatype_new(t) (datatype_t) {t, 0}
-#define datatype_match(t1, t2) (t1.type == t2.type && t1.id == t2.id)
+#include <parser/types.h>
 
 typedef struct ast_s ast_t;
 
@@ -129,7 +103,7 @@ typedef struct {
 typedef struct {
     char* name;
     ast_lambda_t impl;
-    datatype_t rettype;
+    datatype_t* rettype;
     int external;   // external syscall index, true if external (index > 0)
     int dynamic;    // function name is dynamically allocated
 } ast_func_t;
@@ -139,7 +113,7 @@ typedef struct {
     char* name;
     bool mutate;
     ast_t* initializer;
-    datatype_t type;
+    datatype_t* type;
 } ast_decl_t;
 
 // Class struct
@@ -175,7 +149,7 @@ struct ast_s {
 
         struct {
             list_t* elements;
-            datatype_t type;
+            datatype_t* type;
         } array;
 
         struct {
@@ -196,7 +170,6 @@ struct ast_s {
     };
 };
 
-const char* datatype2str(datatype_t type);
 #define ast_is_number(x) (x->class == AST_FLOAT || x->class == AST_INT)
 
 // Main functions for AST-creation

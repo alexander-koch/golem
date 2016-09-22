@@ -15,6 +15,7 @@
 #include <core/mem.h>
 #include <core/util.h>
 #include <parser/parser.h>
+#include <parser/types.h>
 #include <vm/bytecode.h>
 #include <compiler/scope.h>
 #include <lib/native.h>
@@ -24,6 +25,7 @@ typedef struct compiler_t {
     list_t* parsers;
     vector_t* buffer;
     scope_t* scope;
+    context_t* context;
     bool error;
     int depth;
 } compiler_t;

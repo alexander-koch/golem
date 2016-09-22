@@ -52,6 +52,7 @@ FILES := adt/bytebuffer.c \
 		lib/mathlib.c \
 		parser/ast.c \
 		parser/parser.c \
+		parser/types.c \
 		vm/bytecode.c \
 		vm/val.c \
 		vm/vm.c
