@@ -51,6 +51,7 @@ const char* datatype_str(datatype_t* t) {
         case DATA_CLASS: return "type";
         case DATA_VOID: return "void";
         case DATA_GENERIC: return "generic";
+        case DATA_OPTION: return "option";
         case DATA_ARRAY: {
             if(t->subtype) {
                 switch(t->subtype->type) {
@@ -61,6 +62,7 @@ const char* datatype_str(datatype_t* t) {
                     case DATA_CLASS: return "class[]";
                     case DATA_VOID: return "void[]";
                     case DATA_GENERIC: return "generic[]";
+                    case DATA_OPTION: return "option[]";
                     default: return "null[]";
                 }
             } else {
@@ -90,6 +92,7 @@ context_t* context_new() {
     context_insert(context, "float", datatype_new(DATA_FLOAT));
     context_insert(context, "char", datatype_new(DATA_CHAR));
     context_insert(context, "generic", datatype_new(DATA_GENERIC));
+    context_insert(context, "option", datatype_new(DATA_OPTION));
 
     datatype_t* str_type = datatype_new(DATA_ARRAY);
     str_type->subtype = datatype_new(DATA_CHAR);

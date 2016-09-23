@@ -17,6 +17,7 @@ typedef enum {
     DATA_VOID,
     DATA_ARRAY,
     DATA_GENERIC,
+    DATA_OPTION,
 } type_t;
 
 typedef struct datatype_t {

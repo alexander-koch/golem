@@ -105,7 +105,8 @@ int match_simple(parser_t* parser) {
     return match_type(parser, TOKEN_INT)
         || match_type(parser, TOKEN_FLOAT)
         || match_type(parser, TOKEN_STRING)
-        || match_type(parser, TOKEN_BOOL);
+        || match_type(parser, TOKEN_BOOL)
+        || match_type(parser, TOKEN_NONE);
 }
 
 int match_literal(parser_t* parser) {
@@ -297,13 +298,11 @@ ast_t* parse_simpleliteral(parser_t* parser) {
     if(match_type(parser, TOKEN_FLOAT)) {
         node->class = AST_FLOAT;
         node->f = atof(accept_token(parser)->value);
-        return node;
     }
     // Int
     else if(match_type(parser, TOKEN_INT)) {
         node->class = AST_INT;
         node->i = atol(accept_token(parser)->value);
-        return node;
     }
     // String
     else if(match_type(parser, TOKEN_STRING)) {
@@ -314,13 +313,28 @@ ast_t* parse_simpleliteral(parser_t* parser) {
             node->class = AST_CHAR;
             node->ch = node->string[0];
         }
-        return node;
     }
     // Boolean
     else if(match_type(parser, TOKEN_BOOL)) {
         node->class = AST_BOOL;
         node->b = !strcmp(accept_token(parser)->value, "true") ? true : false;
-        return node;
+    }
+    // None
+    else if(match_type(parser, TOKEN_NONE)) {
+        parser->cursor++;
+        node->class = AST_NONE;
+        token_t* lbracket = accept_token_type(parser, TOKEN_LESS);
+        if(!lbracket) {
+            parser_throw(parser, "Expected an opening bracket (<)");
+            return node;
+        }
+
+        node->none.type = parse_datatype(parser);
+        token_t* rbracket = accept_token_type(parser, TOKEN_GREATER);
+        if(!rbracket) {
+            parser_throw(parser, "Expected an opening bracket (>)");
+            return node;
+        }
     }
     // Error
     else {
@@ -581,6 +595,27 @@ datatype_t* parse_datatype(parser_t* parser) {
         t = datatype_new(DATA_CLASS);
         t->id = djb2((unsigned char*)typestr->value);
         context_insert(parser->context, typestr->value, t);
+    }
+
+    if(datatype_match(t, context_get(parser->context, "option"))) {
+        token_t* lt = accept_token_type(parser, TOKEN_LESS);
+        if(!lt) {
+            parser_throw(parser, "Expected opening bracket (<)");
+            return context_null(parser->context);
+        }
+
+        datatype_t* subtype = parse_datatype(parser);
+        token_t* gt = accept_token_type(parser, TOKEN_GREATER);
+        if(!gt) {
+            parser_throw(parser, "Expected closing bracket (>)");
+            return context_null(parser->context);
+        }
+
+        datatype_t dt;
+        dt.type = DATA_OPTION;
+        dt.id = 0;
+        dt.subtype = subtype;
+        t = context_find_or_create(parser->context, &dt);
     }
 
     while(match_type(parser, TOKEN_LBRACKET)) {

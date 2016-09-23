@@ -51,6 +51,7 @@ const char* token_string(token_type_t type) {
         case TOKEN_WHILE: return "while";
         case TOKEN_TYPE: return "type";
         case TOKEN_RETURN: return "return";
+        case TOKEN_NONE: return "None";
         default: return "undefined";
     }
 }
@@ -78,6 +79,7 @@ token_type_t keywords[] = {
     TOKEN_WHILE,
     TOKEN_TYPE,
     TOKEN_RETURN,
+    TOKEN_NONE,
 };
 
 int is_special(char c) {

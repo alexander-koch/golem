@@ -56,6 +56,7 @@ typedef enum {
 // AST_RETURN     -> stores a return statement
 // AST_TOPLEVEL   -> stores a list of ASTs
 // AST_ANNOTATION -> stores an annotation
+// AST_NONE       -> stores an option None type
 typedef enum {
     AST_NULL,
     AST_IDENT,
@@ -78,7 +79,8 @@ typedef enum {
     AST_CLASS,
     AST_RETURN,
     AST_TOPLEVEL,
-    AST_ANNOTATION
+    AST_ANNOTATION,
+    AST_NONE,
 } ast_class_t;
 
 // Condition struct
@@ -124,6 +126,10 @@ typedef struct {
     hashmap_t* fields;
 } ast_struct_t;
 
+typedef struct {
+    datatype_t* type;
+} ast_none_t;
+
 // Structure of an AST-node
 struct ast_s {
     ast_class_t class;
@@ -146,6 +152,7 @@ struct ast_s {
         ast_cond_t whilestmt;
         ast_struct_t classstmt;
         annotation_t annotation;
+        ast_none_t none;
 
         struct {
             list_t* elements;

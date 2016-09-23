@@ -1084,37 +1084,51 @@ datatype_t* eval_class_call(compiler_t* compiler, ast_t* node, datatype_t* dt) {
     return context_null(compiler->context);
 }
 
+datatype_t* eval_option_func(compiler_t* compiler, ast_t* node, datatype_t* dt) {
+    ast_t* call = node->call.callee;
+    ast_t* key = call->subscript.key;
+    list_t* formals = node->call.args;
+    size_t ls = list_size(formals);
+
+    if(ls != 0) {
+        compiler_throw(compiler, node, "Expected zero arguments");
+        return context_null(compiler->context);
+    }
+
+    if(!strcmp(key->ident, "unwrap")) {
+        return dt->subtype;
+    } else if(!strcmp(key->ident, "isSome")) {
+        emit_int(compiler->buffer, 0);
+        emit_op(compiler->buffer, OP_INE);
+        return context_get(compiler->context, "bool");
+    } else if(!strcmp(key->ident, "isNone")) {
+        emit_int(compiler->buffer, 0);
+        emit_op(compiler->buffer, OP_IEQ);
+        return context_get(compiler->context, "bool");
+    } else {
+        compiler_throw(compiler, node, "Invalid option type function");
+    }
+    return context_null(compiler->context);
+}
+
 datatype_t* eval_datatype_call(compiler_t* compiler, ast_t* node, datatype_t* dt) {
     // Class based internal calls
-    // Can either be:
-    // float
-    // int32
-    // array
-    // bool
-    //
-    // Not allowed:
-    // void
-    // null
-    // lambda
+    // Supported:
+    // float, int32/char, array, bool, class, option
 
-    // Evaluate accordingly
-    if(dt->type == DATA_CLASS) {
-        return eval_class_call(compiler, node, dt);
-    } else {
-        if(dt->type == DATA_ARRAY) {
-            return eval_array_func(compiler, node, dt);
-        }
+    switch(dt->type) {
+        case DATA_OPTION: return eval_option_func(compiler, node, dt);
+        case DATA_CLASS: return eval_class_call(compiler, node, dt);
+        case DATA_ARRAY: return eval_array_func(compiler, node, dt);
         // DATA_INT and DATA_CHAR are internally both int32->types
-        else if(dt->type == DATA_INT || dt->type == DATA_CHAR) {
-            return eval_int32_func(compiler, node, dt);
-        } else if(dt->type == DATA_BOOL) {
-            return eval_bool_func(compiler, node, dt);
-        } else if(dt->type == DATA_FLOAT) {
-            return eval_float_func(compiler, node, dt);
-        } else {
-            compiler_throw(compiler, node, "Unsupported operation");
-        }
+        case DATA_CHAR:
+        case DATA_INT: return eval_int32_func(compiler, node, dt);
+        case DATA_BOOL: return eval_bool_func(compiler, node, dt);
+        case DATA_FLOAT: return eval_float_func(compiler, node, dt);
+        default: break;
     }
+
+    compiler_throw(compiler, node, "Unsupported operation");
     return context_null(compiler->context);
 }
 
@@ -1162,6 +1176,17 @@ datatype_t* eval_call(compiler_t* compiler, ast_t* node) {
             }
 
             return context_null(compiler->context);
+        }
+
+        if(!strcmp(call->ident, "Some")) {
+            ast_t* expr = list_top(node->call.args);
+            datatype_t* sub = compiler_eval(compiler, expr);
+
+            datatype_t dt;
+            dt.type = DATA_OPTION;
+            dt.id = 0;
+            dt.subtype = sub;
+            return context_find_or_create(compiler->context, &dt);
         }
 
         compiler_throw(compiler, node, "Implicit declaration of function '%s'", call->ident);
@@ -1890,6 +1915,15 @@ datatype_t* eval_annotation(compiler_t* compiler, ast_t* node) {
     return context_null(compiler->context);
 }
 
+datatype_t* eval_none(compiler_t* compiler, ast_t* node) {
+    datatype_t dt;
+    dt.type = DATA_OPTION;
+    dt.id = 0;
+    dt.subtype = node->none.type;
+    emit_int(compiler->buffer, 0);
+    return context_find_or_create(compiler->context, &dt);
+}
+
 // Compiler.eval(node)
 // Evaluates a node according to its class.
 datatype_t* compiler_eval(compiler_t* compiler, ast_t* node) {
@@ -1920,6 +1954,7 @@ datatype_t* compiler_eval(compiler_t* compiler, ast_t* node) {
         case AST_CLASS: return eval_class(compiler, node);
         case AST_IMPORT: return eval_import(compiler, node);
         case AST_ANNOTATION: return eval_annotation(compiler, node);
+        case AST_NONE: return eval_none(compiler, node);
         default: break;
     }
 

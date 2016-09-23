@@ -87,6 +87,7 @@ typedef enum {
     TOKEN_WHILE,
     TOKEN_TYPE,
     TOKEN_RETURN,
+    TOKEN_NONE,
 } token_type_t;
 
 typedef struct {

@@ -32,6 +32,7 @@ const char* ast_classname(ast_class_t class) {
         case AST_RETURN: return "return";
         case AST_TOPLEVEL: return "toplevel";
         case AST_ANNOTATION: return "annotation";
+        case AST_NONE: return "none";
         default: return "null";
     }
 }
@@ -378,6 +379,10 @@ void ast_dump(ast_t* node, int level) {
             // }
             // list_iterator_free(iter);
             putchar(')');
+            break;
+        }
+        case AST_NONE: {
+            printf("(none type=%s)", datatype_str(node->none.type));
             break;
         }
         default: break;
