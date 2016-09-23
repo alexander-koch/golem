@@ -34,6 +34,7 @@ println("Elapsed: $elapsed")
 - Statically, strong-typed
 - Automatic type inference
 - **NULL** is not possible to create or use
+- Option types
 - Fast, garbage collected bytecode VM
 
 # Installing

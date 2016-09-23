@@ -3,48 +3,76 @@ Language Grammar
 G = (N,T,P,S)
 T = [...]
 N = {
+    Program,
 	Newline,
 	Statement,
-	Expression,
-	Program,
 
 	Import,
-	Declaration,
+	Variable
 	Function,
 	If,
 	While,
 	Class,
 	Return,
 	Annotation,
+    Expression,
+
+    Formals,
+    Formal,
+    BaseType,
+    SimpleType,
+    OptionType,
+    Datatype,
+    Block,
+    ElseIf,
+    Else,
+    Expression_primary,
+    Literal,
+    Array,
+    None,
+    [...]
 }
 S = Program
 P = {
-	Program = {Statement | Newline};
-	Newline = TOKEN_NEWLINE;
-	Statement = (Import | Variable | Function | If | While | Class | Return | Annotation | Expression);
+	Program = { Statement | Newline } .
+	Newline = TOKEN_NEWLINE .
+	Statement = Import | Variable | Function | If | While | Class | Return | Annotation | Expression .
 
-	Import = "using", (TOKEN_WORD | TOKEN_STRING), Newline;
-	Variable = "let", ["mut"], TOKEN_WORD, "=", Expression, Newline;
+	Import = "using" (TOKEN_WORD | TOKEN_STRING) Newline .
+	Variable = "let" [ "mut" ] TOKEN_WORD "=" Expression Newline .
 
-	Function = "func", TOKEN_WORD, Formals, (("->", Datatype, Block) | Block), Newline;
-	Formals = "(", [formal, {",", formal}], ")";
-	Formal = ["mut"], TOKEN_WORD, ":", Datatype;
-	Datatype = (("int" | "char" | "bool" | "float" | TOKEN_WORD), {"[]"}) | "void";
-	Block = "{", Newline, {Statement}, "}";
+	Function = "func" TOKEN_WORD Formals ( ( "->" Datatype Block ) | Block ) Newline .
+	Formals = "(" [ formal { "," formal } ] ")" .
+	Formal = [ "mut" ] TOKEN_WORD ":" Datatype .
 
-	If = "if", Expression, Block, {ElseIf}, [Else];
-	ElseIf = "else", "if", Expression, Block;
-	Else = "else", Block;
+    BaseType = "int" | "char" | "bool" | "float" | "generic" | "str" | "void" | TOKEN_WORD .
+    SimpleType = BaseType { "[]" } .
+    OptionType = "option" TOKEN_LESS ( SimpleType | OptionType ) TOKEN_GREATER .
+    Datatype = SimpleType | OptionType .
 
-	While = "while", Expression, Block, Newline;
-	Class = "type", TOKEN_WORD, Formals, Block;
+	Block = "{" Newline { Statement } "}" .
 
-	Return = "return", [Expression], Newline;
-	Annotation = "@", ("Getter" | "Setter" | "Unused"), Newline;
+	If = "if" Expression Block { ElseIf } [ Else ] .
+	ElseIf = "else" "if" Expression Block .
+	Else = "else" Block .
 
-	Expression = Expression_primary, {Operator, Expression_primary};
-	Expression_primary = Literal | TOKEN_WORD | ("(", Expression, ")") | Unary | Call | Subscript | Subscript_sugar;
+	While = "while" Expression Block Newline .
+	Class = "type" TOKEN_WORD Formals Block .
 
-	Literal = Float | Integer | String | Boolean | Array;
-	Array = "[", ((Expression, {",", Expression}) | ("::", Datatype)), "]";
+	Return = "return" [ Expression ] Newline .
+	Annotation = "@" ( "Getter" | "Setter" | "Unused" ) Newline .
+
+	Expression = Expression_primary { Operator, Expression_primary } .
+	Expression_primary = Literal | TOKEN_WORD | ( "(" Expression ")" ) | Unary
+                    | Call | Subscript | Subscript_sugar .
+
+
+    SimpleLiteral = Float | Integer | String | Boolean | None .
+	Literal = SimpleLiteral | Array .
+	Array = "[", ( ( Expression { "," Expression } ) | ( "::" Datatype ) ) "]" .
+    None = "None" TOKEN_LESS Datatype TOKEN_GREATER .
+
+    Call = Expression "(" [ Expression { "," Expression } ] ")" .
+    Subscript = Expression "[" Expression "]" .
+    Subscript_sugar = Expression "." Ident .
 }

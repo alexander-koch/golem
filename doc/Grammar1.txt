@@ -141,7 +141,7 @@ P = {
 	digit -> '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
 	alpha_numeric -> alpha | digit
 
-	punctuation -> special | '->' | ':=' | '!=' | '<<' | '>>' | '>=' | '&&' | '||' | '::'
+	punctuation -> special | '->' | ':=' | '!=' | '<<' | '>>' | '>=' | '&&' | '||' | '::' | '@'
 	word_begin -> (alpha | '_')
 	word -> (alphanumeric | '_') word | (alphanumeric | '_')
 	text -> (word | space | newline | special) text
@@ -183,5 +183,17 @@ P = {
 	TOKEN_BITNOT -> '~'
 	TOKEN_DOUBLECOLON -> '::'
 	TOKEN_COLON -> ':'
-	TOKEN_ARROW -> '@'
+	TOKEN_ARROW -> '->'
+    TOKEN_AT -> '@'
+
+    TOKEN_USING -> 'using'
+    TOKEN_LET -> 'let'
+    TOKEN_MUT -> 'mut'
+    TOKEN_FUNC -> 'func'
+    TOKEN_IF -> 'if'
+    TOKEN_ELSE -> 'else'
+    TOKEN_WHILE -> 'while'
+    TOKEN_TYPE -> 'type'
+    TOKEN_RETURN -> 'return'
+    TOKEN_NONE -> 'None'
 }

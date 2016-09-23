@@ -28,8 +28,7 @@ char: "a", "b", "c", "d", "e", "f", ...
 bool: "true", "false"
 ```
 
-With classes you can also use custom types.
-Arrays are also permitted.
+Additionally there are also option types, classes and arrays.
 
 ### Arrays
 
@@ -75,7 +74,7 @@ For code blocks the 'egyptian'-style brackets are used.
 For void functions, you don't have to use the arrow, it is optional.
 
 ```
-func main(arg0:char[]) -> int {
+func main(arg0: char[]) -> int {
 	# body
 }
 ```
@@ -83,7 +82,7 @@ func main(arg0:char[]) -> int {
 Parameters are always immutable, if the `mut` keyword is not set.
 
 ```
-func main(mut arg0:char[], arg1:int, arg2:float) -> float {
+func main(mut arg0: char[], arg1: int, arg2: float) -> float {
 	arg0 := "Foobar"
 	let answer = arg1
 	return arg2
@@ -102,7 +101,7 @@ The class declaration is also the class's constructor to prevent NULL-values dur
 ```
 using core
 
-type Class(_x:int, _y:int, _z:int) {
+type Class(_x: int, _y: int, _z: int) {
 	@Getter
 	@Setter
 	let mut x = _x
@@ -130,7 +129,7 @@ Control flows are created by if statements or while loops.
 Example: (assuming variable 'number' is declared as an integer):
 
 ```
-	if number = 5 {
+if number = 5 {
 	println("Your number is odd.")
 } else if number = 3 {
 	println("Your number is odd and it's three.")
@@ -143,7 +142,7 @@ For equality the `=`-operator is used (not the double-equal `==` as in other pro
 While loops:
 
 ```
-while number = 5)  {
+while number = 5  {
 	number := number + 1
 }
 ```
@@ -160,7 +159,7 @@ for |i| = 0; 1 < 5; i := i + 1 {
 	print(i)
 }
 
-for(condition) {
+for condition {
 	print("Condition is still true")
 }
 
@@ -209,6 +208,14 @@ emtpy() -> bool
 append(other:T[]) -> T[]
 cons(other:T) -> T[]
 at(index:int) -> T
+```
+
+#### Option:
+
+```
+unwrap() -> T
+isSome() -> bool
+isNone -> bool
 ```
 
 ### Annotations

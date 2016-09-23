@@ -158,7 +158,7 @@ datatype_t* parse_datatype(parser_t* parser);
  *  Callee:Node
  *
  * EBNF:
- * call = expr, "(", [expr, {",", expr}], ")";
+ * Call = Expression "(" [ Expression { "," Expression } ] ")" .
  */
 ast_t* parse_call(parser_t* parser, ast_t* node) {
     ast_t* class = ast_class_create(AST_CALL, node->location);
@@ -207,7 +207,7 @@ ast_t* parse_call(parser_t* parser, ast_t* node) {
  *  Key:Expression
  *
  * EBNF:
- * subscript = ident, "[", expr, "]";
+ * Subscript = Expression "[" Expression "]" .
  */
 ast_t* parse_subscript(parser_t* parser, ast_t* node) {
     // Create the node
@@ -249,7 +249,7 @@ ast_t* parse_subscript(parser_t* parser, ast_t* node) {
  *  Key:Ident
  *
  * EBNF:
- * subscript_sugar = expr, ".", ident, [call | subscript | subscript_sugar];
+ * Subscript_sugar = Expression "." Ident .
  */
 ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node) {
     // Create the subscript node
@@ -284,28 +284,21 @@ ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node) {
 
 /**
  * parse_simpleliteral:
- * Parses simple literal structures: Float || Integer || String || Boolean
  *
  * EBNF:
- * number = float | integer;
- * simpleliteral = number | string | boolean;
+ * SimpleLiteral = Float | Integer | String | Boolean | None .
  */
 ast_t* parse_simpleliteral(parser_t* parser) {
     // Create a 'placeholder'-node
     ast_t* node = ast_class_create(-1, get_location(parser));
 
-    // Float
     if(match_type(parser, TOKEN_FLOAT)) {
         node->class = AST_FLOAT;
         node->f = atof(accept_token(parser)->value);
-    }
-    // Int
-    else if(match_type(parser, TOKEN_INT)) {
+    } else if(match_type(parser, TOKEN_INT)) {
         node->class = AST_INT;
         node->i = atol(accept_token(parser)->value);
-    }
-    // String
-    else if(match_type(parser, TOKEN_STRING)) {
+    } else if(match_type(parser, TOKEN_STRING)) {
         node->class = AST_STRING;
         node->string = accept_token(parser)->value;
 
@@ -313,14 +306,10 @@ ast_t* parse_simpleliteral(parser_t* parser) {
             node->class = AST_CHAR;
             node->ch = node->string[0];
         }
-    }
-    // Boolean
-    else if(match_type(parser, TOKEN_BOOL)) {
+    } else if(match_type(parser, TOKEN_BOOL)) {
         node->class = AST_BOOL;
         node->b = !strcmp(accept_token(parser)->value, "true") ? true : false;
-    }
-    // None
-    else if(match_type(parser, TOKEN_NONE)) {
+    } else if(match_type(parser, TOKEN_NONE)) {
         parser->cursor++;
         node->class = AST_NONE;
         token_t* lbracket = accept_token_type(parser, TOKEN_LESS);
@@ -335,9 +324,7 @@ ast_t* parse_simpleliteral(parser_t* parser) {
             parser_throw(parser, "Expected an opening bracket (>)");
             return node;
         }
-    }
-    // Error
-    else {
+    } else {
         parser_throw(parser, "Token is not a literal");
     }
     return node;
@@ -352,7 +339,7 @@ ast_t* parse_simpleliteral(parser_t* parser) {
  * let y = [::int]
  *
  * EBNF:
- * array = "[", (Expression, {",", Expression}) | ("::", Datatype), "]";
+ * Array = "[", ( ( Expression { "," Expression } ) | ( "::" Datatype ) ) "]" .
  */
 ast_t* parse_array(parser_t* parser) {
     ast_t* ast = ast_class_create(AST_ARRAY, get_location(parser));
@@ -407,13 +394,9 @@ ast_t* parse_array(parser_t* parser) {
 
 /**
  * parse_literal:
- * Parses a literal.
- * A literal is a number, a string , a boolean or an array.
  *
  * EBNF:
- * number = float | integer;
- * simpleliteral = number | string | boolean;
- * literal = simpleliteral | array;
+ * Literal = SimpleLiteral | Array .
  */
 ast_t* parse_literal(parser_t* parser) {
     if(match_simple(parser)) {
@@ -432,7 +415,9 @@ ast_t* parse_literal(parser_t* parser) {
  * Parses a primary expression.
  *
  * EBNF:
- * expr_primary = literal | ident | expr | unary | call | subscript | subscript_sugar;
+ * Expression_primary =
+ * Literal | TOKEN_WORD | ( "(" Expression ")" ) | Unary
+ * | Call | Subscript | Subscript_sugar .
  */
 ast_t* parse_expression_primary(parser_t* parser) {
     if(match_type(parser, TOKEN_NEWLINE)) {
@@ -560,7 +545,7 @@ ast_t* parse_expression_last(parser_t* parser, ast_t* lhs, int minprec) {
  * Parses one expression.
  *
  * EBNF:
- * expr = expr_primary, {op, expr_primary};
+ * Expression = Expression_primary { Operator, Expression_primary } .
  */
 ast_t* parse_expression(parser_t* parser) {
     ast_t* lhs = parse_expression_primary(parser);
@@ -579,9 +564,10 @@ ast_t* parse_expression(parser_t* parser) {
  * Reads a datatype.
  *
  * EBNF:
- * object = string;
- * basicType = "int" | "float" | "char" | "bool" | "void" | object;
- * datatype = basicType, ["[]"];
+ * BaseType = "int" | "char" | "bool" | "float" | "generic" | "str" | "void" | TOKEN_WORD .
+ * SimpleType = BaseType { "[]" } .
+ * OptionType = "option" TOKEN_LESS ( SimpleType | OptionType ) TOKEN_GREATER .
+ * Datatype = SimpleType | OptionType .
  */
 datatype_t* parse_datatype(parser_t* parser) {
     token_t* typestr = accept_token_type(parser, TOKEN_WORD);
@@ -648,8 +634,8 @@ datatype_t* parse_datatype(parser_t* parser) {
  * and returned in a list.
  *
  * EBNF:
- * formal = ["mut"], ident, ":", datatype;
- * formal_list = "(", [formal, {",", formal}], ")";
+ * Formals = "(" [ formal { "," formal } ] ")" .
+ * Formal = [ "mut" ] TOKEN_WORD ":" Datatype .
  */
 list_t* parse_formals(parser_t* parser) {
     list_t* formals = list_new();
@@ -708,7 +694,7 @@ list_t* parse_formals(parser_t* parser) {
  * Every statement is returned in a list.
  *
  * EBNF:
- * block = "{", newline, {stmt}, "}", newline.
+ * Block = "{" Newline { Statement } "}" .
  */
 list_t* parse_block(parser_t* parser) {
     list_t* statements = list_new();
@@ -768,8 +754,8 @@ void test_newline(parser_t* parser) {
  * Every statement is followed / ended by a newline.
  *
  * EBNF:
- * newline = "\n" | "\r\n";
- * stmt = (import | variable | function | if | while | class | return | annotation | expr), newline;
+ * Newline = TOKEN_NEWLINE .
+ * Statement = Import | Variable | Function | If | While | Class | Return | Annotation | Expression .
  */
 ast_t* parse_stmt(parser_t* parser) {
     location_t pos = get_location(parser);
@@ -870,7 +856,7 @@ extern int io_gen_signatures(context_t* context, list_t* list);
  * Parses an import statement and handles internal libraries.
  *
  * EBNF:
- * import = KEYWORD_IMPORT, (ident | string), newline;
+ * Import = "using" (TOKEN_WORD | TOKEN_STRING) Newline .
  */
 ast_t* parse_import_declaration(parser_t* parser, location_t loc) {
     ast_t* node = ast_class_create(AST_IMPORT, loc);
@@ -905,7 +891,7 @@ ast_t* parse_import_declaration(parser_t* parser, location_t loc) {
  * Parses a variable declaration, returns AST of class 'AST_DECLVAR'.
  *
  * EBNF:
- * vardecl = "let", ["mut"], ident, "=", expr, newline;
+ * Variable = "let" [ "mut" ] TOKEN_WORD "=" Expression Newline .
  */
 ast_t* parse_var_declaration(parser_t* parser, location_t loc) {
     ast_t* node = ast_class_create(AST_DECLVAR, loc);
@@ -946,7 +932,7 @@ ast_t* parse_var_declaration(parser_t* parser, location_t loc) {
  * If there is no arrow with a datatype, the function is of type void.
  *
  * EBNF:
- * Function = "func", TOKEN_WORD, Formals, (("->", Datatype, Block) | Block), Newline;
+ * Function = "func" TOKEN_WORD Formals ( ( "->" Datatype Block ) | Block ) Newline .
  */
 ast_t* parse_fn_declaration(parser_t* parser, location_t loc) {
     ast_t* node = ast_class_create(AST_DECLFUNC, loc);
@@ -989,9 +975,9 @@ ast_t* parse_fn_declaration(parser_t* parser, location_t loc) {
  * and optionally one else statement.
  *
  * EBNF:
- * else = "else", block;
- * else if = "else", "if", expr, block;
- * if = "if", expr, block, {elseif}, [else];
+ * If = "if" Expression Block { ElseIf } [ Else ] .
+ * ElseIf = "else" "if" Expression Block .
+ * Else = "else" Block .
  *
  * Example:
  * if cond1 {
@@ -1047,7 +1033,7 @@ ast_t* parse_if_declaration(parser_t* parser, location_t loc) {
  * Builds an ast for a while loop.
  *
  * EBNF:
- * while_loop = "while", expr, block;
+ * While = "while" Expression Block Newline .
  */
 ast_t* parse_while_declaration(parser_t* parser, location_t loc) {
     // while expr { \n
@@ -1064,7 +1050,7 @@ ast_t* parse_while_declaration(parser_t* parser, location_t loc) {
  * Parses a class declaration.
  *
  * EBNF:
- * class = "class", ident, formal_list, block;
+ * Class = "type" TOKEN_WORD Formals Block .
  */
 ast_t* parse_class_declaration(parser_t* parser, location_t loc) {
     // class expr(constructor) { \n
@@ -1090,7 +1076,7 @@ ast_t* parse_class_declaration(parser_t* parser, location_t loc) {
  * Parses a return statement.
  *
  * EBNF:
- * return = "return", [expr], newline;
+ * Return = "return" [ Expression ] Newline .
  */
 ast_t* parse_return_declaration(parser_t* parser, location_t loc) {
     ast_t* node = ast_class_create(AST_RETURN, loc);
@@ -1110,7 +1096,7 @@ ast_t* parse_return_declaration(parser_t* parser, location_t loc) {
  * Parses an annotation.
  *
  * EBNF:
- * Annotation = "@", ("Getter" | "Setter" | "Unused"), Newline;
+ * Annotation = "@" ( "Getter" | "Setter" | "Unused" ) Newline .
  */
 ast_t* parse_annotation_declaration(parser_t* parser, location_t loc) {
     ast_t* node = ast_class_create(AST_ANNOTATION, loc);
