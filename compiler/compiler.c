@@ -1056,18 +1056,33 @@ datatype_t* eval_class_call(compiler_t* compiler, ast_t* node, datatype_t* dt) {
         return context_null(compiler->context);
     }
 
-    // Test if the field of the class is valid
-    ast_t* cls = class->node;
-    void* val = 0;
-    if(hashmap_get(cls->classstmt.fields, key->ident, &val) == HMAP_MISSING) {
-        compiler_throw(compiler, node, "Class field '%s' does not exist in class '%s'", key->ident, cls->classstmt.name);
+    ast_t* classNode = class->node;
+
+    // Try to find the field in the class
+    // 1. Try to find the key in the class fields
+    // 2. Edge case: the recursive class call;
+    // function is defined for the class, but not yet registered
+    symbol_t* func = hashmap_find(classNode->classstmt.fields, key->ident);
+    if(!func) {
+        scope_t* scope = compiler->scope;
+        while(scope) {
+            if(scope->node && scope->node->class == AST_DECLFUNC
+                && !strcmp(key->ident, scope->node->funcdecl.name)
+                && scope->super && scope->super->node == classNode) {
+                func = symbol_get(scope, key->ident);
+                break;
+            }
+            scope = scope->super;
+        }
+    }
+
+    // Still not found? Error.
+    if(!func) {
+        compiler_throw(compiler, node, "Class field '%s' does not exist in class '%s'", key->ident, classNode->classstmt.name);
         return context_null(compiler->context);
     }
 
-    // Retrive the field
-    symbol_t* func = (symbol_t*)val;
     if(eval_compare_and_call(compiler, func->node, node, func->address)) {
-
         // Class is on top, reassign it
         // Else replace
         symbol_t* sym = symbol_get(compiler->scope, expr->vardecl.name);
