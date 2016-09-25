@@ -189,30 +189,28 @@ int getOp(token_type_t tok, datatype_t* dt) {
             return -1;
         }
         case TOKEN_LESS: {
-            if(type == DATA_INT) return OP_ILT;
+            if(type == DATA_INT || type == DATA_CHAR) return OP_ILT;
             if(type == DATA_FLOAT) return OP_FLT;
             return -1;
         }
         case TOKEN_GREATER: {
-            if(type == DATA_INT) return OP_IGT;
+            if(type == DATA_INT || type == DATA_CHAR) return OP_IGT;
             if(type == DATA_FLOAT) return OP_FGT;
             return -1;
         }
         case TOKEN_LEQUAL: {
-            if(type == DATA_INT) return OP_ILE;
+            if(type == DATA_INT || type == DATA_CHAR) return OP_ILE;
             if(type == DATA_FLOAT) return OP_FLE;
             return -1;
         }
         case TOKEN_GEQUAL: {
-            if(type == DATA_INT) return OP_IGE;
+            if(type == DATA_INT || type == DATA_CHAR) return OP_IGE;
             if(type == DATA_FLOAT) return OP_FGE;
             return -1;
         }
         case TOKEN_AND: return OP_BAND;
         case TOKEN_OR: return OP_BOR;
-        default: {
-            return -1;
-        }
+        default: return -1;
     }
 }
 

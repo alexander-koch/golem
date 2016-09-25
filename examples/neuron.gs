@@ -22,7 +22,7 @@ type Neuron() {
 	func create(n: int) {
 		let mut i = 0
 		while i < n {
-			weights := weights.cons(rand(-1.0, 1.0))
+			weights := weights.add(rand(-1.0, 1.0))
 			i := i + 1
 		}
 	}

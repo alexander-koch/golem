@@ -206,7 +206,7 @@ to_str() -> char[]
 length() -> int
 emtpy() -> bool
 append(other:T[]) -> T[]
-cons(other:T) -> T[]
+add(other:T) -> T[]
 at(index:int) -> T
 ```
 

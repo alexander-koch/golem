@@ -987,7 +987,7 @@ datatype_t* eval_array_func(compiler_t* compiler, ast_t* node, datatype_t* dt) {
 
         emit_op(compiler->buffer, OP_APPEND);
         return dt;
-    } else if(!strcmp(key->ident, "cons")) {
+    } else if(!strcmp(key->ident, "add")) {
         if(ls != 1) {
             compiler_throw(compiler, node, "Expected one argument");
             return context_null(compiler->context);
@@ -1411,7 +1411,14 @@ datatype_t* eval_if(compiler_t* compiler, ast_t* node) {
         val_t* instr = 0;
         if(subnode->ifclause.cond) {
             // Eval the condition and generate an if-false jump
-            compiler_eval(compiler, subnode->ifclause.cond);
+            datatype_t* cond_type = compiler_eval(compiler, subnode->ifclause.cond);
+            if(cond_type->type != DATA_BOOL) {
+                compiler_throw(compiler, subnode, "Conditions must of of type boolean");
+                list_free(jmps);
+                list_iterator_free(iter);
+                return context_null(compiler->context);
+            }
+
             instr = emit_jmpf(compiler->buffer, 0);
         }
 

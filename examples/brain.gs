@@ -18,7 +18,7 @@ func process(c: char) {
 
 		# Allocate more tape if needed
 		if idx > tape.length() - 1 {
-			tape := tape.cons(0)
+			tape := tape.add(0)
 		}
 	} else if c = "<" {
 		idx := idx - 1
