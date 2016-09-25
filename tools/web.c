@@ -2,7 +2,7 @@
 #include <core/util.h>
 #include <vm/vm.h>
 
-int golem_interpret(const char* module, const char* source) {
+int golem_interpret(const char* module, char* source) {
     seed_prng(time(0));
 	vm_t vm;
 	memset(&vm, 0, sizeof(vm_t));

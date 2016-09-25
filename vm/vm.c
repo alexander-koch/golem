@@ -850,7 +850,6 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
             vm_push(vm, OBJ_VAL(obj_ptr));
             obj_append(vm, obj_ptr);
         } else {
-            // Get the two array
             // Allocate a new val_t array
             // Upload it into a obj_t form
             // register it / push it to the stack

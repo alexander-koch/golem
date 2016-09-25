@@ -1205,7 +1205,7 @@ datatype_t* eval_call(compiler_t* compiler, ast_t* node) {
 }
 
 // Helper function
-bool append_interpolated(compiler_t* compiler, char* buffer) {
+bool append_interpolated(compiler_t* compiler, char* buffer, bool on_stack) {
     if(strlen(buffer) == 0) return true;
 
     if(buffer[0] != '_' && !isalpha(buffer[0])) {
@@ -1221,12 +1221,11 @@ bool append_interpolated(compiler_t* compiler, char* buffer) {
 
     // Do operation based on datatype
     datatype_t* dt = eval_ident(compiler, symbol->node);
-    if(datatype_match(dt, context_get(compiler->context, "str"))) {
-        emit_op(compiler->buffer, OP_APPEND);
-    } else if(datatype_match(dt, context_get(compiler->context, "char"))) {
-        emit_op(compiler->buffer, OP_CONS);
-    } else {
+    if(!datatype_match(dt, context_get(compiler->context, "str"))) {
         emit_op(compiler->buffer, OP_TOSTR);
+    }
+
+    if(on_stack) {
         emit_op(compiler->buffer, OP_APPEND);
     }
 
@@ -1253,7 +1252,15 @@ void interpolate_string(compiler_t* compiler, char* str) {
             memset(content, 0, 96 * sizeof(char));
             memcpy(content, start, c-start);
 
-            emit_string(compiler->buffer, content);
+            // Avoid empty strings
+            if(c-start > 0) {
+                emit_string(compiler->buffer, content);
+                if(string_on_stack) {
+                    emit_op(compiler->buffer, OP_APPEND);
+                }
+
+                string_on_stack = true;
+            }
             c++;
             continue;
         }
@@ -1261,12 +1268,7 @@ void interpolate_string(compiler_t* compiler, char* str) {
         // Ending suspected?
         if(!isalnum(*c) && *c != '_' && reading_ident == 1) {
             buffer[bp] = '\0';
-            append_interpolated(compiler, buffer);
-
-            if(string_on_stack) {
-                emit_op(compiler->buffer, OP_APPEND);
-            }
-
+            append_interpolated(compiler, buffer, string_on_stack);
             reading_ident = false;
             string_on_stack = true;
             bp = 0;
@@ -1284,11 +1286,7 @@ void interpolate_string(compiler_t* compiler, char* str) {
     // Final check (if ended on NULL-Terminator)
     if(reading_ident == 1) {
         buffer[bp] = '\0';
-        append_interpolated(compiler, buffer);
-
-        if(string_on_stack) {
-            emit_op(compiler->buffer, OP_APPEND);
-        }
+        append_interpolated(compiler, buffer, string_on_stack);
     } else {
         // Check if there is any string left
         if(start != c) {
