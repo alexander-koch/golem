@@ -1,5 +1,7 @@
 #include "compiler.h"
 
+datatype_t* compiler_eval(compiler_t* compiler, ast_t* node);
+
 /**
  * compiler_throw:
  * If an error occurs, this function can be used as an exception.
@@ -17,8 +19,6 @@ void compiler_throw(compiler_t* compiler, ast_t* node, const char* format, ...) 
     va_end(argptr);
     putchar('\n');
 }
-
-datatype_t* compiler_eval(compiler_t* compiler, ast_t* node);
 
 /**
  * push_scope:
@@ -41,6 +41,19 @@ void push_scope(compiler_t* compiler, ast_t* node) {
     compiler->scope->address = 0;
 }
 
+/**
+ * pop_scope:
+ * Move from current scope to the parent scope (super scope).
+ */
+void pop_scope(compiler_t* compiler) {
+    // Get parent scope
+    scope_t* super = compiler->scope->super;
+
+    // Set parent scope to active
+    compiler->scope = super;
+    compiler->depth--;
+}
+
 void push_scope_virtual(compiler_t* compiler, ast_t* node) {
     // Create scope
     scope_t* scope = scope_new();
@@ -59,34 +72,6 @@ void push_scope_virtual(compiler_t* compiler, ast_t* node) {
 void pop_scope_virtual(compiler_t* compiler) {
     scope_t* super = compiler->scope->super;
     compiler->scope = super;
-}
-
-/**
- * pop_scope:
- * Move from current scope to the parent scope (super scope).
- */
-void pop_scope(compiler_t* compiler) {
-    // Get parent scope
-    scope_t* super = compiler->scope->super;
-
-    // Set parent scope to active
-    compiler->scope = super;
-    compiler->depth--;
-}
-
-/**
- * scope_is_class:
- * Test if the current scope is within a class.
- */
-bool scope_is_class(scope_t* scope, ast_class_t class, ast_t** node) {
-    if(scope->node && scope) {
-        if(scope->node->class == class) {
-            (*node) = scope->node;
-            return true;
-        }
-        return scope_is_class(scope->super, class, node);
-    }
-    return false;
 }
 
 /**
@@ -1847,16 +1832,43 @@ datatype_t* eval_class(compiler_t* compiler, ast_t* node) {
     return context_null(compiler->context);
 }
 
-datatype_t* eval_import(compiler_t* compiler, ast_t* node) {
-    // TODO: Better checking
-    if(strstr(node->import, ".gs")) {
-        // Create a new subparser for new file
-        parser_t* subparser = malloc(sizeof(parser_t));
-        parser_init(subparser, compiler->context, (const char*)node->import);
-        list_push(compiler->parsers, subparser);
+extern int core_gen_signatures(context_t* context, list_t* list);
+extern int math_gen_signatures(context_t* context, list_t* list);
+extern int io_gen_signatures(context_t* context, list_t* list);
 
+datatype_t* eval_import(compiler_t* compiler, ast_t* node) {
+    void* tmp;
+    if(hashmap_get(compiler->imports, node->import, &tmp) == HMAP_OK) {
+        return context_null(compiler->context);
+    }
+
+    ast_t* data = 0;
+    if(!strcmp(node->import, "core")) {
+        data = ast_class_create(AST_TOPLEVEL, node->location);
+        data->toplevel = list_new();
+
+        core_gen_signatures(compiler->context, data->toplevel);
+        compiler_eval(compiler, data);
+    } else if(!strcmp(node->import, "math")) {
+        data = ast_class_create(AST_TOPLEVEL, node->location);
+        data->toplevel = list_new();
+
+        math_gen_signatures(compiler->context, data->toplevel);
+        compiler_eval(compiler, data);
+    } else if(!strcmp(node->import, "io")) {
+        data = ast_class_create(AST_TOPLEVEL, node->location);
+        data->toplevel = list_new();
+
+        io_gen_signatures(compiler->context, data->toplevel);
+        compiler_eval(compiler, data);
+    } else {
+        // Fallback on file
         char* source = readFile(node->import);
         if(source) {
+            parser_t* subparser = malloc(sizeof(parser_t));
+            parser_init(subparser, compiler->context, (const char*)node->import);
+            list_push(compiler->parsers, subparser);
+
             ast_t* root = parser_run(subparser, source);
             if(!root || parser_error(subparser)) {
                 ast_free(root);
@@ -1880,29 +1892,12 @@ datatype_t* eval_import(compiler_t* compiler, ast_t* node) {
             compiler->parser = tmp;
         } else {
             compiler_throw(compiler, node, "Could not read file named '%s'", node->import);
+            return context_null(compiler->context);
         }
         free(source);
-        return context_null(compiler->context);
     }
 
-    // Dynamic library checking
-    if(strcmp(node->import, "core") != 0 && strcmp(node->import, "io") != 0 &&
-        strcmp(node->import, "math") != 0) {
-
-        printf("WARNING: Dynamic libraries are not supported (for %s)\n", node->import);
-#ifdef USE_DYNLIB_FEATURE
-        // 1. Create the formatted name for lib. e.g. png -> libpng.dll
-        // 2. Feed instruction
-
-        // free on scope end?
-        // register in local scope?
-
-        char* name = createSystemLibraryName(node->import);
-        emit_dynlib(compiler->buffer, name);
-        free(name);
-#endif
-    }
-
+    hashmap_set(compiler->imports, node->import, data);
     return context_null(compiler->context);
 }
 
@@ -1978,16 +1973,18 @@ datatype_t* compiler_eval(compiler_t* compiler, ast_t* node) {
 
 // Compiler.compileBuffer(string code)
 // Compiles code into bytecode instructions
-vector_t* compile_buffer(const char* source, const char* name) {
+vector_t* compile_buffer(char* source, const char* name) {
     compiler_t compiler;
     compiler.parser = malloc(sizeof(parser_t));
     compiler.parsers = list_new();
     compiler.buffer = vector_new();
     compiler.scope = scope_new();
     compiler.context = context_new();
+    compiler.imports = hashmap_new();
     compiler.error = false;
     compiler.depth = 0;
     list_push(compiler.parsers, compiler.parser);
+    hashmap_set(compiler.imports, name, 0);
 
     // Run the parser
     parser_init(compiler.parser, compiler.context, name);
@@ -2033,6 +2030,11 @@ vector_t* compile_file(const char* filename) {
     return buffer;
 }
 
+int free_import(void* val, void* arg) {
+    ast_free((ast_t*)val);
+    return 0;
+}
+
 // Compiler.clear()
 // Clears the current instruction buffer of the compiler
 void compiler_clear(compiler_t* compiler) {
@@ -2047,4 +2049,7 @@ void compiler_clear(compiler_t* compiler) {
     list_free(compiler->parsers);
     if(compiler->scope) scope_free(compiler->scope);
     context_free(compiler->context);
+
+    hashmap_foreach(compiler->imports, free_import, 0);
+    hashmap_free(compiler->imports);
 }

@@ -812,7 +812,7 @@ ast_t* parse_stmt(parser_t* parser) {
 // Main parsing function
 //////------------------
 
-ast_t* parser_run(parser_t* parser, const char* content) {
+ast_t* parser_run(parser_t* parser, char* content) {
     parser->buffer = lexer_scan(parser->name, content, &parser->num_tokens);
     if(!parser->buffer) return 0;
 
@@ -847,10 +847,6 @@ ast_t* parser_run(parser_t* parser, const char* content) {
 // Parsing subroutines
 //////------------------
 
-extern int core_gen_signatures(context_t* context, list_t* list);
-extern int math_gen_signatures(context_t* context, list_t* list);
-extern int io_gen_signatures(context_t* context, list_t* list);
-
 /**
  * parse_import:
  * Parses an import statement and handles internal libraries.
@@ -867,14 +863,6 @@ ast_t* parse_import_declaration(parser_t* parser, location_t loc) {
         token_t* val = accept_token(parser);
         node->import = val->value;
 
-        // Built-in core library
-        if(!strcmp(node->import, "core")) {
-            core_gen_signatures(parser->context, parser->top->toplevel);
-        } else if(!strcmp(node->import, "math")) {
-            math_gen_signatures(parser->context, parser->top->toplevel);
-        } else if(!strcmp(node->import, "io")) {
-            io_gen_signatures(parser->context, parser->top->toplevel);
-        }
     // External file handling
     } else if(match_type(parser, TOKEN_STRING)) {
         token_t* val = accept_token(parser);

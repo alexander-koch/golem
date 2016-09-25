@@ -67,8 +67,8 @@ unsigned long crc32(const unsigned char *s, unsigned int len) {
     return crc32val;
 }
 
-unsigned int hashmap_hash_int(hashmap_t* map, char* keystring) {
-    unsigned long key = crc32((unsigned char*) (keystring), strlen(keystring));
+unsigned int hashmap_hash_int(hashmap_t* map, const char* keystring) {
+    unsigned long key = crc32((const unsigned char*) (keystring), strlen(keystring));
 
     // Robert Jenkins' 32 bit Mix Function
     key += (key << 12);
@@ -86,7 +86,7 @@ unsigned int hashmap_hash_int(hashmap_t* map, char* keystring) {
     return key % map->table_size;
 }
 
-int hashmap_hash(hashmap_t* hmap, char* key) {
+int hashmap_hash(hashmap_t* hmap, const char* key) {
     if(hmap->size >= (hmap->table_size / 2)) return HMAP_FULL;
     unsigned int curr = hashmap_hash_int(hmap, key);
 
@@ -136,7 +136,7 @@ hashmap_t* hashmap_new() {
     return hmap;
 }
 
-int hashmap_set(hashmap_t* hashmap, char* key, void* value) {
+int hashmap_set(hashmap_t* hashmap, const char* key, void* value) {
     int index = hashmap_hash(hashmap, key);
     while(index == HMAP_FULL) {
         if(hashmap_rehash(hashmap) == HMAP_MEM) {
@@ -152,7 +152,7 @@ int hashmap_set(hashmap_t* hashmap, char* key, void* value) {
     return HMAP_OK;
 }
 
-int hashmap_get(hashmap_t* hashmap, char* key, void** value) {
+int hashmap_get(hashmap_t* hashmap, const char* key, void** value) {
     unsigned int curr = hashmap_hash_int(hashmap, key);
     for(int i = 0; i < MAX_CHAIN_LENGTH; i++) {
         if(hashmap->data[curr].use) {
@@ -169,7 +169,7 @@ int hashmap_get(hashmap_t* hashmap, char* key, void** value) {
     return HMAP_MISSING;
 }
 
-void* hashmap_find(hashmap_t* hashmap, char* key) {
+void* hashmap_find(hashmap_t* hashmap, const char* key) {
     void* val;
     return (hashmap_get(hashmap, key, &val) == HMAP_OK) ? val : 0;
 }

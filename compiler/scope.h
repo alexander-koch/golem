@@ -47,6 +47,7 @@ typedef struct scope_t {
 scope_t* scope_new();
 void scope_free(scope_t* scope);
 bool scope_requests(scope_t* scope, annotation_t ann);
+bool scope_is_class(scope_t* scope, ast_class_t class, ast_t** node);
 void scope_unflag(scope_t* scope);
 
 #endif

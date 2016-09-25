@@ -26,11 +26,12 @@ typedef struct compiler_t {
     vector_t* buffer;
     scope_t* scope;
     context_t* context;
+    hashmap_t* imports;
     bool error;
     int depth;
 } compiler_t;
 
-vector_t* compile_buffer(const char* source, const char* name);
+vector_t* compile_buffer(char* source, const char* name);
 vector_t* compile_file(const char* filename);
 void compiler_clear(compiler_t* compiler);
 void compiler_dump(ast_t* node, int level);

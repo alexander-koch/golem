@@ -47,6 +47,17 @@ bool scope_requests(scope_t* scope, annotation_t ann) {
     return (scope->flag & ann) == ann;
 }
 
+bool scope_is_class(scope_t* scope, ast_class_t class, ast_t** node) {
+    if(scope && scope->node) {
+        if(scope->node->class == class) {
+            (*node) = scope->node;
+            return true;
+        }
+        return scope_is_class(scope->super, class, node);
+    }
+    return false;
+}
+
 void scope_unflag(scope_t* scope) {
     scope->flag = 0;
 }

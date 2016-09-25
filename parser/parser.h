@@ -52,7 +52,7 @@ typedef struct parser_t {
 
 // Parser functions
 void parser_init(parser_t* parser, context_t* context, const char* name);
-ast_t* parser_run(parser_t* parser, const char* content);
+ast_t* parser_run(parser_t* parser, char* content);
 void parser_free(parser_t* parser);
 
 // Parser helper functions
