@@ -42,13 +42,38 @@ void ast_free(ast_t* ast) {
 
     list_iterator_t* iter = 0;
     switch(ast->class) {
-        case AST_TOPLEVEL: {
-            iter = list_iterator_create(ast->toplevel);
+        case AST_ARRAY: {
+            iter = list_iterator_create(ast->array.elements);
             while(!list_iterator_end(iter)) {
                 ast_free(list_iterator_next(iter));
             }
             list_iterator_free(iter);
-            list_free(ast->toplevel);
+            list_free(ast->array.elements);
+            break;
+        }
+        case AST_BINARY: {
+            ast_free(ast->binary.left);
+            ast_free(ast->binary.right);
+            break;
+        }
+        case AST_UNARY: {
+            ast_free(ast->unary.expr);
+            break;
+        }
+        case AST_SUBSCRIPT: {
+            ast_free(ast->subscript.key);
+            ast_free(ast->subscript.expr);
+            break;
+        }
+        case AST_CALL: {
+            ast_free(ast->call.callee);
+
+            iter = list_iterator_create(ast->call.args);
+            while(!list_iterator_end(iter)) {
+                ast_free(list_iterator_next(iter));
+            }
+            list_iterator_free(iter);
+            list_free(ast->call.args);
             break;
         }
         case AST_DECLVAR: {
@@ -73,29 +98,6 @@ void ast_free(ast_t* ast) {
             if(ast->funcdecl.external || ast->funcdecl.dynamic) {
                 free(ast->funcdecl.name);
             }
-            break;
-        }
-        case AST_BINARY: {
-            ast_free(ast->binary.left);
-            ast_free(ast->binary.right);
-            break;
-        }
-        case AST_UNARY: {
-            ast_free(ast->unary.expr);
-            break;
-        }
-        case AST_ARRAY: {
-            iter = list_iterator_create(ast->array.elements);
-            while(!list_iterator_end(iter)) {
-                ast_free(list_iterator_next(iter));
-            }
-            list_iterator_free(iter);
-            list_free(ast->array.elements);
-            break;
-        }
-        case AST_SUBSCRIPT: {
-            ast_free(ast->subscript.key);
-            ast_free(ast->subscript.expr);
             break;
         }
         case AST_IF: {
@@ -148,15 +150,13 @@ void ast_free(ast_t* ast) {
             ast_free(ast->returnstmt);
             break;
         }
-        case AST_CALL: {
-            ast_free(ast->call.callee);
-
-            iter = list_iterator_create(ast->call.args);
+        case AST_TOPLEVEL: {
+            iter = list_iterator_create(ast->toplevel);
             while(!list_iterator_end(iter)) {
                 ast_free(list_iterator_next(iter));
             }
             list_iterator_free(iter);
-            list_free(ast->call.args);
+            list_free(ast->toplevel);
             break;
         }
         default: break;
@@ -176,18 +176,76 @@ void ast_dump(ast_t* node, int level) {
     for(int i = 0; i < level; i++) printf("  ");
 
     switch(node->class) {
-        case AST_TOPLEVEL: {
-            list_iterator_t* iter = list_iterator_create(node->toplevel);
-            while(!list_iterator_end(iter)) {
-                ast_t* next = list_iterator_next(iter);
-                ast_dump(next, level+1);
-                putchar('\n');
-            }
-            list_iterator_free(iter);
+        case AST_IDENT: {
+            printf("(ident = %s)", node->ident);
             break;
         }
-        case AST_ANNOTATION: {
-            printf("(annotation %d)", (int)node->annotation);
+        case AST_FLOAT: {
+            printf("(num = %f)", node->f);
+            break;
+        }
+        case AST_INT: {
+            printf("(num = %d)", node->i);
+            break;
+        }
+        case AST_BOOL: {
+            printf("(bool = %s)", node->b == true ? "true" : "false");
+            break;
+        }
+        case AST_STRING: {
+            printf("(str = '%s')", node->string);
+            break;
+        }
+        case AST_CHAR: {
+            printf("(char = '%c')", node->ch);
+            break;
+        }
+        case AST_ARRAY: {
+            printf("(array\n");
+
+            list_iterator_t* iter = list_iterator_create(node->array.elements);
+            while(!list_iterator_end(iter)) {
+                ast_dump(list_iterator_next(iter), level+1);
+                if(!list_iterator_end(iter)) putchar('\n');
+            }
+            list_iterator_free(iter);
+            putchar(')');
+            break;
+        }
+        case AST_BINARY: {
+            printf("(bin op=%s\n", token_string(node->binary.op));
+            ast_dump(node->binary.left, level+1);
+            putchar('\n');
+            ast_dump(node->binary.right, level+1);
+            putchar(')');
+            break;
+        }
+        case AST_UNARY: {
+            printf("(unary<%s, ", token_string(node->unary.op));
+            ast_dump(node->unary.expr, 0);
+            putchar(')');
+            break;
+        }
+        case AST_SUBSCRIPT: {
+            printf("(subscript\n");
+            ast_dump(node->subscript.key, level+1);
+            printf("\n");
+            ast_dump(node->subscript.expr, level+1);
+            putchar(')');
+            break;
+        }
+        case AST_CALL: {
+            printf("(call\n");
+            ast_dump(node->call.callee, level+1);
+
+            // list_iterator_t* iter = list_iterator_create(node->call.args);
+            // while(!list_iterator_end(iter))
+            // {
+            //     ast_t* next = list_iterator_next(iter);
+            //     ast_dump(next, level);
+            // }
+            // list_iterator_free(iter);
+            putchar(')');
             break;
         }
         case AST_DECLVAR: {
@@ -223,52 +281,6 @@ void ast_dump(ast_t* node, int level) {
                 }
             }
             list_iterator_free(iter);
-            putchar(')');
-            break;
-        }
-        case AST_IDENT: {
-            printf("(ident = %s)", node->ident);
-            break;
-        }
-        case AST_FLOAT: {
-            printf("(num = %f)", node->f);
-            break;
-        }
-        case AST_INT: {
-            printf("(num = %d)", node->i);
-            break;
-        }
-        case AST_STRING: {
-            printf("(str = '%s')", node->string);
-            break;
-        }
-        case AST_CHAR: {
-            printf("(char = '%c')", node->ch);
-            break;
-        }
-        case AST_BOOL: {
-            printf("(bool = %s)", node->b == true ? "true" : "false");
-            break;
-        }
-        case AST_BINARY: {
-            printf("(bin op=%s\n", token_string(node->binary.op));
-            ast_dump(node->binary.left, level+1);
-            putchar('\n');
-            ast_dump(node->binary.right, level+1);
-            putchar(')');
-            break;
-        }
-        case AST_UNARY: {
-            printf("(unary<%s, ", token_string(node->unary.op));
-            ast_dump(node->unary.expr, 0);
-            putchar(')');
-            break;
-        }
-        case AST_SUBSCRIPT: {
-            printf("(subscript\n");
-            ast_dump(node->subscript.key, level+1);
-            printf("\n");
-            ast_dump(node->subscript.expr, level+1);
             putchar(')');
             break;
         }
@@ -330,18 +342,7 @@ void ast_dump(ast_t* node, int level) {
             printf("(import %s)", node->import);
             break;
         }
-        case AST_ARRAY: {
-            printf("(array\n");
 
-            list_iterator_t* iter = list_iterator_create(node->array.elements);
-            while(!list_iterator_end(iter)) {
-                ast_dump(list_iterator_next(iter), level+1);
-                if(!list_iterator_end(iter)) putchar('\n');
-            }
-            list_iterator_free(iter);
-            putchar(')');
-            break;
-        }
         case AST_CLASS: {
             printf("(class name='%s' ID=%lu\n", node->classstmt.name, djb2((unsigned char*)node->classstmt.name));
 
@@ -367,18 +368,18 @@ void ast_dump(ast_t* node, int level) {
             putchar(')');
             break;
         }
-        case AST_CALL: {
-            printf("(call\n");
-            ast_dump(node->call.callee, level+1);
-
-            // list_iterator_t* iter = list_iterator_create(node->call.args);
-            // while(!list_iterator_end(iter))
-            // {
-            //     ast_t* next = list_iterator_next(iter);
-            //     ast_dump(next, level);
-            // }
-            // list_iterator_free(iter);
-            putchar(')');
+        case AST_TOPLEVEL: {
+            list_iterator_t* iter = list_iterator_create(node->toplevel);
+            while(!list_iterator_end(iter)) {
+                ast_t* next = list_iterator_next(iter);
+                ast_dump(next, level+1);
+                putchar('\n');
+            }
+            list_iterator_free(iter);
+            break;
+        }
+        case AST_ANNOTATION: {
+            printf("(annotation %d)", (int)node->annotation);
             break;
         }
         case AST_NONE: {

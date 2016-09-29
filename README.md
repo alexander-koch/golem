@@ -4,10 +4,10 @@ Golem is a statically typed, object-oriented programming language.
 
 # Example
 
-```csharp
+```rust
 using core
 
-func fib(n:int) -> int {
+func fib(n: int) -> int {
 	if n < 2 {
 		return n
 	}

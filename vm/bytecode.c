@@ -263,10 +263,6 @@ void emit_class_getfield(vector_t* buffer, int address) {
     insert_v1(buffer, OP_GETFIELD, INT32_VAL(address));
 }
 
-void emit_lib_load(vector_t* buffer, char* name) {
-    insert_v1(buffer, OP_LDLIB, STRING_VAL(name));
-}
-
 void emit_reserve(vector_t* buffer, size_t sz) {
     insert_v1(buffer, OP_RESERVE, INT32_VAL(sz));
 }

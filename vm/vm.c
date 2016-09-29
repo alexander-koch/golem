@@ -825,7 +825,7 @@ void vm_exec(vm_t* vm, vector_t* buffer) {
 
         if(IS_STRING(obj)) {
             char* data = AS_STRING(obj);
-            vm_push(vm, INT32_VAL(strlen(data)-1));
+            vm_push(vm, INT32_VAL(strlen(data)));
         } else {
             obj_array_t* arr = AS_ARRAY(obj);
             vm_push(vm, INT32_VAL(arr->len));

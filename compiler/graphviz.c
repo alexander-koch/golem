@@ -169,8 +169,7 @@ int graphviz_eval(graphviz_t* state, ast_t* node) {
             fprintf(state->fp, "node%d [label=\"FORMALS\"]\n", formalsId);
 
             list_iterator_t* iter = list_iterator_create(node->funcdecl.impl.formals);
-            while(!list_iterator_end(iter))
-            {
+            while(!list_iterator_end(iter)) {
                 ast_t* param = list_iterator_next(iter);
                 int other = graphviz_eval(state, param);
                 graphviz_connection(state, formalsId, other);
@@ -183,8 +182,7 @@ int graphviz_eval(graphviz_t* state, ast_t* node) {
             graphviz_mnemonic(state);
             fprintf(state->fp, "node%d [label=\"BODY\"]\n", bodyId);
             iter = list_iterator_create(node->funcdecl.impl.body);
-            while(!list_iterator_end(iter))
-            {
+            while(!list_iterator_end(iter)) {
                 ast_t* next = list_iterator_next(iter);
                 int other = graphviz_eval(state, next);
                 graphviz_connection(state, bodyId, other);
@@ -194,15 +192,13 @@ int graphviz_eval(graphviz_t* state, ast_t* node) {
 
             return this;
         }
-        case AST_IF:
-        {
+        case AST_IF: {
             int this = graphviz_get_id(state);
             graphviz_mnemonic(state);
             fprintf(state->fp, "node%d [label=\"IF\"]\n", this);
 
             list_iterator_t* iter = list_iterator_create(node->ifstmt);
-            while(!list_iterator_end(iter))
-            {
+            while(!list_iterator_end(iter)) {
                 ast_t* subclause = list_iterator_next(iter);
                 int other = graphviz_eval(state, subclause);
                 graphviz_connection(state, this, other);
@@ -210,13 +206,11 @@ int graphviz_eval(graphviz_t* state, ast_t* node) {
             list_iterator_free(iter);
             return this;
         }
-        case AST_IFCLAUSE:
-        {
+        case AST_IFCLAUSE: {
             int this = graphviz_get_id(state);
             graphviz_mnemonic(state);
 
-            if(node->ifclause.cond)
-            {
+            if(node->ifclause.cond) {
                 fprintf(state->fp, "node%d [label=\"IFCLAUSE\"]\n", this);
 
                 int condBranch = graphviz_get_id(state);
@@ -226,9 +220,7 @@ int graphviz_eval(graphviz_t* state, ast_t* node) {
                 int cond = graphviz_eval(state, node->ifclause.cond);
                 graphviz_connection(state, condBranch, cond);
                 graphviz_connection(state, this, condBranch);
-            }
-            else
-            {
+            } else {
                 fprintf(state->fp, "node%d [label=\"ELSE\"]\n", this);
             }
 
@@ -237,8 +229,7 @@ int graphviz_eval(graphviz_t* state, ast_t* node) {
             fprintf(state->fp, "node%d [label=\"BODY\"]\n", bodyBranch);
 
             list_iterator_t* iter = list_iterator_create(node->ifclause.body);
-            while(!list_iterator_end(iter))
-            {
+            while(!list_iterator_end(iter)) {
                 ast_t* subnode = list_iterator_next(iter);
                 int other = graphviz_eval(state, subnode);
                 graphviz_connection(state, bodyBranch, other);
@@ -248,8 +239,7 @@ int graphviz_eval(graphviz_t* state, ast_t* node) {
 
             return this;
         }
-        case AST_WHILE:
-        {
+        case AST_WHILE: {
             int this = graphviz_get_id(state);
             graphviz_mnemonic(state);
             fprintf(state->fp, "node%d [label=\"WHILE\"]\n", this);
@@ -267,8 +257,7 @@ int graphviz_eval(graphviz_t* state, ast_t* node) {
             fprintf(state->fp, "node%d [label=\"BODY\"]\n", bodyBranch);
 
             list_iterator_t* iter = list_iterator_create(node->whilestmt.body);
-            while(!list_iterator_end(iter))
-            {
+            while(!list_iterator_end(iter)) {
                 ast_t* next = list_iterator_next(iter);
                 int other = graphviz_eval(state, next);
                 graphviz_connection(state, bodyBranch, other);
@@ -277,15 +266,13 @@ int graphviz_eval(graphviz_t* state, ast_t* node) {
             graphviz_connection(state, this, bodyBranch);
             return this;
         }
-        case AST_IMPORT:
-        {
+        case AST_IMPORT: {
             int this = graphviz_get_id(state);
             graphviz_mnemonic(state);
             fprintf(state->fp, "node%d [label=\"IMPORT %s\"]\n", this, node->import);
             return this;
         }
-        case AST_CLASS:
-        {
+        case AST_CLASS: {
             int this = graphviz_get_id(state);
             graphviz_mnemonic(state);
             fprintf(state->fp, "node%d [label=\"CLASS %s\"]\n", this, node->classstmt.name);
@@ -295,8 +282,7 @@ int graphviz_eval(graphviz_t* state, ast_t* node) {
             fprintf(state->fp, "node%d [label=\"FORMALS\"]\n", formalBranch);
 
             list_iterator_t* iter = list_iterator_create(node->classstmt.formals);
-            while(!list_iterator_end(iter))
-            {
+            while(!list_iterator_end(iter)) {
                 ast_t* next = list_iterator_next(iter);
                 int other = graphviz_eval(state, next);
                 graphviz_connection(state, formalBranch, other);
@@ -309,8 +295,7 @@ int graphviz_eval(graphviz_t* state, ast_t* node) {
             fprintf(state->fp, "node%d [label=\"BODY\"]\n", bodyBranch);
 
             iter = list_iterator_create(node->classstmt.body);
-            while(!list_iterator_end(iter))
-            {
+            while(!list_iterator_end(iter)) {
                 ast_t* next = list_iterator_next(iter);
                 int other = graphviz_eval(state, next);
                 graphviz_connection(state, bodyBranch, other);
@@ -319,29 +304,25 @@ int graphviz_eval(graphviz_t* state, ast_t* node) {
             graphviz_connection(state, this, bodyBranch);
             return this;
         }
-        case AST_RETURN:
-        {
+        case AST_RETURN: {
             int this = graphviz_get_id(state);
             graphviz_mnemonic(state);
             fprintf(state->fp, "node%d [label=\"RETURN\"]\n", this);
 
-            if(node->returnstmt)
-            {
+            if(node->returnstmt) {
                 int other = graphviz_eval(state, node->returnstmt);
                 graphviz_connection(state, this, other);
             }
 
             return this;
         }
-        case AST_TOPLEVEL:
-        {
+        case AST_TOPLEVEL: {
             int this = graphviz_get_id(state);
             graphviz_mnemonic(state);
             fprintf(state->fp, "node%d [label=\"ROOT\"]\n", this);
 
             list_iterator_t* iter = list_iterator_create(node->toplevel);
-            while(!list_iterator_end(iter))
-            {
+            while(!list_iterator_end(iter)) {
                 ast_t* next = list_iterator_next(iter);
 
                 int child = graphviz_eval(state, next);
@@ -350,12 +331,16 @@ int graphviz_eval(graphviz_t* state, ast_t* node) {
             list_iterator_free(iter);
             return this;
         }
-        case AST_ANNOTATION:
-        {
+        case AST_ANNOTATION: {
             int this = graphviz_get_id(state);
             graphviz_mnemonic(state);
             fprintf(state->fp, "node%d [label=\"ANNOTATION %d\"]\n", this, (int)node->annotation);
             return this;
+        }
+        case AST_NONE: {
+            int this = graphviz_get_id(state);
+            graphviz_mnemonic(state);
+            fprintf(state->fp, "node%d [label=\"NONE\"]", this);
         }
         default: break;
     }
@@ -363,8 +348,7 @@ int graphviz_eval(graphviz_t* state, ast_t* node) {
     return 0;
 }
 
-void graphviz_build(ast_t* root)
-{
+void graphviz_build(ast_t* root) {
     FILE* fp = fopen("ast.dot", "wb");
     fprintf(fp, "// Generated using golem.\n");
     fprintf(fp, "// AST representation\n");

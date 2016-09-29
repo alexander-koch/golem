@@ -157,7 +157,6 @@ void emit_load_upval(vector_t* buffer, int depth, int address);
 void emit_store_upval(vector_t* buffer, int depth, int address);
 void emit_class_setfield(vector_t* buffer, int address);
 void emit_class_getfield(vector_t* buffer, int address);
-void emit_lib_load(vector_t* buffer, char* name);
 void emit_reserve(vector_t* buffer, size_t sz);
 void emit_string_merge(vector_t* buffer, size_t sz);
 void emit_array_merge(vector_t* buffer, size_t sz);
