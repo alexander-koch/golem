@@ -237,38 +237,9 @@ datatype_t* eval_block(compiler_t* compiler, list_t* block) {
     return ret;
 }
 
-/**
- * eval_declfunc:
- * Compiles / evaluates a function declaration.
- *
- * Algorithm: (simplified)
- * 1. Check the symbols.
- * 2. Create a jump at the beginning to prevent runtime execution.
- * 3. Register signature.
- * 4. Create a new scope to evaluate it's content.
- * 5. Create parameter symbols.
- * 6. Analyse body.
- * 7. Emit return.
- * 8. Set jump address.
- */
-datatype_t* eval_declfunc(compiler_t* compiler, ast_t* node) {
-    // Check if existing and non-external
-    if(symbol_exists(compiler, node, node->funcdecl.name)) return context_null(compiler->context);
-
-    // If it is external, just register the symbol.
-    if(node->funcdecl.external) {
-        symbol_t* sym = symbol_new(compiler, node, -1, node->funcdecl.rettype);
-        hashmap_set(compiler->scope->symbols, node->funcdecl.name, sym);
-        return context_null(compiler->context);
-    }
-
+datatype_t* eval_func_body(compiler_t* compiler, ast_t* node) {
     // Add a jump, set the position at the end
     val_t* addr = emit_jmp(compiler->buffer, 0);
-
-    // Register a symbol for the function, save the bytecode address
-    int byte_address = vector_size(compiler->buffer);
-    symbol_t* fnSymbol = symbol_new(compiler, node, byte_address, context_null(compiler->context));
-    hashmap_set(compiler->scope->symbols, node->funcdecl.name, fnSymbol);
 
     // Create a new scope and create the parameter-variables.
     // Treat each parameter as a local variable, with no type or value
@@ -331,10 +302,44 @@ datatype_t* eval_declfunc(compiler_t* compiler, ast_t* node) {
     }
 
     // Set beginning jump address to end
-    byte_address = vector_size(compiler->buffer);
+    int byte_address = vector_size(compiler->buffer);
     *addr = INT32_VAL(byte_address);
 
     return context_null(compiler->context);
+}
+
+/**
+ * eval_declfunc:
+ * Compiles / evaluates a function declaration.
+ *
+ * Algorithm: (simplified)
+ * 1. Check the symbols.
+ * 2. Create a jump at the beginning to prevent runtime execution.
+ * 3. Register signature.
+ * 4. Create a new scope to evaluate it's content.
+ * 5. Create parameter symbols.
+ * 6. Analyse body.
+ * 7. Emit return.
+ * 8. Set jump address.
+ */
+datatype_t* eval_declfunc(compiler_t* compiler, ast_t* node, bool compile_body) {
+    // Check if existing and non-external
+    if(symbol_exists(compiler, node, node->funcdecl.name)) return context_null(compiler->context);
+
+    // If it is external, just register the symbol.
+    if(node->funcdecl.external) {
+        symbol_t* sym = symbol_new(compiler, node, -1, node->funcdecl.rettype);
+        hashmap_set(compiler->scope->symbols, node->funcdecl.name, sym);
+        return context_null(compiler->context);
+    }
+
+    // Register a symbol for the function, save the bytecode address
+    // Byte address + 1 -> one jump instruction add the beginning (eval_func_body)
+    int byte_address = vector_size(compiler->buffer)+1;
+    symbol_t* fnSymbol = symbol_new(compiler, node, byte_address, context_null(compiler->context));
+    hashmap_set(compiler->scope->symbols, node->funcdecl.name, fnSymbol);
+
+    return (compile_body ? eval_func_body(compiler, node) : context_null(compiler->context));
 }
 
 /**
@@ -1049,20 +1054,6 @@ datatype_t* eval_class_call(compiler_t* compiler, ast_t* node, datatype_t* dt) {
     // function is defined for the class, but not yet registered
     symbol_t* func = hashmap_find(classNode->classstmt.fields, key->ident);
     if(!func) {
-        scope_t* scope = compiler->scope;
-        while(scope) {
-            if(scope->node && scope->node->class == AST_DECLFUNC
-                && !strcmp(key->ident, scope->node->funcdecl.name)
-                && scope->super && scope->super->node == classNode) {
-                func = symbol_get(scope, key->ident);
-                break;
-            }
-            scope = scope->super;
-        }
-    }
-
-    // Still not found? Error.
-    if(!func) {
         compiler_throw(compiler, node, "Class field '%s' does not exist in class '%s'", key->ident, classNode->classstmt.name);
         return context_null(compiler->context);
     }
@@ -1146,13 +1137,13 @@ datatype_t* eval_call(compiler_t* compiler, ast_t* node) {
                 bool isClass = false;
                 if(symbol->owner) {
                     ast_t* class = symbol->owner->node;
-                    void* val = 0;
-                    if(hashmap_get(class->classstmt.fields, call->ident, &val) == HMAP_MISSING) {
+
+                    symbol = hashmap_find(class->classstmt.fields, call->ident);
+                    if(!symbol) {
                         compiler_throw(compiler, node, "Function does not exists in class");
                         return context_null(compiler->context);
                     }
 
-                    symbol = (symbol_t*)val;
                     isClass = true;
                     emit_op(compiler->buffer, OP_LDARG0);
                 }
@@ -1811,12 +1802,13 @@ datatype_t* eval_class(compiler_t* compiler, ast_t* node) {
                 scope_unflag(compiler->scope);
             }
         } else if(sub->class == AST_DECLFUNC) {
-            eval_declfunc(compiler, sub);
+            eval_declfunc(compiler, sub, false);
             symbol_t* sym = symbol_get(compiler->scope, sub->funcdecl.name);
             if(sym) {
                 sym->owner = symbol;
                 hashmap_set(node->classstmt.fields, sub->funcdecl.name, sym);
             }
+            eval_func_body(compiler, sub);
         } else {
             compiler_throw(compiler, node, "Statements are not allowed as a direct field of a class");
             break;
@@ -1951,7 +1943,7 @@ datatype_t* compiler_eval(compiler_t* compiler, ast_t* node) {
     switch(node->class) {
         case AST_TOPLEVEL: return eval_block(compiler, node->toplevel);
         case AST_DECLVAR: return eval_declvar(compiler, node, true);
-        case AST_DECLFUNC: return eval_declfunc(compiler, node);
+        case AST_DECLFUNC: return eval_declfunc(compiler, node, true);
         case AST_RETURN: return eval_return(compiler, node);
         case AST_FLOAT: return eval_number(compiler, node);
         case AST_INT: return eval_number(compiler, node);
