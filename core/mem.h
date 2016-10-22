@@ -20,8 +20,7 @@ static int frees = 0;
 #include <stddef.h>
 #include <malloc.h>
 
-void mem_error(const char* format, ...)
-{
+void mem_error(const char* format, ...) {
     va_list args;
     va_start(args, format);
     fprintf(stderr, "Fatal error: ");
@@ -31,15 +30,13 @@ void mem_error(const char* format, ...)
     abort();
 }
 
-void* mem_malloc(unsigned long n, char* file, int line)
-{
+void* mem_malloc(unsigned long n, char* file, int line) {
     // fprintf(stdout, "Allocation at %s, line %d\n", file, line);
     if(n == 0) return 0;
 
     void* ptr = malloc(n);
     unsigned long uln = n;
-    if(!ptr && n > 0)
-    {
+    if(!ptr && n > 0) {
         mem_error("Memory allocation of %lu bytes failed", uln);
     }
     bytes += uln;
@@ -48,11 +45,9 @@ void* mem_malloc(unsigned long n, char* file, int line)
     return ptr;
 }
 
-void* mem_calloc(unsigned long n0, unsigned long n1)
-{
+void* mem_calloc(unsigned long n0, unsigned long n1) {
     void* ptr = calloc(n0, n1);
-    if(!ptr && n0 > 0 && n1 > 0)
-    {
+    if(!ptr && n0 > 0 && n1 > 0) {
         mem_error("Memory allocation of %lu bytes failed", n0 * n1);
     }
     bytes += n0 * n1;
@@ -61,22 +56,19 @@ void* mem_calloc(unsigned long n0, unsigned long n1)
     return ptr;
 }
 
-void* mem_realloc(void* ptr, unsigned long n)
-{
+void* mem_realloc(void* ptr, unsigned long n) {
     bytes -= _msize(ptr);
 
     void* ret = realloc(ptr, n);
     unsigned long uln = n;
-    if(ret == 0 && n > 0)
-    {
+    if(ret == 0 && n > 0) {
         mem_error("Rellocation of pointer %p to size %lu failed\n", ptr, uln);
     }
     bytes += uln;
     return ret;
 }
 
-void mem_free(void* ptr)
-{
+void mem_free(void* ptr) {
     if(ptr == 0) return;
 
     bytes -= _msize(ptr);
@@ -85,16 +77,15 @@ void mem_free(void* ptr)
     ptr = 0;
 }
 
-void mem_leak_check()
-{
-    fprintf(stdout, "\nAllocations:\n");
-    fprintf(stdout, "  %d allocations.\n", allocs);
-    fprintf(stdout, "  %d deallocations.\n", frees);
-    fprintf(stdout, "  %lu bytes leaked.\n", bytes);
-    fprintf(stdout, "Byte usage:\n");
-    fprintf(stdout, "  %lu bytes used.\n", used_bytes);
-    fprintf(stdout, "  %lu kilo bytes used.\n", used_bytes / 1024);
-    fprintf(stdout, "  %lu mega bytes used.\n", used_bytes / 1024 / 1024);
+void mem_leak_check(void) {
+    printf("\nAllocations:\n");
+    printf("  %d allocations.\n", allocs);
+    printf("  %d deallocations.\n", frees);
+    printf("  %lu bytes leaked.\n", bytes);
+    printf("Byte usage:\n");
+    printf("  %lu bytes used.\n", used_bytes);
+    printf("  %lu kilo bytes used.\n", used_bytes / 1024);
+    printf("  %lu mega bytes used.\n", used_bytes / 1024 / 1024);
 }
 
 #endif

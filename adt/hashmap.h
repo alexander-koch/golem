@@ -32,7 +32,7 @@ typedef struct hashmap_t {
     bucket_t* data;
 } hashmap_t;
 
-hashmap_t* hashmap_new();
+hashmap_t* hashmap_new(void);
 int hashmap_set(hashmap_t* hashmap, const char* key, void* value);
 int hashmap_get(hashmap_t* hashmap, const char* key, void** value);
 void* hashmap_find(hashmap_t* hashmap, const char* key);

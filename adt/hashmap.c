@@ -124,7 +124,7 @@ int hashmap_rehash(hashmap_t* hmap) {
     return HMAP_OK;
 }
 
-hashmap_t* hashmap_new() {
+hashmap_t* hashmap_new(void) {
     hashmap_t* hmap = malloc(sizeof(*hmap));
     hmap->data = (bucket_t*)malloc(INIT_SIZE * sizeof(bucket_t));
     for(int i = 0; i < INIT_SIZE; i++) {

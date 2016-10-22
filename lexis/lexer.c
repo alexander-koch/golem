@@ -42,6 +42,7 @@ const char* token_string(token_type_t type) {
         case TOKEN_DOUBLECOLON: return "::";
         case TOKEN_COLON: return ":";
         case TOKEN_ARROW: return "->";
+        case TOKEN_AT: return "@";
         case TOKEN_USING: return "using";
         case TOKEN_LET: return "let";
         case TOKEN_MUT: return "mut";

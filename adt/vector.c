@@ -1,6 +1,6 @@
 #include "vector.h"
 
-vector_t* vector_new() {
+vector_t* vector_new(void) {
     vector_t* vector = malloc(sizeof(*vector));
     vector->capacity = VECTOR_CAPACITY;
     vector->size = 0;

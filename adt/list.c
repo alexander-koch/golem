@@ -1,6 +1,6 @@
 #include "list.h"
 
-list_t* list_new() {
+list_t* list_new(void) {
     list_t* list = malloc(sizeof(*list));
     list->size = 0;
     list->head = 0;

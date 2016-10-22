@@ -20,7 +20,7 @@ typedef struct vector_t {
     size_t size;
 } vector_t;
 
-vector_t* vector_new();
+vector_t* vector_new(void);
 void vector_push(vector_t* vector, void* data);
 void* vector_pop(vector_t* vector);
 void* vector_top(vector_t* vector);

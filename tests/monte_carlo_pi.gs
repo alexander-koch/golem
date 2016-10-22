@@ -15,7 +15,7 @@ func generatePoints(count: int) -> Point[] {
     let mut list = [::Point]
     let mut i = 0
     while i < count {
-        list := list.cons(Point(prng() * 2.0 - 1.0, prng() * 2.0 - 1.0))
+        list := list.add(Point(prng() * 2.0 - 1.0, prng() * 2.0 - 1.0))
         i := i + 1
     }
     return list

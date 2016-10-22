@@ -41,6 +41,6 @@ void memset64(void* dest, uint64_t value, uintptr_t size);
 
 // Mersenne-Twister
 void seed_prng(const uint32_t seed_value);
-double prng();
+double prng(void);
 
 #endif

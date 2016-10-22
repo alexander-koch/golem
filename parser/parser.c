@@ -215,13 +215,9 @@ ast_t* parse_subscript(parser_t* parser, ast_t* node) {
     ast->subscript.expr = node;
     ast->subscript.key = parse_expression(parser);
 
-    if(!match_type(parser, TOKEN_RBRACKET)) {
-        parser_throw(parser, "Expected closing bracket");
+    if(!accept_token_type(parser, TOKEN_RBRACKET)) {
         return ast;
     }
-
-    // Consume the bracket
-    parser->cursor++;
 
     // Continue the parsing if possible
     if(match_type(parser, TOKEN_LPAREN)) {
@@ -252,17 +248,15 @@ ast_t* parse_subscript(parser_t* parser, ast_t* node) {
  * Subscript_sugar = Expression "." Ident .
  */
 ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node) {
-    // Create the subscript node
     ast_t* ast = ast_class_create(AST_SUBSCRIPT, node->location);
     ast->subscript.expr = node;
 
-    if(!match_type(parser, TOKEN_WORD)) {
+    // Consume the identifier
+    token_t* ident = accept_token_type(parser, TOKEN_WORD);
+    if(!ident) {
         parser_throw(parser, "Subscript: Identifier expected");
         return ast;
     }
-
-    // Consume the identifier
-    token_t* ident = accept_token(parser);
 
     // Create the identifier node and set is as key
     ast_t* key = ast_class_create(AST_IDENT, ident->location);
@@ -289,8 +283,7 @@ ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node) {
  * SimpleLiteral = Float | Integer | String | Boolean | None .
  */
 ast_t* parse_simpleliteral(parser_t* parser) {
-    // Create a 'placeholder'-node
-    ast_t* node = ast_class_create(-1, get_location(parser));
+    ast_t* node = ast_class_create(AST_NULL, get_location(parser));
 
     if(match_type(parser, TOKEN_FLOAT)) {
         node->class = AST_FLOAT;
@@ -345,13 +338,7 @@ ast_t* parse_array(parser_t* parser) {
     ast_t* ast = ast_class_create(AST_ARRAY, get_location(parser));
     ast->array.elements = list_new();
     ast->array.type = context_null(parser->context);
-
-    token_t* tmp = accept_token_type(parser, TOKEN_LBRACKET);
-    if(!tmp) {
-        parser_throw(parser, "Expected array begin");
-        // TODO: Return ast?
-    }
-
+    parser->cursor++;
     skip_newline(parser);
 
     // New Feature 'Doublecolon initializer': [::int] -> initializes array with zero elements of type int
@@ -385,10 +372,7 @@ ast_t* parse_array(parser_t* parser) {
         skip_newline(parser);
     }
     skip_newline(parser);
-    tmp = accept_token_type(parser, TOKEN_RBRACKET);
-    if(!tmp) {
-        parser_throw(parser, "Expected array end");
-    }
+    accept_token_type(parser, TOKEN_RBRACKET);
     return ast;
 }
 
@@ -986,12 +970,7 @@ ast_t* parse_if_declaration(parser_t* parser, location_t loc) {
         && match_next(parser, TOKEN_IF))) {
         // create a subclause and skip tokens
         ast_t* clause = ast_class_create(AST_IFCLAUSE, get_location(parser));
-        if(match_type(parser, TOKEN_IF)) {
-            accept_token_type(parser, TOKEN_IF);
-        } else {
-            accept_token_type(parser, TOKEN_ELSE);
-            accept_token_type(parser, TOKEN_IF);
-        }
+        parser->cursor += (match_type(parser, TOKEN_IF) ? 1 : 2);
 
         clause->ifclause.cond = parse_expression(parser);
         clause->ifclause.body = parse_block(parser);
@@ -999,17 +978,12 @@ ast_t* parse_if_declaration(parser_t* parser, location_t loc) {
     }
 
     if(match_type(parser, TOKEN_ELSE)) {
-        ast_t* clause = ast_class_create(AST_IFCLAUSE, get_location(parser));
-        token_t* elsetok = accept_token_type(parser, TOKEN_ELSE);
-        if(elsetok) {
-            clause->ifclause.cond = 0;
-            clause->ifclause.body = parse_block(parser);
-        } else {
-            parser_throw(parser, "Else statement without else keyword");
-            free(clause);
-            return node;
-        }
+        location_t loc = get_location(parser);
+        parser->cursor++;
 
+        ast_t* clause = ast_class_create(AST_IFCLAUSE, loc);
+        clause->ifclause.cond = 0;
+        clause->ifclause.body = parse_block(parser);
         list_push(node->ifstmt, clause);
     }
 
@@ -1024,10 +998,8 @@ ast_t* parse_if_declaration(parser_t* parser, location_t loc) {
  * While = "while" Expression Block Newline .
  */
 ast_t* parse_while_declaration(parser_t* parser, location_t loc) {
-    // while expr { \n
     ast_t* node = ast_class_create(AST_WHILE, loc);
-    parser->cursor++; // while keyword
-
+    parser->cursor++;
     node->whilestmt.cond = parse_expression(parser);
     node->whilestmt.body = parse_block(parser);
     return node;
@@ -1041,7 +1013,6 @@ ast_t* parse_while_declaration(parser_t* parser, location_t loc) {
  * Class = "type" TOKEN_WORD Formals Block .
  */
 ast_t* parse_class_declaration(parser_t* parser, location_t loc) {
-    // class expr(constructor) { \n
     ast_t* node = ast_class_create(AST_CLASS, loc);
     parser->cursor++;
 

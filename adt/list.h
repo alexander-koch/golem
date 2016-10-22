@@ -25,7 +25,7 @@ typedef struct list_iterator_t {
     list_node_t* ptr;
 } list_iterator_t;
 
-list_t* list_new();
+list_t* list_new(void);
 void* list_top(list_t* list);
 void list_push(list_t* list, void* val);
 void list_push_front(list_t* list, void* val);

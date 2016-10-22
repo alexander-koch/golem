@@ -151,7 +151,7 @@ void seed_prng(const uint32_t seed_value) {
     seed = seed_value;
 }
 
-uint32_t mt() {
+uint32_t mt(void) {
     uint32_t e;
     if(index0 > N) {
         int i;
@@ -188,7 +188,7 @@ uint32_t mt() {
     return e;
 }
 
-double prng() {
+double prng(void) {
     uint32_t rnd = mt();
     double res = rnd / (double)UINT32_MAX;
     return res;

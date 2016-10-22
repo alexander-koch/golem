@@ -19,7 +19,7 @@
 #include <compiler/serializer.h>
 #include <compiler/graphviz.h>
 
-void print_info() {
+void print_info(void) {
     printf("Golem compiler\n");
     printf("Copyright (c) Alexander Koch 2016\n\n");
     printf("Usage:\n");
