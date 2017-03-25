@@ -2,6 +2,7 @@
 
 const char* token_string(token_type_t type) {
     switch(type) {
+        case TOKEN_EOF: return "<eof>";
         case TOKEN_NEWLINE: return "newline";
         case TOKEN_SPACE: return "space";
         case TOKEN_WORD: return "word";

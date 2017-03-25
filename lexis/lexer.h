@@ -35,6 +35,7 @@ typedef struct lexer_t {
 } lexer_t;
 
 typedef enum {
+    TOKEN_EOF,
     TOKEN_NEWLINE,
     TOKEN_SPACE,
     TOKEN_WORD,
@@ -95,6 +96,12 @@ typedef struct {
     token_type_t type;
     char* value;
 } token_t;
+
+static const token_t EOF_TOKEN = {
+    .location = {.line = 0, .column = 0},
+    .type = TOKEN_EOF,
+    .value = "<EOF>"
+};
 
 const char* token_string(token_type_t type);
 
