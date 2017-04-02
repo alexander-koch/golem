@@ -4,7 +4,6 @@ G = (N,T,P,S)
 T = [...]
 N = {
     Program,
-	Newline,
 	Statement,
 
 	Import,
@@ -34,14 +33,13 @@ N = {
 }
 S = Program
 P = {
-	Program = { Statement | Newline } .
-	Newline = TOKEN_NEWLINE .
-	Statement = Import | Variable | Function | If | While | Class | Return | Annotation | Expression .
+	Program = { Statement } .
+	Statement = ( Import | Variable | Function | If | While | Class | Return | Annotation | Expression ) ";" .
 
-	Import = "using" (TOKEN_WORD | TOKEN_STRING) Newline .
-	Variable = "let" [ "mut" ] TOKEN_WORD "=" Expression Newline .
+	Import = "using" (TOKEN_WORD | TOKEN_STRING) .
+	Variable = "let" [ "mut" ] TOKEN_WORD "=" Expression .
 
-	Function = "func" TOKEN_WORD Formals ( ( "->" Datatype Block ) | Block ) Newline .
+	Function = "func" TOKEN_WORD Formals ( ( "->" Datatype Block ) | Block ) .
 	Formals = "(" [ formal { "," formal } ] ")" .
 	Formal = [ "mut" ] TOKEN_WORD ":" Datatype .
 
@@ -50,17 +48,17 @@ P = {
     OptionType = "option" TOKEN_LESS ( SimpleType | OptionType ) TOKEN_GREATER .
     Datatype = SimpleType | OptionType .
 
-	Block = "{" Newline { Statement } "}" .
+	Block = "{" { Statement } "}" .
 
 	If = "if" Expression Block { ElseIf } [ Else ] .
 	ElseIf = "else" "if" Expression Block .
 	Else = "else" Block .
 
-	While = "while" Expression Block Newline .
+	While = "while" Expression Block .
 	Class = "type" TOKEN_WORD Formals Block .
 
-	Return = "return" [ Expression ] Newline .
-	Annotation = "@" ( "Getter" | "Setter" | "Unused" ) Newline .
+	Return = "return" [ Expression ] .
+	Annotation = "@" ( "Getter" | "Setter" | "Unused" ) .
 
 	Expression = Expression_primary { Operator, Expression_primary } .
 	Expression_primary = Literal | TOKEN_WORD | ( "(" Expression ")" ) | Unary

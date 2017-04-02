@@ -12,7 +12,6 @@ ast_t* parse_annotation_declaration(parser_t* parser, location_t loc);
 ast_t* parse_expression(parser_t* parser);
 ast_t* parse_stmt(parser_t* parser);
 ast_t* parse_expression(parser_t* parser);
-void test_newline(parser_t* parser);
 
 void parser_init(parser_t* parser, context_t* context, const char* name) {
     parser->name = name;
@@ -62,12 +61,6 @@ bool expect_token(parser_t* parser, token_type_t type) {
         parser_throw(parser, "Invalid syntax token '%s'. Expected '%s'",
             token_string(tp), token_string(type));
         return false;
-    }
-}
-
-void skip_newline(parser_t* parser) {
-    while(parser->buffer[parser->cursor].type == TOKEN_NEWLINE) {
-        parser->cursor++;
     }
 }
 
@@ -360,7 +353,6 @@ ast_t* parse_array(parser_t* parser) {
     ast->array.elements = list_new();
     ast->array.type = context_null(parser->context);
     parser->cursor++;
-    skip_newline(parser);
 
     // New Feature 'Doublecolon initializer': [::int] -> initializes array with zero elements of type int
     if(match_type(parser, TOKEN_DOUBLECOLON)) {
@@ -384,15 +376,12 @@ ast_t* parse_array(parser_t* parser) {
     ast_t* expr = 0;
     while(!match_type(parser, TOKEN_RBRACKET) && (expr = parse_expression(parser))) {
         list_push(ast->array.elements, (void*)expr);
-        skip_newline(parser);
         if(!match_type(parser, TOKEN_COMMA)) {
             break;
         } else {
             parser->cursor++;
         }
-        skip_newline(parser);
     }
-    skip_newline(parser);
     expect_token(parser, TOKEN_RBRACKET);
     return ast;
 }
@@ -425,7 +414,8 @@ ast_t* parse_literal(parser_t* parser) {
  * | Call | Subscript | Subscript_sugar .
  */
 ast_t* parse_expression_primary(parser_t* parser) {
-    if(match_type(parser, TOKEN_NEWLINE)) {
+    if(match_type(parser, TOKEN_SEMICOLON)) {
+        parser->cursor++;
         return 0;
     }
 
@@ -569,7 +559,7 @@ ast_t* parse_expression(parser_t* parser) {
     if(!lhs) return lhs;
 
     // TODO: test if next is a valid operator
-    if(!match_type(parser, TOKEN_NEWLINE)) {
+    if(!match_type(parser, TOKEN_SEMICOLON)) {
         lhs = parse_expression_last(parser, lhs, 0);
     }
 
@@ -708,7 +698,7 @@ list_t* parse_formals(parser_t* parser) {
  * Every statement is returned in a list.
  *
  * EBNF:
- * Block = "{" Newline { Statement } "}" .
+ * Block = "{" { Statement } "}" .
  */
 list_t* parse_block(parser_t* parser) {
     list_t* statements = list_new();
@@ -717,13 +707,6 @@ list_t* parse_block(parser_t* parser) {
         return statements;
     }
     parser->cursor++;
-
-    if(!match_type(parser, TOKEN_NEWLINE)) {
-        parser_throw(parser, "Newline after block begin expected");
-        return statements;
-    }
-    parser->cursor++;
-    skip_newline(parser);
 
     while(!match_type(parser, TOKEN_RBRACE) && !parser_error(parser)) {
         if(parser_end(parser)) {
@@ -737,7 +720,6 @@ list_t* parse_block(parser_t* parser) {
         }
 
         list_push(statements, stmt);
-        skip_newline(parser);
     }
 
     if(!parser_error(parser)) {
@@ -749,26 +731,13 @@ list_t* parse_block(parser_t* parser) {
     return statements;
 }
 
-// Newline testing, throws error if there is none
-// Newline = '\r\n' | '\n';
-void test_newline(parser_t* parser) {
-    if(!parser->error) {
-        if(!match_type(parser, TOKEN_NEWLINE)) {
-            parser_throw(parser, "Invalid statement (Newline missing?)");
-        } else {
-            parser->cursor++;
-        }
-    }
-}
-
 /**
  * parse_stmt:
  * Parses a statement.
- * Every statement is followed / ended by a newline.
  *
  * EBNF:
- * Newline = TOKEN_NEWLINE .
- * Statement = Import | Variable | Function | If | While | Class | Return | Annotation | Expression .
+ * Statement = ( Import | Variable | Function
+ *  | If | While | Class | Return | Annotation | Expression ) ";" .
  */
 ast_t* parse_stmt(parser_t* parser) {
     location_t pos = get_location(parser);
@@ -784,7 +753,8 @@ ast_t* parse_stmt(parser_t* parser) {
         {TOKEN_IF, parse_if_declaration},
         {TOKEN_WHILE, parse_while_declaration},
         {TOKEN_TYPE, parse_class_declaration},
-        {TOKEN_RETURN, parse_return_declaration}
+        {TOKEN_RETURN, parse_return_declaration},
+        {TOKEN_AT, parse_annotation_declaration}
     };
 
     // Test for a statement
@@ -792,16 +762,9 @@ ast_t* parse_stmt(parser_t* parser) {
     for(size_t i = 0; i < sizeof(parsers)/sizeof(parsers[0]); i++) {
         if(match_type(parser, parsers[i].ty)) {
             ast_t* node = parsers[i].fn(parser, pos);
-            test_newline(parser);
+            expect_token(parser, TOKEN_SEMICOLON);
             return node;
         }
-    }
-
-    // Annotation testing
-    if(match_type(parser, TOKEN_AT)) {
-        ast_t* node = parse_annotation_declaration(parser, pos);
-        test_newline(parser);
-        return node;
     }
 
     // Error testing
@@ -813,6 +776,7 @@ ast_t* parse_stmt(parser_t* parser) {
     // Otherwise just do expression testing
     ast_t* node = parse_expression(parser);
     if(node) {
+        expect_token(parser, TOKEN_SEMICOLON);
         return node;
     }
 
@@ -838,7 +802,6 @@ ast_t* parser_run(parser_t* parser, char* content) {
     parser->top = ast;
 
     // Parse each statement and abort if an error occurs
-    skip_newline(parser);
     while(!parser_end(parser)) {
         ast_t* node = parse_stmt(parser);
         if(!node || parser_error(parser)) {
@@ -850,7 +813,6 @@ ast_t* parser_run(parser_t* parser, char* content) {
 
         // add node to program
         list_push(ast->toplevel, node);
-        skip_newline(parser);
     }
 
     return ast;
@@ -865,7 +827,7 @@ ast_t* parser_run(parser_t* parser, char* content) {
  * Parses an import statement and handles internal libraries.
  *
  * EBNF:
- * Import = "using" (TOKEN_WORD | TOKEN_STRING) Newline .
+ * Import = "using" ( TOKEN_WORD | TOKEN_STRING ) .
  */
 ast_t* parse_import_declaration(parser_t* parser, location_t loc) {
     ast_t* node = ast_class_create(AST_IMPORT, loc);
@@ -893,7 +855,7 @@ ast_t* parse_import_declaration(parser_t* parser, location_t loc) {
  * Parses a variable declaration, returns AST of class 'AST_DECLVAR'.
  *
  * EBNF:
- * Variable = "let" [ "mut" ] TOKEN_WORD "=" Expression Newline .
+ * Variable = "let" [ "mut" ] TOKEN_WORD "=" Expression .
  */
 ast_t* parse_var_declaration(parser_t* parser, location_t loc) {
     ast_t* node = ast_class_create(AST_DECLVAR, loc);
@@ -935,7 +897,7 @@ ast_t* parse_var_declaration(parser_t* parser, location_t loc) {
  * If there is no arrow with a datatype, the function is of type void.
  *
  * EBNF:
- * Function = "func" TOKEN_WORD Formals ( ( "->" Datatype Block ) | Block ) Newline .
+ * Function = "func" TOKEN_WORD Formals ( ( "->" Datatype Block ) | Block ) .
  */
 ast_t* parse_fn_declaration(parser_t* parser, location_t loc) {
     ast_t* node = ast_class_create(AST_DECLFUNC, loc);
@@ -1026,7 +988,7 @@ ast_t* parse_if_declaration(parser_t* parser, location_t loc) {
  * Builds an ast for a while loop.
  *
  * EBNF:
- * While = "while" Expression Block Newline .
+ * While = "while" Expression Block .
  */
 ast_t* parse_while_declaration(parser_t* parser, location_t loc) {
     ast_t* node = ast_class_create(AST_WHILE, loc);
@@ -1067,13 +1029,13 @@ ast_t* parse_class_declaration(parser_t* parser, location_t loc) {
  * Parses a return statement.
  *
  * EBNF:
- * Return = "return" [ Expression ] Newline .
+ * Return = "return" [ Expression ] .
  */
 ast_t* parse_return_declaration(parser_t* parser, location_t loc) {
     ast_t* node = ast_class_create(AST_RETURN, loc);
     parser->cursor++;
 
-    if(match_type(parser, TOKEN_NEWLINE)) {
+    if(match_type(parser, TOKEN_SEMICOLON)) {
         node->returnstmt = 0;
     } else {
         node->returnstmt = parse_expression(parser);
@@ -1087,7 +1049,7 @@ ast_t* parse_return_declaration(parser_t* parser, location_t loc) {
  * Parses an annotation.
  *
  * EBNF:
- * Annotation = "@" ( "Getter" | "Setter" | "Unused" ) Newline .
+ * Annotation = "@" ( "Getter" | "Setter" | "Unused" ) .
  */
 ast_t* parse_annotation_declaration(parser_t* parser, location_t loc) {
     ast_t* node = ast_class_create(AST_ANNOTATION, loc);

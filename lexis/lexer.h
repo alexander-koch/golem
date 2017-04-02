@@ -24,6 +24,8 @@ typedef struct {
     unsigned int column;
 } location_t;
 
+enum token_type_t;
+
 // Lexer structure
 typedef struct lexer_t {
     location_t location;
@@ -31,13 +33,13 @@ typedef struct lexer_t {
     const char* source;
     const char* cursor;
     const char* lastline;
+    int last_type;
     int error;
 } lexer_t;
 
 typedef enum {
     TOKEN_EOF,
     TOKEN_NEWLINE,
-    TOKEN_SPACE,
     TOKEN_WORD,
     TOKEN_STRING,
     TOKEN_INT,

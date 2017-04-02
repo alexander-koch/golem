@@ -4,7 +4,6 @@ const char* token_string(token_type_t type) {
     switch(type) {
         case TOKEN_EOF: return "<eof>";
         case TOKEN_NEWLINE: return "newline";
-        case TOKEN_SPACE: return "space";
         case TOKEN_WORD: return "word";
         case TOKEN_STRING: return "string";
         case TOKEN_INT: return "int";
@@ -117,13 +116,16 @@ int is_special(char c) {
 }
 
 void lex_skip_space(lexer_t* lexer) {
-    if(lexer->cursor[0] == '#') {
-        while(lexer->cursor[0] != '\n' && lexer->cursor[0] != '\r') {
+    if(*lexer->cursor == '#') {
+        while(*lexer->cursor != '\n' && *lexer->cursor != '\r') {
             lexer->cursor++;
         }
     }
 
-    while(isspace(lexer->cursor[0]) && lexer->cursor[0] != '\n' && lexer->cursor[0] != '\r' && lexer->cursor[0] != '#') {
+    while(isspace(*lexer->cursor)
+        && *lexer->cursor != '\n'
+        && *lexer->cursor != '\r'
+        && *lexer->cursor != '#') {
         lexer->cursor++;
     }
 }
@@ -134,11 +136,6 @@ int is_word_start(char c) {
 
 int is_word(char c) {
     return isalnum(c) || c == '_';
-}
-
-int is_newline(lexer_t* lexer) {
-    return (lexer->cursor[0] == '\r' && lexer->cursor[1] == '\n')
-        || lexer->cursor[0] == '\n';
 }
 
 int is_space(lexer_t* lexer) {
@@ -165,25 +162,36 @@ int is_eof(lexer_t* lexer) {
     return lexer->cursor[0] == 0;
 }
 
-int lex_newline(lexer_t* lexer, token_t* token) {
-    if(lexer->cursor[0] == '\r') {
+int lex_space(lexer_t* lexer, token_t* token) {
+    lex_skip_space(lexer);
+
+    token->value = 0;
+    if(*lexer->cursor == '\r') {
         lexer->cursor++;
     }
 
-    if(lexer->cursor[0] == '\n') {
+    if(*lexer->cursor == '\n') {
         lexer->location.line++;
         lexer->lastline = lexer->cursor++;
+
+        switch(lexer->last_type) {
+            case TOKEN_WORD:
+            case TOKEN_STRING:
+            case TOKEN_INT:
+            case TOKEN_FLOAT:
+            case TOKEN_BOOL:
+            case TOKEN_RETURN:
+            case TOKEN_RPAREN:
+            case TOKEN_RBRACKET:
+            case TOKEN_RBRACE: {
+                token->type = TOKEN_SEMICOLON;
+                return 1;
+            }
+            default: break;
+        }
     }
 
     token->type = TOKEN_NEWLINE;
-    token->value = 0;
-    return 1;
-}
-
-int lex_space(lexer_t* lexer, token_t* token) {
-    lex_skip_space(lexer);
-    token->type = TOKEN_SPACE;
-    token->value = 0;
     return 1;
 }
 
@@ -349,9 +357,6 @@ int next_token(lexer_t* lexer, token_t* token) {
     token->location.line = lexer->location.line;
     token->location.column = lexer->location.column;
 
-    if(is_newline(lexer)) {
-        return lex_newline(lexer, token);
-    }
     if(is_space(lexer)) {
         return lex_space(lexer, token);
     }
@@ -384,6 +389,7 @@ token_t* lexer_scan(const char* name, const char* src, size_t* numTokens) {
     lexer.cursor = src;
     lexer.lastline = src;
     lexer.error = 0;
+    lexer.last_type = TOKEN_EOF;
 
     size_t alloc_size = 8;
     size_t n = 0;
@@ -392,7 +398,7 @@ token_t* lexer_scan(const char* name, const char* src, size_t* numTokens) {
 
     token_t token;
     while(next_token(&lexer, &token)) {
-        if(token.type == TOKEN_SPACE) {
+        if(token.type == TOKEN_NEWLINE) {
             continue;
         }
 
@@ -403,6 +409,7 @@ token_t* lexer_scan(const char* name, const char* src, size_t* numTokens) {
         }
 
         buffer[n++] = token;
+        lexer.last_type = token.type;
     }
 
     if(lexer.error) {
@@ -417,8 +424,8 @@ token_t* lexer_scan(const char* name, const char* src, size_t* numTokens) {
 void lexer_print_tokens(token_t* tokens, size_t n) {
     for(size_t i = 0; i < n; i++) {
         token_t* token = &tokens[i];
-        if(token->type == TOKEN_NEWLINE) {
-            printf("[TOK: NEWLINE]\n");
+        if(token->type == TOKEN_SEMICOLON) {
+            printf("[TOK: Semicolon]\n");
         } else {
             printf("[TOK: %s], ", token->value);
         }
