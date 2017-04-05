@@ -47,14 +47,14 @@ class_upload()
 
 #define class_new(nm) \
     clazz = ast_class_create(AST_CLASS, loc); \
-    clazz->classstmt.name = nm; \
+    clazz->classstmt.name = strdup(nm); \
     clazz->classstmt.body = list_new(); \
     clazz->classstmt.formals = list_new(); \
     clazz->classstmt.fields = hashmap_new()
 
 #define class_add_param(nm, dtype) \
     param = ast_class_create(AST_DECLVAR, loc); \
-    param->vardecl.name = nm; \
+    param->vardecl.name = (nm ? strdup(nm) : NULL); \
     param->vardecl.type = dtype; \
     list_push(clazz->classstmt.formals, param)
 
@@ -83,7 +83,7 @@ function_upload();
 
 #define function_add_param(nm, dtype) \
     param = ast_class_create(AST_DECLVAR, loc); \
-    param->vardecl.name = nm; \
+    param->vardecl.name = nm ? strdup(nm) : NULL; \
     param->vardecl.type = dtype; \
     list_push(func->funcdecl.impl.formals, param)
 
@@ -105,7 +105,7 @@ Variables
 
 #define variable_new(nm, dtype) \
     var = ast_class_create(AST_DECLVAR, loc); \
-    var->vardecl.name = nm; \
+    var->vardecl.name = strdup(nm); \
     var->vardecl.type = dtype
 
 #define variable_upload(ref) list_push(ref, var)

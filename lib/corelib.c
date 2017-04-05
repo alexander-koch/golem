@@ -74,12 +74,12 @@ int core_gen_signatures(context_t* context, list_t* toplevel) {
 
 	// print(T) -> void
 	function_new("print", void_type, 1);
-	function_add_param(0, generic_type);
+	function_add_param(NULL, generic_type);
 	function_upload(toplevel);
 
 	// println(T) -> void
 	function_new("println", void_type, 2);
-	function_add_param(0, generic_type);
+	function_add_param(NULL, generic_type);
 	function_upload(toplevel);
 
 	// getline() -> char[]
@@ -88,7 +88,7 @@ int core_gen_signatures(context_t* context, list_t* toplevel) {
 
 	// parseFloat(str:char[]) -> float
 	function_new("parseFloat", float_type, 4);
-	function_add_param(0, string_type);
+	function_add_param(NULL, string_type);
 	function_upload(toplevel);
 
 	// break() -> void
@@ -101,7 +101,7 @@ int core_gen_signatures(context_t* context, list_t* toplevel) {
 
 	// sysarg(idx:int) -> char[]
 	function_new("sysarg", string_type, 7);
-	function_add_param(0, int_type);
+	function_add_param(NULL, int_type);
 	function_upload(toplevel);
 
 	return 0;

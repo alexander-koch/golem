@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2016
+ * Copyright (c) 2015-2017
  * @author Alexander Koch
  */
 
@@ -38,8 +38,8 @@ int main(int argc, char** argv) {
         vector_t* buffer = compile_file(argv[1]);
         if(buffer) {
             vm_run_args(&vm, buffer, argc, argv);
-            bytecode_buffer_free(buffer);
         }
+        bytecode_buffer_free(buffer);
     } else if(argc == 3) {
         if(!strcmp(argv[1], "-c")) {
             // Compile to bytecode
@@ -50,8 +50,8 @@ int main(int argc, char** argv) {
                 serialize(out, buffer);
                 printf("Wrote bytecode to file '%s'\n", out);
                 free(out);
-                bytecode_buffer_free(buffer);
             }
+            bytecode_buffer_free(buffer);
         } else if(!strcmp(argv[1], "-r")) {
             // Run compiled bytecode file
             vector_t* buffer = vector_new();
@@ -68,16 +68,16 @@ int main(int argc, char** argv) {
                 return 1;
             }
 
-            parser_t parser;
             context_t* context = context_new();
-            parser_init(&parser, context, path);
-            ast_t* root = parser_run(&parser, source);
+            parser_t* parser = parser_new(path, context);
+            ast_t* root = parser_run(parser, source);
+            free(source);
+            parser_free(parser);
             if(root) {
                 graphviz_build(root);
             }
-            parser_free(&parser);
+            ast_free(root);
             context_free(context);
-            free(source);
         } else {
             printf("Flag: '%s' is invalid\n\n", argv[1]);
             return 1;

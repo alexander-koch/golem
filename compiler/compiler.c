@@ -1,6 +1,7 @@
 #include "compiler.h"
 
 datatype_t* compiler_eval(compiler_t* compiler, ast_t* node);
+void compiler_clear(compiler_t* compiler);
 
 /**
  * compiler_throw:
@@ -1710,7 +1711,7 @@ datatype_t* eval_class(compiler_t* compiler, ast_t* node) {
 
                     ast_t* ret = ast_class_create(AST_RETURN, node->location);
                     ret->returnstmt = ast_class_create(AST_IDENT, node->location);
-                    ret->returnstmt->ident = name;
+                    ret->returnstmt->ident = strdup(name);
                     list_push(fn->funcdecl.impl.body, ret);
                     list_push_front(node->classstmt.body, fn);
 
@@ -1764,7 +1765,7 @@ datatype_t* eval_class(compiler_t* compiler, ast_t* node) {
 
                     // Create parameter p0
                     ast_t* p0 = ast_class_create(AST_DECLVAR, node->location);
-                    p0->vardecl.name = param_name;
+                    p0->vardecl.name = strdup(param_name);
                     p0->vardecl.type = vartype;
                     p0->vardecl.mutate = false;
                     list_push(fn->funcdecl.impl.formals, p0);
@@ -1773,8 +1774,8 @@ datatype_t* eval_class(compiler_t* compiler, ast_t* node) {
                     ast_t* bin = ast_class_create(AST_BINARY, node->location);
                     ast_t* lhs = ast_class_create(AST_IDENT, node->location);
                     ast_t* rhs = ast_class_create(AST_IDENT, node->location);
-                    lhs->ident = name;
-                    rhs->ident = param_name;
+                    lhs->ident = strdup(name);
+                    rhs->ident = strdup(param_name);
                     bin->binary.left = lhs;
                     bin->binary.right = rhs;
                     bin->binary.op = TOKEN_ASSIGN;
@@ -1841,57 +1842,50 @@ datatype_t* eval_import(compiler_t* compiler, ast_t* node) {
 
     ast_t* data = 0;
     if(!strcmp(node->import, "core")) {
-        data = ast_class_create(AST_TOPLEVEL, node->location);
-        data->toplevel = list_new();
+        data = ast_class_create(AST_BLOCK, node->location);
+        data->block = list_new();
 
-        core_gen_signatures(compiler->context, data->toplevel);
+        core_gen_signatures(compiler->context, data->block);
         compiler_eval(compiler, data);
     } else if(!strcmp(node->import, "math")) {
-        data = ast_class_create(AST_TOPLEVEL, node->location);
-        data->toplevel = list_new();
+        data = ast_class_create(AST_BLOCK, node->location);
+        data->block = list_new();
 
-        math_gen_signatures(compiler->context, data->toplevel);
+        math_gen_signatures(compiler->context, data->block);
         compiler_eval(compiler, data);
     } else if(!strcmp(node->import, "io")) {
-        data = ast_class_create(AST_TOPLEVEL, node->location);
-        data->toplevel = list_new();
+        data = ast_class_create(AST_BLOCK, node->location);
+        data->block = list_new();
 
-        io_gen_signatures(compiler->context, data->toplevel);
+        io_gen_signatures(compiler->context, data->block);
         compiler_eval(compiler, data);
     } else {
         // Fallback on file
         char* source = readFile(node->import);
         if(source) {
-            parser_t* subparser = malloc(sizeof(parser_t));
-            parser_init(subparser, compiler->context, (const char*)node->import);
-            list_push(compiler->parsers, subparser);
-
+            parser_t* subparser = parser_new(node->import, compiler->context);
             ast_t* root = parser_run(subparser, source);
+            parser_free(subparser);
             if(!root || parser_error(subparser)) {
                 ast_free(root);
                 free(source);
                 compiler_throw(compiler, node, "Could not compile file '%s'", node->import);
                 return context_null(compiler->context);
             }
-
-            // Store and swap to new parser
-            parser_t* tmp = compiler->parser;
-            compiler->parser = subparser;
+            free(source);
 
 #ifndef NO_AST
-            printf("Abstract syntax tree '%s':\n", compiler->parser->name);
+            printf("Abstract syntax tree '%s':\n", subparser->name);
             ast_dump(root, 0);
             putchar('\n');
 #endif
 
             // Evaluate and swap back
             compiler_eval(compiler, root);
-            compiler->parser = tmp;
         } else {
             compiler_throw(compiler, node, "Could not read file named '%s'", node->import);
             return context_null(compiler->context);
         }
-        free(source);
     }
 
     hashmap_set(compiler->imports, node->import, data);
@@ -1941,7 +1935,7 @@ datatype_t* compiler_eval(compiler_t* compiler, ast_t* node) {
 #endif
 
     switch(node->class) {
-        case AST_TOPLEVEL: return eval_block(compiler, node->toplevel);
+        case AST_BLOCK: return eval_block(compiler, node->block);
         case AST_DECLVAR: return eval_declvar(compiler, node, true);
         case AST_DECLFUNC: return eval_declfunc(compiler, node, true);
         case AST_RETURN: return eval_return(compiler, node);
@@ -1970,21 +1964,18 @@ datatype_t* compiler_eval(compiler_t* compiler, ast_t* node) {
 
 // Compiler.compileBuffer(string code)
 // Compiles code into bytecode instructions
-vector_t* compile_buffer(char* source, const char* name) {
+vector_t* compile_buffer(const char* name, char* source) {
     compiler_t compiler;
-    compiler.parser = malloc(sizeof(parser_t));
-    compiler.parsers = list_new();
-    compiler.buffer = vector_new();
-    compiler.scope = scope_new();
     compiler.context = context_new();
+    compiler.parser = parser_new(name, compiler.context);
+    compiler.scope = scope_new();
     compiler.imports = hashmap_new();
+    compiler.buffer = vector_new();
     compiler.error = false;
     compiler.depth = 0;
-    list_push(compiler.parsers, compiler.parser);
     hashmap_set(compiler.imports, name, 0);
 
     // Run the parser
-    parser_init(compiler.parser, compiler.context, name);
     ast_t* root = parser_run(compiler.parser, source);
     if(root) {
 #ifndef NO_AST
@@ -2001,15 +1992,16 @@ vector_t* compile_buffer(char* source, const char* name) {
         compiler.error = true;
     }
 
-    vector_t* buffer = compiler.buffer;
+    ast_free(root);
     compiler_clear(&compiler);
 
+    vector_t* buffer = compiler.buffer;
     if(compiler.error) {
         bytecode_buffer_free(buffer);
-        return 0;
+        return NULL;
+    } else {
+        return buffer;
     }
-
-    return buffer;
 }
 
 // Compiler.compileFile(string filename)
@@ -2022,7 +2014,7 @@ vector_t* compile_file(const char* filename) {
     }
 
     // Compile into instructions
-    vector_t* buffer = compile_buffer(source, filename);
+    vector_t* buffer = compile_buffer(filename, source);
     free(source);
     return buffer;
 }
@@ -2035,16 +2027,11 @@ int free_import(void* val, void* arg) {
 // Compiler.clear()
 // Clears the current instruction buffer of the compiler
 void compiler_clear(compiler_t* compiler) {
-    // Free Scope and parsers
-    list_iterator_t* iter = list_iterator_create(compiler->parsers);
-    while(!list_iterator_end(iter)) {
-        parser_t* parser = list_iterator_next(iter);
-        parser_free(parser);
-        free(parser);
-    }
-    list_iterator_free(iter);
-    list_free(compiler->parsers);
-    if(compiler->scope) scope_free(compiler->scope);
+    // Free parser
+    parser_free(compiler->parser);
+
+    // Free scope and context
+    scope_free(compiler->scope);
     context_free(compiler->context);
 
     hashmap_foreach(compiler->imports, free_import, 0);

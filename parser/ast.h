@@ -54,7 +54,7 @@ typedef enum {
 // AST_IMPORT     -> stores an import / using statement
 // AST_CLASS      -> stores a class
 // AST_RETURN     -> stores a return statement
-// AST_TOPLEVEL   -> stores a list of ASTs
+// AST_BLOCK      -> stores a list of ASTs
 // AST_ANNOTATION -> stores an annotation
 // AST_NONE       -> stores an option None type
 typedef enum {
@@ -78,7 +78,7 @@ typedef enum {
     AST_IMPORT,
     AST_CLASS,
     AST_RETURN,
-    AST_TOPLEVEL,
+    AST_BLOCK,
     AST_ANNOTATION,
     AST_NONE,
 } ast_class_t;
@@ -139,7 +139,7 @@ struct ast_s {
         char* string;
         char* import;
         char ch;
-        list_t* toplevel;
+        list_t* block;
         list_t* ifstmt;
         int i;
         double f;

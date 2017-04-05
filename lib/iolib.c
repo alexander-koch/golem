@@ -42,14 +42,14 @@ int io_gen_signatures(context_t* context, list_t* toplevel) {
 
 	// readFile(str:char[]) -> char[]
 	function_new("readFile", string_type, INDEX(1));
-	function_add_param(0, string_type);
+	function_add_param(NULL, string_type);
 	function_upload(toplevel);
 
 	// writeFile(name:char[], content:char[], mode:char[]) -> void
 	function_new("writeFile", void_type, INDEX(2));
-	function_add_param(0, string_type);
-	function_add_param(0, string_type);
-	function_add_param(0, string_type);
+	function_add_param(NULL, string_type);
+	function_add_param(NULL, string_type);
+	function_add_param(NULL, string_type);
 	function_upload(toplevel);
 
 	/**
@@ -89,12 +89,12 @@ int io_gen_signatures(context_t* context, list_t* toplevel) {
 	// let filename = name
 	variable_new("filename", string_type);
 	var->vardecl.initializer = ast_class_create(AST_IDENT, loc);
-	var->vardecl.initializer->ident = "name";
+	var->vardecl.initializer->ident = strdup("name");
 	variable_upload(clazz->classstmt.body);
 
 	// read() -> char[] {
 	func = ast_class_create(AST_DECLFUNC, loc);
-    func->funcdecl.name = "read";
+    func->funcdecl.name = strdup("read");
     func->funcdecl.impl.formals = list_new();
     func->funcdecl.impl.body = list_new();
     func->funcdecl.rettype = string_type;
@@ -104,12 +104,12 @@ int io_gen_signatures(context_t* context, list_t* toplevel) {
 	ast_t* ret = ast_class_create(AST_RETURN, loc);
 	ast_t* callFunc = ast_class_create(AST_CALL, loc);
 	callFunc->call.callee = ast_class_create(AST_IDENT, loc);
-	callFunc->call.callee->ident = "readFile";
+	callFunc->call.callee->ident = strdup("readFile");
 	callFunc->call.args = list_new();
 
 	// readFile (filename)
 	param = ast_class_create(AST_IDENT, loc);
-	param->ident = "filename";
+	param->ident = strdup("filename");
 	list_push(callFunc->call.args, param);
 
 	// return -> readFile(filename)
@@ -121,7 +121,7 @@ int io_gen_signatures(context_t* context, list_t* toplevel) {
 
 	// write(str:char[]) -> void
 	func = ast_class_create(AST_DECLFUNC, loc);
-	func->funcdecl.name = "write";
+	func->funcdecl.name = strdup("write");
     func->funcdecl.impl.formals = list_new();
     func->funcdecl.impl.body = list_new();
     func->funcdecl.rettype = void_type;
@@ -130,15 +130,15 @@ int io_gen_signatures(context_t* context, list_t* toplevel) {
 	function_add_param("str", string_type);
 	callFunc = ast_class_create(AST_CALL, loc);
 	callFunc->call.callee = ast_class_create(AST_IDENT, loc);
-	callFunc->call.callee->ident = "writeFile";
+	callFunc->call.callee->ident = strdup("writeFile");
 	callFunc->call.args = list_new();
 
 	ast_t* p1 = ast_class_create(AST_IDENT, loc);
-	p1->ident = "filename";
+	p1->ident = strdup("filename");
 	ast_t* p2 = ast_class_create(AST_IDENT, loc);
-	p2->ident = "str";
+	p2->ident = strdup("str");
 	ast_t* p3 = ast_class_create(AST_STRING, loc);
-	p3->string = "wb";
+	p3->string = strdup("wb");
 
 	list_push(callFunc->call.args, p1);
 	list_push(callFunc->call.args, p2);

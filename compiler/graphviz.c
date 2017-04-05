@@ -316,12 +316,12 @@ int graphviz_eval(graphviz_t* state, ast_t* node) {
 
             return this;
         }
-        case AST_TOPLEVEL: {
+        case AST_BLOCK: {
             int this = graphviz_get_id(state);
             graphviz_mnemonic(state);
             fprintf(state->fp, "node%d [label=\"ROOT\"]\n", this);
 
-            list_iterator_t* iter = list_iterator_create(node->toplevel);
+            list_iterator_t* iter = list_iterator_create(node->block);
             while(!list_iterator_end(iter)) {
                 ast_t* next = list_iterator_next(iter);
 

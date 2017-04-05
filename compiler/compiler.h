@@ -21,19 +21,16 @@
 #include <lib/native.h>
 
 typedef struct compiler_t {
-    parser_t* parser;
-    list_t* parsers;
-    vector_t* buffer;
-    scope_t* scope;
     context_t* context;
+    parser_t* parser;
+    scope_t* scope;
     hashmap_t* imports;
+    vector_t* buffer;
     bool error;
     int depth;
 } compiler_t;
 
-vector_t* compile_buffer(char* source, const char* name);
+vector_t* compile_buffer(const char* name, char* source);
 vector_t* compile_file(const char* filename);
-void compiler_clear(compiler_t* compiler);
-void compiler_dump(ast_t* node, int level);
 
 #endif

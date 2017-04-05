@@ -11,16 +11,21 @@ ast_t* parse_return_declaration(parser_t* parser, location_t loc);
 ast_t* parse_annotation_declaration(parser_t* parser, location_t loc);
 ast_t* parse_expression(parser_t* parser);
 ast_t* parse_stmt(parser_t* parser);
-ast_t* parse_expression(parser_t* parser);
+void parser_throw(parser_t* parser, const char* format, ...);
 
-void parser_init(parser_t* parser, context_t* context, const char* name) {
+parser_t* parser_new(const char* name, context_t* context) {
+    parser_t* parser = malloc(sizeof(parser_t));
     parser->name = name;
     parser->buffer = 0;
     parser->num_tokens = 0;
     parser->cursor = 0;
     parser->error = false;
-    parser->top = 0;
     parser->context = context;
+    return parser;
+}
+
+void parser_free(parser_t* parser) {
+    free(parser);
 }
 
 // Check if we reached the end
@@ -62,11 +67,6 @@ bool expect_token(parser_t* parser, token_type_t type) {
             token_string(tp), token_string(type));
         return false;
     }
-}
-
-void parser_free(parser_t* parser) {
-    ast_free(parser->top);
-    lexer_free_buffer(parser->buffer, parser->num_tokens);
 }
 
 int parser_error(parser_t* parser) {
@@ -252,7 +252,7 @@ ast_t* parse_subscript_sugar(parser_t* parser, ast_t* node) {
 
     // Create the identifier node and set is as key
     ast_t* key = ast_class_create(AST_IDENT, ident->location);
-    key->ident = ident->value;
+    key->ident = strdup(ident->value);
     ast->subscript.key = key;
 
     const token_t* nxt = parser_peek(parser, 0);
@@ -299,12 +299,13 @@ ast_t* parse_simpleliteral(parser_t* parser) {
         }
         case TOKEN_STRING: {
             node->class = AST_STRING;
-            node->string = current->value;
+            char* str= current->value;
             parser->cursor++;
-
-            if(strlen(node->string) == 1) {
+            if(strlen(str) == 1) {
                 node->class = AST_CHAR;
-                node->ch = node->string[0];
+                node->ch = str[0];
+            } else {
+                node->string = strdup(str);
             }
             break;
         }
@@ -373,7 +374,7 @@ ast_t* parse_array(parser_t* parser) {
         return ast;
     }
 
-    ast_t* expr = 0;
+    ast_t* expr = NULL;
     while(!match_type(parser, TOKEN_RBRACKET) && (expr = parse_expression(parser))) {
         list_push(ast->array.elements, (void*)expr);
         if(!match_type(parser, TOKEN_COMMA)) {
@@ -400,7 +401,7 @@ ast_t* parse_literal(parser_t* parser) {
     } else {
         parser_throw(parser, "Could not parse literal");
     }
-    return 0;
+    return NULL;
 }
 
 /**
@@ -416,16 +417,16 @@ ast_t* parse_literal(parser_t* parser) {
 ast_t* parse_expression_primary(parser_t* parser) {
     if(match_type(parser, TOKEN_SEMICOLON)) {
         parser->cursor++;
-        return 0;
+        return NULL;
     }
 
-    ast_t* ast = 0;
+    ast_t* ast = NULL;
     const token_t* current = parser_peek(parser, 0);
     switch(current->type) {
         case TOKEN_WORD: {
             // myscript.access = denied
             ast = ast_class_create(AST_IDENT, get_location(parser));
-            ast->ident = current->value;
+            ast->ident = strdup(current->value);
             parser->cursor++;
             break;
         }
@@ -672,7 +673,7 @@ list_t* parse_formals(parser_t* parser) {
         parser->cursor++; // ':'
 
         ast_t* param = ast_class_create(AST_DECLVAR, get_location(parser));
-        param->vardecl.name = name->value;
+        param->vardecl.name = strdup(name->value);
         param->vardecl.type = parse_datatype(parser);
         param->vardecl.mutate = mutable;
         list_push(formals, param);
@@ -796,26 +797,25 @@ ast_t* parser_run(parser_t* parser, char* content) {
     // Use this for lexical analysis, debug if tokens are read wrong
     // lexer_print_tokens(parser->buffer, parser->num_tokens);
 
-    // Create toplevel program scope
-    ast_t* ast = ast_class_create(AST_TOPLEVEL, get_location(parser));
-    ast->toplevel = list_new();
-    parser->top = ast;
+    // Create root node
+    ast_t* root = ast_class_create(AST_BLOCK, get_location(parser));
+    root->block = list_new();
 
     // Parse each statement and abort if an error occurs
     while(!parser_end(parser)) {
         ast_t* node = parse_stmt(parser);
         if(!node || parser_error(parser)) {
             ast_free(node);
-            ast_free(ast);
-            parser->top = 0;
-            return 0;
+            ast_free(root);
+            return NULL;
         }
 
-        // add node to program
-        list_push(ast->toplevel, node);
+        // Add node to program
+        list_push(root->block, node);
     }
 
-    return ast;
+    lexer_free_buffer(parser->buffer, parser->num_tokens);
+    return root;
 }
 
 ///////-----------------
@@ -838,7 +838,7 @@ ast_t* parse_import_declaration(parser_t* parser, location_t loc) {
         case TOKEN_WORD:
         case TOKEN_STRING: {
             parser->cursor++;
-            node->import = tok->value;
+            node->import = strdup(tok->value);
             break;
         }
         default: {
@@ -875,7 +875,7 @@ ast_t* parse_var_declaration(parser_t* parser, location_t loc) {
     // If WORD followed by EQUAL
     if(ident->type == TOKEN_WORD && eq->type == TOKEN_EQUAL) {
         parser->cursor += 2;
-        node->vardecl.name = ident->value;
+        node->vardecl.name = strdup(ident->value);
         node->vardecl.mutate = mutate;
         node->vardecl.initializer = parse_expression(parser);
         node->vardecl.type = context_null(parser->context);
@@ -907,7 +907,7 @@ ast_t* parse_fn_declaration(parser_t* parser, location_t loc) {
     const token_t* ident = parser_peek(parser, 0);
     if(ident->type == TOKEN_WORD) {
         parser->cursor++;
-        node->funcdecl.name = ident->value;
+        node->funcdecl.name = strdup(ident->value);
         node->funcdecl.impl.formals = parse_formals(parser);
         node->funcdecl.rettype = context_null(parser->context);
         node->funcdecl.external = false;
@@ -1013,7 +1013,7 @@ ast_t* parse_class_declaration(parser_t* parser, location_t loc) {
     const token_t* ident = parser_peek(parser, 0);
     if(ident->type == TOKEN_WORD) {
         parser->cursor++;
-        node->classstmt.name = ident->value;
+        node->classstmt.name = strdup(ident->value);
         node->classstmt.formals = parse_formals(parser);
         node->classstmt.body = parse_block(parser);
         node->classstmt.fields = hashmap_new();

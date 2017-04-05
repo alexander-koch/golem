@@ -30,7 +30,7 @@ const char* ast_classname(ast_class_t class) {
         case AST_IMPORT: return "import";
         case AST_CLASS: return "class";
         case AST_RETURN: return "return";
-        case AST_TOPLEVEL: return "toplevel";
+        case AST_BLOCK: return "block";
         case AST_ANNOTATION: return "annotation";
         case AST_NONE: return "none";
         default: return "null";
@@ -40,8 +40,16 @@ const char* ast_classname(ast_class_t class) {
 void ast_free(ast_t* ast) {
     if(!ast) return;
 
-    list_iterator_t* iter = 0;
+    list_iterator_t* iter = NULL;
     switch(ast->class) {
+        case AST_IDENT: {
+            free(ast->ident);
+            break;
+        }
+        case AST_STRING: {
+            free(ast->string);
+            break;
+        }
         case AST_ARRAY: {
             iter = list_iterator_create(ast->array.elements);
             while(!list_iterator_end(iter)) {
@@ -77,10 +85,12 @@ void ast_free(ast_t* ast) {
             break;
         }
         case AST_DECLVAR: {
+            free(ast->vardecl.name);
             ast_free(ast->vardecl.initializer);
             break;
         }
         case AST_DECLFUNC: {
+            free(ast->funcdecl.name);
             iter = list_iterator_create(ast->funcdecl.impl.body);
             while(!list_iterator_end(iter)) {
                 ast_free(list_iterator_next(iter));
@@ -89,15 +99,10 @@ void ast_free(ast_t* ast) {
 
             list_iterator_reset(iter, ast->funcdecl.impl.formals);
             while(!list_iterator_end(iter)) {
-                ast_t* param = list_iterator_next(iter);
-                ast_free(param);
+                ast_free(list_iterator_next(iter));
             }
             list_iterator_free(iter);
             list_free(ast->funcdecl.impl.formals);
-
-            if(ast->funcdecl.external || ast->funcdecl.dynamic) {
-                free(ast->funcdecl.name);
-            }
             break;
         }
         case AST_IF: {
@@ -129,20 +134,28 @@ void ast_free(ast_t* ast) {
             ast_free(ast->whilestmt.cond);
             break;
         }
+        case AST_IMPORT: {
+            free(ast->import);
+            break;
+        }
         case AST_CLASS: {
+            free(ast->classstmt.name);
+
+            // Free body
             iter = list_iterator_create(ast->classstmt.body);
             while(!list_iterator_end(iter)) {
                 ast_free(list_iterator_next(iter));
             }
             list_free(ast->classstmt.body);
 
+            // Free formals
             list_iterator_reset(iter, ast->classstmt.formals);
             while(!list_iterator_end(iter)) {
                 ast_free(list_iterator_next(iter));
             }
-            list_iterator_free(iter);
             list_free(ast->classstmt.formals);
 
+            list_iterator_free(iter);
             hashmap_free(ast->classstmt.fields);
             break;
         }
@@ -150,13 +163,13 @@ void ast_free(ast_t* ast) {
             ast_free(ast->returnstmt);
             break;
         }
-        case AST_TOPLEVEL: {
-            iter = list_iterator_create(ast->toplevel);
+        case AST_BLOCK: {
+            iter = list_iterator_create(ast->block);
             while(!list_iterator_end(iter)) {
                 ast_free(list_iterator_next(iter));
             }
             list_iterator_free(iter);
-            list_free(ast->toplevel);
+            list_free(ast->block);
             break;
         }
         default: break;
@@ -368,8 +381,8 @@ void ast_dump(ast_t* node, int level) {
             putchar(')');
             break;
         }
-        case AST_TOPLEVEL: {
-            list_iterator_t* iter = list_iterator_create(node->toplevel);
+        case AST_BLOCK: {
+            list_iterator_t* iter = list_iterator_create(node->block);
             while(!list_iterator_end(iter)) {
                 ast_t* next = list_iterator_next(iter);
                 ast_dump(next, level+1);

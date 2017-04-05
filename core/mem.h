@@ -20,6 +20,12 @@ static int frees = 0;
 #include <stddef.h>
 #include <malloc.h>
 
+#ifdef __MINGW32__
+    #define ptr_size _msize
+#else
+    #define ptr_size malloc_usable_size
+#endif
+
 void mem_error(const char* format, ...) {
     va_list args;
     va_start(args, format);
@@ -35,7 +41,7 @@ void* mem_malloc(unsigned long n, char* file, int line) {
     if(n == 0) return 0;
 
     void* ptr = malloc(n);
-    unsigned long uln = n;
+    unsigned long uln = ptr_size(ptr);
     if(!ptr && n > 0) {
         mem_error("Memory allocation of %lu bytes failed", uln);
     }
@@ -47,20 +53,21 @@ void* mem_malloc(unsigned long n, char* file, int line) {
 
 void* mem_calloc(unsigned long n0, unsigned long n1) {
     void* ptr = calloc(n0, n1);
+    unsigned long uln = ptr_size(ptr);
     if(!ptr && n0 > 0 && n1 > 0) {
-        mem_error("Memory allocation of %lu bytes failed", n0 * n1);
+        mem_error("Memory allocation of %lu bytes failed", uln);
     }
-    bytes += n0 * n1;
-    used_bytes += n0 * n1;
+    bytes += uln;
+    used_bytes += uln;
     allocs++;
     return ptr;
 }
 
 void* mem_realloc(void* ptr, unsigned long n) {
-    bytes -= _msize(ptr);
+    bytes -= ptr_size(ptr);
 
     void* ret = realloc(ptr, n);
-    unsigned long uln = n;
+    unsigned long uln = ptr_size(ret);
     if(ret == 0 && n > 0) {
         mem_error("Rellocation of pointer %p to size %lu failed\n", ptr, uln);
     }
@@ -71,7 +78,7 @@ void* mem_realloc(void* ptr, unsigned long n) {
 void mem_free(void* ptr) {
     if(ptr == 0) return;
 
-    bytes -= _msize(ptr);
+    bytes -= ptr_size(ptr);
     frees++;
     free(ptr);
     ptr = 0;
