@@ -1,14 +1,14 @@
 # Golem Bytecode Set
 
 Golem runs on an internal stack-based bytecode virtual machine (gvm).
-Bytecode is used because of the better speed compared to simple Tree-walkers, a JIT is not
+Bytecode is used because of the better speed compared to simple Tree-walkers. A JIT is not
 used because of the complexity of its implementation.
 
 # VM Benchmark / Speed
 
 The current VM uses a technique called NaN-Tagging, similar to javascript's technique.
 It stores all values in a IEEE-754 64-bit floating-point value (double).
-Integers, double-floats, booleans, characters, etc. and pointers are mapped onto it.
+Integers, doubles, booleans, characters, etc. and pointers are mapped onto it.
 This greatly improves the speed and the memory usage.
 On 64-bit systems, you can use the whole 64-bit for a double, and 32-bits for an integer.
 

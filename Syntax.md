@@ -3,7 +3,7 @@
 ### Variables
 
 A variable is declared using the `let` keyword and is set to immutable by default.
-Because of the type-inference, there is no type declaration needed.
+No type declaration needed thanks to golem's type inference system.
 Example:
 
 ```
@@ -69,7 +69,7 @@ This would create an empty, mutable integer-array.
 ### Functions
 
 Functions are declared using the `func` keyword.
-Then you have to declare the parameters with their type and finally a return type using the 'arrow' notation.
+You declare the parameters with their type and a return type using the 'arrow' notation.
 For code blocks the 'egyptian'-style brackets are used.
 For void functions, you don't have to use the arrow, it is optional.
 
