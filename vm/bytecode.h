@@ -1,7 +1,7 @@
 /**
  * bytecode.h
- * @author Alexander Koch
- * @desc Bytecode definition for the VM.
+ * Copyright (C) 2017 Alexander Koch
+ * Bytecode definition for the VM
  *
  * An instruction is defined as a c-struct
  * with one opcode and two optional val_t generic values.

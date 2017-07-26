@@ -1,7 +1,7 @@
 /**
  * util.h
- * @author Alexander Koch 2016
- * @desc Utility / helper functions.
+ * Copyright (C) 2016 Alexander Koch
+ * Utility / helper functions
  */
 
 #ifndef util_h

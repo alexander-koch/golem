@@ -1,3 +1,4 @@
+// Copyright (C) 2017 Alexander Koch
 #include "list.h"
 
 list_t* list_new(void) {

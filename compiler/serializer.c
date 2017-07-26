@@ -1,3 +1,4 @@
+// Copyright (C) 2017 Alexander Koch
 #include "serializer.h"
 
 bool serialize_value(FILE* fp, val_t val) {

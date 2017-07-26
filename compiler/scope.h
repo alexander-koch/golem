@@ -1,7 +1,8 @@
 /**
  * scope.h
- * @author Alexander Koch
- * @desc Scope definition and helper functions.
+ * Copyright (C) 2017 Alexander Koch
+ * Scope definition and helper functions
+ *
  * Used to store symbols and bind variables to a certain lifetime.
  */
 

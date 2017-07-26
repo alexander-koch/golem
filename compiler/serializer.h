@@ -1,7 +1,7 @@
 /**
  * serializer.h
- * @author Alexander Koch
- * @desc Converts a list of bytecodes into a *.gvm-file and vice versa.
+ * Copyright (C) 2017 Alexander Koch
+ * Converts a list of bytecodes into a *.gvm-file and vice versa.
  */
 
 #ifndef serializer_h

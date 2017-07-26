@@ -1,3 +1,4 @@
+// Copyright (C) 2017 Alexander Koch
 #include "bytebuffer.h"
 
 void bytebuffer_init(bytebuffer_t* buffer) {

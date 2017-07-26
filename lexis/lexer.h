@@ -1,7 +1,8 @@
 /**
  * lexer.h
- * @author Alexander Koch
- * @desc Lexical analysis tool.
+ * Copyright (C) 2017 Alexander Koch
+ * Lexical analysis tool
+ *
  * Reads a string and converts its content into fragments: Tokens.
  * Each token has a certain type with a string value.
  * The string value may be NULL.

@@ -1,3 +1,4 @@
+// Copyright (C) 2017 Alexander Koch
 #ifndef native_h
 #define native_h
 

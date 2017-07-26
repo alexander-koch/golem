@@ -1,7 +1,7 @@
 /**
  * parser.h
- * @author Alexander Koch
- * @desc Parser structure for analysis of tokens.
+ * Copyright (C) 2017 Alexander Koch
+ * Parser structure for analysis of tokens.
  */
 
 #ifndef parser_h

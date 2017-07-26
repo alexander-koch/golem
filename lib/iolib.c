@@ -1,4 +1,5 @@
 // IO standard library
+// Copyright (C) 2017 Alexander Koch
 
 #include "libdef.h"
 #include <vm/vm.h>

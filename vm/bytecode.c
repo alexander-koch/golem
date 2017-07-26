@@ -1,3 +1,4 @@
+// Copyright (C) 2017 Alexander Koch
 #include "bytecode.h"
 
 const char* op2str(opcode_t code) {

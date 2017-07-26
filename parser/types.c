@@ -1,3 +1,4 @@
+// Copyright (C) 2017 Alexander Koch
 #include "types.h"
 
 datatype_t* datatype_new(type_t base) {
