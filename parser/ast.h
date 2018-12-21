@@ -1,7 +1,7 @@
 /**
  * ast.h
- * @author Alexander Koch
- * @desc Abstract syntax tree (AST) representation.
+ * Copyright (C) 2017 Alexander Koch
+ * Abstract syntax tree (AST) representation
  *
  * Used for storing expressions in a tree-like structure
  * and converting them to final bytecode by the compiler.

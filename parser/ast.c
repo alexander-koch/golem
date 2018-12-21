@@ -1,3 +1,4 @@
+// Copyright (C) 2017 Alexander Koch
 #include "ast.h"
 
 ast_t* ast_class_create(ast_class_t class, location_t location) {

@@ -1,3 +1,4 @@
+// Copyright (C) 2017 Alexander Koch
 #include "vm.h"
 
 void vm_gc(vm_t* vm);

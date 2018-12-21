@@ -1,6 +1,8 @@
 #ifndef libdef_h
 #define libdef_h
 
+// Copyright (C) 2017 Alexander Koch
+
 /**
 Helper functions for standard libraries
 (Meta-programming)

@@ -1,3 +1,4 @@
+// Copyright (C) 2017 Alexander Koch
 #include "compiler.h"
 
 datatype_t* compiler_eval(compiler_t* compiler, ast_t* node);

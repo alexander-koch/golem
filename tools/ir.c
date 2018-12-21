@@ -1,3 +1,4 @@
+// Copyright (C) 2017 Alexander Koch
 #include <stdio.h>
 #include <compiler/serializer.h>
 #include <vm/bytecode.h>

@@ -1,3 +1,4 @@
+// Copyright (C) 2017 Alexander Koch
 #include "parser.h"
 
 // Forward declaration of main parsing methods

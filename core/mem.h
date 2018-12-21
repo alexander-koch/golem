@@ -1,3 +1,9 @@
+/**
+ * mem.h
+ * Copyright (C) 2017 Alexander Koch
+ * Memory debug helper
+ */
+
 #ifndef NO_MEMINFO
 #ifdef USE_MEM_IMPLEMENTATION
 #undef USE_MEM_IMPLEMENTATION

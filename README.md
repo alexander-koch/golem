@@ -40,18 +40,23 @@ println("Elapsed: $elapsed")
 # Installing
 
 Golem is written in C99, and has been tested to run on Linux and Windows.
-To build it, a Makefile is used.
+A Makefile is used to build the compiler.
 
 ```sh
 $ make
 $ golem your/file/here.gs
 ```
 
-This will generate the compiler.
-Using `make DEBUG=1` will generate the debug version.
+Use `make DEBUG=1` to generate the debugger.
 To generate the immediate representation tool, run `make ir`.
 More features can be enabled/disabled in the Makefile.
 
+# Info
+
+For more information about the syntax see [Syntax](Syntax.md).
+This project was used in the german science competition "Jugend forscht" 2016.
+
 # Licence
 
-Copyright (c) Alexander Koch 2016
+Licensed under GNU GPLv3.
+Copyright (c) Alexander Koch 2017

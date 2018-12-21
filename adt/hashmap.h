@@ -1,7 +1,7 @@
 /**
  * hashmap.h
- * @author Alexander Koch
- * @desc Hashmap implementation
+ * Copyright (C) 2017 Alexander Koch
+ * Hashmap implementation
  */
 
 #ifndef hashmap_h

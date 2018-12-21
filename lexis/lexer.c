@@ -1,3 +1,4 @@
+// Copyright (C) 2017 Alexander Koch
 #include "lexer.h"
 
 const char* token_string(token_type_t type) {

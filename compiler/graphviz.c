@@ -1,3 +1,4 @@
+// Copyright (C) 2017 Alexander Koch
 #include "graphviz.h"
 
 void graphviz_mnemonic(graphviz_t* state) {

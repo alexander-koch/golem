@@ -1,3 +1,8 @@
+/**
+ * bytebuffer.h
+ * Copyright (C) 2017 Alexander Koch
+ */
+
 #ifndef bytebuffer_h
 #define bytebuffer_h
 

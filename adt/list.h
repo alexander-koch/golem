@@ -1,7 +1,7 @@
 /**
  * list.h
- * @author Alexander Koch
- * @desc List implementation based on a queue
+ * Copyright (C) 2017 Alexander Koch
+ * List implementation based on a queue
  */
 
 #ifndef list_h

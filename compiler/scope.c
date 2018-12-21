@@ -1,3 +1,4 @@
+// Copyright (C) 2017 Alexander Koch
 #include "scope.h"
 
 // Scope.new()

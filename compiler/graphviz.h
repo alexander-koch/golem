@@ -1,7 +1,8 @@
 /**
  * graphiz.h
- * @author Alexander Koch
- * @desc Graphiz DOT file generator.
+ * Copyright (C) 2017 Alexander Koch
+ * Graphiz DOT file generator
+ *
  * Generates an AST diagram from the supplied AST.
  */
 

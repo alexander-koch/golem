@@ -1,7 +1,7 @@
 /**
  * val.h
- * @author Alexander Koch 2016
- * @desc Generic value definition.
+ * Copyright (C) 2017 Alexander Koch
+ * Generic value definition
  *
  * NaN-Tagging to store values on IEEE 754 doubles.
  */

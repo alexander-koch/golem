@@ -1,3 +1,9 @@
+/**
+ * types.h
+ * Copyright (C) 2017 Alexander Koch
+ * Type definition
+ */
+
 #ifndef types_h
 #define types_h
 

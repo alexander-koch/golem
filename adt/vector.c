@@ -1,3 +1,4 @@
+// Copyright (C) 2017 Alexander Koch
 #include "vector.h"
 
 vector_t* vector_new(void) {

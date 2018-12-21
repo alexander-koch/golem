@@ -1,7 +1,7 @@
 /**
  * Compiler
- * @author Alexander Koch
- * @desc Compiles an abstract syntax tree (AST) into bytecode instructions.
+ * Copyright (C) 2017 Alexander Koch
+ * Compiles an abstract syntax tree (AST) into bytecode instructions
  *
  * Scopes are managed, ASTs are optimized and converted to bytecode instructions.
  * An error is thrown by the compiler if the semantics are wrong.

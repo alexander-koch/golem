@@ -1,7 +1,7 @@
 /**
  * vector.h
- * @author Alexander Koch
- * @desc Vector implementation
+ * Copyright (C) 2017 Alexander Koch
+ * Vector implementation
  */
 
 #ifndef vector_h

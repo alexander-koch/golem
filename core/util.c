@@ -1,3 +1,4 @@
+// Copyright (C) 2017 Alexander Koch
 #include "util.h"
 
 //static char* rootDirectory = 0;

@@ -1,3 +1,4 @@
+// Copyright (C) 2017 Alexander Koch
 #include "hashmap.h"
 
 #define INIT_SIZE 256
