@@ -81,7 +81,7 @@ clean:
 $(OBJDIR):
 	@test -d $@ || mkdir $@
 
-install:
+install: all
 	install $(MODULE_EXEC) $(PREFIX)/bin
 
 uninstall:
